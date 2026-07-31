@@ -952,7 +952,7 @@ function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): Jso
     return Number.isFinite(nextValue) ? nextValue : 0;
   }
   if (propSchema.type === "boolean") {
-    return Boolean(value);
+    return asBoolean(value);
   }
   if (propSchema.type === "array" || propSchema.type === "object") {
     if (typeof value !== "string") return value as JsonValue;
@@ -963,6 +963,16 @@ function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): Jso
     }
   }
   return String(value);
+}
+
+function asBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return !["", "0", "false", "off", "no"].includes(normalized);
+  }
+  return Boolean(value);
 }
 
 function select(nodeId: string): void {
@@ -2003,6 +2013,20 @@ function formatReleaseTime(value: string): string {
               rows="5"
               @input="updateProp(String(propName), propSchema, ($event.target as HTMLTextAreaElement).value)"
             />
+            <div
+              v-else-if="propSchema.setter === 'switch' || propSchema.type === 'boolean'"
+              class="switch-field"
+            >
+              <input
+                type="checkbox"
+                :checked="asBoolean(selectedNode.props[String(propName)])"
+                @change="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).checked)"
+              />
+              <span class="switch-track" aria-hidden="true">
+                <i />
+              </span>
+              <em>{{ asBoolean(selectedNode.props[String(propName)]) ? "开启" : "关闭" }}</em>
+            </div>
             <input
               v-else-if="propSchema.setter === 'color'"
               type="color"

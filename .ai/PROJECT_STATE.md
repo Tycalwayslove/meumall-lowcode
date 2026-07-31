@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料和楼层锚点导航。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航和布尔开关属性编辑。
 
 ## 当前维护范围
 
@@ -60,6 +60,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器本地版本管理：本地版本列表支持选择对比，展示标题、状态、环境、页面版本、节点数、数据源数和动作数摘要差异，并支持将所选版本作为新的 published release 回滚发布。
 - 活动规则弹窗物料：React/Vue H5 物料包已新增 `ActivityRuleModal`，支持规则入口、弹窗展示、规则列表和 `onOpen` 事件；大促模板、新人券模板和 React H5 runtime 示例已接入。
 - 楼层锚点导航：React/Vue H5 renderer 已为 schema 节点输出 `data-lowcode-node-id`，React/Vue H5 物料包新增 `FloorAnchorNav`，支持吸顶、横向滚动锚点、点击滚动到目标节点和 `onAnchorClick` 事件。
+- Vue3 编辑器布尔属性编辑：属性面板已将 `switch` setter 和 `boolean` 类型字段渲染为开关控件，写入真实 boolean，并兼容旧草稿中的 `"false"`、`"0"`、`"off"` 字符串。
 
 ## 已知缺口
 
@@ -106,7 +107,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `b942ab3` | 增强 Vue3 编辑器发布前检查清单。 |
 | 2026-07-31 | `ad7cb47` | 增强 Vue3 编辑器本地版本对比和回滚。 |
 | 2026-07-31 | `26909c4` | 新增活动规则弹窗物料并对齐 React/Vue H5。 |
-| 2026-07-31 | 本提交 | 新增楼层锚点导航并补充 renderer 节点标记。 |
+| 2026-07-31 | `2c8fd6d` | 新增楼层锚点导航并补充 renderer 节点标记。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器布尔开关属性编辑。 |
 
 ## 默认验证命令
 
