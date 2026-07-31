@@ -7,8 +7,10 @@
   "packageManager": "pnpm@9.12.3",
   "scripts": {
     "dev": "pnpm --filter @meumall/lowcode-editor-playground dev",
-    "build": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground build",
-    "typecheck": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground typecheck",
+    "dev:editor": "pnpm --filter @meumall/lowcode-editor-playground dev",
+    "dev:h5": "pnpm --filter @meumall/lowcode-h5-runtime-playground dev",
+    "build": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground build && pnpm --filter @meumall/lowcode-h5-runtime-playground build",
+    "typecheck": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground typecheck && pnpm --filter @meumall/lowcode-h5-runtime-playground typecheck",
     "lint": "pnpm -r --if-present lint",
     "clean": "pnpm -r --if-present clean",
     "changeset": "changeset",

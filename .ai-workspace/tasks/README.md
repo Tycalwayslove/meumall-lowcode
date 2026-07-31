@@ -13,3 +13,4 @@
 - `TASK-2026-0731-005-container-assets-data-preview.md`
 - `TASK-2026-0731-006-local-platform-publish-flow.md`
 - `TASK-2026-0731-007-h5-material-parity-canvas-actions.md`
+- `TASK-2026-0731-008-react-h5-runtime-playground.md`

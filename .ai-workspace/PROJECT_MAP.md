@@ -10,6 +10,7 @@ renderer-vue-h5 -> core -> schema
 materials-vue-h5 -> renderer-vue-h5 -> core -> schema
 adapters -> schema
 editor-playground -> editor + renderer-vue-h5 + materials-vue-h5
+h5-runtime-playground -> renderer-h5 + materials-h5 + core + schema
 
 Java config platform -> stores and publishes PageSchema
 hybird-meumall -> consumes renderer-h5/materials-h5/schema
@@ -72,6 +73,17 @@ Vue3 编辑器 playground。负责演示和验证：
 - 本地保存。
 
 该 app 可以作为后续迁入 Java 管理系统的参考实现，但不作为业务管理后台本体。
+
+### `apps/h5-runtime-playground`
+
+React H5 runtime playground。负责演示和验证：
+
+- React H5 renderer 消费 Page Schema。
+- React H5 materials 渲染基础物料和嵌套容器。
+- mock runtime data 通过 dataBinding 注入商品列表。
+- 未来 `hybird-meumall` H5 接入形态。
+
+该 app 只作为 H5 runtime 集成参考，不作为真实 H5 业务工程。
 
 ### `packages/adapters`
 

@@ -1,0 +1,24 @@
+{
+  "name": "@meumall/lowcode-h5-runtime-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@meumall/lowcode-core": "workspace:*",
+    "@meumall/lowcode-materials-h5": "workspace:*",
+    "@meumall/lowcode-renderer-h5": "workspace:*",
+    "@meumall/lowcode-schema": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^18.3.0",
+    "vite": "8.2.0"
+  }
+}

@@ -30,6 +30,7 @@ packages/materials-vue-h5  @meumall/lowcode-materials-vue-h5
 packages/editor        @meumall/lowcode-editor
 packages/adapters      @meumall/lowcode-adapters
 apps/editor-playground Vue3 editor playground
+apps/h5-runtime-playground React H5 runtime playground
 ```
 
 ## Architecture
@@ -64,6 +65,9 @@ Java config platform
 
 apps/editor-playground
   -> runnable Vue3 editor playground
+
+apps/h5-runtime-playground
+  -> runnable React H5 runtime playground
 ```
 
 ## Local Development
@@ -71,6 +75,7 @@ apps/editor-playground
 ```bash
 pnpm install
 pnpm dev
+pnpm dev:h5
 pnpm typecheck
 pnpm build
 ```

@@ -1,0 +1,149 @@
+:root {
+  color: #111827;
+  background: #e7e9ee;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.runtime-shell {
+  display: grid;
+  min-height: 100dvh;
+  grid-template-columns: minmax(260px, 320px) minmax(320px, 430px);
+  align-items: start;
+  justify-content: center;
+  gap: 18px;
+  padding: 22px;
+}
+
+.runtime-status,
+.runtime-errors {
+  border: 1px solid #d8dbe2;
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fafc;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.runtime-status strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.runtime-status dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.runtime-status div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.runtime-status dt,
+.runtime-status dd {
+  margin: 0;
+  font-size: 13px;
+}
+
+.runtime-status dt {
+  color: #64748b;
+}
+
+.runtime-status dd {
+  color: #111827;
+  font-weight: 700;
+  text-align: right;
+}
+
+.phone-frame {
+  overflow: hidden;
+  width: min(430px, 100%);
+  min-height: calc(100dvh - 44px);
+  border: 10px solid #111827;
+  border-radius: 30px;
+  background: #f3f4f6;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+}
+
+.phone-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 14px;
+  color: #fff;
+  background: #111827;
+  font-size: 12px;
+}
+
+.phone-frame [data-lowcode-page] {
+  min-height: calc(100dvh - 100px);
+  background: #f3f4f6;
+}
+
+.phone-frame [data-lowcode-missing],
+.phone-frame [data-lowcode-error],
+.runtime-empty {
+  margin: 12px;
+  padding: 14px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  background: #fff;
+  text-align: center;
+}
+
+.runtime-errors {
+  grid-column: 1 / -1;
+  color: #b91c1c;
+  background: #fff5f5;
+}
+
+.runtime-errors p {
+  margin: 0;
+}
+
+.runtime-errors p + p {
+  margin-top: 6px;
+}
+
+@media (max-width: 820px) {
+  .runtime-shell {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .runtime-status {
+    order: 2;
+  }
+
+  .phone-frame {
+    order: 1;
+    justify-self: center;
+  }
+}

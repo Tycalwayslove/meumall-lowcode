@@ -14,6 +14,20 @@ const registry = createMaterialRegistry(h5Materials);
 <LowcodeRenderer schema={schema} registry={registry} />
 ```
 
+本仓库提供独立 React H5 runtime 验证入口：
+
+```bash
+pnpm dev:h5
+```
+
+默认地址：
+
+```text
+http://localhost:5174/
+```
+
+该入口位于 `apps/h5-runtime-playground`，只消费 React H5 renderer/materials/core/schema，不依赖 Vue 编辑器。
+
 ## Suggested Routes
 
 ```text

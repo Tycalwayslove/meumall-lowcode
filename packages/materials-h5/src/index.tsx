@@ -1,9 +1,9 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
-import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
+import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 
 type MaterialProps = {
-  props: JsonObject;
+  props: Record<string, unknown>;
   node: LowcodeNode;
   children?: React.ReactNode;
 };

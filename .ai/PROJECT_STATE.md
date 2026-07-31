@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路，并开始对齐 React H5 与 Vue H5 基础物料。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐，并新增独立 React H5 runtime playground。
 
 ## 当前维护范围
 
@@ -15,6 +15,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - `packages/editor`
 - `packages/adapters`
 - `apps/editor-playground`
+- `apps/h5-runtime-playground`
 - `docs/`
 - `.ai-workspace/`
 - `.ai/`
@@ -39,6 +40,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器实操增强：容器物料、嵌套结构展示、向容器添加子物料、素材/商品快捷选择和 mock 数据源预览绑定。
 - Vue3 编辑器发布链路 mock：保存草稿、生成预览、发布页面、本地版本列表和独立 H5 runtime 入口。
 - Vue3 编辑器画布上下文操作：选中节点后可前后插入物料、向容器加入物料、同级上移/下移、复制和删除。
+- React H5 runtime playground：独立消费 React H5 renderer/materials/core/schema，验证基础物料、容器嵌套和 dataBinding。
 
 ## 已知缺口
 
@@ -64,7 +66,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `b1861d4` | 增强 Vue3 编辑器交互。 |
 | 2026-07-31 | `edda161` | 增强容器、素材/商品选择和数据源预览。 |
 | 2026-07-31 | `c3035f7` | 补充本地 mock 发布预览链路和独立 H5 runtime 入口。 |
-| 2026-07-31 | 待提交 | 对齐 React H5 容器物料并增强画布上下文操作。 |
+| 2026-07-31 | `8d4cf89` | 对齐 React H5 容器物料并增强画布上下文操作。 |
+| 2026-07-31 | 待提交 | 新增独立 React H5 runtime playground。 |
 
 ## 默认验证命令
 
