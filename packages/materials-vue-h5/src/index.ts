@@ -124,6 +124,81 @@ export const ImageBanner = defineComponent({
   },
 });
 
+export const SectionTitle = defineComponent({
+  name: "SectionTitle",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const alignValue = text(runtimeProps.align, "left");
+      const align = alignValue === "center" || alignValue === "right" ? alignValue : "left";
+      const markerText = text(runtimeProps.markerText);
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-section-title",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 18)}px 16px 10px`,
+            color: text(runtimeProps.titleColor, "#111827"),
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+            textAlign: align,
+          } satisfies CSSProperties,
+        },
+        [
+          markerText
+            ? h(
+                "span",
+                {
+                  style: {
+                    display: "inline-flex",
+                    alignItems: "center",
+                    minHeight: "22px",
+                    marginBottom: "8px",
+                    borderRadius: "999px",
+                    padding: "0 9px",
+                    color: text(runtimeProps.accentColor, "#0f766e"),
+                    background: "rgba(15, 118, 110, 0.1)",
+                    fontSize: "12px",
+                    fontWeight: 800,
+                    lineHeight: 1,
+                  } satisfies CSSProperties,
+                },
+                markerText,
+              )
+            : null,
+          h(
+            "h2",
+            {
+              style: {
+                margin: 0,
+                fontSize: `${number(runtimeProps.titleSize, 20)}px`,
+                lineHeight: 1.25,
+                fontWeight: 900,
+                color: text(runtimeProps.titleColor, "#111827"),
+              } satisfies CSSProperties,
+            },
+            text(runtimeProps.title, "区块标题"),
+          ),
+          text(runtimeProps.subtitle)
+            ? h(
+                "p",
+                {
+                  style: {
+                    margin: "7px 0 0",
+                    color: text(runtimeProps.textColor, "#64748b"),
+                    fontSize: "13px",
+                    lineHeight: 1.6,
+                  },
+                },
+                text(runtimeProps.subtitle),
+              )
+            : null,
+        ],
+      );
+    };
+  },
+});
+
 export const RichTextBlock = defineComponent({
   name: "RichTextBlock",
   props: materialPropOptions,
@@ -1739,6 +1814,40 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         content: { label: "内容", type: "string", setter: "textarea", defaultValue: "活动期间下单即享限时优惠，库存有限先到先得。" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb" },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e" },
+      },
+    }),
+  },
+  {
+    component: SectionTitle,
+    manifest: createMaterialManifest({
+      componentName: "SectionTitle",
+      materialVersion: "0.1.0",
+      title: "区块标题",
+      category: "content",
+      platforms: ["h5"],
+      defaultProps: {
+        markerText: "精选",
+        title: "今日主推",
+        subtitle: "用标题和说明分隔不同运营楼层。",
+        align: "left",
+        backgroundColor: "#f3f4f6",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        titleSize: 20,
+        paddingY: 18,
+      },
+      propsSchema: {
+        markerText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "今日主推" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "用标题和说明分隔不同运营楼层。" },
+        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 20 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 18 },
       },
     }),
   },

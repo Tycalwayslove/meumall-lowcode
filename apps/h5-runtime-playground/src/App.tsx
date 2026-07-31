@@ -215,6 +215,23 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_section_title_pick",
+      componentName: "SectionTitle",
+      materialVersion: "0.1.0",
+      props: {
+        markerText: "今日主推",
+        title: "先领券，再逛精选好物",
+        subtitle: "用清晰楼层标题把优惠、品牌、榜单和推荐模块串起来。",
+        align: "left",
+        backgroundColor: "#f3f4f6",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        titleSize: 20,
+        paddingY: 18,
+      },
+    },
+    {
       id: "node_coupon",
       componentName: "CouponSection",
       materialVersion: "0.1.0",

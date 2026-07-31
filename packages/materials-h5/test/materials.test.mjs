@@ -41,6 +41,17 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.events?.[0]?.name, "onAnchorClick");
   });
 
+  it("registers the section title material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "SectionTitle");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "区块标题");
+    assert.equal(material.manifest.category, "content");
+    assert.equal(material.manifest.defaultProps.title, "今日主推");
+    assert.equal(material.manifest.propsSchema.markerText.setter, "input");
+    assert.equal(material.manifest.propsSchema.subtitle.setter, "textarea");
+  });
+
   it("registers the coupon bundle material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "CouponBundle");
 
