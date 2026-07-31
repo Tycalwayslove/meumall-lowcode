@@ -35,6 +35,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeVersionDiffItems`
 - `createLowcodeSchemaPreviewSnippet`
 - `createLowcodeSchemaPreviewItems`
+- `createLowcodeTemplatePreviewMeta`
+- `createLowcodeTemplateListItem`
+- `sliceLowcodeTemplateTags`
+- `formatLowcodeTemplateVersion`
+- `formatLowcodeTemplateSummary`
 
 ## Readiness API
 
@@ -69,6 +74,25 @@ The version helpers keep local draft comparison, rollback confirmation, and futu
 `createLowcodeSchemaPreviewSnippet(schema)` returns a compact JSON-safe summary with page metadata, layout, node summary, data source ids, and action ids.
 
 `createLowcodeSchemaPreviewItems(current, selected, options)` formats current and selected schema snippets for side-by-side preview panels.
+
+## Template Summary API
+
+The template helpers keep template cards, page-start wizards, and future Java template market screens on one framework-agnostic display contract.
+
+`createLowcodeTemplatePreviewMeta(template, options)` derives the visual preview metadata from common schema props:
+
+- Preview image from `imageUrl`, `coverImageUrl`, or `logoImageUrl`.
+- Preview title from `title`, `brandName`, or `text`.
+- Preview subtitle from `subtitle`, `description`, or `summary`.
+- Node count label from the full Page Schema node tree.
+
+`createLowcodeTemplateListItem(template, options)` returns the template card data used by editor shells, including node count, data source count, action count, tags, version, and preview metadata.
+
+`sliceLowcodeTemplateTags(template, limit)` keeps tag truncation consistent across template list surfaces.
+
+`formatLowcodeTemplateVersion(template)` returns `v{version}` or `未标版本`.
+
+`formatLowcodeTemplateSummary(template)` formats the current card summary text as `节点 / 数据源 / 动作`.
 
 ## Contract
 

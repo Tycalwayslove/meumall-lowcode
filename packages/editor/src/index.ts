@@ -1,5 +1,6 @@
 import type {
   JsonObject,
+  JsonValue,
   LowcodeNode,
   LowcodeMaterialManifest,
   LowcodePageSchema,
@@ -162,6 +163,42 @@ export interface CreateLowcodeSchemaPreviewItemsOptions extends CreateLowcodeSch
   selectedDescription?: string;
 }
 
+export interface LowcodeEditorTemplateResource {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags?: string[];
+  version?: string;
+  schema: LowcodePageSchema;
+}
+
+export interface LowcodeEditorTemplatePreviewMeta {
+  imageUrl: string;
+  title: string;
+  subtitle: string;
+  nodeCountText: string;
+}
+
+export interface LowcodeEditorTemplateListItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  version?: string;
+  nodeCount: number;
+  dataSourceCount: number;
+  actionCount: number;
+  preview: LowcodeEditorTemplatePreviewMeta;
+}
+
+export interface CreateLowcodeTemplatePreviewMetaOptions {
+  fallbackImageUrl?: string;
+}
+
+export interface CreateLowcodeTemplateListItemOptions extends CreateLowcodeTemplatePreviewMetaOptions {}
+
 type NodeInput = Omit<LowcodeNode, "id"> & { id?: string };
 
 const DEFAULT_VIEWPORT: LowcodeEditorViewport = {
@@ -176,6 +213,9 @@ const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
   { actionType: "tracking.click", paramName: "eventName", label: "eventName" },
 ];
+const TEMPLATE_IMAGE_PROP_NAMES = ["imageUrl", "coverImageUrl", "logoImageUrl"];
+const TEMPLATE_TITLE_PROP_NAMES = ["title", "brandName", "text"];
+const TEMPLATE_SUBTITLE_PROP_NAMES = ["subtitle", "description", "summary"];
 
 export function createEditorState(schema: LowcodePageSchema, options: CreateEditorStateOptions = {}): LowcodeEditorState {
   return {
@@ -722,6 +762,60 @@ export function createLowcodeSchemaPreviewItems(
   ];
 }
 
+export function createLowcodeTemplatePreviewMeta(
+  template: LowcodeEditorTemplateResource,
+  options: CreateLowcodeTemplatePreviewMetaOptions = {},
+): LowcodeEditorTemplatePreviewMeta {
+  const nodes = flattenLowcodeNodes(template.schema.nodes);
+  const imageUrl = pickFirstTemplateNodeText(nodes, TEMPLATE_IMAGE_PROP_NAMES);
+  const title = pickFirstTemplateNodeText(nodes, TEMPLATE_TITLE_PROP_NAMES) || template.title;
+  const subtitle = pickFirstTemplateNodeText(nodes, TEMPLATE_SUBTITLE_PROP_NAMES) || template.description;
+
+  return {
+    imageUrl: imageUrl || options.fallbackImageUrl || "",
+    title,
+    subtitle,
+    nodeCountText: `${countLowcodeNodes(template.schema)} 节点`,
+  };
+}
+
+export function createLowcodeTemplateListItem(
+  template: LowcodeEditorTemplateResource,
+  options: CreateLowcodeTemplateListItemOptions = {},
+): LowcodeEditorTemplateListItem {
+  return {
+    id: template.id,
+    title: template.title,
+    description: template.description,
+    category: template.category,
+    tags: template.tags ?? [],
+    version: template.version,
+    nodeCount: countLowcodeNodes(template.schema),
+    dataSourceCount: template.schema.dataSources?.length ?? 0,
+    actionCount: template.schema.actions?.length ?? 0,
+    preview: createLowcodeTemplatePreviewMeta(template, options),
+  };
+}
+
+export function sliceLowcodeTemplateTags(
+  template: Pick<LowcodeEditorTemplateListItem, "tags">,
+  limit = 4,
+): string[] {
+  return template.tags.slice(0, Math.max(0, limit));
+}
+
+export function formatLowcodeTemplateVersion(
+  template: Pick<LowcodeEditorTemplateListItem, "version">,
+): string {
+  return template.version ? `v${template.version}` : "未标版本";
+}
+
+export function formatLowcodeTemplateSummary(
+  template: Pick<LowcodeEditorTemplateListItem, "nodeCount" | "dataSourceCount" | "actionCount">,
+): string {
+  return `${template.nodeCount} 个节点 / ${template.dataSourceCount} 个数据源 / ${template.actionCount} 个动作`;
+}
+
 function commitSchemaChange(
   state: LowcodeEditorState,
   schema: LowcodePageSchema,
@@ -907,6 +1001,26 @@ function createDeliveryStatusText(summary: LowcodeEditorPublishCheckSummary): st
   if (summary.error) return `${summary.error} 个阻塞项`;
   if (summary.warning) return `${summary.warning} 个提醒`;
   return "检查通过";
+}
+
+function pickFirstTemplateNodeText(nodes: LowcodeNode[], propNames: string[]): string {
+  for (const node of nodes) {
+    const text = pickFirstTemplatePropText(node.props, propNames);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickFirstTemplatePropText(props: JsonObject, propNames: string[]): string {
+  for (const propName of propNames) {
+    const text = pickTemplatePreviewText(props[propName]);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickTemplatePreviewText(value: JsonValue | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function cloneJsonObject(value: unknown): JsonObject {

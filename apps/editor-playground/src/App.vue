@@ -56,10 +56,12 @@ import {
   createLowcodeDeliverySummary,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
+  createLowcodeTemplateListItem,
   createLowcodeVersionDiffItems,
   createEditorState,
   duplicateNode,
-  flattenLowcodeNodes,
+  formatLowcodeTemplateSummary,
+  formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
   insertNode,
   markSaved,
@@ -71,12 +73,14 @@ import {
   selectNode,
   setEditorMode,
   setEditorViewport,
+  sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
   undo,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
   type LowcodeEditorSchemaPreviewItem as ReleaseSchemaPreviewItem,
+  type LowcodeEditorTemplateListItem as TemplateListItem,
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -418,24 +422,6 @@ let suppressNextAutoSave = false;
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
-interface TemplateListItem {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  tags: string[];
-  version?: string;
-  nodeCount: number;
-  dataSourceCount: number;
-  actionCount: number;
-  preview: TemplatePreviewMeta;
-}
-interface TemplatePreviewMeta {
-  imageUrl: string;
-  title: string;
-  subtitle: string;
-  nodeCountText: string;
-}
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
 type NodeContextAction = "rename" | "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
@@ -978,7 +964,9 @@ const deliverySchemaJson = computed(() => deliverySummary.value.schemaJson);
 const deliveryStatusText = computed(() => deliverySummary.value.statusText);
 const deliveryMetrics = computed<DeliveryMetricItem[]>(() => deliverySummary.value.metrics);
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(getAllPageTemplates().map((template) => template.category)))]);
-const pageStartTemplates = computed<TemplateListItem[]>(() => getAllPageTemplates().map(createTemplateListItem));
+const pageStartTemplates = computed<TemplateListItem[]>(() =>
+  getAllPageTemplates().map((template) => createLowcodeTemplateListItem(template)),
+);
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
   {
     id: "open-page-start-wizard",
@@ -1308,10 +1296,6 @@ function outlineRowMatchesKeyword(row: OutlineRow, keyword: string): boolean {
     .includes(keyword);
 }
 
-function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
-  return flattenLowcodeNodes(nodes);
-}
-
 function getSiblingNodes(nodes: LowcodeNode[], parentId?: string): LowcodeNode[] | undefined {
   if (!parentId) return nodes;
   for (const node of nodes) {
@@ -1464,83 +1448,9 @@ function schemaNodeCount(schema: LowcodePageSchema): number {
   return countLowcodeNodes(schema);
 }
 
-function pickTemplatePreviewText(value: JsonValue | undefined): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function createTemplatePreviewMeta(template: LowcodeTemplateResource): TemplatePreviewMeta {
-  const nodes = flattenNodeList(template.schema.nodes);
-  const imageNode = nodes.find((node) =>
-    Boolean(
-      pickTemplatePreviewText(node.props.imageUrl) ||
-      pickTemplatePreviewText(node.props.coverImageUrl) ||
-      pickTemplatePreviewText(node.props.logoImageUrl),
-    ),
-  );
-  const titleNode = nodes.find((node) =>
-    Boolean(
-      pickTemplatePreviewText(node.props.title) ||
-      pickTemplatePreviewText(node.props.brandName) ||
-      pickTemplatePreviewText(node.props.text),
-    ),
-  );
-  const subtitleNode = nodes.find((node) =>
-    Boolean(
-      pickTemplatePreviewText(node.props.subtitle) ||
-      pickTemplatePreviewText(node.props.description) ||
-      pickTemplatePreviewText(node.props.summary),
-    ),
-  );
-  const imageUrl = imageNode
-    ? pickTemplatePreviewText(imageNode.props.imageUrl) ||
-      pickTemplatePreviewText(imageNode.props.coverImageUrl) ||
-      pickTemplatePreviewText(imageNode.props.logoImageUrl)
-    : "";
-  const title = titleNode
-    ? pickTemplatePreviewText(titleNode.props.title) ||
-      pickTemplatePreviewText(titleNode.props.brandName) ||
-      pickTemplatePreviewText(titleNode.props.text)
-    : template.title;
-  const subtitle = subtitleNode
-    ? pickTemplatePreviewText(subtitleNode.props.subtitle) ||
-      pickTemplatePreviewText(subtitleNode.props.description) ||
-      pickTemplatePreviewText(subtitleNode.props.summary)
-    : template.description;
-  return {
-    imageUrl,
-    title: title || template.title,
-    subtitle: subtitle || template.description,
-    nodeCountText: `${schemaNodeCount(template.schema)} 节点`,
-  };
-}
-
-function createTemplateListItem(template: LowcodeTemplateResource): TemplateListItem {
-  const nodeCount = schemaNodeCount(template.schema);
-  return {
-    id: template.id,
-    title: template.title,
-    description: template.description,
-    category: template.category,
-    tags: template.tags ?? [],
-    version: template.version,
-    nodeCount,
-    dataSourceCount: template.schema.dataSources?.length ?? 0,
-    actionCount: template.schema.actions?.length ?? 0,
-    preview: createTemplatePreviewMeta(template),
-  };
-}
-
-function templateTags(template: TemplateListItem): string[] {
-  return template.tags.slice(0, 4);
-}
-
-function templateVersionText(template: TemplateListItem): string {
-  return template.version ? `v${template.version}` : "未标版本";
-}
-
-function templateSummaryText(template: TemplateListItem): string {
-  return `${template.nodeCount} 个节点 / ${template.dataSourceCount} 个数据源 / ${template.actionCount} 个动作`;
-}
+const templateTags = sliceLowcodeTemplateTags;
+const templateVersionText = formatLowcodeTemplateVersion;
+const templateSummaryText = formatLowcodeTemplateSummary;
 
 function getSiblingCount(parentId?: string): number {
   if (!parentId) return editorState.value.schema.nodes.length;
@@ -1563,7 +1473,7 @@ async function refreshTemplates(): Promise<void> {
       status: "published",
     }));
     if (seq !== templateSearchSeq) return;
-    visiblePageTemplates.value = result.items.map(createTemplateListItem);
+    visiblePageTemplates.value = result.items.map((template) => createLowcodeTemplateListItem(template));
   } catch {
     if (seq === templateSearchSeq) visiblePageTemplates.value = [];
   } finally {

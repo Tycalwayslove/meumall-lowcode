@@ -7,9 +7,14 @@ import {
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
   createLowcodeSchemaPreviewSnippet,
+  createLowcodeTemplateListItem,
+  createLowcodeTemplatePreviewMeta,
   createLowcodeVersionDiffItems,
   flattenLowcodeNodes,
+  formatLowcodeTemplateSummary,
+  formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
+  sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
 } from "../dist/index.js";
 import {
@@ -259,5 +264,61 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(previewItems[0].title, "当前草稿 Schema 片段");
     assert.equal(previewItems[1].description, "本地发布版本 / 0.1.0");
     assert.equal(previewItems[1].json.includes("banner_old"), true);
+  });
+
+  it("creates template preview metadata and list summaries", () => {
+    const template = {
+      id: "template_topic",
+      title: "商品专题页",
+      description: "适合商品内容运营。",
+      category: "商品",
+      tags: ["商品", "专题", "内容", "转化", "长尾"],
+      version: "1.2.0",
+      schema: createLowcodePageSchema({
+        pageId: "template_topic_page",
+        title: "商品专题页",
+        pageType: "topic",
+        nodes: [
+          createLowcodeNode({
+            id: "container_1",
+            componentName: "SectionContainer",
+            materialVersion: "1.0.0",
+            props: {},
+            children: [
+              createLowcodeNode({
+                id: "brand_1",
+                componentName: "BrandFeatureSection",
+                materialVersion: "1.0.0",
+                props: {
+                  coverImageUrl: "https://example.com/topic.jpg",
+                  brandName: "通勤好物",
+                  summary: "精选日常高频商品",
+                },
+              }),
+            ],
+          }),
+        ],
+        dataSources: [{ id: "products", type: "mock.products", bindTo: "products" }],
+        actions: [{ id: "go_topic", type: "navigate", params: { url: "/topic" } }],
+      }),
+    };
+
+    const preview = createLowcodeTemplatePreviewMeta(template);
+    const item = createLowcodeTemplateListItem(template);
+
+    assert.deepEqual(preview, {
+      imageUrl: "https://example.com/topic.jpg",
+      title: "通勤好物",
+      subtitle: "精选日常高频商品",
+      nodeCountText: "2 节点",
+    });
+    assert.equal(item.nodeCount, 2);
+    assert.equal(item.dataSourceCount, 1);
+    assert.equal(item.actionCount, 1);
+    assert.deepEqual(sliceLowcodeTemplateTags(item), ["商品", "专题", "内容", "转化"]);
+    assert.deepEqual(sliceLowcodeTemplateTags(item, 2), ["商品", "专题"]);
+    assert.equal(formatLowcodeTemplateVersion(item), "v1.2.0");
+    assert.equal(formatLowcodeTemplateSummary(item), "2 个节点 / 1 个数据源 / 1 个动作");
+    assert.equal(formatLowcodeTemplateVersion({ version: undefined }), "未标版本");
   });
 });
