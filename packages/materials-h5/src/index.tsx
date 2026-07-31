@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcImage, MlcTag, MlcText } from "./primitives/index.js";
+import { MlcButton, MlcImage, MlcPrice, MlcTag, MlcText } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -312,22 +312,21 @@ export function ProductRankList({ props }: MaterialProps) {
     <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#ffffff") }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <strong style={{ display: "block", color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+          <MlcText as="strong" size={17} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
             {text(props.title, "商品榜单")}
-          </strong>
-          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>
+          </MlcText>
+          <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 3 }}>
             {text(props.subtitle, "按活动热度整理，帮助用户快速选爆品。")}
-          </span>
+          </MlcText>
         </div>
-        <span style={{ flex: "0 0 auto", color: text(props.accentColor, "#ef4444"), fontSize: 12, fontWeight: 800 }}>
+        <MlcTag style={{ flex: "0 0 auto", color: text(props.accentColor, "#ef4444"), background: text(props.rankBackgroundColor, "#fff1f2") }}>
           {text(props.badgeText, "热卖榜")}
-        </span>
+        </MlcTag>
       </div>
       <div style={{ display: "grid", gap: 8 }}>
         {visibleItems.slice(0, number(props.limit, 5)).map((item, index) => (
-          <button
+          <MlcButton
             key={String(item.id ?? index)}
-            type="button"
             onClick={() => {
               if (typeof onProductClick === "function") onProductClick(item);
             }}
@@ -346,12 +345,12 @@ export function ProductRankList({ props }: MaterialProps) {
               textAlign: "left",
             }}
           >
-            <span
+            <MlcTag
+              radius={9}
               style={{
-                display: "grid",
-                placeItems: "center",
                 width: 30,
                 height: 30,
+                justifyContent: "center",
                 borderRadius: 9,
                 color: text(props.accentColor, "#ef4444"),
                 background: text(props.rankBackgroundColor, "#fff1f2"),
@@ -360,29 +359,28 @@ export function ProductRankList({ props }: MaterialProps) {
               }}
             >
               {index + 1}
-            </span>
+            </MlcTag>
             {typeof item.imageUrl === "string" ? (
-              <img
+              <MlcImage
                 src={item.imageUrl}
                 alt=""
-                style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, background: "#f3f4f6" }}
+                radius={8}
+                style={{ width: 64, height: 64, background: "#f3f4f6" }}
               />
             ) : (
               <span style={{ width: 64, height: 64, borderRadius: 8, background: "#f3f4f6" }} />
             )}
             <span style={{ minWidth: 0 }}>
-              <strong style={{ display: "block", overflow: "hidden", color: "#111827", fontSize: 14, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <MlcText as="strong" size={14} weight={800} style={{ display: "block", overflow: "hidden", color: "#111827", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {String(item.title ?? `榜单商品 ${index + 1}`)}
-              </strong>
-              <span style={{ display: "block", marginTop: 6, color: text(props.accentColor, "#ef4444"), fontWeight: 800 }}>
-                {String(item.priceText ?? "")}
-              </span>
-              <small style={{ display: "block", marginTop: 4, color: "#94a3b8", fontSize: 11 }}>
+              </MlcText>
+              <MlcPrice amountText={String(item.priceText ?? "")} size={14} style={{ display: "block", marginTop: 6, color: text(props.accentColor, "#ef4444") }} />
+              <MlcText size={11} tone="muted" style={{ display: "block", marginTop: 4, color: "#94a3b8" }}>
                 {String(item.rankText ?? item.desc ?? "活动热卖")}
-              </small>
+              </MlcText>
             </span>
-            <span style={{ color: "#9ca3af", fontSize: 12, fontWeight: 700 }}>{String(item.buttonText ?? text(props.buttonText, "去看看"))}</span>
-          </button>
+            <MlcText size={12} weight={700} tone="muted" style={{ color: "#9ca3af" }}>{String(item.buttonText ?? text(props.buttonText, "去看看"))}</MlcText>
+          </MlcButton>
         ))}
       </div>
     </section>
@@ -809,38 +807,34 @@ export function CouponBundle({ props }: MaterialProps) {
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <strong style={{ display: "block", color: text(props.titleColor, "#9a3412"), fontSize: 17 }}>
+          <MlcText as="strong" size={17} weight={800} style={{ display: "block", color: text(props.titleColor, "#9a3412") }}>
             {text(props.title, "组合券包")}
-          </strong>
-          <span style={{ display: "block", marginTop: 3, color: "#9a3412", opacity: 0.78, fontSize: 12 }}>
+          </MlcText>
+          <MlcText size={12} style={{ display: "block", marginTop: 3, color: "#9a3412", opacity: 0.78 }}>
             {text(props.subtitle, "多张优惠券一次领取，下单更划算。")}
-          </span>
+          </MlcText>
         </div>
-        <button
-          type="button"
+        <MlcButton
+          size="sm"
+          radius={999}
           onClick={() => {
             if (typeof onReceiveAll === "function") onReceiveAll();
           }}
           style={{
             flex: "0 0 auto",
-            minHeight: 34,
             border: 0,
-            borderRadius: 999,
-            padding: "0 14px",
             color: "#ffffff",
             background: text(props.buttonColor, "#ea580c"),
             fontSize: 13,
-            fontWeight: 700,
           }}
         >
           {text(props.receiveAllText, "一键领取")}
-        </button>
+        </MlcButton>
       </div>
       <div style={{ display: "grid", gap: 9 }}>
         {visibleCoupons.map((coupon, index) => (
-          <button
+          <MlcButton
             key={String(coupon.id ?? index)}
-            type="button"
             onClick={() => {
               if (typeof onReceive === "function") onReceive(coupon);
             }}
@@ -858,24 +852,25 @@ export function CouponBundle({ props }: MaterialProps) {
               textAlign: "left",
             }}
           >
-            <strong style={{ color: text(props.amountColor, "#dc2626"), fontSize: 22, lineHeight: 1 }}>
-              {String(coupon.valueText ?? "¥10")}
-            </strong>
+            <MlcPrice amountText={String(coupon.valueText ?? "¥10")} size={22} style={{ color: text(props.amountColor, "#dc2626") }} />
             <span style={{ minWidth: 0 }}>
-              <strong style={{ display: "block", color: "#111827", fontSize: 14 }}>{String(coupon.title ?? `优惠券 ${index + 1}`)}</strong>
-              <small style={{ display: "block", marginTop: 4, color: "#9a3412", fontSize: 12 }}>
+              <MlcText as="strong" size={14} weight={800} style={{ display: "block", color: "#111827" }}>{String(coupon.title ?? `优惠券 ${index + 1}`)}</MlcText>
+              <MlcText size={12} style={{ display: "block", marginTop: 4, color: "#9a3412" }}>
                 {String(coupon.thresholdText ?? "指定商品可用")}
-              </small>
+              </MlcText>
               {coupon.expireText ? (
-                <small style={{ display: "block", marginTop: 3, color: "#94a3b8", fontSize: 11 }}>
+                <MlcText size={11} tone="muted" style={{ display: "block", marginTop: 3, color: "#94a3b8" }}>
                   {String(coupon.expireText)}
-                </small>
+                </MlcText>
               ) : null}
             </span>
-            <span style={{ color: text(props.buttonColor, "#ea580c"), fontSize: 12, fontWeight: 800 }}>
+            <MlcTag
+              radius={0}
+              style={{ minHeight: "auto", padding: 0, color: text(props.buttonColor, "#ea580c"), background: "transparent", fontSize: 12 }}
+            >
               {String(coupon.buttonText ?? text(props.receiveText, "领取"))}
-            </span>
-          </button>
+            </MlcTag>
+          </MlcButton>
         ))}
       </div>
     </section>
@@ -1102,21 +1097,22 @@ export function StickyActionBar({ props }: MaterialProps) {
       }}
     >
       <span style={{ minWidth: 0 }}>
-        <strong style={{ display: "block", color: text(props.titleColor, "#111827"), fontSize: 14 }}>
+        <MlcText as="strong" size={14} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
           {text(props.title, "限时福利")}
-        </strong>
-        <small style={{ display: "block", marginTop: 3, color: text(props.textColor, "#64748b"), fontSize: 11 }}>
+        </MlcText>
+        <MlcText size={11} tone="muted" style={{ display: "block", marginTop: 3, color: text(props.textColor, "#64748b") }}>
           {text(props.subtitle, "领取优惠后立即逛活动精选")}
-        </small>
+        </MlcText>
       </span>
       {showSecondary ? (
-        <button
-          type="button"
+        <MlcButton
+          size="sm"
+          variant="outline"
+          radius={number(props.radius, 999)}
           onClick={handleSecondaryClick}
           style={{
             minHeight: 38,
             border: `1px solid ${text(props.accentColor, "#111827")}`,
-            borderRadius: number(props.radius, 999),
             padding: "0 12px",
             color: text(props.accentColor, "#111827"),
             background: text(props.secondaryBackgroundColor, "#ffffff"),
@@ -1126,15 +1122,15 @@ export function StickyActionBar({ props }: MaterialProps) {
           }}
         >
           {text(props.secondaryText, "领券")}
-        </button>
+        </MlcButton>
       ) : null}
-      <button
-        type="button"
+      <MlcButton
+        size="sm"
+        radius={number(props.radius, 999)}
         onClick={handlePrimaryClick}
         style={{
           minHeight: 38,
           border: 0,
-          borderRadius: number(props.radius, 999),
           padding: "0 15px",
           color: text(props.primaryTextColor, "#ffffff"),
           background: text(props.accentColor, "#111827"),
@@ -1144,7 +1140,7 @@ export function StickyActionBar({ props }: MaterialProps) {
         }}
       >
         {text(props.primaryText, "立即抢购")}
-      </button>
+      </MlcButton>
     </section>
   );
 }

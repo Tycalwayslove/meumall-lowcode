@@ -1,12 +1,31 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { h5Materials } from "../dist/index.js";
+import { CouponBundle, h5Materials, ProductRankList, StickyActionBar } from "../dist/index.js";
 import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
 import { validateLowcodeMaterialManifest } from "../../schema/dist/index.js";
 
 function manifestNames(materials) {
   return materials.map((material) => material.manifest.componentName);
+}
+
+function elementTypeNames(element, names = new Set()) {
+  if (!element || typeof element !== "object") return names;
+
+  if (typeof element.type === "function") {
+    names.add(element.type.displayName || element.type.name);
+  } else if (typeof element.type === "string") {
+    names.add(element.type);
+  }
+
+  const children = element.props?.children;
+  if (Array.isArray(children)) {
+    for (const child of children) elementTypeNames(child, names);
+  } else {
+    elementTypeNames(children, names);
+  }
+
+  return names;
 }
 
 describe("MeuMall H5 material manifests", () => {
@@ -29,6 +48,25 @@ describe("MeuMall H5 material manifests", () => {
       assert.equal(manifestNames(h5Materials).includes(name), false, `${name} should not be a React material`);
       assert.equal(manifestNames(h5VueMaterials).includes(name), false, `${name} should not be a Vue material`);
     }
+  });
+
+  it("composes migrated business materials from runtime primitives", () => {
+    const baseNode = { id: "node_1", componentName: "TestNode", props: {} };
+    const productRankTypes = elementTypeNames(ProductRankList({ props: {}, node: baseNode }));
+    const couponBundleTypes = elementTypeNames(CouponBundle({ props: {}, node: baseNode }));
+    const stickyActionTypes = elementTypeNames(StickyActionBar({ props: {}, node: baseNode }));
+
+    assert.equal(productRankTypes.has("MlcButton"), true);
+    assert.equal(productRankTypes.has("MlcImage"), true);
+    assert.equal(productRankTypes.has("MlcTag"), true);
+    assert.equal(productRankTypes.has("MlcText"), true);
+    assert.equal(productRankTypes.has("MlcPrice"), true);
+    assert.equal(couponBundleTypes.has("MlcButton"), true);
+    assert.equal(couponBundleTypes.has("MlcTag"), true);
+    assert.equal(couponBundleTypes.has("MlcText"), true);
+    assert.equal(couponBundleTypes.has("MlcPrice"), true);
+    assert.equal(stickyActionTypes.has("MlcButton"), true);
+    assert.equal(stickyActionTypes.has("MlcText"), true);
   });
 
   it("registers the activity rule modal material", () => {

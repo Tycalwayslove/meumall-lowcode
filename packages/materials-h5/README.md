@@ -18,6 +18,15 @@ Current internal primitives:
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5Materials`.
 
+Currently migrated materials:
+
+- `ActionButton`
+- `ImageBanner`
+- `SectionTitle`
+- `StickyActionBar`
+- `CouponBundle`
+- `ProductRankList`
+
 See `docs/material-layering-architecture.md` for the layering plan.
 
 Current materials:

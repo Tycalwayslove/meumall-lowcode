@@ -2,7 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcImage, MlcTag, MlcText } from "./primitives/index.js";
+import { MlcButton, MlcImage, MlcPrice, MlcTag, MlcText } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -489,20 +489,18 @@ export const ProductRankList = defineComponent({
           h("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "12px", marginBottom: "10px" } }, [
             h("div", { style: { minWidth: 0 } }, [
               h(
-                "strong",
-                { style: { display: "block", color: text(runtimeProps.titleColor, "#111827"), fontSize: "17px" } },
-                text(runtimeProps.title, "商品榜单"),
+                MlcText,
+                { as: "strong", size: 17, weight: 800, style: { display: "block", color: text(runtimeProps.titleColor, "#111827") } },
+                () => text(runtimeProps.title, "商品榜单"),
               ),
-              h(
-                "span",
-                { style: { display: "block", marginTop: "3px", color: "#64748b", fontSize: "12px" } },
+              h(MlcText, { size: 12, tone: "muted", style: { display: "block", marginTop: "3px" } }, () =>
                 text(runtimeProps.subtitle, "按活动热度整理，帮助用户快速选爆品。"),
               ),
             ]),
             h(
-              "span",
-              { style: { flex: "0 0 auto", color: text(runtimeProps.accentColor, "#ef4444"), fontSize: "12px", fontWeight: 800 } },
-              text(runtimeProps.badgeText, "热卖榜"),
+              MlcTag,
+              { style: { flex: "0 0 auto", color: text(runtimeProps.accentColor, "#ef4444"), background: text(runtimeProps.rankBackgroundColor, "#fff1f2") } },
+              () => text(runtimeProps.badgeText, "热卖榜"),
             ),
           ]),
           h(
@@ -510,9 +508,8 @@ export const ProductRankList = defineComponent({
             { style: { display: "grid", gap: "8px" } },
             visibleItems.slice(0, number(runtimeProps.limit, 5)).map((item, index) =>
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
                   onClick: () => {
                     const handler = runtimeProps.onProductClick;
                     if (typeof handler === "function") handler(item);
@@ -532,67 +529,66 @@ export const ProductRankList = defineComponent({
                     textAlign: "left",
                   } satisfies CSSProperties,
                 },
-                [
+                () => [
                   h(
-                    "span",
+                    MlcTag,
                     {
+                      radius: 9,
                       style: {
-                        display: "grid",
-                        placeItems: "center",
                         width: "30px",
                         height: "30px",
-                        borderRadius: "9px",
+                        justifyContent: "center",
                         color: text(runtimeProps.accentColor, "#ef4444"),
                         background: text(runtimeProps.rankBackgroundColor, "#fff1f2"),
                         fontSize: "14px",
                         fontWeight: 900,
                       } satisfies CSSProperties,
                     },
-                    String(index + 1),
+                    () => String(index + 1),
                   ),
                   typeof item.imageUrl === "string"
-                    ? h("img", {
+                    ? h(MlcImage, {
                         src: item.imageUrl,
                         alt: "",
+                        radius: 8,
                         style: {
                           width: "64px",
                           height: "64px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
                           background: "#f3f4f6",
                         },
                       })
                     : h("span", { style: { width: "64px", height: "64px", borderRadius: "8px", background: "#f3f4f6" } }),
                   h("span", { style: { minWidth: 0 } }, [
                     h(
-                      "strong",
+                      MlcText,
                       {
+                        as: "strong",
+                        size: 14,
+                        weight: 800,
                         style: {
                           display: "block",
                           overflow: "hidden",
                           color: "#111827",
-                          fontSize: "14px",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                         } satisfies CSSProperties,
                       },
-                      String(item.title ?? `榜单商品 ${index + 1}`),
+                      () => String(item.title ?? `榜单商品 ${index + 1}`),
                     ),
                     h(
-                      "span",
-                      { style: { display: "block", marginTop: "6px", color: text(runtimeProps.accentColor, "#ef4444"), fontWeight: 800 } },
-                      String(item.priceText ?? ""),
+                      MlcPrice,
+                      { amountText: String(item.priceText ?? ""), size: 14, style: { display: "block", marginTop: "6px", color: text(runtimeProps.accentColor, "#ef4444") } },
                     ),
                     h(
-                      "small",
-                      { style: { display: "block", marginTop: "4px", color: "#94a3b8", fontSize: "11px" } },
-                      String(item.rankText ?? item.desc ?? "活动热卖"),
+                      MlcText,
+                      { size: 11, tone: "muted", style: { display: "block", marginTop: "4px", color: "#94a3b8" } },
+                      () => String(item.rankText ?? item.desc ?? "活动热卖"),
                     ),
                   ]),
                   h(
-                    "span",
-                    { style: { color: "#9ca3af", fontSize: "12px", fontWeight: 700 } },
-                    String(item.buttonText ?? text(runtimeProps.buttonText, "去看看")),
+                    MlcText,
+                    { size: 12, weight: 700, tone: "muted", style: { color: "#9ca3af" } },
+                    () => String(item.buttonText ?? text(runtimeProps.buttonText, "去看看")),
                   ),
                 ],
               ),
@@ -1181,34 +1177,35 @@ export const CouponBundle = defineComponent({
             { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "10px" } },
             [
               h("div", { style: { minWidth: 0 } }, [
-                h("strong", { style: { display: "block", color: text(runtimeProps.titleColor, "#9a3412"), fontSize: "17px" } }, text(runtimeProps.title, "组合券包")),
                 h(
-                  "span",
-                  { style: { display: "block", marginTop: "3px", color: "#9a3412", opacity: 0.78, fontSize: "12px" } },
-                  text(runtimeProps.subtitle, "多张优惠券一次领取，下单更划算。"),
+                  MlcText,
+                  { as: "strong", size: 17, weight: 800, style: { display: "block", color: text(runtimeProps.titleColor, "#9a3412") } },
+                  () => text(runtimeProps.title, "组合券包"),
+                ),
+                h(
+                  MlcText,
+                  { size: 12, style: { display: "block", marginTop: "3px", color: "#9a3412", opacity: 0.78 } },
+                  () => text(runtimeProps.subtitle, "多张优惠券一次领取，下单更划算。"),
                 ),
               ]),
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  size: "sm",
+                  radius: 999,
                   onClick: () => {
                     const handler = runtimeProps.onReceiveAll;
                     if (typeof handler === "function") handler();
                   },
                   style: {
                     flex: "0 0 auto",
-                    minHeight: "34px",
                     border: 0,
-                    borderRadius: "999px",
-                    padding: "0 14px",
                     color: "#ffffff",
                     background: text(runtimeProps.buttonColor, "#ea580c"),
                     fontSize: "13px",
-                    fontWeight: 700,
                   } satisfies CSSProperties,
                 },
-                text(runtimeProps.receiveAllText, "一键领取"),
+                () => text(runtimeProps.receiveAllText, "一键领取"),
               ),
             ],
           ),
@@ -1217,9 +1214,8 @@ export const CouponBundle = defineComponent({
             { style: { display: "grid", gap: "9px" } },
             visibleCoupons.map((coupon, index) =>
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
                   onClick: () => {
                     const handler = runtimeProps.onReceive;
                     if (typeof handler === "function") handler(coupon);
@@ -1238,19 +1234,26 @@ export const CouponBundle = defineComponent({
                     textAlign: "left",
                   } satisfies CSSProperties,
                 },
-                [
-                  h("strong", { style: { color: text(runtimeProps.amountColor, "#dc2626"), fontSize: "22px", lineHeight: 1 } }, String(coupon.valueText ?? "¥10")),
+                () => [
+                  h(MlcPrice, { amountText: String(coupon.valueText ?? "¥10"), size: 22, style: { color: text(runtimeProps.amountColor, "#dc2626") } }),
                   h("span", { style: { minWidth: 0 } }, [
-                    h("strong", { style: { display: "block", color: "#111827", fontSize: "14px" } }, String(coupon.title ?? `优惠券 ${index + 1}`)),
-                    h("small", { style: { display: "block", marginTop: "4px", color: "#9a3412", fontSize: "12px" } }, String(coupon.thresholdText ?? "指定商品可用")),
+                    h(MlcText, { as: "strong", size: 14, weight: 800, style: { display: "block", color: "#111827" } }, () =>
+                      String(coupon.title ?? `优惠券 ${index + 1}`),
+                    ),
+                    h(MlcText, { size: 12, style: { display: "block", marginTop: "4px", color: "#9a3412" } }, () =>
+                      String(coupon.thresholdText ?? "指定商品可用"),
+                    ),
                     coupon.expireText
-                      ? h("small", { style: { display: "block", marginTop: "3px", color: "#94a3b8", fontSize: "11px" } }, String(coupon.expireText))
+                      ? h(MlcText, { size: 11, tone: "muted", style: { display: "block", marginTop: "3px", color: "#94a3b8" } }, () => String(coupon.expireText))
                       : null,
                   ]),
                   h(
-                    "span",
-                    { style: { color: text(runtimeProps.buttonColor, "#ea580c"), fontSize: "12px", fontWeight: 800 } },
-                    String(coupon.buttonText ?? text(runtimeProps.receiveText, "领取")),
+                    MlcTag,
+                    {
+                      radius: 0,
+                      style: { minHeight: "auto", padding: 0, color: text(runtimeProps.buttonColor, "#ea580c"), background: "transparent", fontSize: "12px" },
+                    },
+                    () => String(coupon.buttonText ?? text(runtimeProps.receiveText, "领取")),
                   ),
                 ],
               ),
@@ -1534,26 +1537,27 @@ export const StickyActionBar = defineComponent({
         [
           h("span", { style: { minWidth: 0 } }, [
             h(
-              "strong",
-              { style: { display: "block", color: text(runtimeProps.titleColor, "#111827"), fontSize: "14px" } },
-              text(runtimeProps.title, "限时福利"),
+              MlcText,
+              { as: "strong", size: 14, weight: 800, style: { display: "block", color: text(runtimeProps.titleColor, "#111827") } },
+              () => text(runtimeProps.title, "限时福利"),
             ),
             h(
-              "small",
-              { style: { display: "block", marginTop: "3px", color: text(runtimeProps.textColor, "#64748b"), fontSize: "11px" } },
-              text(runtimeProps.subtitle, "领取优惠后立即逛活动精选"),
+              MlcText,
+              { size: 11, tone: "muted", style: { display: "block", marginTop: "3px", color: text(runtimeProps.textColor, "#64748b") } },
+              () => text(runtimeProps.subtitle, "领取优惠后立即逛活动精选"),
             ),
           ]),
           showSecondary
             ? h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  size: "sm",
+                  variant: "outline",
+                  radius: number(runtimeProps.radius, 999),
                   onClick: handleSecondaryClick,
                   style: {
                     minHeight: "38px",
                     border: `1px solid ${text(runtimeProps.accentColor, "#111827")}`,
-                    borderRadius: `${number(runtimeProps.radius, 999)}px`,
                     padding: "0 12px",
                     color: text(runtimeProps.accentColor, "#111827"),
                     background: text(runtimeProps.secondaryBackgroundColor, "#ffffff"),
@@ -1562,18 +1566,18 @@ export const StickyActionBar = defineComponent({
                     whiteSpace: "nowrap",
                   } satisfies CSSProperties,
                 },
-                text(runtimeProps.secondaryText, "领券"),
+                () => text(runtimeProps.secondaryText, "领券"),
               )
             : null,
           h(
-            "button",
+            MlcButton,
             {
-              type: "button",
+              size: "sm",
+              radius: number(runtimeProps.radius, 999),
               onClick: handlePrimaryClick,
               style: {
                 minHeight: "38px",
                 border: 0,
-                borderRadius: `${number(runtimeProps.radius, 999)}px`,
                 padding: "0 15px",
                 color: text(runtimeProps.primaryTextColor, "#ffffff"),
                 background: text(runtimeProps.accentColor, "#111827"),
@@ -1582,7 +1586,7 @@ export const StickyActionBar = defineComponent({
                 whiteSpace: "nowrap",
               } satisfies CSSProperties,
             },
-            text(runtimeProps.primaryText, "立即抢购"),
+            () => text(runtimeProps.primaryText, "立即抢购"),
           ),
         ],
       );
