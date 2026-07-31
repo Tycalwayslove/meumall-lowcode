@@ -357,6 +357,7 @@ const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
 const pageStartWizardOpen = ref(false);
 const nodeContextMenu = ref<NodeContextMenuState | undefined>();
+const selectedMaterialDetailManifest = ref<LowcodeMaterialManifest>();
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
 const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
@@ -813,6 +814,38 @@ const visibleMaterials = computed(() => {
       .join(" ")
       .toLowerCase()
       .includes(keyword);
+  });
+});
+const materialDetailPropEntries = computed(() => {
+  const manifest = selectedMaterialDetailManifest.value;
+  if (!manifest) return [];
+  return Object.entries(manifest.propsSchema).map(([name, schema]) => ({ name, schema }));
+});
+const materialDetailPreviewSchema = computed<LowcodePageSchema | undefined>(() => {
+  const manifest = selectedMaterialDetailManifest.value;
+  if (!manifest) return undefined;
+  return createLowcodePageSchema({
+    pageId: `material-preview-${manifest.componentName}`,
+    title: `${manifest.title} 默认预览`,
+    pageType: "custom",
+    targetPlatforms: ["h5"],
+    layout: {
+      safeArea: true,
+      backgroundColor: "#f8fafc",
+      maxWidth: 430,
+    },
+    nodes: [
+      {
+        id: `preview_${manifest.componentName}`,
+        ...createNodeInput(manifest),
+      },
+    ],
+    dataSources: editorState.value.schema.dataSources,
+    actions: editorState.value.schema.actions,
+    publishMeta: {
+      environment: editorState.value.schema.publishMeta.environment,
+      operator: "playground",
+    },
   });
 });
 const selectedParentTitle = computed(() => {
@@ -1748,6 +1781,22 @@ function recordRecentMaterial(manifest: LowcodeMaterialManifest): void {
 function addMaterial(manifest: LowcodeMaterialManifest): void {
   editorState.value = appendNode(editorState.value, createNodeInput(manifest));
   recordRecentMaterial(manifest);
+}
+
+function openMaterialDetail(manifest: LowcodeMaterialManifest): void {
+  selectedMaterialDetailManifest.value = manifest;
+}
+
+function closeMaterialDetail(): void {
+  selectedMaterialDetailManifest.value = undefined;
+}
+
+function addMaterialFromDetail(): void {
+  const manifest = selectedMaterialDetailManifest.value;
+  if (!manifest) return;
+  addMaterial(manifest);
+  materialPreferenceMessage.value = `已添加物料：${manifest.title}`;
+  closeMaterialDetail();
 }
 
 function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void {
@@ -3020,6 +3069,7 @@ function createBlankPageSchema(): LowcodePageSchema {
 
 function openPageStartWizard(): void {
   closeCommandPalette();
+  closeMaterialDetail();
   pageStartWizardOpen.value = true;
 }
 
@@ -3071,6 +3121,7 @@ function clearCanvas(): void {
 
 function openCommandPalette(): void {
   closePageStartWizard();
+  closeMaterialDetail();
   commandKeyword.value = "";
   commandPaletteOpen.value = true;
   void nextTick(() => {
@@ -3114,6 +3165,11 @@ function onGlobalKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape" && pageStartWizardOpen.value) {
     event.preventDefault();
     closePageStartWizard();
+    return;
+  }
+  if (event.key === "Escape" && selectedMaterialDetailManifest.value) {
+    event.preventDefault();
+    closeMaterialDetail();
     return;
   }
   if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
@@ -3945,6 +4001,114 @@ function formatAutoSaveTime(value: string): string {
     </div>
 
     <div
+      v-if="selectedMaterialDetailManifest"
+      class="material-detail-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="物料详情"
+      @click.self="closeMaterialDetail"
+    >
+      <section class="material-detail-dialog">
+        <div class="material-detail-head">
+          <div>
+            <strong>{{ selectedMaterialDetailManifest.title }}</strong>
+            <span>{{ selectedMaterialDetailManifest.category }} / {{ selectedMaterialDetailManifest.componentName }}</span>
+          </div>
+          <button type="button" title="关闭物料详情" @click="closeMaterialDetail">
+            <X :size="18" />
+          </button>
+        </div>
+
+        <div class="material-detail-body">
+          <div class="material-detail-info">
+            <dl class="material-detail-meta">
+              <div>
+                <dt>版本</dt>
+                <dd>{{ selectedMaterialDetailManifest.materialVersion }}</dd>
+              </div>
+              <div>
+                <dt>平台</dt>
+                <dd>{{ selectedMaterialDetailManifest.platforms.join(" / ") }}</dd>
+              </div>
+              <div>
+                <dt>配置项</dt>
+                <dd>{{ materialDetailPropEntries.length }} 个</dd>
+              </div>
+            </dl>
+
+            <div class="material-detail-section">
+              <strong>配置字段</strong>
+              <div class="material-prop-list">
+                <div
+                  v-for="entry in materialDetailPropEntries"
+                  :key="entry.name"
+                  class="material-prop-item"
+                >
+                  <span>
+                    <b>{{ entry.schema.label }}</b>
+                    <small>{{ entry.name }} / {{ entry.schema.setter }}</small>
+                  </span>
+                  <em>{{ entry.schema.type }}{{ entry.schema.required ? " / 必填" : "" }}</em>
+                </div>
+                <div v-if="!materialDetailPropEntries.length" class="mini-empty">无配置字段</div>
+              </div>
+            </div>
+
+            <div class="material-detail-section">
+              <strong>事件</strong>
+              <div class="material-chip-list">
+                <span
+                  v-for="event in selectedMaterialDetailManifest.events ?? []"
+                  :key="event.name"
+                >
+                  {{ event.title }} / {{ event.name }}
+                </span>
+                <span v-if="!selectedMaterialDetailManifest.events?.length">无事件</span>
+              </div>
+            </div>
+
+            <div class="material-detail-section">
+              <strong>数据槽</strong>
+              <div class="material-chip-list">
+                <span
+                  v-for="slot in selectedMaterialDetailManifest.dataSourceSlots ?? []"
+                  :key="slot.name"
+                >
+                  {{ slot.name }} / {{ slot.acceptedTypes.join(", ") }}
+                </span>
+                <span v-if="!selectedMaterialDetailManifest.dataSourceSlots?.length">无数据槽</span>
+              </div>
+            </div>
+
+            <div class="material-detail-actions">
+              <button type="button" @click="addMaterialFromDetail">
+                <Plus :size="15" />
+                <span>添加到画布</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="material-detail-preview">
+            <div class="material-preview-phone">
+              <div class="material-preview-status">
+                <span>默认 H5 预览</span>
+                <span>{{ selectedMaterialDetailManifest.componentName }}</span>
+              </div>
+              <LowcodeVueRenderer
+                v-if="materialDetailPreviewSchema"
+                :schema="materialDetailPreviewSchema"
+                :registry="registry"
+                :data="previewData"
+                :action-executor="actionExecutor"
+                :fallback="'物料无法预览'"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div
       v-if="nodeContextMenu"
       class="node-context-backdrop"
       aria-hidden="true"
@@ -4124,6 +4288,16 @@ function formatAutoSaveTime(value: string): string {
             @click.stop="toggleFavoriteMaterial(material.manifest)"
           >
             <Star :size="15" :fill="isFavoriteMaterial(material.manifest.componentName) ? 'currentColor' : 'none'" />
+          </button>
+          <button
+            type="button"
+            class="material-detail-button"
+            :title="`查看 ${material.manifest.title} 详情`"
+            @pointerdown.stop
+            @click.stop="openMaterialDetail(material.manifest)"
+          >
+            <Eye :size="15" />
+            <span>详情</span>
           </button>
         </article>
         <div v-if="!visibleMaterials.length" class="mini-empty">没有匹配物料</div>

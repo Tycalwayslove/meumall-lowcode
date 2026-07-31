@@ -405,12 +405,22 @@ async function assertEditorWorkflow(page) {
 
   log("检查物料收藏和最近使用");
   const nodeCountBeforeMaterialPreference = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.clickChildByText(".material-item", "图片 Banner", ".material-detail-button");
+  await page.waitForExpression("document.querySelector('.material-detail-dialog') && document.body.innerText.includes('默认 H5 预览') && document.body.innerText.includes('ImageBanner') && document.body.innerText.includes('配置字段')");
+  await page.waitForExpression("document.querySelector('.material-preview-phone [data-lowcode-node-id=\"preview_ImageBanner\"]')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-prop-item')).some((item) => item.innerText.includes('图片') || item.innerText.includes('image'))");
+  await page.clickByText(".material-detail-actions button", "添加到画布");
+  await page.waitForExpression("!document.querySelector('.material-detail-dialog')");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreference)}`);
+  log("通过：物料详情可展示默认 H5 预览、配置字段并一键添加");
+
+  const nodeCountBeforeMaterialPreferenceAdd = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.clickChildByText(".material-item", "图片 Banner", ".material-favorite-button");
   await page.waitForExpression("document.body.innerText.includes('已收藏物料：图片 Banner')");
   await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-material-favorites'); return Boolean(raw && raw.includes('ImageBanner')); })()");
   await page.waitForExpression("Array.from(document.querySelectorAll('.material-quick-chip')).some((item) => item.innerText.includes('图片 Banner'))");
   await page.clickByText(".material-main-button", "图片 Banner");
-  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreference)}`);
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreferenceAdd)}`);
   await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-material-recent'); return Boolean(raw && raw.includes('ImageBanner')); })()");
   await page.waitForExpression("document.body.innerText.includes('最近使用') && Array.from(document.querySelectorAll('.material-quick-chip')).some((item) => item.innerText.includes('图片 Banner'))");
   log("通过：物料可收藏、最近使用可更新并持久化");

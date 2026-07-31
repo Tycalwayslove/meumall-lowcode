@@ -54,11 +54,12 @@
 - Vue3 编辑器 playground 已支持模板 H5 预览入口：左侧模板卡片拆分为应用主区域和独立预览按钮，点击预览会通过 React H5 runtime schema URL handoff 打开模板渲染效果，不替换当前画布。
 - Vue3 编辑器 playground 已支持新建页面向导：顶部“新建”和快捷命令可打开向导，运营可以从空白 H5 页面或已有模板开始搭建；空白页使用 `createLowcodePageSchema` 生成本地草稿，模板起点复用 Template Library Client 和 `applyTemplate`。
 - Vue3 编辑器 playground 已支持页面设置面板增强：右侧页面面板可编辑标题、描述、页面类型、背景色、安全区、H5 最大宽度、状态和发布环境，全部写回现有 Page Schema 字段并在源码模式同步展示。
+- Vue3 编辑器 playground 已支持物料详情预览：左侧物料卡片可打开详情弹窗，弹窗复用 `LowcodeVueRenderer` 渲染该物料默认 H5 预览，并展示 manifest 基础信息、propsSchema 字段、事件和数据源槽位。
 - React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `ProductRankList` 商品榜单，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `StickyActionBar` 底部转化条，支持标题、说明、主/副按钮、安全区、sticky 开关、跳转链接、`onPrimaryClick` 和 `onSecondaryClick` 事件；Vue3 编辑器大促模板、React H5 runtime 示例和 browser smoke check 已接入。
-- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证页面设置写入 schema，搜索 `商品专题页` 模板，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面和模板起点。
+- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面和模板起点。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定
