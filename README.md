@@ -81,6 +81,8 @@ pnpm dev:h5
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm smoke:browser
+pnpm smoke:visual
 ```
 
 ## Release

@@ -70,6 +70,7 @@
 - React/Vue H5 物料包已新增 `ImageCardGrid` 图片卡片宫格，支持标题、说明、列数、间距、圆角、卡片数组、图片、角标和 `onItemClick`；Vue3 编辑器大促模板、React H5 runtime 示例、数组属性表单、列表项图片素材选择和 browser smoke check 已接入，后续可扩展 data source slot 接真实会场/频道数据。
 - React/Vue H5 物料包已新增 `LeadFormBlock` 留资表单通用物料，复用内部 `MlcInput`、`MlcTextarea`、`MlcSwitch`、`MlcStepper`、`MlcButton` 和 `MlcText` primitives，支持姓名、手机号、人数、备注、协议开关、提交按钮和 `onSubmit` 安全 action；当前只做本地运行时交互，不接真实表单提交接口。
 - 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、留资表单物料、交付分享清单、本地版本备注/筛选/差异对比、React H5 runtime 诊断面板、pageId published 命中、releaseId preview 命中、missing pageId fallback、empty demo 空态、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览、本地自定义模板保存、模板 H5 预览入口不会替换当前画布、应用模板、`通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、本地模板、模板缩略预览和模板起点。
+- 根目录已提供 `pnpm smoke:visual`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，截取 Vue3 编辑器 playground、React H5 runtime `?pageId=summer-campaign-demo` published 入口、React H5 runtime `?releaseId=preview_demo` preview 入口，并写入 `.ai/test-reports/latest-visual/index.md` 本地报告。该命令是协作可见性护栏，不改变 Page Schema、包边界、materials 分层或 npm 公开 API；生成报告和截图不进入 Git 历史。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 - 新增业务物料前必须先按 `docs/material-layering-architecture.md` 判断：是否能通过通用物料和模板解决，是否需要新增业务无关 primitives，是否应该落在 Generic Materials 还是 Business Materials。
 

@@ -50,3 +50,19 @@ http://localhost:5174/?demo=empty
 - `demo=empty` renders an empty Page Schema to verify the H5 runtime empty state does not white-screen.
 
 The left diagnostics panel shows the requested entry, effective schema source, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
+
+## Visual Smoke
+
+The repository root provides a local visual smoke command:
+
+```bash
+pnpm smoke:visual
+```
+
+It starts the Vue3 editor playground, starts this React H5 runtime playground, opens Chrome headless, captures editor / published pageId / preview releaseId screenshots, and writes a local report to:
+
+```text
+.ai/test-reports/latest-visual/index.md
+```
+
+The generated report and screenshots are local verification artifacts and are not committed.
