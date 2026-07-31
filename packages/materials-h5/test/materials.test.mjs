@@ -76,6 +76,20 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.events?.[0]?.name, "onProductClick");
   });
 
+  it("registers the brand feature section material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BrandFeatureSection");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "品牌专题");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.brandName, "MeuMall Select");
+    assert.equal(material.manifest.propsSchema.coverImageUrl.setter, "image");
+    assert.equal(material.manifest.propsSchema.items.setter, "dataSourceSelector");
+    assert.deepEqual(material.manifest.dataSourceSlots?.[0]?.acceptedTypes, ["product.byIds", "product.byActivity"]);
+    assert.equal(material.manifest.events?.[0]?.name, "onEnter");
+    assert.equal(material.manifest.events?.[1]?.name, "onProductClick");
+  });
+
   it("registers the live entry material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "LiveEntry");
 

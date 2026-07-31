@@ -226,6 +226,167 @@ export function ProductRankList({ props }: MaterialProps) {
   );
 }
 
+export function BrandFeatureSection({ props }: MaterialProps) {
+  const coverImageUrl = text(props.coverImageUrl);
+  const logoImageUrl = text(props.logoImageUrl);
+  const linkUrl = text(props.linkUrl);
+  const items = list(props.items);
+  const sellingPoints = ruleList(props.sellingPoints);
+  const visibleItems = items.length
+    ? items
+    : [
+        {
+          id: "brand_sku_1",
+          title: "轻盈通勤手提包",
+          priceText: "¥199",
+          imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+        },
+        {
+          id: "brand_sku_2",
+          title: "夏季舒适凉鞋",
+          priceText: "¥129",
+          imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+        },
+      ];
+  const visibleSellingPoints = sellingPoints.length
+    ? sellingPoints
+    : [
+        { id: "point_1", title: "会员专享", desc: "品牌券叠加平台补贴" },
+        { id: "point_2", title: "当季新品", desc: "通勤、度假和日常穿搭一次配齐" },
+      ];
+  const onEnter = props.onEnter;
+  const onProductClick = props.onProductClick;
+
+  const handleEnter = () => {
+    if (typeof onEnter === "function") onEnter();
+    if (linkUrl && typeof window !== "undefined") window.location.href = linkUrl;
+  };
+
+  return (
+    <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#f8fafc") }}>
+      <div
+        style={{
+          overflow: "hidden",
+          border: "1px solid #e2e8f0",
+          borderRadius: 12,
+          background: text(props.cardBackgroundColor, "#ffffff"),
+        }}
+      >
+        {coverImageUrl ? (
+          <img src={coverImageUrl} alt="" style={{ width: "100%", height: 132, objectFit: "cover", display: "block" }} />
+        ) : null}
+        <div style={{ display: "grid", gap: 12, padding: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "52px minmax(0, 1fr) auto", alignItems: "center", gap: 10 }}>
+            {logoImageUrl ? (
+              <img
+                src={logoImageUrl}
+                alt=""
+                style={{ width: 52, height: 52, borderRadius: 12, objectFit: "cover", background: "#f3f4f6" }}
+              />
+            ) : (
+              <span
+                style={{
+                  display: "grid",
+                  placeItems: "center",
+                  width: 52,
+                  height: 52,
+                  borderRadius: 12,
+                  color: "#ffffff",
+                  background: text(props.accentColor, "#111827"),
+                  fontWeight: 900,
+                }}
+              >
+                {text(props.brandName, "M").slice(0, 1)}
+              </span>
+            )}
+            <span style={{ minWidth: 0 }}>
+              <small style={{ display: "block", color: text(props.accentColor, "#111827"), fontSize: 11, fontWeight: 800 }}>
+                {text(props.badgeText, "品牌专题")}
+              </small>
+              <strong style={{ display: "block", marginTop: 4, color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+                {text(props.title, "夏日品牌馆")}
+              </strong>
+              <span style={{ display: "block", marginTop: 4, color: "#64748b", fontSize: 12 }}>
+                {text(props.brandName, "MeuMall Select")}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={handleEnter}
+              style={{
+                alignSelf: "center",
+                minHeight: 32,
+                border: 0,
+                borderRadius: 8,
+                padding: "0 10px",
+                color: "#ffffff",
+                background: text(props.accentColor, "#111827"),
+                fontSize: 12,
+                fontWeight: 800,
+              }}
+            >
+              {text(props.buttonText, "进入品牌")}
+            </button>
+          </div>
+          <p style={{ margin: 0, color: text(props.textColor, "#374151"), fontSize: 13, lineHeight: 1.6 }}>
+            {text(props.description, "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。")}
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+            {visibleSellingPoints.slice(0, 4).map((point, index) => {
+              const item = (typeof point === "string" ? { title: point } : point) as Record<string, unknown>;
+              return (
+                <span
+                  key={String(item.id ?? index)}
+                  style={{
+                    display: "grid",
+                    gap: 2,
+                    minHeight: 48,
+                    borderRadius: 8,
+                    padding: "8px 9px",
+                    background: text(props.pointBackgroundColor, "#f8fafc"),
+                  }}
+                >
+                  <strong style={{ color: text(props.accentColor, "#111827"), fontSize: 12 }}>{String(item.title ?? `卖点 ${index + 1}`)}</strong>
+                  <small style={{ color: "#64748b", fontSize: 11 }}>{String(item.desc ?? item.content ?? "")}</small>
+                </span>
+              );
+            })}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
+            {visibleItems.slice(0, 2).map((item, index) => (
+              <button
+                key={String(item.id ?? index)}
+                type="button"
+                onClick={() => {
+                  if (typeof onProductClick === "function") onProductClick(item);
+                }}
+                style={{
+                  overflow: "hidden",
+                  border: "1px solid #eef0f3",
+                  borderRadius: 9,
+                  padding: 0,
+                  background: "#ffffff",
+                  textAlign: "left",
+                }}
+              >
+                {typeof item.imageUrl === "string" ? (
+                  <img src={item.imageUrl} alt="" style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" }} />
+                ) : null}
+                <span style={{ display: "grid", gap: 4, padding: 8 }}>
+                  <strong style={{ overflow: "hidden", color: "#111827", fontSize: 12, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {String(item.title ?? `品牌商品 ${index + 1}`)}
+                  </strong>
+                  <span style={{ color: text(props.accentColor, "#111827"), fontWeight: 800 }}>{String(item.priceText ?? "")}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function StoreExpertSection({ props }: MaterialProps) {
   const items = list(props.items);
   const visibleItems = items.length
@@ -1163,6 +1324,60 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
       },
       events: [{ name: "onProductClick", title: "点击榜单商品" }],
+    }),
+  },
+  {
+    component: BrandFeatureSection,
+    manifest: createMaterialManifest({
+      componentName: "BrandFeatureSection",
+      materialVersion: "0.1.0",
+      title: "品牌专题",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        brandName: "MeuMall Select",
+        title: "夏日品牌馆",
+        description: "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。",
+        badgeText: "品牌专题",
+        buttonText: "进入品牌",
+        coverImageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+        logoImageUrl: "",
+        linkUrl: "",
+        backgroundColor: "#f8fafc",
+        cardBackgroundColor: "#ffffff",
+        pointBackgroundColor: "#f8fafc",
+        titleColor: "#111827",
+        textColor: "#374151",
+        accentColor: "#111827",
+        sellingPoints: [
+          { id: "point_1", title: "会员专享", desc: "品牌券叠加平台补贴" },
+          { id: "point_2", title: "当季新品", desc: "通勤、度假和日常穿搭一次配齐" },
+        ],
+        items: [],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
+      propsSchema: {
+        brandName: { label: "品牌名", type: "string", setter: "input", defaultValue: "MeuMall Select" },
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "夏日品牌馆" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "品牌专题" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "进入品牌" },
+        coverImageUrl: { label: "封面图", type: "string", setter: "image", defaultValue: "" },
+        logoImageUrl: { label: "Logo", type: "string", setter: "image", defaultValue: "" },
+        linkUrl: { label: "跳转链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        pointBackgroundColor: { label: "卖点底色", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "正文色", type: "string", setter: "color", defaultValue: "#374151" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#111827" },
+        sellingPoints: { label: "卖点列表", type: "array", setter: "textarea", defaultValue: [] },
+        items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+      },
+      events: [
+        { name: "onEnter", title: "点击进入品牌" },
+        { name: "onProductClick", title: "点击品牌商品" },
+      ],
     }),
   },
   {

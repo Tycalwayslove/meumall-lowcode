@@ -480,11 +480,14 @@ const contentPropNames = new Set([
   "viewerText",
   "badgeText",
   "modalTitle",
+  "brandName",
+  "description",
   "alt",
   "imageUrl",
   "coverImageUrl",
+  "logoImageUrl",
 ]);
-const dataPropNames = new Set(["items", "coupons", "rules"]);
+const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
 const behaviorPropNames = new Set(["linkUrl", "sticky", "smooth", "offsetTop"]);
 
 const commonListEditorFields: Record<string, ListEditorField> = {
@@ -509,6 +512,7 @@ const commonListEditorFields: Record<string, ListEditorField> = {
 const defaultListFields: Record<string, string[]> = {
   coupons: ["id", "title", "thresholdText", "valueText", "expireText", "buttonText"],
   rules: ["title", "content"],
+  sellingPoints: ["id", "title", "desc"],
 };
 
 const safeActionRegistry = createSafeActionRegistry({
@@ -584,7 +588,7 @@ const imagePropOptions = computed(() => {
 const canUseAssetLibrary = computed(() => Boolean(selectedNode.value && imagePropOptions.value.length));
 const assetCategories = computed(() => ["全部", ...Array.from(new Set(sampleAssets.map((asset) => asset.category)))]);
 const isProductMaterialSelected = computed(() =>
-  Boolean(selectedNode.value && ["ProductList", "ProductRankList", "FlashSaleList"].includes(selectedNode.value.componentName)),
+  Boolean(selectedNode.value && ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(selectedNode.value.componentName)),
 );
 const isCouponBundleSelected = computed(() => selectedNode.value?.componentName === "CouponBundle");
 const isCouponSectionSelected = computed(() => selectedNode.value?.componentName === "CouponSection");
@@ -1204,7 +1208,7 @@ function createPublishChecks(): PublishCheck[] {
       .map(([propName]) => `${manifest.title}.${propName}`);
   });
   const emptyProductNodes = nodes.filter((node) => {
-    if (!["ProductList", "ProductRankList", "FlashSaleList"].includes(node.componentName)) return false;
+    if (!["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(node.componentName)) return false;
     if (node.dataBinding?.items) return false;
     return !Array.isArray(node.props.items) || node.props.items.length === 0;
   });
@@ -1287,7 +1291,7 @@ function createNodeInput(manifest: LowcodeMaterialManifest) {
     props: { ...manifest.defaultProps },
     meta: { name: manifest.title },
   };
-  if (["ProductList", "ProductRankList"].includes(manifest.componentName)) {
+  if (["ProductList", "ProductRankList", "BrandFeatureSection"].includes(manifest.componentName)) {
     return {
       ...node,
       dataBinding: {
@@ -3757,7 +3761,7 @@ function formatReleaseTime(value: string): string {
                     :value="asText(selectedNode.props[entry.name])"
                     @input="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
                   />
-                  <div v-if="['ProductList', 'ProductRankList', 'FlashSaleList'].includes(selectedNode.componentName) && entry.name === 'items'" class="quick-actions">
+                  <div v-if="['ProductList', 'ProductRankList', 'BrandFeatureSection', 'FlashSaleList'].includes(selectedNode.componentName) && entry.name === 'items'" class="quick-actions">
                     <button type="button" @click="applySampleProducts">使用示例商品</button>
                     <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
                   </div>

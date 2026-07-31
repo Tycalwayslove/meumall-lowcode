@@ -13,6 +13,7 @@ Current materials:
 - `ActionButton`
 - `ProductList`
 - `ProductRankList`
+- `BrandFeatureSection`
 - `StoreExpertSection`
 - `LiveEntry`
 - `CouponSection`

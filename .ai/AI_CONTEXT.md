@@ -20,7 +20,7 @@
 - 编辑器可以通过 `@meumall/lowcode-adapters` 的 schema URL 编解码工具把当前 schema handoff 到 React H5 runtime：`http://localhost:5174/?schema=...&source=editor`。
 - `@meumall/lowcode-adapters` 已提供 `resolveLowcodeDataSources`，编辑器预览和 React H5 runtime 均通过注册白名单 data source handler 解析 schema.dataSources，再把结果作为 renderer data 注入。
 - `@meumall/lowcode-adapters` 已提供 `createSafeActionRegistry` 和 `createSafeActionExecutor`，编辑器 playground 可维护 schema.actions 并把物料事件绑定到 action；Vue 预览和 React H5 runtime 通过白名单 handler 执行 mock navigate、coupon.receive、tracking.click 和 noop。
-- React/Vue H5 物料包已包含基础物料和高阶活动物料：`CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ProductRankList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`；大促模板、新人券模板和 React H5 runtime 示例已使用这些物料。
+- React/Vue H5 物料包已包含基础物料和高阶活动物料：`CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ProductRankList`、`BrandFeatureSection`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`；大促模板、新人券模板和 React H5 runtime 示例已使用这些物料。
 - `Material Manifest v1` 契约已写入 `.ai-workspace/contracts/material-manifest-v1.md`，定义物料字段语义、兼容性、编辑器/renderer/Java/H5 消费规则和变更流程。
 - React/Vue H5 renderer 已为 schema 节点输出 `data-lowcode-node-id`，楼层锚点物料可按目标节点 id 滚动定位。
 - Java 配置平台 API 草案已写入 `.ai-workspace/contracts/java-config-platform-api-v1.md`，`@meumall/lowcode-adapters` 已提供 `LowcodeConfigPlatformClient` 与 `createHttpConfigPlatformClient`，编辑器本地 mock 发布链路已实现同一 client 接口。
@@ -28,7 +28,7 @@
 - `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，Vue3 编辑器 playground 右侧素材库、商品选择器、优惠券选择器和门店/达人选择器已通过 resource client 查询数据；后续接真实素材中心、商品中心、优惠券中心、门店/达人中心时优先替换 client，不改 UI 内部查询逻辑。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeTemplateLibraryClient` 和 `createStaticTemplateLibraryClient`，Vue3 编辑器 playground 左侧模板列表已通过 template client 查询，支持搜索、分类过滤、加载态和空状态；后续接 Java 模板市场时优先替换 client，不改 UI 内部查询逻辑。
-- Vue3 编辑器 playground 右侧属性区已提供资源选择器：图片类节点可搜索/分类选择图片，`ProductList`/`ProductRankList`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items` 或重新绑定 `products` 数据源，`CouponBundle` 可多选优惠券写入 `props.coupons`，`CouponSection` 可选择单张优惠券写入主券文案，`StoreExpertSection` 可多选门店/达人写入 `props.items` 或重新绑定 `stores` 数据源。
+- Vue3 编辑器 playground 右侧属性区已提供资源选择器：图片类节点可搜索/分类选择图片，`ProductList`/`ProductRankList`/`BrandFeatureSection`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items` 或重新绑定 `products` 数据源，`CouponBundle` 可多选优惠券写入 `props.coupons`，`CouponSection` 可选择单张优惠券写入主券文案，`StoreExpertSection` 可多选门店/达人写入 `props.items` 或重新绑定 `stores` 数据源。
 - Vue3 编辑器 playground 画布已支持物料拖拽插入线：拖到节点上半区插入前方，下半区插入后方，拖到 `SectionContainer` 中间区域加入容器，拖到空白区域追加页面末尾。
 - Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - Vue3 编辑器 playground 已补充触屏/手写笔 Pointer Events 拖拽：物料面板、结构树节点和 H5 画布节点都可通过 pointer 移动超过阈值后复用现有 drop hint 完成投放或移动；拖拽完成后会抑制紧随其后的 click，避免额外追加物料。
@@ -45,6 +45,7 @@
 - Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板。
 - React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `ProductRankList` 商品榜单，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
+- React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会搜索并应用 `商品专题页` 模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`，以及源码/预览/设计模式切换。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 

@@ -185,6 +185,7 @@ const sampleSchema = createLowcodePageSchema({
         items: [
           { id: "anchor_coupon", title: "领券", targetId: "node_coupon" },
           { id: "anchor_live", title: "直播", targetId: "node_live" },
+          { id: "anchor_brand", title: "品牌", targetId: "node_brand" },
           { id: "anchor_rank", title: "榜单", targetId: "node_rank" },
           { id: "anchor_recommend", title: "推荐", targetId: "node_store_expert" },
           { id: "anchor_flash", title: "限时秒杀", targetId: "node_flash_sale" },
@@ -249,6 +250,39 @@ const sampleSchema = createLowcodePageSchema({
       events: {
         onReceive: { actionId: "receive_coupon" },
         onReceiveAll: { actionId: "receive_coupon_bundle" },
+      },
+    },
+    {
+      id: "node_brand",
+      componentName: "BrandFeatureSection",
+      materialVersion: "0.1.0",
+      props: {
+        brandName: "MeuMall Select",
+        title: "夏日品牌馆",
+        description: "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。",
+        badgeText: "品牌专题",
+        buttonText: "进入品牌",
+        coverImageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+        logoImageUrl: "",
+        linkUrl: "",
+        backgroundColor: "#f8fafc",
+        cardBackgroundColor: "#ffffff",
+        pointBackgroundColor: "#f8fafc",
+        titleColor: "#111827",
+        textColor: "#374151",
+        accentColor: "#111827",
+        sellingPoints: [
+          { id: "point_member", title: "会员专享", desc: "品牌券叠加平台补贴" },
+          { id: "point_new", title: "当季新品", desc: "通勤、度假和日常穿搭一次配齐" },
+        ],
+        items: [],
+      },
+      dataBinding: {
+        items: "products",
+      },
+      events: {
+        onEnter: { actionId: "track_brand_enter" },
+        onProductClick: { actionId: "track_brand_product" },
       },
     },
     {
@@ -430,6 +464,20 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "rank_product_click",
+      },
+    },
+    {
+      id: "track_brand_enter",
+      type: "tracking.click",
+      params: {
+        eventName: "brand_feature_enter_click",
+      },
+    },
+    {
+      id: "track_brand_product",
+      type: "tracking.click",
+      params: {
+        eventName: "brand_feature_product_click",
       },
     },
     {

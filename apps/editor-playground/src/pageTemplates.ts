@@ -164,6 +164,7 @@ export const pageTemplates: PageTemplate[] = [
             items: [
               { id: "anchor_coupon", title: "领券", targetId: "summer_coupon" },
               { id: "anchor_live", title: "直播", targetId: "summer_live" },
+              { id: "anchor_brand", title: "品牌", targetId: "summer_brand" },
               { id: "anchor_rank", title: "榜单", targetId: "summer_rank" },
               { id: "anchor_recommend", title: "推荐", targetId: "summer_store_expert" },
               { id: "anchor_pick", title: "精选专区", targetId: "summer_container" },
@@ -218,6 +219,35 @@ export const pageTemplates: PageTemplate[] = [
               { id: "coupon_category_80", title: "满 399 减 80", thresholdText: "包袋鞋履可用", valueText: "¥80", expireText: "每日限量" },
               { id: "coupon_shipping", title: "满 99 包邮", thresholdText: "指定区域可用", valueText: "包邮", expireText: "活动期内有效" },
             ],
+          },
+        },
+        {
+          id: "summer_brand",
+          componentName: "BrandFeatureSection",
+          materialVersion: "0.1.0",
+          props: {
+            brandName: "MeuMall Select",
+            title: "夏日品牌馆",
+            description: "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。",
+            badgeText: "品牌专题",
+            buttonText: "进入品牌",
+            coverImageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+            logoImageUrl: "",
+            linkUrl: "",
+            backgroundColor: "#f8fafc",
+            cardBackgroundColor: "#ffffff",
+            pointBackgroundColor: "#f8fafc",
+            titleColor: "#111827",
+            textColor: "#374151",
+            accentColor: "#111827",
+            sellingPoints: [
+              { id: "point_member", title: "会员专享", desc: "品牌券叠加平台补贴" },
+              { id: "point_new", title: "当季新品", desc: "通勤、度假和日常穿搭一次配齐" },
+            ],
+            items: productItems.slice(0, 2),
+          },
+          dataBinding: {
+            items: "products",
           },
         },
         {
