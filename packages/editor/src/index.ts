@@ -232,6 +232,39 @@ export interface CreateLowcodeDeliverySummaryOptions {
   checks?: LowcodeEditorPublishCheck[];
 }
 
+export interface CreateLowcodeSchemaFileNameOptions {
+  filename?: string;
+  filenamePrefix?: string;
+  now?: Date;
+}
+
+export interface CreateLowcodeSchemaFileExportOptions extends CreateLowcodeSchemaFileNameOptions {
+  pretty?: boolean;
+}
+
+export interface LowcodeEditorSchemaFileExport {
+  filename: string;
+  mimeType: string;
+  content: string;
+  sizeBytes: number;
+  sizeText: string;
+}
+
+export interface ParseLowcodeSchemaFileContentOptions {
+  cloneSchema?: boolean;
+}
+
+export type LowcodeEditorSchemaFileImportResult =
+  | {
+    ok: true;
+    schema: LowcodePageSchema;
+  }
+  | {
+    ok: false;
+    error: string;
+    validationErrors?: string[];
+  };
+
 export interface LowcodeEditorVersionDiffItem {
   label: string;
   current: string;
@@ -375,6 +408,7 @@ const TEMPLATE_IMAGE_PROP_NAMES = ["imageUrl", "coverImageUrl", "logoImageUrl"];
 const TEMPLATE_TITLE_PROP_NAMES = ["title", "brandName", "text"];
 const TEMPLATE_SUBTITLE_PROP_NAMES = ["subtitle", "description", "summary"];
 const DEFAULT_BLANK_PAGE_ID_PREFIX = "blank-h5";
+const DEFAULT_SCHEMA_FILE_PREFIX = "meumall-lowcode";
 const DEFAULT_CONTENT_PROP_NAMES = [
   "title",
   "subtitle",
@@ -1193,6 +1227,65 @@ export function formatLowcodeSchemaSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+export function createLowcodeSchemaFileName(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeSchemaFileNameOptions = {},
+): string {
+  if (options.filename) {
+    return ensureJsonFileName(sanitizeFileName(options.filename));
+  }
+
+  const prefix = sanitizeFileName(options.filenamePrefix ?? DEFAULT_SCHEMA_FILE_PREFIX);
+  const pageId = sanitizeFileName(schema.pageId) || "page";
+  const timestamp = (options.now ?? new Date()).toISOString().replace(/[:.]/g, "-");
+  return `${prefix}-${pageId}-${timestamp}.json`;
+}
+
+export function createLowcodeSchemaFileExport(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeSchemaFileExportOptions = {},
+): LowcodeEditorSchemaFileExport {
+  const content = options.pretty === false ? JSON.stringify(schema) : JSON.stringify(schema, null, 2);
+  const sizeBytes = encodedByteSize(content);
+  return {
+    filename: createLowcodeSchemaFileName(schema, options),
+    mimeType: "application/json;charset=utf-8",
+    content,
+    sizeBytes,
+    sizeText: formatLowcodeSchemaSize(sizeBytes),
+  };
+}
+
+export function parseLowcodeSchemaFileContent(
+  content: string,
+  options: ParseLowcodeSchemaFileContentOptions = {},
+): LowcodeEditorSchemaFileImportResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    return {
+      ok: false,
+      error: `JSON 格式不正确：${error instanceof Error ? error.message : "解析失败"}`,
+    };
+  }
+
+  const validation = validateLowcodePageSchema(parsed);
+  if (!validation.valid) {
+    return {
+      ok: false,
+      error: `Page Schema 校验失败：${validation.errors.join("；")}`,
+      validationErrors: validation.errors,
+    };
+  }
+
+  const schema = parsed as LowcodePageSchema;
+  return {
+    ok: true,
+    schema: options.cloneSchema === false ? schema : cloneLowcodePageSchema(schema),
+  };
+}
+
 export function createLowcodeVersionDiffItems(
   current: LowcodePageSchema,
   selected: LowcodePageSchema,
@@ -1633,6 +1726,14 @@ function cloneJsonObject(value: unknown): JsonObject {
 
 function encodedByteSize(value: string): number {
   return new TextEncoder().encode(value).length;
+}
+
+function sanitizeFileName(value: string): string {
+  return value.replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/^-+|-+$/g, "") || "page";
+}
+
+function ensureJsonFileName(filename: string): string {
+  return filename.toLowerCase().endsWith(".json") ? filename : `${filename}.json`;
 }
 
 function clampIndex(index: number, max: number): number {

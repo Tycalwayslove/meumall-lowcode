@@ -64,7 +64,8 @@
 - `@meumall/lowcode-editor` 已沉淀框架无关 command palette API：`LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`、`createLowcodeEditorCommandSearchText`、`filterLowcodeEditorCommands` 和 `groupLowcodeEditorCommands`；Vue3 editor playground 的快捷命令搜索和默认展示限制已改为复用这些 API，后续管理台接入时不要复制 title/group/description/keywords 搜索口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 outline tree API：`createLowcodeOutlineRows`、`createLowcodeOutlineRowSearchText`、`createLowcodeOutlineVisibility`、`pruneLowcodeOutlineCollapsedNodeIds` 和 `revealLowcodeOutlineNode`；Vue3 editor playground 的结构树节点扁平化、搜索命中、折叠可见性、选中路径和可见摘要已改为复用这些 API，后续管理台接入时不要复制结构树算法。
 - `@meumall/lowcode-editor` 已沉淀框架无关 prop groups API：`LOWCODE_EDITOR_PROP_GROUP_ORDER`、`LOWCODE_EDITOR_PROP_GROUP_META`、`getLowcodePropGroupKey`、`createLowcodePropGroups`、`isLowcodePropGroupCollapsed` 和 `toggleLowcodePropGroupCollapsed`；Vue3 editor playground 的属性面板字段归类、分组展示文案、顺序和折叠状态 helper 已改为复用这些 API，后续管理台接入时不要复制 propName/setter/type 分组口径。
-- Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时先复用 `validateLowcodePageSchema` 校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
+- `@meumall/lowcode-editor` 已沉淀框架无关 schema file API：`createLowcodeSchemaFileName`、`createLowcodeSchemaFileExport` 和 `parseLowcodeSchemaFileContent`；Vue3 editor playground 的 Page Schema 文件名、导出内容、mimeType、字节大小、大小文案和导入解析校验已改为复用这些 API，后续管理台接入时不要复制 JSON 解析和校验口径。
+- Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时复用 editor schema file API 解析并校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。
 - Vue3 编辑器 playground 已支持模板视觉缩略预览：左侧模板卡片和新建页面向导模板起点会从模板 schema 常见图片与文案字段派生缩略图、首屏标题、副标题和节点数标签；后续 Java 模板市场提供独立缩略图字段时可优先使用服务端字段。

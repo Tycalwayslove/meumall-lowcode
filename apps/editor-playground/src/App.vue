@@ -69,6 +69,7 @@ import {
   createLowcodeOutlineVisibility,
   createLowcodePropGroups,
   duplicateNode,
+  createLowcodeSchemaFileExport,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
   filterLowcodeEditorCommands,
@@ -84,6 +85,7 @@ import {
   markSaved,
   moveNodeById,
   pasteNode,
+  parseLowcodeSchemaFileContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   redo,
@@ -3533,26 +3535,20 @@ function openReactH5Runtime(schema: LowcodePageSchema = editorState.value.schema
   window.open(createReactH5RuntimeUrl(schema), "_blank", "noopener,noreferrer");
 }
 
-function createSchemaExportFileName(schema: LowcodePageSchema): string {
-  const pageId = schema.pageId.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "page";
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return `meumall-lowcode-${pageId}-${timestamp}.json`;
-}
-
 function exportCurrentSchema(): void {
   closeCommandPalette();
   const schema = editorState.value.schema;
-  const content = JSON.stringify(schema, null, 2);
-  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const exported = createLowcodeSchemaFileExport(schema);
+  const blob = new Blob([exported.content], { type: exported.mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = createSchemaExportFileName(schema);
+  anchor.download = exported.filename;
   document.body.appendChild(anchor);
   anchor.click();
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
-  schemaTransferMessage.value = `已导出页面 Schema：${schema.title || schema.pageId}`;
+  schemaTransferMessage.value = `已导出页面 Schema：${schema.title || schema.pageId}（${exported.sizeText}）`;
   releaseMessage.value = schemaTransferMessage.value;
 }
 
@@ -3579,10 +3575,9 @@ async function onSchemaFileChange(event: Event): Promise<void> {
 
   try {
     const raw = await file.text();
-    const parsed = JSON.parse(raw) as unknown;
-    const result = validateLowcodePageSchema(parsed);
-    if (!result.valid) {
-      const message = `导入失败：${result.errors.join("；")}`;
+    const result = parseLowcodeSchemaFileContent(raw);
+    if (!result.ok) {
+      const message = `导入失败：${result.error}`;
       schemaTransferMessage.value = "";
       jsonError.value = message;
       releaseMessage.value = message;
@@ -3592,7 +3587,7 @@ async function onSchemaFileChange(event: Event): Promise<void> {
       schemaTransferMessage.value = "已取消导入 Schema";
       return;
     }
-    const schema = parsed as LowcodePageSchema;
+    const schema = result.schema;
     replaceCurrentSchema(schema, "importSchema", {
       mode: "design",
       message: `已导入页面 Schema：${schema.title || schema.pageId}`,

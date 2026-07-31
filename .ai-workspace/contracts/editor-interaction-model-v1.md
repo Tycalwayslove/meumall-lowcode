@@ -117,6 +117,14 @@ interface LowcodeEditorState {
 
 属性分组 API 从物料 `propsSchema` 的字段名、setter 和字段类型派生内容配置、样式配置、数据配置、行为配置和其他配置分组，并提供默认中文分组文案、稳定排序和折叠状态纯 helper。API 不渲染具体 setter 控件、不打开资源选择器、不修改 Page Schema 值、不处理字段权限或审计。
 
+Schema 文件 API：
+
+- `createLowcodeSchemaFileName`
+- `createLowcodeSchemaFileExport`
+- `parseLowcodeSchemaFileContent`
+
+Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeType、字节大小和大小文案，并提供 JSON 文本解析与 Page Schema v1 校验结果。合法导入默认返回克隆后的 schema；非法 JSON 或非法 schema 返回失败结构和错误文案。API 不创建 `File`、`Blob`、下载链接或上传请求，不处理覆盖确认、权限、审计、存储、审批或 migration。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -132,13 +140,14 @@ interface LowcodeEditorState {
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
+- Schema 文件 API 只处理 JSON 字符串、文件名和 Page Schema 校验，不依赖 DOM，不依赖浏览器文件对象，不修改 Page Schema v1 契约。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式
 
 - `pnpm typecheck`
 - `pnpm build`
-- 后续补充 editor command 单元测试。
+- `pnpm test`
 
 ## 变更流程
 

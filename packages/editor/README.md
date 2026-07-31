@@ -58,6 +58,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `summarizeLowcodePublishChecks`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
+- `createLowcodeSchemaFileName`
+- `createLowcodeSchemaFileExport`
+- `parseLowcodeSchemaFileContent`
 - `createLowcodeVersionDiffItems`
 - `createLowcodeSchemaPreviewSnippet`
 - `createLowcodeSchemaPreviewItems`
@@ -85,6 +88,18 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+## Schema File API
+
+The schema file helpers keep Page Schema JSON import/export reusable across the Vue3 playground, future Java management-console shells, and optional server-side preflight tooling.
+
+`createLowcodeSchemaFileName(schema, options)` returns a sanitized `.json` filename from page id, timestamp, optional prefix, or an explicit filename.
+
+`createLowcodeSchemaFileExport(schema, options)` returns the JSON content, filename, `application/json;charset=utf-8` mime type, byte size, and formatted size text. It does not create `Blob`, anchors, or downloads.
+
+`parseLowcodeSchemaFileContent(content, options)` parses JSON text and validates it with Page Schema v1 rules. It returns `{ ok: true, schema }` for valid content and `{ ok: false, error, validationErrors? }` for invalid JSON or invalid schema. Valid schemas are cloned by default before they are returned.
+
+Host shells remain responsible for file pickers, upload/download UI, overwrite confirmation, permissions, audit records, storage, and user-facing messages.
 
 ## Version Summary API
 

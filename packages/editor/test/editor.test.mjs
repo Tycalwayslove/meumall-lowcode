@@ -17,6 +17,8 @@ import {
   createLowcodePageStartState,
   createLowcodePropGroups,
   createLowcodePublishChecks,
+  createLowcodeSchemaFileExport,
+  createLowcodeSchemaFileName,
   createLowcodeSchemaPreviewItems,
   createLowcodeSchemaPreviewSnippet,
   createLowcodeTemplateListItem,
@@ -39,6 +41,7 @@ import {
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
+  parseLowcodeSchemaFileContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
@@ -219,6 +222,49 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(delivery.schemaJson.includes("delivery_page"), true);
     assert.equal(delivery.schemaSizeBytes > 0, true);
     assert.match(delivery.schemaSizeText, /B|KB/);
+  });
+
+  it("creates reusable schema file export and import results", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "schema file/page",
+      title: "Schema 文件页面",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/banner.jpg" },
+        }),
+      ],
+    });
+    const exported = createLowcodeSchemaFileExport(schema, {
+      now: new Date("2026-08-01T00:00:00.000Z"),
+    });
+
+    assert.equal(createLowcodeSchemaFileName(schema, { filename: "活动页备份" }), "活动页备份.json");
+    assert.equal(exported.filename, "meumall-lowcode-schema-file-page-2026-08-01T00-00-00-000Z.json");
+    assert.equal(exported.mimeType, "application/json;charset=utf-8");
+    assert.equal(exported.content.includes("\n  "), true);
+    assert.equal(exported.sizeBytes > 0, true);
+    assert.match(exported.sizeText, /B|KB/);
+
+    const compact = createLowcodeSchemaFileExport(schema, { pretty: false });
+    assert.equal(compact.content.includes("\n"), false);
+
+    const imported = parseLowcodeSchemaFileContent(exported.content);
+    assert.equal(imported.ok, true);
+    assert.equal(imported.schema.pageId, "schema file/page");
+    imported.schema.title = "导入后修改";
+    assert.equal(schema.title, "Schema 文件页面");
+
+    const invalidJson = parseLowcodeSchemaFileContent("{");
+    assert.equal(invalidJson.ok, false);
+    assert.match(invalidJson.error, /JSON 格式不正确/);
+
+    const invalidSchema = parseLowcodeSchemaFileContent(JSON.stringify({ pageId: "missing_fields" }));
+    assert.equal(invalidSchema.ok, false);
+    assert.match(invalidSchema.error, /Page Schema 校验失败/);
+    assert.equal(Array.isArray(invalidSchema.validationErrors), true);
   });
 
   it("creates reusable material catalog items, categories and filters", () => {
