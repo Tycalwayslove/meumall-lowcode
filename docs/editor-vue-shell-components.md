@@ -289,10 +289,28 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行保存、预览、发布、权限、协作锁定、审批、审计或服务端保存。
 
+### `EditorStatusPanel`
+
+路径：`apps/editor-playground/src/components/EditorStatusPanel.vue`
+
+职责：
+
+- 展示右侧状态面板、节点数、历史 past/future 数、校验状态和重置示例按钮。
+- 接收节点数、历史 past 数、历史 future 数和校验是否通过。
+- 通过 emits 抛出重置示例事件。
+- 复用现有 `.state-list`、`.panel-section`、`.panel-title` 和 `.reset-button` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生节点数、历史数或校验状态。
+- 不执行真实 `resetSchema`。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不执行保存、预览、发布、权限、协作锁定、审批、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 状态面板：优先消费 workspace summary API，继续保持重置示例和真实 schema 写回在宿主 shell。
-2. 画布上下文工具条：优先消费 node operation API，并继续保持真实节点操作在宿主 shell。
+1. 画布上下文工具条：优先消费 node operation API，并继续保持真实节点操作在宿主 shell。
 
 ## 抽 npm 包判断
 

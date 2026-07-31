@@ -3,13 +3,11 @@ import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch, typ
 import {
   ArrowDown,
   ArrowUp,
-  Code2,
   Copy,
   ExternalLink,
   Layers,
   MoreHorizontal,
   Plus,
-  RotateCcw,
   Save,
   Search,
   Trash2,
@@ -204,6 +202,7 @@ import EditorResourcePanels from "./components/EditorResourcePanels.vue";
 import EditorSchemaConfigPanel from "./components/EditorSchemaConfigPanel.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import EditorSourcePanel from "./components/EditorSourcePanel.vue";
+import EditorStatusPanel from "./components/EditorStatusPanel.vue";
 import EditorTopToolbar from "./components/EditorTopToolbar.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -3769,30 +3768,13 @@ function rollbackPublishSelectedRelease(): void {
         @remove-action="removeAction"
       />
 
-      <section class="panel-section">
-        <div class="panel-title">
-          <Code2 :size="16" />
-          <span>状态</span>
-        </div>
-        <dl class="state-list">
-          <div>
-            <dt>节点数</dt>
-            <dd>{{ editorState.schema.nodes.length }}</dd>
-          </div>
-          <div>
-            <dt>历史</dt>
-            <dd>{{ editorState.history.past.length }} / {{ editorState.history.future.length }}</dd>
-          </div>
-          <div>
-            <dt>校验</dt>
-            <dd>{{ validation.valid ? "通过" : "失败" }}</dd>
-          </div>
-        </dl>
-        <button class="reset-button" @click="resetSchema">
-          <RotateCcw :size="16" />
-          <span>重置示例</span>
-        </button>
-      </section>
+      <EditorStatusPanel
+        :node-count="editorState.schema.nodes.length"
+        :history-past-count="editorState.history.past.length"
+        :history-future-count="editorState.history.future.length"
+        :validation-valid="validation.valid"
+        @reset-schema="resetSchema"
+      />
     </aside>
   </main>
 </template>
