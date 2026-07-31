@@ -11,6 +11,7 @@ Current materials:
 - `ActionButton`
 - `ProductList`
 - `StoreExpertSection`
+- `LiveEntry`
 - `CouponSection`
 - `CouponBundle`
 - `ActivityRuleModal`

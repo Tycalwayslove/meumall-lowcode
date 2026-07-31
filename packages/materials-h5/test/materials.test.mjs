@@ -63,4 +63,16 @@ describe("MeuMall H5 material manifests", () => {
     assert.deepEqual(material.manifest.dataSourceSlots?.[0]?.acceptedTypes, ["store.byIds", "expert.byActivity"]);
     assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
   });
+
+  it("registers the live entry material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "LiveEntry");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "直播入口");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.buttonText, "进入直播");
+    assert.equal(material.manifest.propsSchema.coverImageUrl.setter, "image");
+    assert.equal(material.manifest.propsSchema.linkUrl.setter, "input");
+    assert.equal(material.manifest.events?.[0]?.name, "onEnter");
+  });
 });

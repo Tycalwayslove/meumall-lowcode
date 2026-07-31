@@ -149,6 +149,27 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_live",
+      componentName: "LiveEntry",
+      materialVersion: "0.1.0",
+      props: {
+        title: "今晚 8 点直播专场",
+        subtitle: "主播讲解夏日搭配和爆品清单，直播间同步发放限时券。",
+        statusText: "直播中",
+        viewerText: "12.8w 人正在看",
+        buttonText: "进入直播",
+        coverImageUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=300&q=80",
+        linkUrl: "",
+        backgroundColor: "#111827",
+        titleColor: "#ffffff",
+        textColor: "#d1d5db",
+        accentColor: "#ef4444",
+      },
+      events: {
+        onEnter: { actionId: "track_live_enter" },
+      },
+    },
+    {
       id: "node_floor_anchor",
       componentName: "FloorAnchorNav",
       materialVersion: "0.1.0",
@@ -163,6 +184,7 @@ const sampleSchema = createLowcodePageSchema({
         textColor: "#111827",
         items: [
           { id: "anchor_coupon", title: "领券", targetId: "node_coupon" },
+          { id: "anchor_live", title: "直播", targetId: "node_live" },
           { id: "anchor_recommend", title: "推荐", targetId: "node_store_expert" },
           { id: "anchor_flash", title: "限时秒杀", targetId: "node_flash_sale" },
           { id: "anchor_pick", title: "精选专区", targetId: "node_container" },
@@ -384,6 +406,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "store_expert_click",
+      },
+    },
+    {
+      id: "track_live_enter",
+      type: "tracking.click",
+      params: {
+        eventName: "live_entry_click",
       },
     },
     {

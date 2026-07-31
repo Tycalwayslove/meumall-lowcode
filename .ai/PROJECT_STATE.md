@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、模板搜索筛选、物料搜索过滤、画布工作区状态摘要、当前节点信息卡、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、数组属性列表编辑器和列表项拖拽排序。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、模板搜索筛选、物料搜索过滤、画布工作区状态摘要、当前节点信息卡、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、直播入口物料、数组属性列表编辑器和列表项拖拽排序。
 
 ## 当前维护范围
 
@@ -28,14 +28,14 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Changesets 基础配置。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
-- H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
+- H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
 - Page Schema v1 ready 契约：`.ai-workspace/contracts/page-schema-v1.md` 已定义字段语义、生命周期、校验规则、兼容性、安全要求、变更流程和回滚方式。
 - Page Schema v1 基础类型、标准化、递归校验、默认值校验、枚举边界校验和 manifest 校验。
 - Editor headless command：模式、视口、选择、插入、更新、复制、移动、删除、undo/redo。
 - Vue H5 renderer 初始实现。
-- Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组、富文本。
+- Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组、富文本。
 - Vue3 编辑器 playground：物料添加、拖到画布、节点选择、属性编辑、JSON 查看/应用、本地保存、撤销/重做和 H5 预览。
 - Vue3 编辑器交互增强：画布节点点击选中、高亮、根节点拖拽排序、页面状态/环境配置和数据源面板。
 - Vue3 编辑器实操增强：容器物料、嵌套结构展示、向容器添加子物料、素材/商品快捷选择和 mock 数据源预览绑定。
@@ -50,7 +50,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Browser smoke check：根目录提供 `pnpm smoke:browser`，脚本会启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时覆盖模板搜索、应用 `商品专题页`、源码/预览/设计模式切换和 schema 草稿同步。
 - Data source resolver：`@meumall/lowcode-adapters` 提供通用数据源解析，编辑器预览和 React H5 runtime 可按 schema.dataSources 生成 renderer data，并展示逐数据源诊断状态。
 - Safe action executor：`@meumall/lowcode-adapters` 提供安全 action registry/executor，编辑器可维护 actions 并绑定物料事件，Vue 预览和 React H5 runtime 可执行白名单动作。
-- 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`，大促模板和 React H5 runtime 示例已使用新增物料。
+- 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`，大促模板和 React H5 runtime 示例已使用新增物料。
 - Java 配置平台 API 草案：`.ai-workspace/contracts/java-config-platform-api-v1.md` 已定义草稿、预览、发布、release 查询、draft 查询和 active published schema 查询接口。
 - Material Manifest v1 契约：`.ai-workspace/contracts/material-manifest-v1.md` 已定义物料 manifest 的字段语义、兼容性、编辑器/renderer/Java/H5 消费规则、测试方式、变更流程和回滚方式。
 - Config platform client：`@meumall/lowcode-adapters` 提供 `LowcodeConfigPlatformClient` 和 `createHttpConfigPlatformClient`，编辑器本地 mock 已实现同一 client 接口。
@@ -71,6 +71,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器布尔属性编辑：属性面板已将 `switch` setter 和 `boolean` 类型字段渲染为开关控件，写入真实 boolean，并兼容旧草稿中的 `"false"`、`"0"`、`"off"` 字符串。
 - 组合券包物料：React/Vue H5 物料包已新增 `CouponBundle`，支持多券展示、一键领取、单券领取和 `onReceive/onReceiveAll` 事件；大促模板和 React H5 runtime 示例已接入。
 - 门店/达人推荐物料：React/Vue H5 物料包已新增 `StoreExpertSection`，支持门店/达人混合推荐、多项展示、静态列表配置、预留 `items` data source slot 和 `onItemClick` 事件；大促模板和 React H5 runtime 示例已接入。
+- 直播入口物料：React/Vue H5 物料包已新增 `LiveEntry`，支持直播封面、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；大促模板、Vue3 编辑器素材库、React H5 runtime 示例和 browser smoke check 已接入。
 - Vue3 编辑器数组属性编辑：属性面板已为 `array` + `textarea` 字段提供列表项编辑器，支持新增、删除、复制、上移、下移和常见字段表单输入，并保留 JSON 高级编辑兜底。
 - Vue3 编辑器数组列表排序：属性面板列表项已支持同一数组属性内 HTML5 拖拽排序，拖拽后写回当前节点 props 数组，并提供拖拽中和目标项视觉状态。
 - Vue3 编辑器体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，并补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与响应式兜底。
@@ -86,7 +87,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
-- 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐和 mock 商品数据，尚未对接真实活动、库存、价格、规则中心、楼层配置中心、优惠券中心、门店中心和达人中心。
+- 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐、静态直播入口和 mock 商品数据，尚未对接真实活动、库存、价格、规则中心、楼层配置中心、优惠券中心、门店中心、达人中心和直播中心。
 - 素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，但仍使用静态 mock client；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token。
@@ -137,7 +138,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `f0d1015` | 增强 Vue3 编辑器优惠券和门店/达人资源选择器。 |
 | 2026-07-31 | `7188aec` | 新增浏览器级 smoke check 覆盖编辑器和 H5 runtime。 |
 | 2026-07-31 | `723a114` | 增强 browser smoke 覆盖模板应用和模式切换。 |
-| 2026-07-31 | 本提交 | 首轮优化 Vue3 编辑器物料查找、工作区状态摘要和节点信息展示。 |
+| 2026-07-31 | `3e5b43c` | 首轮优化 Vue3 编辑器物料查找、工作区状态摘要和节点信息展示。 |
+| 2026-07-31 | 本提交 | 新增直播入口物料并接入编辑器模板和 React H5 runtime。 |
 
 ## 默认验证命令
 

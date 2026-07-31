@@ -131,6 +131,24 @@ export const pageTemplates: PageTemplate[] = [
           },
         },
         {
+          id: "summer_live",
+          componentName: "LiveEntry",
+          materialVersion: "0.1.0",
+          props: {
+            title: "今晚 8 点直播专场",
+            subtitle: "主播讲解夏日搭配和爆品清单，直播间同步发放限时券。",
+            statusText: "直播中",
+            viewerText: "12.8w 人正在看",
+            buttonText: "进入直播",
+            coverImageUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=300&q=80",
+            linkUrl: "",
+            backgroundColor: "#111827",
+            titleColor: "#ffffff",
+            textColor: "#d1d5db",
+            accentColor: "#ef4444",
+          },
+        },
+        {
           id: "summer_floor_anchor",
           componentName: "FloorAnchorNav",
           materialVersion: "0.1.0",
@@ -145,6 +163,7 @@ export const pageTemplates: PageTemplate[] = [
             textColor: "#111827",
             items: [
               { id: "anchor_coupon", title: "领券", targetId: "summer_coupon" },
+              { id: "anchor_live", title: "直播", targetId: "summer_live" },
               { id: "anchor_recommend", title: "推荐", targetId: "summer_store_expert" },
               { id: "anchor_pick", title: "精选专区", targetId: "summer_container" },
               { id: "anchor_flash", title: "限时秒杀", targetId: "summer_flash_sale" },

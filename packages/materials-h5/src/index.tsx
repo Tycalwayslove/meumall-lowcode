@@ -214,6 +214,120 @@ export function StoreExpertSection({ props }: MaterialProps) {
   );
 }
 
+export function LiveEntry({ props }: MaterialProps) {
+  const coverImageUrl = text(props.coverImageUrl);
+  const linkUrl = text(props.linkUrl);
+  const onEnter = props.onEnter;
+
+  const handleEnter = () => {
+    if (typeof onEnter === "function") onEnter();
+    if (linkUrl && typeof window !== "undefined") window.location.href = linkUrl;
+  };
+
+  return (
+    <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#111827") }}>
+      <button
+        type="button"
+        onClick={handleEnter}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "96px minmax(0, 1fr)",
+          gap: 12,
+          width: "100%",
+          minHeight: 116,
+          border: "1px solid rgba(255, 255, 255, 0.16)",
+          borderRadius: 12,
+          padding: 10,
+          color: text(props.titleColor, "#ffffff"),
+          background: "rgba(255, 255, 255, 0.08)",
+          textAlign: "left",
+          boxShadow: "0 10px 28px rgba(15, 23, 42, 0.18)",
+        }}
+      >
+        {coverImageUrl ? (
+          <img
+            src={coverImageUrl}
+            alt=""
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 10,
+              objectFit: "cover",
+              background: "rgba(255, 255, 255, 0.12)",
+            }}
+          />
+        ) : (
+          <span style={{ width: 96, height: 96, borderRadius: 10, background: "rgba(255, 255, 255, 0.12)" }} />
+        )}
+        <span style={{ display: "grid", alignContent: "space-between", minWidth: 0 }}>
+          <span style={{ minWidth: 0 }}>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 5,
+                minHeight: 22,
+                borderRadius: 999,
+                padding: "0 8px",
+                color: "#ffffff",
+                background: text(props.accentColor, "#ef4444"),
+                fontSize: 11,
+                fontWeight: 800,
+              }}
+            >
+              <i
+                style={{
+                  display: "block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: "#ffffff",
+                }}
+              />
+              {text(props.statusText, "直播中")}
+            </span>
+            <strong
+              style={{
+                display: "block",
+                marginTop: 8,
+                overflow: "hidden",
+                color: text(props.titleColor, "#ffffff"),
+                fontSize: 17,
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {text(props.title, "直播间正在热播")}
+            </strong>
+            <span
+              style={{
+                display: "-webkit-box",
+                marginTop: 4,
+                overflow: "hidden",
+                color: text(props.textColor, "#d1d5db"),
+                fontSize: 12,
+                lineHeight: 1.45,
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+              }}
+            >
+              {text(props.subtitle, "主播讲解爆品搭配，限时福利同步发放。")}
+            </span>
+          </span>
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 10 }}>
+            <small style={{ color: text(props.textColor, "#d1d5db"), fontSize: 12, fontWeight: 700 }}>
+              {text(props.viewerText, "12.8w 人正在看")}
+            </small>
+            <strong style={{ color: text(props.accentColor, "#ef4444"), fontSize: 13 }}>
+              {text(props.buttonText, "进入直播")}
+            </strong>
+          </span>
+        </span>
+      </button>
+    </section>
+  );
+}
+
 export function CouponSection({ props }: MaterialProps) {
   const title = text(props.title, "优惠券");
   return (
@@ -934,6 +1048,43 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         items: { label: "推荐列表", type: "array", setter: "textarea", defaultValue: [] },
       },
       events: [{ name: "onItemClick", title: "点击推荐项" }],
+    }),
+  },
+  {
+    component: LiveEntry,
+    manifest: createMaterialManifest({
+      componentName: "LiveEntry",
+      materialVersion: "0.1.0",
+      title: "直播入口",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "今晚 8 点直播专场",
+        subtitle: "主播讲解爆品搭配，限时券和专属福利同步发放。",
+        statusText: "直播中",
+        viewerText: "12.8w 人正在看",
+        buttonText: "进入直播",
+        coverImageUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=300&q=80",
+        linkUrl: "",
+        backgroundColor: "#111827",
+        titleColor: "#ffffff",
+        textColor: "#d1d5db",
+        accentColor: "#ef4444",
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "今晚 8 点直播专场" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "主播讲解爆品搭配，限时券和专属福利同步发放。" },
+        statusText: { label: "状态文案", type: "string", setter: "input", defaultValue: "直播中" },
+        viewerText: { label: "观看文案", type: "string", setter: "input", defaultValue: "12.8w 人正在看" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "进入直播" },
+        coverImageUrl: { label: "封面图", type: "string", setter: "image", defaultValue: "" },
+        linkUrl: { label: "直播链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#111827" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#d1d5db" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#ef4444" },
+      },
+      events: [{ name: "onEnter", title: "进入直播" }],
     }),
   },
   {

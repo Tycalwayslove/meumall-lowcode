@@ -20,7 +20,7 @@
 - 编辑器可以通过 `@meumall/lowcode-adapters` 的 schema URL 编解码工具把当前 schema handoff 到 React H5 runtime：`http://localhost:5174/?schema=...&source=editor`。
 - `@meumall/lowcode-adapters` 已提供 `resolveLowcodeDataSources`，编辑器预览和 React H5 runtime 均通过注册白名单 data source handler 解析 schema.dataSources，再把结果作为 renderer data 注入。
 - `@meumall/lowcode-adapters` 已提供 `createSafeActionRegistry` 和 `createSafeActionExecutor`，编辑器 playground 可维护 schema.actions 并把物料事件绑定到 action；Vue 预览和 React H5 runtime 通过白名单 handler 执行 mock navigate、coupon.receive、tracking.click 和 noop。
-- React/Vue H5 物料包已包含基础物料和高阶活动物料：`CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`；大促模板、新人券模板和 React H5 runtime 示例已使用这些物料。
+- React/Vue H5 物料包已包含基础物料和高阶活动物料：`CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`；大促模板、新人券模板和 React H5 runtime 示例已使用这些物料。
 - `Material Manifest v1` 契约已写入 `.ai-workspace/contracts/material-manifest-v1.md`，定义物料字段语义、兼容性、编辑器/renderer/Java/H5 消费规则和变更流程。
 - React/Vue H5 renderer 已为 schema 节点输出 `data-lowcode-node-id`，楼层锚点物料可按目标节点 id 滚动定位。
 - Java 配置平台 API 草案已写入 `.ai-workspace/contracts/java-config-platform-api-v1.md`，`@meumall/lowcode-adapters` 已提供 `LowcodeConfigPlatformClient` 与 `createHttpConfigPlatformClient`，编辑器本地 mock 发布链路已实现同一 client 接口。
@@ -41,6 +41,7 @@
 - Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、门店/达人推荐等常见数组配置，并保留 JSON 高级编辑兜底。
 - Vue3 编辑器 playground 数组属性列表项已支持同一属性内 HTML5 拖拽排序，并保留上移、下移、复制、删除和 JSON 高级编辑。
 - Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
+- React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会搜索并应用 `商品专题页` 模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`，以及源码/预览/设计模式切换。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 

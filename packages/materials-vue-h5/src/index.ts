@@ -348,6 +348,152 @@ export const StoreExpertSection = defineComponent({
   },
 });
 
+export const LiveEntry = defineComponent({
+  name: "LiveEntry",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const coverImageUrl = text(runtimeProps.coverImageUrl);
+      const linkUrl = text(runtimeProps.linkUrl);
+      const handleEnter = () => {
+        const handler = runtimeProps.onEnter;
+        if (typeof handler === "function") handler();
+        if (linkUrl && typeof window !== "undefined") window.location.href = linkUrl;
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-live-entry",
+          style: {
+            padding: "14px 12px",
+            background: text(runtimeProps.backgroundColor, "#111827"),
+          },
+        },
+        [
+          h(
+            "button",
+            {
+              type: "button",
+              onClick: handleEnter,
+              style: {
+                display: "grid",
+                gridTemplateColumns: "96px minmax(0, 1fr)",
+                gap: "12px",
+                width: "100%",
+                minHeight: "116px",
+                border: "1px solid rgba(255, 255, 255, 0.16)",
+                borderRadius: "12px",
+                padding: "10px",
+                color: text(runtimeProps.titleColor, "#ffffff"),
+                background: "rgba(255, 255, 255, 0.08)",
+                textAlign: "left",
+                boxShadow: "0 10px 28px rgba(15, 23, 42, 0.18)",
+              } satisfies CSSProperties,
+            },
+            [
+              coverImageUrl
+                ? h("img", {
+                    src: coverImageUrl,
+                    alt: "",
+                    style: {
+                      width: "96px",
+                      height: "96px",
+                      borderRadius: "10px",
+                      objectFit: "cover",
+                      background: "rgba(255, 255, 255, 0.12)",
+                    },
+                  })
+                : h("span", { style: { width: "96px", height: "96px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.12)" } }),
+              h("span", { style: { display: "grid", alignContent: "space-between", minWidth: 0 } }, [
+                h("span", { style: { minWidth: 0 } }, [
+                  h(
+                    "span",
+                    {
+                      style: {
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        minHeight: "22px",
+                        borderRadius: "999px",
+                        padding: "0 8px",
+                        color: "#ffffff",
+                        background: text(runtimeProps.accentColor, "#ef4444"),
+                        fontSize: "11px",
+                        fontWeight: 800,
+                      } satisfies CSSProperties,
+                    },
+                    [
+                      h("i", {
+                        style: {
+                          display: "block",
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "999px",
+                          background: "#ffffff",
+                        },
+                      }),
+                      text(runtimeProps.statusText, "直播中"),
+                    ],
+                  ),
+                  h(
+                    "strong",
+                    {
+                      style: {
+                        display: "block",
+                        marginTop: "8px",
+                        overflow: "hidden",
+                        color: text(runtimeProps.titleColor, "#ffffff"),
+                        fontSize: "17px",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                      },
+                    },
+                    text(runtimeProps.title, "直播间正在热播"),
+                  ),
+                  h(
+                    "span",
+                    {
+                      style: {
+                        display: "-webkit-box",
+                        marginTop: "4px",
+                        overflow: "hidden",
+                        color: text(runtimeProps.textColor, "#d1d5db"),
+                        fontSize: "12px",
+                        lineHeight: 1.45,
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                      } satisfies CSSProperties,
+                    },
+                    text(runtimeProps.subtitle, "主播讲解爆品搭配，限时福利同步发放。"),
+                  ),
+                ]),
+                h(
+                  "span",
+                  { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginTop: "10px" } },
+                  [
+                    h(
+                      "small",
+                      { style: { color: text(runtimeProps.textColor, "#d1d5db"), fontSize: "12px", fontWeight: 700 } },
+                      text(runtimeProps.viewerText, "12.8w 人正在看"),
+                    ),
+                    h(
+                      "strong",
+                      { style: { color: text(runtimeProps.accentColor, "#ef4444"), fontSize: "13px" } },
+                      text(runtimeProps.buttonText, "进入直播"),
+                    ),
+                  ],
+                ),
+              ]),
+            ],
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const CouponSection = defineComponent({
   name: "CouponSection",
   props: materialPropOptions,
@@ -1266,6 +1412,43 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         items: { label: "推荐列表", type: "array", setter: "textarea", defaultValue: [] },
       },
       events: [{ name: "onItemClick", title: "点击推荐项" }],
+    }),
+  },
+  {
+    component: LiveEntry,
+    manifest: createMaterialManifest({
+      componentName: "LiveEntry",
+      materialVersion: "0.1.0",
+      title: "直播入口",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "今晚 8 点直播专场",
+        subtitle: "主播讲解爆品搭配，限时券和专属福利同步发放。",
+        statusText: "直播中",
+        viewerText: "12.8w 人正在看",
+        buttonText: "进入直播",
+        coverImageUrl: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=300&q=80",
+        linkUrl: "",
+        backgroundColor: "#111827",
+        titleColor: "#ffffff",
+        textColor: "#d1d5db",
+        accentColor: "#ef4444",
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "今晚 8 点直播专场" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "主播讲解爆品搭配，限时券和专属福利同步发放。" },
+        statusText: { label: "状态文案", type: "string", setter: "input", defaultValue: "直播中" },
+        viewerText: { label: "观看文案", type: "string", setter: "input", defaultValue: "12.8w 人正在看" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "进入直播" },
+        coverImageUrl: { label: "封面图", type: "string", setter: "image", defaultValue: "" },
+        linkUrl: { label: "直播链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#111827" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#d1d5db" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#ef4444" },
+      },
+      events: [{ name: "onEnter", title: "进入直播" }],
     }),
   },
   {

@@ -117,6 +117,13 @@ const sampleAssets: LowcodeImageAssetResource[] = [
     url: "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=900&q=80",
     tags: ["秒杀", "活动", "促销"],
   },
+  {
+    id: "asset_live_entry",
+    title: "直播间氛围",
+    category: "直播素材",
+    url: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=900&q=80",
+    tags: ["直播", "达人", "讲解"],
+  },
 ];
 
 const sampleProducts: LowcodeProductResource[] = [
