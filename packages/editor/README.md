@@ -51,6 +51,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeCanvasAppendDropHint`
 - `createLowcodeCanvasTargetDropHint`
 - `isLowcodeInvalidNodeDropTarget`
+- `getLowcodeCanvasAdjacentDropIndex`
+- `createLowcodeCanvasDropTarget`
+- `getLowcodeAdjustedCanvasMoveIndex`
+- `createLowcodeCanvasNodeMoveTarget`
+- `createLowcodeCanvasGroupMoveTarget`
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
 - `LOWCODE_EDITOR_PROP_GROUP_META`
 - `getLowcodePropGroupKey`
@@ -500,6 +505,18 @@ The canvas drop hint helpers keep drag placement, visual drop line, snap guide, 
 `createLowcodeCanvasAppendDropHint(source)` and `createLowcodeCanvasTargetDropHint(options)` create stable hint models for append and target-node drops. `isLowcodeInvalidNodeDropTarget(nodes, draggedNodeId, targetNodeId)` prevents dragging a node onto itself or any of its descendants.
 
 These helpers do not query DOM nodes, bind DragEvent or Pointer Events, scroll canvases, insert materials, move nodes, render guide elements, inspect permissions, write audit records, persist state, or modify Page Schema. Host shells remain responsible for event handling, element measurement, actual insert/move commands, group move execution, permission checks, collaboration locks, audit, and server saving.
+
+## Canvas Drop Target API
+
+The canvas drop target helpers keep `parentId + index` derivation reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeCanvasDropTarget(rows, hint, rootNodeCount)` derives the base target for append, inside, before, and after drops from outline rows and a canvas drop hint.
+
+`getLowcodeCanvasAdjacentDropIndex(targetIndex, placement)` exposes the before/after index rule. `getLowcodeAdjustedCanvasMoveIndex(sourceRow, targetRow, placement)` adjusts single-node moves within the same parent so the target index remains correct after the source node is removed.
+
+`createLowcodeCanvasNodeMoveTarget(rows, hint, sourceNodeId, rootNodeCount)` derives a single-node move target. `createLowcodeCanvasGroupMoveTarget(rows, hint, sourceNodeIds, rootNodeCount)` derives a same-parent group move target and adjusts the target index after removing selected source nodes.
+
+These helpers do not insert materials, move nodes, replace siblings, mutate Page Schema, query DOM, bind events, check permissions, write audit records, persist state, or handle cross-parent group move semantics. Host shells remain responsible for actual schema commands, group move execution, permission checks, collaboration locks, audit, and server saving.
 
 ## Property Group API
 

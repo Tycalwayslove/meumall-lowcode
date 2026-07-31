@@ -59,6 +59,9 @@ import {
   bindLowcodeNodeEvent,
   canLowcodeDragSelectedGroup,
   createLowcodeCanvasAppendDropHint,
+  createLowcodeCanvasDropTarget,
+  createLowcodeCanvasGroupMoveTarget,
+  createLowcodeCanvasNodeMoveTarget,
   createLowcodeCanvasTargetDropHint,
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
@@ -177,7 +180,7 @@ import {
   type LowcodeEditorCommandEntry,
   type LowcodeEditorCanvasDragSource as CanvasDragSource,
   type LowcodeEditorCanvasDropHint as CanvasDropHint,
-  type LowcodeEditorCanvasDropPlacement as CanvasDropPlacement,
+  type LowcodeEditorCanvasDropTarget as CanvasDropTarget,
   type LowcodeEditorCanvasFrameMetrics as CanvasFrameMetrics,
   type LowcodeEditorCanvasPoint as CanvasPoint,
   type LowcodeEditorCanvasRect as CanvasRect,
@@ -1954,39 +1957,17 @@ function onMaterialDragEnd(): void {
   clearCanvasDragState();
 }
 
-function getAdjustedMoveIndex(sourceRow: OutlineRow, targetRow: OutlineRow, placement: Exclude<CanvasDropPlacement, "inside" | "append">): number {
-  let index = placement === "before" ? targetRow.index : targetRow.index + 1;
-  if (sourceRow.parentId === targetRow.parentId && sourceRow.index < index) {
-    index -= 1;
-  }
-  return index;
-}
-
 function selectedGroupNodeIdsForDrag(seedNodeId: string): string[] {
   return getLowcodeSelectedGroupNodeIdsForDrag(outlineRows.value, multiSelectedNodeIds.value, seedNodeId);
 }
 
-function getGroupDropTarget(hint: CanvasDropHint): { parentId?: string; index: number; targetRow?: OutlineRow } | undefined {
-  if (!hint.targetNodeId || hint.placement === "append") {
-    return {
-      parentId: undefined,
-      index: editorState.value.schema.nodes.length,
-    };
-  }
-  const targetRow = findOutlineRowByNodeId(hint.targetNodeId);
-  if (!targetRow) return undefined;
-  if (hint.placement === "inside") {
-    return {
-      parentId: targetRow.node.id,
-      index: targetRow.node.children?.length ?? 0,
-      targetRow,
-    };
-  }
-  return {
-    parentId: targetRow.parentId,
-    index: hint.placement === "before" ? targetRow.index : targetRow.index + 1,
-    targetRow,
-  };
+function getGroupDropTarget(hint: CanvasDropHint, nodeIds: string[]): CanvasDropTarget<OutlineRow> | undefined {
+  return createLowcodeCanvasGroupMoveTarget(
+    outlineRows.value,
+    hint,
+    nodeIds,
+    editorState.value.schema.nodes.length,
+  );
 }
 
 function isInvalidGroupParent(nodeIds: string[], parentId: string | undefined): boolean {
@@ -2003,7 +1984,7 @@ function moveCanvasNodeGroup(nodeIds: string[], hint: CanvasDropHint): boolean {
   const sourceParentId = rows[0]?.parentId;
   if (!rows.every((row) => row.parentId === sourceParentId)) return false;
 
-  const target = getGroupDropTarget(hint);
+  const target = getGroupDropTarget(hint, nodeIds);
   if (!target) return false;
   if (target.targetRow && nodeIds.includes(target.targetRow.node.id)) return true;
   if (isInvalidGroupParent(nodeIds, target.parentId)) return true;
@@ -2018,13 +1999,11 @@ function moveCanvasNodeGroup(nodeIds: string[], hint: CanvasDropHint): boolean {
   let nextNodes = replaceSiblingNodes(editorState.value.schema.nodes, sourceParentId, remainingSourceSiblings);
   if (!nextNodes) return false;
 
-  const removedBeforeTarget = sourceParentId === target.parentId ? rows.filter((row) => row.index < target.index).length : 0;
-  const targetIndex = Math.max(0, target.index - removedBeforeTarget);
   const targetSiblings = getSiblingNodes(nextNodes, target.parentId);
   if (!targetSiblings) return false;
 
   const nextTargetSiblings = [...targetSiblings];
-  nextTargetSiblings.splice(Math.min(targetIndex, nextTargetSiblings.length), 0, ...movingNodes);
+  nextTargetSiblings.splice(Math.min(target.index, nextTargetSiblings.length), 0, ...movingNodes);
   nextNodes = replaceSiblingNodes(nextNodes, target.parentId, nextTargetSiblings);
   if (!nextNodes) return false;
 
@@ -2044,54 +2023,57 @@ function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
   const groupNodeIds = selectedGroupNodeIdsForDrag(nodeId);
   if (moveCanvasNodeGroup(groupNodeIds, hint)) return;
 
-  const sourceRow = findOutlineRowByNodeId(nodeId);
-  if (!sourceRow) return;
-  if (!hint.targetNodeId || hint.placement === "append") {
+  const target = createLowcodeCanvasNodeMoveTarget(
+    outlineRows.value,
+    hint,
+    nodeId,
+    editorState.value.schema.nodes.length,
+  );
+  if (!target) return;
+  if (!target.targetRow || hint.placement === "append") {
     editorState.value = moveNodeById(editorState.value, {
       nodeId,
-      index: editorState.value.schema.nodes.length,
+      index: target.index,
     });
     return;
   }
-  const targetRow = findOutlineRowByNodeId(hint.targetNodeId);
-  if (!targetRow || targetRow.node.id === nodeId) return;
   if (hint.placement === "inside") {
     editorState.value = moveNodeById(editorState.value, {
       nodeId,
-      targetParentId: targetRow.node.id,
-      index: targetRow.node.children?.length ?? 0,
+      targetParentId: target.parentId,
+      index: target.index,
     });
     return;
   }
   editorState.value = moveNodeById(editorState.value, {
     nodeId,
-    targetParentId: targetRow.parentId,
-    index: getAdjustedMoveIndex(sourceRow, targetRow, hint.placement),
+    targetParentId: target.parentId,
+    index: target.index,
   });
 }
 
 function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: CanvasDropHint): void {
-  if (!hint.targetNodeId || hint.placement === "append") {
-    addMaterial(manifest);
-    return;
-  }
-  const row = findOutlineRowByNodeId(hint.targetNodeId);
-  if (!row) {
+  const target = createLowcodeCanvasDropTarget(
+    outlineRows.value,
+    hint,
+    editorState.value.schema.nodes.length,
+  );
+  if (!target || !target.targetRow || hint.placement === "append") {
     addMaterial(manifest);
     return;
   }
   if (hint.placement === "inside") {
     editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-      parentId: row.node.id,
-      index: row.node.children?.length ?? 0,
+      parentId: target.parentId,
+      index: target.index,
       select: true,
     });
     recordRecentMaterial(manifest);
     return;
   }
   editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-    parentId: row.parentId,
-    index: hint.placement === "before" ? row.index : row.index + 1,
+    parentId: target.parentId,
+    index: target.index,
     select: true,
   });
   recordRecentMaterial(manifest);

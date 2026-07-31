@@ -519,6 +519,12 @@ export interface CreateLowcodeCanvasTargetDropHintOptions {
   targetRect: LowcodeEditorCanvasRect;
 }
 
+export interface LowcodeEditorCanvasDropTarget<T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index"> = LowcodeEditorOutlineRow> {
+  parentId?: string;
+  index: number;
+  targetRow?: T;
+}
+
 export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 
 export interface LowcodeEditorPropGroupMeta {
@@ -2697,6 +2703,106 @@ export function isLowcodeInvalidNodeDropTarget(
   if (draggedNodeId === targetNodeId) return true;
   const draggedNode = findLowcodeNodeById(nodes, draggedNodeId);
   return lowcodeNodeContains(draggedNode, targetNodeId);
+}
+
+export function getLowcodeCanvasAdjacentDropIndex(
+  targetIndex: number,
+  placement: Extract<LowcodeEditorCanvasDropPlacement, "before" | "after">,
+): number {
+  return placement === "before" ? targetIndex : targetIndex + 1;
+}
+
+export function createLowcodeCanvasDropTarget<T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">>(
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  rootNodeCount: number,
+): LowcodeEditorCanvasDropTarget<T> | undefined {
+  if (!hint.targetNodeId || hint.placement === "append") {
+    return {
+      parentId: undefined,
+      index: rootNodeCount,
+    };
+  }
+
+  const targetRow = rows.find((row) => row.node.id === hint.targetNodeId);
+  if (!targetRow) return undefined;
+
+  if (hint.placement === "inside") {
+    return {
+      parentId: targetRow.node.id,
+      index: targetRow.node.children?.length ?? 0,
+      targetRow,
+    };
+  }
+
+  return {
+    parentId: targetRow.parentId,
+    index: getLowcodeCanvasAdjacentDropIndex(targetRow.index, hint.placement),
+    targetRow,
+  };
+}
+
+export function getLowcodeAdjustedCanvasMoveIndex<
+  T extends Pick<LowcodeEditorOutlineRow, "parentId" | "index">,
+>(
+  sourceRow: T,
+  targetRow: T,
+  placement: Extract<LowcodeEditorCanvasDropPlacement, "before" | "after">,
+): number {
+  let index = getLowcodeCanvasAdjacentDropIndex(targetRow.index, placement);
+  if (sourceRow.parentId === targetRow.parentId && sourceRow.index < index) {
+    index -= 1;
+  }
+  return index;
+}
+
+export function createLowcodeCanvasNodeMoveTarget<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  sourceNodeId: string,
+  rootNodeCount: number,
+): LowcodeEditorCanvasDropTarget<T> | undefined {
+  const sourceRow = rows.find((row) => row.node.id === sourceNodeId);
+  if (!sourceRow) return undefined;
+  const target = createLowcodeCanvasDropTarget(rows, hint, rootNodeCount);
+  if (!target) return undefined;
+  if (!target.targetRow || hint.placement === "append" || hint.placement === "inside") return target;
+  if (target.targetRow.node.id === sourceNodeId) return undefined;
+  return {
+    ...target,
+    index: getLowcodeAdjustedCanvasMoveIndex(sourceRow, target.targetRow, hint.placement),
+  };
+}
+
+export function createLowcodeCanvasGroupMoveTarget<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  sourceNodeIds: readonly string[],
+  rootNodeCount: number,
+): LowcodeEditorCanvasDropTarget<T> | undefined {
+  if (sourceNodeIds.length < 2) return undefined;
+  const selected = new Set(sourceNodeIds);
+  const sourceRows = rows.filter((row) => selected.has(row.node.id));
+  if (sourceRows.length !== sourceNodeIds.length) return undefined;
+  const sourceParentId = sourceRows[0]?.parentId;
+  if (!sourceRows.every((row) => row.parentId === sourceParentId)) return undefined;
+
+  const target = createLowcodeCanvasDropTarget(rows, hint, rootNodeCount);
+  if (!target) return undefined;
+  if (target.targetRow && selected.has(target.targetRow.node.id)) return target;
+
+  const removedBeforeTarget = sourceParentId === target.parentId
+    ? sourceRows.filter((row) => row.index < target.index).length
+    : 0;
+
+  return {
+    ...target,
+    index: Math.max(0, target.index - removedBeforeTarget),
+  };
 }
 
 export function getLowcodePropGroupKey(

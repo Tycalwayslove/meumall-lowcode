@@ -15,6 +15,9 @@ import {
   createLowcodeActionFormItems,
   createLowcodeCanvasAppendDropHint,
   createLowcodeCanvasDropHintStyle,
+  createLowcodeCanvasDropTarget,
+  createLowcodeCanvasGroupMoveTarget,
+  createLowcodeCanvasNodeMoveTarget,
   createLowcodeCanvasSnapGuides,
   createLowcodeCanvasTargetDropHint,
   createLowcodeDataSourceConfig,
@@ -1031,6 +1034,118 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "container_1", "banner_1"), true);
     assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "banner_1", "button_1"), false);
     assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "banner_1", undefined), false);
+  });
+
+  it("creates reusable canvas drop target models", () => {
+    const rows = [
+      {
+        node: createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [
+            createLowcodeNode({
+              id: "banner_1",
+              componentName: "ImageBanner",
+              materialVersion: "1.0.0",
+              props: {},
+            }),
+            createLowcodeNode({
+              id: "products_1",
+              componentName: "ProductList",
+              materialVersion: "1.0.0",
+              props: {},
+            }),
+          ],
+        }),
+        parentId: undefined,
+        index: 0,
+      },
+      {
+        node: createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: {},
+        }),
+        parentId: "container_1",
+        index: 0,
+      },
+      {
+        node: createLowcodeNode({
+          id: "products_1",
+          componentName: "ProductList",
+          materialVersion: "1.0.0",
+          props: {},
+        }),
+        parentId: "container_1",
+        index: 1,
+      },
+      {
+        node: createLowcodeNode({
+          id: "button_1",
+          componentName: "ActionButton",
+          materialVersion: "1.0.0",
+          props: {},
+        }),
+        parentId: undefined,
+        index: 1,
+      },
+    ];
+
+    assert.deepEqual(createLowcodeCanvasDropTarget(rows, { placement: "append" }, 2), {
+      parentId: undefined,
+      index: 2,
+    });
+
+    const insideTarget = createLowcodeCanvasDropTarget(rows, {
+      placement: "inside",
+      targetNodeId: "container_1",
+    }, 2);
+    assert.equal(insideTarget?.parentId, "container_1");
+    assert.equal(insideTarget?.index, 2);
+    assert.equal(insideTarget?.targetRow?.node.id, "container_1");
+
+    const afterTarget = createLowcodeCanvasDropTarget(rows, {
+      placement: "after",
+      targetNodeId: "banner_1",
+    }, 2);
+    assert.equal(afterTarget?.parentId, "container_1");
+    assert.equal(afterTarget?.index, 1);
+    assert.equal(afterTarget?.targetRow?.node.id, "banner_1");
+
+    const sameParentMoveTarget = createLowcodeCanvasNodeMoveTarget(rows, {
+      placement: "after",
+      targetNodeId: "products_1",
+    }, "banner_1", 2);
+    assert.equal(sameParentMoveTarget?.parentId, "container_1");
+    assert.equal(sameParentMoveTarget?.index, 1);
+
+    const crossParentMoveTarget = createLowcodeCanvasNodeMoveTarget(rows, {
+      placement: "before",
+      targetNodeId: "button_1",
+    }, "banner_1", 2);
+    assert.equal(crossParentMoveTarget?.parentId, undefined);
+    assert.equal(crossParentMoveTarget?.index, 1);
+
+    const groupTarget = createLowcodeCanvasGroupMoveTarget(rows, {
+      placement: "after",
+      targetNodeId: "button_1",
+    }, ["banner_1", "products_1"], 2);
+    assert.equal(groupTarget?.parentId, undefined);
+    assert.equal(groupTarget?.index, 2);
+
+    const sameParentGroupTarget = createLowcodeCanvasGroupMoveTarget(rows, {
+      placement: "after",
+      targetNodeId: "products_1",
+    }, ["banner_1", "products_1"], 2);
+    assert.equal(sameParentGroupTarget?.parentId, "container_1");
+    assert.equal(sameParentGroupTarget?.index, 2);
+
+    assert.equal(createLowcodeCanvasDropTarget(rows, { placement: "before", targetNodeId: "missing" }, 2), undefined);
+    assert.equal(createLowcodeCanvasNodeMoveTarget(rows, { placement: "before", targetNodeId: "button_1" }, "missing", 2), undefined);
+    assert.equal(createLowcodeCanvasGroupMoveTarget(rows, { placement: "after", targetNodeId: "button_1" }, ["banner_1", "button_1"], 2), undefined);
   });
 
   it("creates reusable property groups and collapsed state", () => {

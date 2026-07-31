@@ -162,6 +162,16 @@ interface LowcodeEditorState {
 
 画布投放提示模型 API 从宿主提供的指针坐标、目标节点、目标节点矩形、画布 frame metrics 和 Page Schema nodes 派生 before/after/inside/append 投放位置、投放提示 style、吸附线、append hint、target hint 和节点拖拽非法目标判断。默认只有 `SectionContainer` 的中部区域可投放 inside。API 不查询 DOM、不绑定 DragEvent 或 Pointer Events、不滚动画布、不插入物料、不执行节点移动、不渲染吸附线、不修改 Page Schema、不处理权限、协作锁定、审计或服务端保存。宿主 shell 负责元素测量、事件处理、投放执行、节点命令、权限判断和用户反馈。
 
+画布投放目标模型 API：
+
+- `getLowcodeCanvasAdjacentDropIndex`
+- `createLowcodeCanvasDropTarget`
+- `getLowcodeAdjustedCanvasMoveIndex`
+- `createLowcodeCanvasNodeMoveTarget`
+- `createLowcodeCanvasGroupMoveTarget`
+
+画布投放目标模型 API 从结构树 rows、drop hint、根节点数量和源节点 id 派生 append/inside/before/after 的 `parentId + index`，并处理单节点同父级移动和同父级成组移动在源节点移除后的 index 修正。API 不插入物料、不执行节点移动、不替换 siblings、不修改 Page Schema、不查询 DOM、不绑定 DragEvent 或 Pointer Events、不处理跨父级成组拖拽、不处理权限、协作锁定、审计或服务端保存。宿主 shell 负责真实 schema 命令、移动执行、权限判断和用户反馈。
+
 属性分组 API：
 
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
@@ -311,6 +321,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 节点选择模型 API 只派生多选状态、同父级判断、多选摘要和成组拖拽候选，不执行 DOM 拖拽或节点移动，不修改 Page Schema、Material Manifest 或 renderer 行为。
 - 画布投放提示模型 API 只派生投放位置、提示样式、吸附线、hint 模型和非法节点目标判断，不执行 DOM 拖拽、物料插入或节点移动，不修改 Page Schema、Material Manifest 或 renderer 行为。
+- 画布投放目标模型 API 只派生 `parentId + index` 和移动 index 修正，不执行物料插入、节点移动或 siblings 替换，不修改 Page Schema、Material Manifest 或 renderer 行为。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。
 - 页面设置模型 API 只派生 Page Schema 页面设置表单模型和页面字段写回 helper，不依赖 DOM、管理台组件库、Java API、权限、审批、协作锁定或服务端保存。
