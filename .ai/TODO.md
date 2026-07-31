@@ -2,7 +2,6 @@
 
 ## P0
 
-- 细化 Page Schema v1 契约字段语义，推动 draft -> ready。
 - 确认 npm registry、scope 和 access。
 
 ## P1

@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  LOWCODE_SCHEMA_VERSION,
   createLowcodeNode,
   createLowcodePageSchema,
   createMaterialManifest,
   isSchemaVersionCompatible,
+  normalizeLowcodePageSchema,
   validateLowcodeMaterialManifest,
   validateLowcodePageSchema,
 } from "../dist/index.js";
@@ -42,6 +44,54 @@ describe("@meumall/lowcode-schema", () => {
     assert.deepEqual(result.errors, []);
     assert.equal(schema.publishMeta.environment, "test");
     assert.equal(schema.targetPlatforms[0], "h5");
+  });
+
+  it("normalizes Page Schema v1 defaults and validates enum boundaries", () => {
+    const normalized = normalizeLowcodePageSchema({
+      schemaVersion: "",
+      pageId: "minimal_page",
+      pageVersion: "",
+      title: "最小页面",
+      status: "",
+      targetPlatforms: [],
+      layout: undefined,
+      nodes: undefined,
+      publishMeta: {},
+    });
+
+    assert.equal(normalized.schemaVersion, LOWCODE_SCHEMA_VERSION);
+    assert.equal(normalized.pageVersion, "0.1.0");
+    assert.equal(normalized.status, "draft");
+    assert.deepEqual(normalized.targetPlatforms, ["h5"]);
+    assert.deepEqual(normalized.layout, { safeArea: true });
+    assert.deepEqual(normalized.nodes, []);
+    assert.equal(normalized.publishMeta.environment, "test");
+    assert.equal(validateLowcodePageSchema(normalized).valid, true);
+
+    const invalid = createLowcodePageSchema({
+      pageId: "invalid_page",
+      title: "非法页面",
+      status: "archived",
+      targetPlatforms: ["native"],
+      nodes: [
+        createLowcodeNode({
+          id: "bad_node",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: {},
+          visibility: { source: "expression" },
+          responsive: [{ platform: "native" }],
+        }),
+      ],
+    });
+
+    const result = validateLowcodePageSchema(invalid);
+
+    assert.equal(result.valid, false);
+    assert.match(result.errors.join("\n"), /status must be draft/);
+    assert.match(result.errors.join("\n"), /targetPlatforms\[0\] must be h5 or miniapp/);
+    assert.match(result.errors.join("\n"), /visibility.source must be static or data/);
+    assert.match(result.errors.join("\n"), /responsive\[0\].platform must be h5 or miniapp/);
   });
 
   it("reports duplicate node ids and missing action references", () => {

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Material Manifest v1 契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、数组属性列表编辑器和列表项拖拽排序。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、数组属性列表编辑器和列表项拖拽排序。
 
 ## 当前维护范围
 
@@ -31,7 +31,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
-- Page Schema v1 基础类型、标准化、递归校验和 manifest 校验。
+- Page Schema v1 ready 契约：`.ai-workspace/contracts/page-schema-v1.md` 已定义字段语义、生命周期、校验规则、兼容性、安全要求、变更流程和回滚方式。
+- Page Schema v1 基础类型、标准化、递归校验、默认值校验、枚举边界校验和 manifest 校验。
 - Editor headless command：模式、视口、选择、插入、更新、复制、移动、删除、undo/redo。
 - Vue H5 renderer 初始实现。
 - Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、门店/达人推荐、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组、富文本。
@@ -72,7 +73,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放、已有节点移动和数组列表项排序；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
-- Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
+- Page Schema v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端发布校验、审批和审计字段。
 - Material Manifest v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端校验字段。
 - Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批、服务端发布校验、版本 diff、回滚审计和分页。
 - 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
@@ -119,7 +120,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `2b6d726` | 新增门店/达人推荐物料并接入 H5 示例。 |
 | 2026-07-31 | `557697a` | 增强 Vue3 编辑器数组属性列表编辑。 |
 | 2026-07-31 | `45576b0` | 增强 Vue3 编辑器数组列表拖拽排序。 |
-| 2026-07-31 | 本提交 | 定义 Material Manifest v1 契约。 |
+| 2026-07-31 | `9dfff40` | 定义 Material Manifest v1 契约。 |
+| 2026-07-31 | 本提交 | 完善 Page Schema v1 ready 契约。 |
 
 ## 默认验证命令
 

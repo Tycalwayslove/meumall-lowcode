@@ -7,6 +7,7 @@
 ## 设计基线
 
 - schema 是核心契约。
+- `Page Schema v1` ready 契约已写入 `.ai-workspace/contracts/page-schema-v1.md`，定义页面 schema 的字段语义、生命周期、校验规则、兼容性、安全要求、变更流程和回滚方式。
 - editor 生产 schema。
 - renderer 消费 schema。
 - materials 实现可配置节点。
