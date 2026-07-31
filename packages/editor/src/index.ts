@@ -94,6 +94,40 @@ export interface LowcodeEditorDataSourceResolutionRecord {
   error?: string;
 }
 
+export type LowcodeEditorPreviewLinkStatus = "ready" | "disabled";
+
+export interface LowcodeEditorPreviewLinkSource {
+  id: string;
+  title: string;
+  description: string;
+  url?: string;
+  disabledReason?: string;
+}
+
+export interface LowcodeEditorPreviewLinkItem {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  status: LowcodeEditorPreviewLinkStatus;
+  statusText: string;
+  openable: boolean;
+  copyable: boolean;
+}
+
+export interface CreateLowcodePreviewLinksOptions {
+  includeDisabled?: boolean;
+  readyStatusText?: string;
+}
+
+export interface LowcodeEditorPreviewLinkSummary {
+  total: number;
+  ready: number;
+  disabled: number;
+  statusText: string;
+  readyTitles: string[];
+}
+
 export interface CreateLowcodePublishChecksOptions {
   materialManifests?: Iterable<LowcodeMaterialManifest>;
   dataSourceRecords?: LowcodeEditorDataSourceResolutionRecord[];
@@ -573,6 +607,47 @@ export function setEditorViewportPreset(
   preset: LowcodeEditorViewportPreset,
 ): LowcodeEditorState {
   return setEditorViewport(state, createLowcodeEditorViewportFromPreset(preset));
+}
+
+export function createLowcodePreviewLinkItem(
+  source: LowcodeEditorPreviewLinkSource,
+  options: CreateLowcodePreviewLinksOptions = {},
+): LowcodeEditorPreviewLinkItem {
+  const url = typeof source.url === "string" ? source.url.trim() : "";
+  const openable = Boolean(url && !source.disabledReason);
+  const status: LowcodeEditorPreviewLinkStatus = openable ? "ready" : "disabled";
+  return {
+    id: source.id,
+    title: source.title,
+    description: source.description,
+    url,
+    status,
+    statusText: status === "ready" ? options.readyStatusText ?? "可打开" : source.disabledReason || "暂无可用链接",
+    openable,
+    copyable: openable,
+  };
+}
+
+export function createLowcodePreviewLinkItems(
+  sources: readonly LowcodeEditorPreviewLinkSource[],
+  options: CreateLowcodePreviewLinksOptions = {},
+): LowcodeEditorPreviewLinkItem[] {
+  const items = sources.map((source) => createLowcodePreviewLinkItem(source, options));
+  return options.includeDisabled === false ? items.filter((item) => item.status === "ready") : items;
+}
+
+export function summarizeLowcodePreviewLinks(
+  items: readonly LowcodeEditorPreviewLinkItem[],
+): LowcodeEditorPreviewLinkSummary {
+  const readyItems = items.filter((item) => item.status === "ready");
+  const disabled = items.length - readyItems.length;
+  return {
+    total: items.length,
+    ready: readyItems.length,
+    disabled,
+    statusText: disabled ? `${readyItems.length} 个可用 / ${disabled} 个不可用` : `${readyItems.length} 个可用入口`,
+    readyTitles: readyItems.map((item) => item.title),
+  };
 }
 
 export function createLowcodeMaterialCatalogItem(

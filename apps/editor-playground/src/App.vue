@@ -68,6 +68,7 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
+  createLowcodePreviewLinkItems,
   createLowcodePropGroups,
   duplicateNode,
   createLowcodeSchemaFileExport,
@@ -101,11 +102,13 @@ import {
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
+  summarizeLowcodePreviewLinks,
   toggleLowcodePropGroupCollapsed,
   undo,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
+  type LowcodeEditorPreviewLinkItem as PreviewLinkItem,
   type LowcodeEditorPropGroup as PropEditorGroup,
   type LowcodeEditorPropGroupKey as PropGroupKey,
   type LowcodeEditorState,
@@ -495,13 +498,6 @@ interface PointerCanvasDragState {
   nodeId?: string;
 }
 
-interface PreviewLinkItem {
-  id: string;
-  title: string;
-  description: string;
-  url: string;
-}
-
 interface WorkspaceStat {
   label: string;
   value: string;
@@ -885,8 +881,8 @@ const releaseSchemaPreviewItems = computed<ReleaseSchemaPreviewItem[]>(() =>
 );
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
-const previewLinkItems = computed<PreviewLinkItem[]>(() => {
-  const items: PreviewLinkItem[] = [
+const previewLinkItems = computed<PreviewLinkItem[]>(() =>
+  createLowcodePreviewLinkItems([
     {
       id: "react-current",
       title: "当前草稿 React H5",
@@ -899,17 +895,20 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() => {
       description: "按 pageId 读取本地 mock 配置平台。",
       url: createRuntimeUrl({ pageId: editorState.value.schema.pageId }),
     },
-  ];
-  if (latestPublishedRelease.value) {
-    items.push({
+    latestPublishedRelease.value ? {
       id: "published-runtime",
       title: "最近发布版本 H5",
       description: `${latestPublishedRelease.value.pageVersion} / ${formatReleaseTime(latestPublishedRelease.value.createdAt)}`,
       url: createRuntimeUrl({ releaseId: latestPublishedRelease.value.id }),
-    });
-  }
-  return items;
-});
+    } : {
+      id: "published-runtime",
+      title: "最近发布版本 H5",
+      description: "发布后可复制给验收方查看线上版本。",
+      disabledReason: "暂无发布版本",
+    },
+  ], { includeDisabled: false }),
+);
+const previewLinkSummary = computed(() => summarizeLowcodePreviewLinks(previewLinkItems.value));
 const deliverySummary = computed(() => createLowcodeDeliverySummary(editorState.value.schema, { checks: publishChecks.value }));
 const deliverySchemaJson = computed(() => deliverySummary.value.schemaJson);
 const deliveryStatusText = computed(() => deliverySummary.value.statusText);
@@ -3598,10 +3597,12 @@ async function onSchemaFileChange(event: Event): Promise<void> {
 }
 
 function openPreviewLink(item: PreviewLinkItem): void {
+  if (!item.openable) return;
   window.open(item.url, "_blank", "noopener,noreferrer");
 }
 
 async function copyPreviewLink(item: PreviewLinkItem): Promise<void> {
+  if (!item.copyable) return;
   try {
     await copyTextToClipboard(item.url);
     releaseMessage.value = `已复制预览链接：${item.title}`;
@@ -4712,6 +4713,7 @@ function formatReleaseTime(value: string): string {
         <div class="panel-title">
           <Link2 :size="16" />
           <span>H5 预览入口</span>
+          <small>{{ previewLinkSummary.statusText }}</small>
         </div>
         <div class="preview-link-list">
           <article
@@ -4725,11 +4727,11 @@ function formatReleaseTime(value: string): string {
             </div>
             <input :value="item.url" readonly />
             <div class="preview-link-actions">
-              <button type="button" class="preview-open-button" @click="openPreviewLink(item)">
+              <button type="button" class="preview-open-button" :disabled="!item.openable" @click="openPreviewLink(item)">
                 <ExternalLink :size="13" />
                 打开
               </button>
-              <button type="button" class="preview-copy-button" @click="copyPreviewLink(item)">
+              <button type="button" class="preview-copy-button" :disabled="!item.copyable" @click="copyPreviewLink(item)">
                 <Copy :size="13" />
                 复制
               </button>
@@ -4753,10 +4755,10 @@ function formatReleaseTime(value: string): string {
         <div class="delivery-link-status">
           <strong>H5 交付入口</strong>
           <span
-            v-for="item in previewLinkItems"
-            :key="item.id"
+            v-for="title in previewLinkSummary.readyTitles"
+            :key="title"
           >
-            {{ item.title }}
+            {{ title }}
           </span>
         </div>
         <div class="delivery-actions">

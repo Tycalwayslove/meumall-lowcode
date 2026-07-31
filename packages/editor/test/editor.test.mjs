@@ -17,6 +17,8 @@ import {
   createLowcodeOutlineVisibility,
   createLowcodePageStartState,
   createLowcodePropGroups,
+  createLowcodePreviewLinkItem,
+  createLowcodePreviewLinkItems,
   createLowcodePublishChecks,
   createLowcodeSchemaFileExport,
   createLowcodeSchemaFileName,
@@ -51,6 +53,7 @@ import {
   revealLowcodeOutlineNode,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
+  summarizeLowcodePreviewLinks,
   summarizeLowcodePublishChecks,
   toggleLowcodePropGroupCollapsed,
 } from "../dist/index.js";
@@ -344,6 +347,59 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodeEditorDraftStatusTone("restored"), "success");
     assert.equal(getLowcodeEditorDraftStatusTone("saved"), "success");
     assert.equal(getLowcodeEditorDraftStatusTone("error"), "danger");
+  });
+
+  it("creates reusable H5 preview link items and summaries", () => {
+    const sources = [
+      {
+        id: "react-current",
+        title: "当前草稿 React H5",
+        description: "携带当前 schema。",
+        url: " https://example.com/runtime?schema=abc ",
+      },
+      {
+        id: "published-runtime",
+        title: "最近发布版本 H5",
+        description: "发布后可用。",
+        disabledReason: "暂无发布版本",
+      },
+      {
+        id: "missing-url",
+        title: "空链接",
+        description: "缺少 URL。",
+      },
+    ];
+
+    const ready = createLowcodePreviewLinkItem(sources[0], { readyStatusText: "可预览" });
+    assert.deepEqual(ready, {
+      id: "react-current",
+      title: "当前草稿 React H5",
+      description: "携带当前 schema。",
+      url: "https://example.com/runtime?schema=abc",
+      status: "ready",
+      statusText: "可预览",
+      openable: true,
+      copyable: true,
+    });
+
+    const allItems = createLowcodePreviewLinkItems(sources);
+    assert.equal(allItems.length, 3);
+    assert.equal(allItems[1].status, "disabled");
+    assert.equal(allItems[1].statusText, "暂无发布版本");
+    assert.equal(allItems[2].statusText, "暂无可用链接");
+    assert.deepEqual(createLowcodePreviewLinkItems(sources, { includeDisabled: false }).map((item) => item.id), [
+      "react-current",
+    ]);
+
+    const summary = summarizeLowcodePreviewLinks(allItems);
+    assert.deepEqual(summary, {
+      total: 3,
+      ready: 1,
+      disabled: 2,
+      statusText: "1 个可用 / 2 个不可用",
+      readyTitles: ["当前草稿 React H5"],
+    });
+    assert.equal(summarizeLowcodePreviewLinks(createLowcodePreviewLinkItems(sources, { includeDisabled: false })).statusText, "1 个可用入口");
   });
 
   it("creates reusable material catalog items, categories and filters", () => {

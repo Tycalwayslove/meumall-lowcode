@@ -58,6 +58,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `summarizeLowcodePublishChecks`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
+- `createLowcodePreviewLinkItem`
+- `createLowcodePreviewLinkItems`
+- `summarizeLowcodePreviewLinks`
 - `createLowcodeEditorDraftPayload`
 - `parseLowcodeEditorDraftContent`
 - `formatLowcodeEditorDraftStatusText`
@@ -92,6 +95,18 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+## Preview Link API
+
+The preview link helpers keep H5 preview entry lists reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodePreviewLinkItem(source, options)` normalizes one host-provided preview source into an item with `ready` or `disabled` status, status text, trimmed URL, and open/copy capability flags.
+
+`createLowcodePreviewLinkItems(sources, options)` creates a list of preview link items and can optionally filter disabled entries with `includeDisabled: false`.
+
+`summarizeLowcodePreviewLinks(items)` returns total, ready count, disabled count, display status text, and ready entry titles for delivery panels.
+
+These helpers do not build URLs, encode Page Schema, open windows, copy to clipboard, or call runtime APIs. Host shells remain responsible for URL construction, previewToken/releaseId/pageId protocols, permissions, expiration, audit records, and user-facing click handlers.
 
 ## Draft Persistence API
 
