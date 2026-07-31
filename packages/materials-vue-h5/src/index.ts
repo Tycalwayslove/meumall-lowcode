@@ -661,74 +661,71 @@ export const BrandFeatureSection = defineComponent({
             },
             [
               coverImageUrl
-                ? h("img", {
+                ? h(MlcImage, {
                     src: coverImageUrl,
                     alt: "",
                     style: {
                       width: "100%",
                       height: "132px",
-                      objectFit: "cover",
-                      display: "block",
                     },
                   })
                 : null,
               h("div", { style: { display: "grid", gap: "12px", padding: "12px" } }, [
                 h("div", { style: { display: "grid", gridTemplateColumns: "52px minmax(0, 1fr) auto", alignItems: "center", gap: "10px" } }, [
                   logoImageUrl
-                    ? h("img", {
+                    ? h(MlcImage, {
                         src: logoImageUrl,
                         alt: "",
+                        radius: 12,
                         style: {
                           width: "52px",
                           height: "52px",
-                          borderRadius: "12px",
-                          objectFit: "cover",
                           background: "#f3f4f6",
                         },
                       })
                     : h(
-                        "span",
+                        MlcTag,
                         {
+                          radius: 12,
                           style: {
                             display: "grid",
                             placeItems: "center",
                             width: "52px",
                             height: "52px",
-                            borderRadius: "12px",
                             color: "#ffffff",
                             background: text(runtimeProps.accentColor, "#111827"),
                             fontWeight: 900,
                           } satisfies CSSProperties,
                         },
-                        text(runtimeProps.brandName, "M").slice(0, 1),
+                        () => text(runtimeProps.brandName, "M").slice(0, 1),
                       ),
                   h("span", { style: { minWidth: 0 } }, [
                     h(
-                      "small",
-                      { style: { display: "block", color: text(runtimeProps.accentColor, "#111827"), fontSize: "11px", fontWeight: 800 } },
-                      text(runtimeProps.badgeText, "品牌专题"),
+                      MlcText,
+                      { size: 11, weight: 800, style: { display: "block", color: text(runtimeProps.accentColor, "#111827") } },
+                      () => text(runtimeProps.badgeText, "品牌专题"),
                     ),
                     h(
-                      "strong",
-                      { style: { display: "block", marginTop: "4px", color: text(runtimeProps.titleColor, "#111827"), fontSize: "17px" } },
-                      text(runtimeProps.title, "夏日品牌馆"),
+                      MlcText,
+                      { as: "strong", size: 17, weight: 800, style: { display: "block", marginTop: "4px", color: text(runtimeProps.titleColor, "#111827") } },
+                      () => text(runtimeProps.title, "夏日品牌馆"),
                     ),
                     h(
-                      "span",
-                      { style: { display: "block", marginTop: "4px", color: "#64748b", fontSize: "12px" } },
-                      text(runtimeProps.brandName, "MeuMall Select"),
+                      MlcText,
+                      { size: 12, tone: "muted", style: { display: "block", marginTop: "4px" } },
+                      () => text(runtimeProps.brandName, "MeuMall Select"),
                     ),
                   ]),
                   h(
-                    "button",
+                    MlcButton,
                     {
-                      type: "button",
+                      size: "sm",
+                      radius: 8,
                       onClick: handleEnter,
                       style: {
                         alignSelf: "center",
                         minHeight: "32px",
                         border: 0,
-                        borderRadius: "8px",
                         padding: "0 10px",
                         color: "#ffffff",
                         background: text(runtimeProps.accentColor, "#111827"),
@@ -736,13 +733,13 @@ export const BrandFeatureSection = defineComponent({
                         fontWeight: 800,
                       } satisfies CSSProperties,
                     },
-                    text(runtimeProps.buttonText, "进入品牌"),
+                    () => text(runtimeProps.buttonText, "进入品牌"),
                   ),
                 ]),
                 h(
-                  "p",
-                  { style: { margin: 0, color: text(runtimeProps.textColor, "#374151"), fontSize: "13px", lineHeight: 1.6 } },
-                  text(runtimeProps.description, "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。"),
+                  MlcText,
+                  { as: "p", size: 13, style: { margin: 0, color: text(runtimeProps.textColor, "#374151"), lineHeight: 1.6 } },
+                  () => text(runtimeProps.description, "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。"),
                 ),
                 h(
                   "div",
@@ -750,20 +747,22 @@ export const BrandFeatureSection = defineComponent({
                   visibleSellingPoints.slice(0, 4).map((point, index) => {
                     const item = (typeof point === "string" ? { title: point } : point) as Record<string, unknown>;
                     return h(
-                      "span",
+                      MlcTag,
                       {
+                        radius: 8,
                         style: {
                           display: "grid",
                           gap: "2px",
                           minHeight: "48px",
-                          borderRadius: "8px",
                           padding: "8px 9px",
                           background: text(runtimeProps.pointBackgroundColor, "#f8fafc"),
                         } satisfies CSSProperties,
                       },
-                      [
-                        h("strong", { style: { color: text(runtimeProps.accentColor, "#111827"), fontSize: "12px" } }, String(item.title ?? `卖点 ${index + 1}`)),
-                        h("small", { style: { color: "#64748b", fontSize: "11px" } }, String(item.desc ?? item.content ?? "")),
+                      () => [
+                        h(MlcText, { as: "strong", size: 12, weight: 800, style: { color: text(runtimeProps.accentColor, "#111827") } }, () =>
+                          String(item.title ?? `卖点 ${index + 1}`),
+                        ),
+                        h(MlcText, { size: 11, tone: "muted" }, () => String(item.desc ?? item.content ?? "")),
                       ],
                     );
                   }),
@@ -773,50 +772,51 @@ export const BrandFeatureSection = defineComponent({
                   { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" } },
                   visibleItems.slice(0, 2).map((item, index) =>
                     h(
-                      "button",
+                      MlcButton,
                       {
-                        type: "button",
+                        radius: 9,
                         onClick: () => {
                           const handler = runtimeProps.onProductClick;
                           if (typeof handler === "function") handler(item);
                         },
                         style: {
+                          display: "block",
                           overflow: "hidden",
+                          width: "100%",
                           border: "1px solid #eef0f3",
-                          borderRadius: "9px",
                           padding: 0,
                           background: "#ffffff",
                           textAlign: "left",
                         } satisfies CSSProperties,
                       },
-                      [
+                      () => [
                         typeof item.imageUrl === "string"
-                          ? h("img", {
+                          ? h(MlcImage, {
                               src: item.imageUrl,
                               alt: "",
+                              ratio: "1 / 1",
                               style: {
                                 width: "100%",
-                                aspectRatio: "1 / 1",
-                                objectFit: "cover",
-                                display: "block",
                               },
                             })
                           : null,
                         h("span", { style: { display: "grid", gap: "4px", padding: "8px" } }, [
                           h(
-                            "strong",
+                            MlcText,
                             {
+                              as: "strong",
+                              size: 12,
+                              weight: 800,
                               style: {
                                 overflow: "hidden",
                                 color: "#111827",
-                                fontSize: "12px",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
                               } satisfies CSSProperties,
                             },
-                            String(item.title ?? `品牌商品 ${index + 1}`),
+                            () => String(item.title ?? `品牌商品 ${index + 1}`),
                           ),
-                          h("span", { style: { color: text(runtimeProps.accentColor, "#111827"), fontWeight: 800 } }, String(item.priceText ?? "")),
+                          h(MlcPrice, { amountText: String(item.priceText ?? ""), size: 13, style: { color: text(runtimeProps.accentColor, "#111827") } }),
                         ]),
                       ],
                     ),
@@ -876,17 +876,21 @@ export const StoreExpertSection = defineComponent({
             { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "12px", marginBottom: "10px" } },
             [
               h("div", { style: { minWidth: 0 } }, [
-                h("strong", { style: { display: "block", color: text(runtimeProps.titleColor, "#111827"), fontSize: "17px" } }, text(runtimeProps.title, "门店/达人推荐")),
                 h(
-                  "span",
-                  { style: { display: "block", marginTop: "3px", color: "#64748b", fontSize: "12px" } },
-                  text(runtimeProps.subtitle, "精选门店和达人内容，帮助用户快速进入转化场景。"),
+                  MlcText,
+                  { as: "strong", size: 17, weight: 800, style: { display: "block", color: text(runtimeProps.titleColor, "#111827") } },
+                  () => text(runtimeProps.title, "门店/达人推荐"),
+                ),
+                h(
+                  MlcText,
+                  { size: 12, tone: "muted", style: { display: "block", marginTop: "3px" } },
+                  () => text(runtimeProps.subtitle, "精选门店和达人内容，帮助用户快速进入转化场景。"),
                 ),
               ]),
               h(
-                "span",
-                { style: { flex: "0 0 auto", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "12px", fontWeight: 800 } },
-                text(runtimeProps.badgeText, "精选"),
+                MlcTag,
+                { style: { flex: "0 0 auto", color: text(runtimeProps.accentColor, "#0f766e"), background: "rgba(15, 118, 110, 0.1)" } },
+                () => text(runtimeProps.badgeText, "精选"),
               ),
             ],
           ),
@@ -895,9 +899,8 @@ export const StoreExpertSection = defineComponent({
             { style: { display: "grid", gap: "10px" } },
             visibleItems.map((item, index) =>
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
                   onClick: () => {
                     const handler = runtimeProps.onItemClick;
                     if (typeof handler === "function") handler(item);
@@ -917,36 +920,39 @@ export const StoreExpertSection = defineComponent({
                     textAlign: "left",
                   } satisfies CSSProperties,
                 },
-                [
+                () => [
                   typeof item.imageUrl === "string"
-                    ? h("img", {
+                    ? h(MlcImage, {
                         src: item.imageUrl,
                         alt: "",
+                        radius: 8,
                         style: {
                           width: "64px",
                           height: "64px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
                           background: "#e5e7eb",
                         },
                       })
                     : h("span", { style: { width: "64px", height: "64px", borderRadius: "8px", background: "#e5e7eb" } }),
                   h("span", { style: { minWidth: 0 } }, [
                     h(
-                      "small",
-                      { style: { display: "inline-block", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "11px", fontWeight: 800 } },
-                      String(item.typeText ?? "推荐"),
+                      MlcTag,
+                      { radius: 0, style: { minHeight: "auto", padding: 0, color: text(runtimeProps.accentColor, "#0f766e"), background: "transparent", fontSize: "11px" } },
+                      () => String(item.typeText ?? "推荐"),
                     ),
-                    h("strong", { style: { display: "block", marginTop: "4px", color: "#111827", fontSize: "14px" } }, String(item.title ?? `推荐 ${index + 1}`)),
-                    h("span", { style: { display: "block", marginTop: "4px", color: "#64748b", fontSize: "12px" } }, String(item.subtitle ?? item.desc ?? "精选内容")),
-                    item.desc ? h("small", { style: { display: "block", marginTop: "4px", color: "#94a3b8", fontSize: "11px" } }, String(item.desc)) : null,
+                    h(MlcText, { as: "strong", size: 14, weight: 800, style: { display: "block", marginTop: "4px", color: "#111827" } }, () =>
+                      String(item.title ?? `推荐 ${index + 1}`),
+                    ),
+                    h(MlcText, { size: 12, tone: "muted", style: { display: "block", marginTop: "4px" } }, () => String(item.subtitle ?? item.desc ?? "精选内容")),
+                    item.desc ? h(MlcText, { size: 11, tone: "muted", style: { display: "block", marginTop: "4px", color: "#94a3b8" } }, () => String(item.desc)) : null,
                   ]),
                   h(
                     "span",
                     { style: { display: "grid", gap: "8px", justifyItems: "end", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "12px" } },
                     [
-                      h("strong", String(item.metricText ?? "")),
-                      h("span", { style: { fontWeight: 800 } }, String(item.buttonText ?? text(runtimeProps.buttonText, "查看"))),
+                      h(MlcText, { as: "strong", size: 12, weight: 800, style: { color: text(runtimeProps.accentColor, "#0f766e") } }, () => String(item.metricText ?? "")),
+                      h(MlcText, { size: 12, weight: 800, style: { color: text(runtimeProps.accentColor, "#0f766e") } }, () =>
+                        String(item.buttonText ?? text(runtimeProps.buttonText, "查看")),
+                      ),
                     ],
                   ),
                 ],
@@ -984,9 +990,9 @@ export const LiveEntry = defineComponent({
         },
         [
           h(
-            "button",
+            MlcButton,
             {
-              type: "button",
+              radius: 12,
               onClick: handleEnter,
               style: {
                 display: "grid",
@@ -995,7 +1001,6 @@ export const LiveEntry = defineComponent({
                 width: "100%",
                 minHeight: "116px",
                 border: "1px solid rgba(255, 255, 255, 0.16)",
-                borderRadius: "12px",
                 padding: "10px",
                 color: text(runtimeProps.titleColor, "#ffffff"),
                 background: "rgba(255, 255, 255, 0.08)",
@@ -1003,16 +1008,15 @@ export const LiveEntry = defineComponent({
                 boxShadow: "0 10px 28px rgba(15, 23, 42, 0.18)",
               } satisfies CSSProperties,
             },
-            [
+            () => [
               coverImageUrl
-                ? h("img", {
+                ? h(MlcImage, {
                     src: coverImageUrl,
                     alt: "",
+                    radius: 10,
                     style: {
                       width: "96px",
                       height: "96px",
-                      borderRadius: "10px",
-                      objectFit: "cover",
                       background: "rgba(255, 255, 255, 0.12)",
                     },
                   })
@@ -1020,14 +1024,11 @@ export const LiveEntry = defineComponent({
               h("span", { style: { display: "grid", alignContent: "space-between", minWidth: 0 } }, [
                 h("span", { style: { minWidth: 0 } }, [
                   h(
-                    "span",
+                    MlcTag,
                     {
+                      radius: 999,
                       style: {
-                        display: "inline-flex",
-                        alignItems: "center",
                         gap: "5px",
-                        minHeight: "22px",
-                        borderRadius: "999px",
                         padding: "0 8px",
                         color: "#ffffff",
                         background: text(runtimeProps.accentColor, "#ef4444"),
@@ -1035,7 +1036,7 @@ export const LiveEntry = defineComponent({
                         fontWeight: 800,
                       } satisfies CSSProperties,
                     },
-                    [
+                    () => [
                       h("i", {
                         style: {
                           display: "block",
@@ -1049,35 +1050,37 @@ export const LiveEntry = defineComponent({
                     ],
                   ),
                   h(
-                    "strong",
+                    MlcText,
                     {
+                      as: "strong",
+                      size: 17,
+                      weight: 800,
                       style: {
                         display: "block",
                         marginTop: "8px",
                         overflow: "hidden",
                         color: text(runtimeProps.titleColor, "#ffffff"),
-                        fontSize: "17px",
                         whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
                       },
                     },
-                    text(runtimeProps.title, "直播间正在热播"),
+                    () => text(runtimeProps.title, "直播间正在热播"),
                   ),
                   h(
-                    "span",
+                    MlcText,
                     {
+                      size: 12,
                       style: {
                         display: "-webkit-box",
                         marginTop: "4px",
                         overflow: "hidden",
                         color: text(runtimeProps.textColor, "#d1d5db"),
-                        fontSize: "12px",
                         lineHeight: 1.45,
                         WebkitBoxOrient: "vertical",
                         WebkitLineClamp: 2,
                       } satisfies CSSProperties,
                     },
-                    text(runtimeProps.subtitle, "主播讲解爆品搭配，限时福利同步发放。"),
+                    () => text(runtimeProps.subtitle, "主播讲解爆品搭配，限时福利同步发放。"),
                   ),
                 ]),
                 h(
@@ -1085,14 +1088,14 @@ export const LiveEntry = defineComponent({
                   { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginTop: "10px" } },
                   [
                     h(
-                      "small",
-                      { style: { color: text(runtimeProps.textColor, "#d1d5db"), fontSize: "12px", fontWeight: 700 } },
-                      text(runtimeProps.viewerText, "12.8w 人正在看"),
+                      MlcText,
+                      { size: 12, weight: 700, style: { color: text(runtimeProps.textColor, "#d1d5db") } },
+                      () => text(runtimeProps.viewerText, "12.8w 人正在看"),
                     ),
                     h(
-                      "strong",
-                      { style: { color: text(runtimeProps.accentColor, "#ef4444"), fontSize: "13px" } },
-                      text(runtimeProps.buttonText, "进入直播"),
+                      MlcText,
+                      { as: "strong", size: 13, weight: 800, style: { color: text(runtimeProps.accentColor, "#ef4444") } },
+                      () => text(runtimeProps.buttonText, "进入直播"),
                     ),
                   ],
                 ),

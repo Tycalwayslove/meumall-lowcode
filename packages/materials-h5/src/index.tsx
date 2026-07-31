@@ -434,51 +434,52 @@ export function BrandFeatureSection({ props }: MaterialProps) {
         }}
       >
         {coverImageUrl ? (
-          <img src={coverImageUrl} alt="" style={{ width: "100%", height: 132, objectFit: "cover", display: "block" }} />
+          <MlcImage src={coverImageUrl} alt="" style={{ height: 132 }} />
         ) : null}
         <div style={{ display: "grid", gap: 12, padding: 12 }}>
           <div style={{ display: "grid", gridTemplateColumns: "52px minmax(0, 1fr) auto", alignItems: "center", gap: 10 }}>
             {logoImageUrl ? (
-              <img
+              <MlcImage
                 src={logoImageUrl}
                 alt=""
-                style={{ width: 52, height: 52, borderRadius: 12, objectFit: "cover", background: "#f3f4f6" }}
+                radius={12}
+                style={{ width: 52, height: 52, background: "#f3f4f6" }}
               />
             ) : (
-              <span
+              <MlcTag
+                radius={12}
                 style={{
                   display: "grid",
                   placeItems: "center",
                   width: 52,
                   height: 52,
-                  borderRadius: 12,
                   color: "#ffffff",
                   background: text(props.accentColor, "#111827"),
                   fontWeight: 900,
                 }}
               >
                 {text(props.brandName, "M").slice(0, 1)}
-              </span>
+              </MlcTag>
             )}
             <span style={{ minWidth: 0 }}>
-              <small style={{ display: "block", color: text(props.accentColor, "#111827"), fontSize: 11, fontWeight: 800 }}>
+              <MlcText size={11} weight={800} style={{ display: "block", color: text(props.accentColor, "#111827") }}>
                 {text(props.badgeText, "品牌专题")}
-              </small>
-              <strong style={{ display: "block", marginTop: 4, color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+              </MlcText>
+              <MlcText as="strong" size={17} weight={800} style={{ display: "block", marginTop: 4, color: text(props.titleColor, "#111827") }}>
                 {text(props.title, "夏日品牌馆")}
-              </strong>
-              <span style={{ display: "block", marginTop: 4, color: "#64748b", fontSize: 12 }}>
+              </MlcText>
+              <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 4 }}>
                 {text(props.brandName, "MeuMall Select")}
-              </span>
+              </MlcText>
             </span>
-            <button
-              type="button"
+            <MlcButton
+              size="sm"
+              radius={8}
               onClick={handleEnter}
               style={{
                 alignSelf: "center",
                 minHeight: 32,
                 border: 0,
-                borderRadius: 8,
                 padding: "0 10px",
                 color: "#ffffff",
                 background: text(props.accentColor, "#111827"),
@@ -487,59 +488,60 @@ export function BrandFeatureSection({ props }: MaterialProps) {
               }}
             >
               {text(props.buttonText, "进入品牌")}
-            </button>
+            </MlcButton>
           </div>
-          <p style={{ margin: 0, color: text(props.textColor, "#374151"), fontSize: 13, lineHeight: 1.6 }}>
+          <MlcText as="p" size={13} style={{ margin: 0, color: text(props.textColor, "#374151"), lineHeight: 1.6 }}>
             {text(props.description, "精选品牌当季新品与平台补贴权益，帮助用户快速进入品牌导购场景。")}
-          </p>
+          </MlcText>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
             {visibleSellingPoints.slice(0, 4).map((point, index) => {
               const item = (typeof point === "string" ? { title: point } : point) as Record<string, unknown>;
               return (
-                <span
+                <MlcTag
                   key={String(item.id ?? index)}
+                  radius={8}
                   style={{
                     display: "grid",
                     gap: 2,
                     minHeight: 48,
-                    borderRadius: 8,
                     padding: "8px 9px",
                     background: text(props.pointBackgroundColor, "#f8fafc"),
                   }}
                 >
-                  <strong style={{ color: text(props.accentColor, "#111827"), fontSize: 12 }}>{String(item.title ?? `卖点 ${index + 1}`)}</strong>
-                  <small style={{ color: "#64748b", fontSize: 11 }}>{String(item.desc ?? item.content ?? "")}</small>
-                </span>
+                  <MlcText as="strong" size={12} weight={800} style={{ color: text(props.accentColor, "#111827") }}>{String(item.title ?? `卖点 ${index + 1}`)}</MlcText>
+                  <MlcText size={11} tone="muted">{String(item.desc ?? item.content ?? "")}</MlcText>
+                </MlcTag>
               );
             })}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
             {visibleItems.slice(0, 2).map((item, index) => (
-              <button
+              <MlcButton
                 key={String(item.id ?? index)}
-                type="button"
+                radius={9}
                 onClick={() => {
                   if (typeof onProductClick === "function") onProductClick(item);
                 }}
                 style={{
+                  display: "block",
                   overflow: "hidden",
+                  width: "100%",
                   border: "1px solid #eef0f3",
-                  borderRadius: 9,
                   padding: 0,
                   background: "#ffffff",
                   textAlign: "left",
                 }}
               >
                 {typeof item.imageUrl === "string" ? (
-                  <img src={item.imageUrl} alt="" style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" }} />
+                  <MlcImage src={item.imageUrl} alt="" ratio="1 / 1" />
                 ) : null}
                 <span style={{ display: "grid", gap: 4, padding: 8 }}>
-                  <strong style={{ overflow: "hidden", color: "#111827", fontSize: 12, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <MlcText as="strong" size={12} weight={800} style={{ overflow: "hidden", color: "#111827", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {String(item.title ?? `品牌商品 ${index + 1}`)}
-                  </strong>
-                  <span style={{ color: text(props.accentColor, "#111827"), fontWeight: 800 }}>{String(item.priceText ?? "")}</span>
+                  </MlcText>
+                  <MlcPrice amountText={String(item.priceText ?? "")} size={13} style={{ color: text(props.accentColor, "#111827") }} />
                 </span>
-              </button>
+              </MlcButton>
             ))}
           </div>
         </div>
@@ -578,22 +580,21 @@ export function StoreExpertSection({ props }: MaterialProps) {
     <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#f8fafc") }}>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
         <div style={{ minWidth: 0 }}>
-          <strong style={{ display: "block", color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+          <MlcText as="strong" size={17} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
             {text(props.title, "门店/达人推荐")}
-          </strong>
-          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>
+          </MlcText>
+          <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 3 }}>
             {text(props.subtitle, "精选门店和达人内容，帮助用户快速进入转化场景。")}
-          </span>
+          </MlcText>
         </div>
-        <span style={{ flex: "0 0 auto", color: text(props.accentColor, "#0f766e"), fontSize: 12, fontWeight: 800 }}>
+        <MlcTag style={{ flex: "0 0 auto", color: text(props.accentColor, "#0f766e"), background: "rgba(15, 118, 110, 0.1)" }}>
           {text(props.badgeText, "精选")}
-        </span>
+        </MlcTag>
       </div>
       <div style={{ display: "grid", gap: 10 }}>
         {visibleItems.map((item, index) => (
-          <button
+          <MlcButton
             key={String(item.id ?? index)}
-            type="button"
             onClick={() => {
               if (typeof onItemClick === "function") onItemClick(item);
             }}
@@ -613,33 +614,34 @@ export function StoreExpertSection({ props }: MaterialProps) {
             }}
           >
             {typeof item.imageUrl === "string" ? (
-              <img
+              <MlcImage
                 src={item.imageUrl}
                 alt=""
-                style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, background: "#e5e7eb" }}
+                radius={8}
+                style={{ width: 64, height: 64, background: "#e5e7eb" }}
               />
             ) : (
               <span style={{ width: 64, height: 64, borderRadius: 8, background: "#e5e7eb" }} />
             )}
             <span style={{ minWidth: 0 }}>
-              <small style={{ display: "inline-block", color: text(props.accentColor, "#0f766e"), fontSize: 11, fontWeight: 800 }}>
+              <MlcTag radius={0} style={{ minHeight: "auto", padding: 0, color: text(props.accentColor, "#0f766e"), background: "transparent", fontSize: 11 }}>
                 {String(item.typeText ?? "推荐")}
-              </small>
-              <strong style={{ display: "block", marginTop: 4, color: "#111827", fontSize: 14 }}>
+              </MlcTag>
+              <MlcText as="strong" size={14} weight={800} style={{ display: "block", marginTop: 4, color: "#111827" }}>
                 {String(item.title ?? `推荐 ${index + 1}`)}
-              </strong>
-              <span style={{ display: "block", marginTop: 4, color: "#64748b", fontSize: 12 }}>
+              </MlcText>
+              <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 4 }}>
                 {String(item.subtitle ?? item.desc ?? "精选内容")}
-              </span>
+              </MlcText>
               {item.desc ? (
-                <small style={{ display: "block", marginTop: 4, color: "#94a3b8", fontSize: 11 }}>{String(item.desc)}</small>
+                <MlcText size={11} tone="muted" style={{ display: "block", marginTop: 4, color: "#94a3b8" }}>{String(item.desc)}</MlcText>
               ) : null}
             </span>
             <span style={{ display: "grid", gap: 8, justifyItems: "end", color: text(props.accentColor, "#0f766e"), fontSize: 12 }}>
-              <strong>{String(item.metricText ?? "")}</strong>
-              <span style={{ fontWeight: 800 }}>{String(item.buttonText ?? text(props.buttonText, "查看"))}</span>
+              <MlcText as="strong" size={12} weight={800} style={{ color: text(props.accentColor, "#0f766e") }}>{String(item.metricText ?? "")}</MlcText>
+              <MlcText size={12} weight={800} style={{ color: text(props.accentColor, "#0f766e") }}>{String(item.buttonText ?? text(props.buttonText, "查看"))}</MlcText>
             </span>
-          </button>
+          </MlcButton>
         ))}
       </div>
     </section>
@@ -658,8 +660,8 @@ export function LiveEntry({ props }: MaterialProps) {
 
   return (
     <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#111827") }}>
-      <button
-        type="button"
+      <MlcButton
+        radius={12}
         onClick={handleEnter}
         style={{
           display: "grid",
@@ -668,7 +670,6 @@ export function LiveEntry({ props }: MaterialProps) {
           width: "100%",
           minHeight: 116,
           border: "1px solid rgba(255, 255, 255, 0.16)",
-          borderRadius: 12,
           padding: 10,
           color: text(props.titleColor, "#ffffff"),
           background: "rgba(255, 255, 255, 0.08)",
@@ -677,14 +678,13 @@ export function LiveEntry({ props }: MaterialProps) {
         }}
       >
         {coverImageUrl ? (
-          <img
+          <MlcImage
             src={coverImageUrl}
             alt=""
+            radius={10}
             style={{
               width: 96,
               height: 96,
-              borderRadius: 10,
-              objectFit: "cover",
               background: "rgba(255, 255, 255, 0.12)",
             }}
           />
@@ -693,13 +693,10 @@ export function LiveEntry({ props }: MaterialProps) {
         )}
         <span style={{ display: "grid", alignContent: "space-between", minWidth: 0 }}>
           <span style={{ minWidth: 0 }}>
-            <span
+            <MlcTag
+              radius={999}
               style={{
-                display: "inline-flex",
-                alignItems: "center",
                 gap: 5,
-                minHeight: 22,
-                borderRadius: 999,
                 padding: "0 8px",
                 color: "#ffffff",
                 background: text(props.accentColor, "#ef4444"),
@@ -717,45 +714,47 @@ export function LiveEntry({ props }: MaterialProps) {
                 }}
               />
               {text(props.statusText, "直播中")}
-            </span>
-            <strong
+            </MlcTag>
+            <MlcText
+              as="strong"
+              size={17}
+              weight={800}
               style={{
                 display: "block",
                 marginTop: 8,
                 overflow: "hidden",
                 color: text(props.titleColor, "#ffffff"),
-                fontSize: 17,
                 whiteSpace: "nowrap",
                 textOverflow: "ellipsis",
               }}
             >
               {text(props.title, "直播间正在热播")}
-            </strong>
-            <span
+            </MlcText>
+            <MlcText
+              size={12}
               style={{
                 display: "-webkit-box",
                 marginTop: 4,
                 overflow: "hidden",
                 color: text(props.textColor, "#d1d5db"),
-                fontSize: 12,
                 lineHeight: 1.45,
                 WebkitBoxOrient: "vertical",
                 WebkitLineClamp: 2,
               }}
             >
               {text(props.subtitle, "主播讲解爆品搭配，限时福利同步发放。")}
-            </span>
+            </MlcText>
           </span>
           <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 10 }}>
-            <small style={{ color: text(props.textColor, "#d1d5db"), fontSize: 12, fontWeight: 700 }}>
+            <MlcText size={12} weight={700} style={{ color: text(props.textColor, "#d1d5db") }}>
               {text(props.viewerText, "12.8w 人正在看")}
-            </small>
-            <strong style={{ color: text(props.accentColor, "#ef4444"), fontSize: 13 }}>
+            </MlcText>
+            <MlcText as="strong" size={13} weight={800} style={{ color: text(props.accentColor, "#ef4444") }}>
               {text(props.buttonText, "进入直播")}
-            </strong>
+            </MlcText>
           </span>
         </span>
-      </button>
+      </MlcButton>
     </section>
   );
 }

@@ -24,6 +24,9 @@ Currently migrated materials:
 - `StickyActionBar`
 - `CouponBundle`
 - `ProductRankList`
+- `BrandFeatureSection`
+- `LiveEntry`
+- `StoreExpertSection`
 
 See `docs/material-layering-architecture.md` for the layering plan.
 

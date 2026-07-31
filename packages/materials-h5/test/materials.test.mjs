@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { CouponBundle, h5Materials, ProductRankList, StickyActionBar } from "../dist/index.js";
+import {
+  BrandFeatureSection,
+  CouponBundle,
+  h5Materials,
+  LiveEntry,
+  ProductRankList,
+  StickyActionBar,
+  StoreExpertSection,
+} from "../dist/index.js";
 import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
 import { validateLowcodeMaterialManifest } from "../../schema/dist/index.js";
 
@@ -55,6 +63,9 @@ describe("MeuMall H5 material manifests", () => {
     const productRankTypes = elementTypeNames(ProductRankList({ props: {}, node: baseNode }));
     const couponBundleTypes = elementTypeNames(CouponBundle({ props: {}, node: baseNode }));
     const stickyActionTypes = elementTypeNames(StickyActionBar({ props: {}, node: baseNode }));
+    const brandFeatureTypes = elementTypeNames(BrandFeatureSection({ props: {}, node: baseNode }));
+    const liveEntryTypes = elementTypeNames(LiveEntry({ props: { coverImageUrl: "https://example.com/live.jpg" }, node: baseNode }));
+    const storeExpertTypes = elementTypeNames(StoreExpertSection({ props: {}, node: baseNode }));
 
     assert.equal(productRankTypes.has("MlcButton"), true);
     assert.equal(productRankTypes.has("MlcImage"), true);
@@ -67,6 +78,19 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(couponBundleTypes.has("MlcPrice"), true);
     assert.equal(stickyActionTypes.has("MlcButton"), true);
     assert.equal(stickyActionTypes.has("MlcText"), true);
+    assert.equal(brandFeatureTypes.has("MlcButton"), true);
+    assert.equal(brandFeatureTypes.has("MlcImage"), true);
+    assert.equal(brandFeatureTypes.has("MlcTag"), true);
+    assert.equal(brandFeatureTypes.has("MlcText"), true);
+    assert.equal(brandFeatureTypes.has("MlcPrice"), true);
+    assert.equal(liveEntryTypes.has("MlcButton"), true);
+    assert.equal(liveEntryTypes.has("MlcImage"), true);
+    assert.equal(liveEntryTypes.has("MlcTag"), true);
+    assert.equal(liveEntryTypes.has("MlcText"), true);
+    assert.equal(storeExpertTypes.has("MlcButton"), true);
+    assert.equal(storeExpertTypes.has("MlcImage"), true);
+    assert.equal(storeExpertTypes.has("MlcTag"), true);
+    assert.equal(storeExpertTypes.has("MlcText"), true);
   });
 
   it("registers the activity rule modal material", () => {
