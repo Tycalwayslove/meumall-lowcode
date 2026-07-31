@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch, type CSSProperties } from "vue";
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, type CSSProperties } from "vue";
 import {
   ArrowDown,
   ArrowUp,
@@ -236,6 +236,24 @@ interface CanvasDropHint {
   style: CSSProperties;
 }
 
+interface CanvasDragPoint {
+  clientX: number;
+  clientY: number;
+  target?: EventTarget | null;
+}
+
+interface PointerCanvasDragState {
+  pointerId: number;
+  source: CanvasDragSource;
+  startX: number;
+  startY: number;
+  lastX: number;
+  lastY: number;
+  dragging: boolean;
+  componentName?: string;
+  nodeId?: string;
+}
+
 interface PublishCheck {
   id: string;
   title: string;
@@ -265,10 +283,13 @@ interface ListItemDragState {
 
 const canvasDropHint = ref<CanvasDropHint>();
 const listItemDragState = ref<ListItemDragState>();
+const pointerCanvasDragState = ref<PointerCanvasDragState>();
 
 const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
 const NODE_DRAG_TYPE = "application/x-meumall-node";
 const LIST_ITEM_DRAG_TYPE = "application/x-meumall-list-item";
+const POINTER_DRAG_START_DISTANCE = 8;
+let suppressNextClick = false;
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -433,6 +454,18 @@ watch(
   },
   { immediate: true },
 );
+
+onMounted(() => {
+  window.addEventListener("pointermove", onPointerCanvasDragMove, { passive: false });
+  window.addEventListener("pointerup", onPointerCanvasDragEnd);
+  window.addEventListener("pointercancel", onPointerCanvasDragCancel);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("pointermove", onPointerCanvasDragMove);
+  window.removeEventListener("pointerup", onPointerCanvasDragEnd);
+  window.removeEventListener("pointercancel", onPointerCanvasDragCancel);
+});
 
 function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefined {
   if (!nodeId) return undefined;
@@ -672,6 +705,16 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
   });
 }
 
+function onMaterialClick(event: MouseEvent, manifest: LowcodeMaterialManifest): void {
+  if (consumeSuppressedClick(event)) return;
+  addMaterial(manifest);
+}
+
+function onOutlineNodeClick(event: MouseEvent, nodeId: string): void {
+  if (consumeSuppressedClick(event)) return;
+  select(nodeId);
+}
+
 function onDragStart(event: DragEvent, manifest: LowcodeMaterialManifest): void {
   event.dataTransfer?.setData(MATERIAL_DRAG_TYPE, manifest.componentName);
   event.dataTransfer?.setData("text/plain", manifest.componentName);
@@ -692,19 +735,144 @@ function getCanvasDragSource(event: DragEvent): CanvasDragSource | undefined {
   return undefined;
 }
 
+function isTouchLikePointer(event: PointerEvent): boolean {
+  return event.pointerType === "touch" || event.pointerType === "pen";
+}
+
+function startPointerCanvasDrag(
+  event: PointerEvent,
+  source: CanvasDragSource,
+  options: { componentName?: string; nodeId?: string } = {},
+): void {
+  if (!isTouchLikePointer(event) || editorState.value.mode !== "design") return;
+  pointerCanvasDragState.value = {
+    pointerId: event.pointerId,
+    source,
+    startX: event.clientX,
+    startY: event.clientY,
+    lastX: event.clientX,
+    lastY: event.clientY,
+    dragging: false,
+    componentName: options.componentName,
+    nodeId: options.nodeId,
+  };
+  if (options.nodeId) {
+    draggedNodeId.value = options.nodeId;
+  }
+  const target = event.currentTarget;
+  if (target instanceof HTMLElement && typeof target.setPointerCapture === "function") {
+    target.setPointerCapture(event.pointerId);
+  }
+}
+
+function onMaterialPointerDown(event: PointerEvent, manifest: LowcodeMaterialManifest): void {
+  startPointerCanvasDrag(event, "material", { componentName: manifest.componentName });
+}
+
+function onOutlineNodePointerDown(event: PointerEvent, nodeId: string): void {
+  startPointerCanvasDrag(event, "node", { nodeId });
+}
+
+function onPhoneFramePointerDown(event: PointerEvent): void {
+  if (!isTouchLikePointer(event) || editorState.value.mode !== "design") return;
+  const nodeElement = getRuntimeNodeElementFromTarget(event.target);
+  const nodeId = nodeElement?.dataset.lowcodeNodeId;
+  if (!nodeId) return;
+  select(nodeId);
+  startPointerCanvasDrag(event, "node", { nodeId });
+}
+
+function pointerDragDistance(state: PointerCanvasDragState, event: PointerEvent): number {
+  return Math.hypot(event.clientX - state.startX, event.clientY - state.startY);
+}
+
+function onPointerCanvasDragMove(event: PointerEvent): void {
+  const state = pointerCanvasDragState.value;
+  if (!state || state.pointerId !== event.pointerId) return;
+  const distance = pointerDragDistance(state, event);
+  if (!state.dragging && distance < POINTER_DRAG_START_DISTANCE) return;
+
+  event.preventDefault();
+  pointerCanvasDragState.value = {
+    ...state,
+    dragging: true,
+    lastX: event.clientX,
+    lastY: event.clientY,
+  };
+  if (state.nodeId) draggedNodeId.value = state.nodeId;
+  updateCanvasDropHintAtPoint(event, state.source, state.nodeId);
+}
+
+function onPointerCanvasDragEnd(event: PointerEvent): void {
+  finishPointerCanvasDrag(event, false);
+}
+
+function onPointerCanvasDragCancel(event: PointerEvent): void {
+  finishPointerCanvasDrag(event, true);
+}
+
+function finishPointerCanvasDrag(event: PointerEvent, cancelled: boolean): void {
+  const state = pointerCanvasDragState.value;
+  if (!state || state.pointerId !== event.pointerId) return;
+  const didDrag = state.dragging;
+  const point = {
+    clientX: event.clientX,
+    clientY: event.clientY,
+    target: document.elementFromPoint(event.clientX, event.clientY),
+  };
+  if (didDrag && !cancelled) {
+    const hint = canvasDropHint.value ?? updateCanvasDropHintAtPoint(point, state.source, state.nodeId);
+    if (state.source === "material" && state.componentName) {
+      const material = materials.find((item) => item.manifest.componentName === state.componentName);
+      if (material && hint) insertMaterialByDropHint(material.manifest, hint);
+    }
+    if (state.source === "node" && state.nodeId && hint) {
+      moveCanvasNode(state.nodeId, hint);
+    }
+    suppressFollowingClick();
+  }
+  pointerCanvasDragState.value = undefined;
+  clearCanvasDragState();
+}
+
+function suppressFollowingClick(): void {
+  suppressNextClick = true;
+  window.setTimeout(() => {
+    suppressNextClick = false;
+  }, 0);
+}
+
+function consumeSuppressedClick(event: MouseEvent): boolean {
+  if (!suppressNextClick) return false;
+  event.preventDefault();
+  event.stopPropagation();
+  suppressNextClick = false;
+  return true;
+}
+
 function findOutlineRowByNodeId(nodeId: string): OutlineRow | undefined {
   return outlineRows.value.find((row) => row.node.id === nodeId);
 }
 
-function getRuntimeNodeElement(event: DragEvent): HTMLElement | undefined {
-  const target = event.target;
+function getRuntimeNodeElementFromTarget(target: EventTarget | null | undefined): HTMLElement | undefined {
   if (!(target instanceof Element)) return undefined;
   return target.closest<HTMLElement>(".mlc-runtime-node[data-lowcode-node-id]") ?? undefined;
 }
 
-function getDropPlacement(event: DragEvent, node: LowcodeNode, nodeElement: HTMLElement): CanvasDropPlacement {
+function getRuntimeNodeElement(point: CanvasDragPoint): HTMLElement | undefined {
+  return getRuntimeNodeElementFromTarget(point.target) ?? getRuntimeNodeElementFromTarget(document.elementFromPoint(point.clientX, point.clientY));
+}
+
+function isPointInsidePhoneFrame(point: CanvasDragPoint): boolean {
+  const frame = phoneFrameRef.value;
+  if (!frame) return false;
+  const rect = frame.getBoundingClientRect();
+  return point.clientX >= rect.left && point.clientX <= rect.right && point.clientY >= rect.top && point.clientY <= rect.bottom;
+}
+
+function getDropPlacement(point: CanvasDragPoint, node: LowcodeNode, nodeElement: HTMLElement): CanvasDropPlacement {
   const rect = nodeElement.getBoundingClientRect();
-  const ratio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5;
+  const ratio = rect.height > 0 ? (point.clientY - rect.top) / rect.height : 0.5;
   if (node.componentName === "SectionContainer" && ratio > 0.28 && ratio < 0.72) return "inside";
   return ratio < 0.5 ? "before" : "after";
 }
@@ -731,16 +899,24 @@ function createDropHintStyle(nodeElement: HTMLElement, placement: CanvasDropPlac
   };
 }
 
-function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
-  const source = getCanvasDragSource(event);
+function updateCanvasDropHintAtPoint(
+  point: CanvasDragPoint,
+  source: CanvasDragSource | undefined,
+  draggedNodeId?: string,
+  options: { allowAppendOutsideFrame?: boolean } = {},
+): CanvasDropHint | undefined {
   if (!source) {
     canvasDropHint.value = undefined;
     return undefined;
   }
-  const nodeElement = getRuntimeNodeElement(event);
+  const isInsideFrame = isPointInsidePhoneFrame(point);
+  if (!isInsideFrame && !options.allowAppendOutsideFrame) {
+    canvasDropHint.value = undefined;
+    return undefined;
+  }
+  const nodeElement = isInsideFrame ? getRuntimeNodeElement(point) : undefined;
   const nodeId = nodeElement?.dataset.lowcodeNodeId;
   const node = nodeId ? findNode(editorState.value.schema.nodes, nodeId) : undefined;
-  const draggedNodeId = source === "node" ? event.dataTransfer?.getData(NODE_DRAG_TYPE) : undefined;
   const draggedNode = draggedNodeId ? findNode(editorState.value.schema.nodes, draggedNodeId) : undefined;
   if (source === "node" && node && draggedNodeId && (node.id === draggedNodeId || nodeContains(draggedNode, node.id))) {
     canvasDropHint.value = undefined;
@@ -755,7 +931,7 @@ function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
     };
     return canvasDropHint.value;
   }
-  const placement = getDropPlacement(event, node, nodeElement);
+  const placement = getDropPlacement(point, node, nodeElement);
   const manifest = registry.get(node.componentName)?.manifest;
   canvasDropHint.value = {
     source,
@@ -765,6 +941,12 @@ function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
     style: createDropHintStyle(nodeElement, placement),
   };
   return canvasDropHint.value;
+}
+
+function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
+  const source = getCanvasDragSource(event);
+  const sourceNodeId = source === "node" ? event.dataTransfer?.getData(NODE_DRAG_TYPE) : undefined;
+  return updateCanvasDropHintAtPoint(event, source, sourceNodeId, { allowAppendOutsideFrame: true });
 }
 
 function onCanvasDragOver(event: DragEvent): void {
@@ -825,6 +1007,31 @@ function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
   });
 }
 
+function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: CanvasDropHint): void {
+  if (!hint.targetNodeId || hint.placement === "append") {
+    addMaterial(manifest);
+    return;
+  }
+  const row = findOutlineRowByNodeId(hint.targetNodeId);
+  if (!row) {
+    addMaterial(manifest);
+    return;
+  }
+  if (hint.placement === "inside") {
+    editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
+      parentId: row.node.id,
+      index: row.node.children?.length ?? 0,
+      select: true,
+    });
+    return;
+  }
+  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
+    parentId: row.parentId,
+    index: hint.placement === "before" ? row.index : row.index + 1,
+    select: true,
+  });
+}
+
 function onCanvasDrop(event: DragEvent): void {
   const source = getCanvasDragSource(event);
   if (source === "node") {
@@ -841,30 +1048,7 @@ function onCanvasDrop(event: DragEvent): void {
     return;
   }
   const hint = canvasDropHint.value ?? updateCanvasDropHint(event);
-  if (!hint?.targetNodeId || hint.placement === "append") {
-    addMaterial(material.manifest);
-    clearCanvasDragState();
-    return;
-  }
-  const row = findOutlineRowByNodeId(hint.targetNodeId);
-  if (!row) {
-    addMaterial(material.manifest);
-    clearCanvasDragState();
-    return;
-  }
-  if (hint.placement === "inside") {
-    editorState.value = insertNode(editorState.value, createNodeInput(material.manifest), {
-      parentId: row.node.id,
-      index: row.node.children?.length ?? 0,
-      select: true,
-    });
-  } else {
-    editorState.value = insertNode(editorState.value, createNodeInput(material.manifest), {
-      parentId: row.parentId,
-      index: hint.placement === "before" ? row.index : row.index + 1,
-      select: true,
-    });
-  }
+  if (hint) insertMaterialByDropHint(material.manifest, hint);
   clearCanvasDragState();
 }
 
@@ -1795,9 +1979,10 @@ function formatReleaseTime(value: string): string {
           :key="material.manifest.componentName"
           class="material-item"
           draggable="true"
+          @pointerdown="onMaterialPointerDown($event, material.manifest)"
           @dragstart="onDragStart($event, material.manifest)"
           @dragend="onMaterialDragEnd"
-          @click="addMaterial(material.manifest)"
+          @click="onMaterialClick($event, material.manifest)"
         >
           <span>
             <strong>{{ material.manifest.title }}</strong>
@@ -1831,10 +2016,11 @@ function formatReleaseTime(value: string): string {
           :class="{ selected: editorState.selectedNodeId === row.node.id }"
           :style="{ paddingLeft: `${12 + row.depth * 18}px` }"
           draggable="true"
+          @pointerdown="onOutlineNodePointerDown($event, row.node.id)"
           @dragstart="onNodeDragStart($event, row.node.id)"
           @dragover.prevent
           @drop.prevent="onNodeDrop($event, row)"
-          @click="select(row.node.id)"
+          @click="onOutlineNodeClick($event, row.node.id)"
         >
           <GripVertical :size="15" class="drag-icon" />
           <span>{{ row.index + 1 }}</span>
@@ -1928,7 +2114,13 @@ function formatReleaseTime(value: string): string {
             </button>
           </div>
         </div>
-        <div ref="phoneFrameRef" class="phone-frame" :style="{ width: `${editorState.viewport.width}px` }">
+        <div
+          ref="phoneFrameRef"
+          class="phone-frame"
+          :class="{ 'is-touch-drag-enabled': editorState.mode === 'design' }"
+          :style="{ width: `${editorState.viewport.width}px` }"
+          @pointerdown="onPhoneFramePointerDown"
+        >
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
             <span>H5</span>
