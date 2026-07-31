@@ -1271,6 +1271,11 @@ button:disabled {
   background: #fff;
 }
 
+.release-card.selected {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
 .release-card div:first-child {
   display: flex;
   align-items: center;
@@ -1291,7 +1296,7 @@ button:disabled {
 
 .release-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1301,6 +1306,106 @@ button:disabled {
   border-radius: 8px;
   color: #1f2937;
   background: #fff;
+}
+
+.release-diff-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.release-diff-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.release-diff-head strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.release-diff-head span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.release-diff-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.release-diff-list div {
+  display: grid;
+  gap: 4px;
+  padding: 7px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.release-diff-list div.changed {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.release-diff-list dt,
+.release-diff-list dd {
+  margin: 0;
+}
+
+.release-diff-list dt {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.release-diff-list dd {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.release-diff-list dd span,
+.release-diff-list dd strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.release-diff-list dd span {
+  color: #64748b;
+}
+
+.release-diff-list dd strong {
+  color: #111827;
+}
+
+.release-diff-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.release-diff-actions button {
+  height: 32px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #1f2937;
+  background: #fff;
+}
+
+.release-diff-actions .danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff5f5;
 }
 
 @media (max-width: 900px) {

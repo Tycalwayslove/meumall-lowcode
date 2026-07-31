@@ -28,6 +28,7 @@
 - Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - `@meumall/lowcode-renderer-vue-h5` 的 editable wrapper 已提供可选 `nodeDraggable`、`onNodeDragStart`、`onNodeDragEnd`，供编辑器 shell 编排拖拽，不影响默认生产渲染。
 - Vue3 编辑器 playground 右侧面板已提供发布检查清单，覆盖 schema、节点、图片、商品、数据源和动作；生成预览和发布会拦截 error 检查项，保存草稿不拦截。
+- Vue3 编辑器 playground 本地版本列表已支持选择版本对比，摘要展示标题、状态、环境、页面版本、节点数、数据源数和动作数差异，并可将选中版本作为新的 published release 回滚发布。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定

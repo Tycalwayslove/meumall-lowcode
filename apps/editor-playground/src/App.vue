@@ -206,7 +206,8 @@ const draggedNodeId = ref<string>();
 const phoneFrameRef = ref<HTMLElement>();
 const releaseMessage = ref("");
 const configPlatformClient = localConfigPlatformClient;
-const releases = ref<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
+const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
+const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 const assetKeyword = ref("");
 const assetCategory = ref("全部");
@@ -240,6 +241,13 @@ interface PublishCheck {
   title: string;
   status: PublishCheckStatus;
   description: string;
+}
+
+interface ReleaseDiffItem {
+  label: string;
+  current: string;
+  selected: string;
+  changed: boolean;
 }
 
 const canvasDropHint = ref<CanvasDropHint>();
@@ -332,6 +340,13 @@ const publishCheckSummary = computed(() => {
   );
 });
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
+const selectedRelease = computed<LocalPageRelease | undefined>(() =>
+  releases.value.find((release) => release.id === selectedReleaseId.value),
+);
+const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
+  selectedRelease.value ? createReleaseDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
+);
+const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 
@@ -411,6 +426,26 @@ function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): Outli
 
 function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
   return nodes.flatMap((node) => [node, ...flattenNodeList(node.children ?? [])]);
+}
+
+function schemaNodeCount(schema: LowcodePageSchema): number {
+  return flattenNodeList(schema.nodes).length;
+}
+
+function createReleaseDiffItems(current: LowcodePageSchema, selected: LowcodePageSchema): ReleaseDiffItem[] {
+  const items = [
+    { label: "标题", current: current.title, selected: selected.title },
+    { label: "状态", current: current.status, selected: selected.status },
+    { label: "环境", current: current.publishMeta.environment, selected: selected.publishMeta.environment },
+    { label: "页面版本", current: current.pageVersion, selected: selected.pageVersion },
+    { label: "节点数", current: String(schemaNodeCount(current)), selected: String(schemaNodeCount(selected)) },
+    { label: "数据源数", current: String(current.dataSources?.length ?? 0), selected: String(selected.dataSources?.length ?? 0) },
+    { label: "动作数", current: String(current.actions?.length ?? 0), selected: String(selected.actions?.length ?? 0) },
+  ];
+  return items.map((item) => ({
+    ...item,
+    changed: item.current !== item.selected,
+  }));
 }
 
 function getSiblingCount(parentId?: string): number {
@@ -1306,6 +1341,9 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
 
 function refreshReleases(): void {
   releases.value = configPlatformClient.listReleases(editorState.value.schema.pageId);
+  if (!releases.value.some((release) => release.id === selectedReleaseId.value)) {
+    selectedReleaseId.value = releases.value[0]?.id ?? "";
+  }
 }
 
 function resolveRuntimeSchema(): LowcodePageSchema | undefined {
@@ -1394,6 +1432,7 @@ function loadRelease(release: LocalPageRelease): void {
   });
   schemaDraft.value = JSON.stringify(release.schema, null, 2);
   refreshReleases();
+  selectedReleaseId.value = release.id;
   setReleaseMessage(release, "已载入版本");
 }
 
@@ -1404,6 +1443,38 @@ function loadReleaseById(releaseId: string): void {
 
 function openReleaseRuntime(releaseId: string): void {
   openRuntime({ releaseId });
+}
+
+function selectRelease(releaseId: string): void {
+  selectedReleaseId.value = releaseId;
+}
+
+function loadSelectedRelease(): void {
+  if (selectedRelease.value) loadRelease(selectedRelease.value);
+}
+
+function rollbackPublishSelectedRelease(): void {
+  const release = selectedRelease.value;
+  if (!release) return;
+  if (!window.confirm(`确认将版本 ${release.pageVersion} 作为新的已发布版本吗？`)) return;
+  const rollbackRelease = configPlatformClient.publishPage({
+    ...release.schema,
+    status: "published",
+    publishMeta: {
+      ...release.schema.publishMeta,
+      environment: editorState.value.schema.publishMeta.environment,
+    },
+  });
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rollbackRelease.schema));
+  editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
+    selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  }));
+  schemaDraft.value = JSON.stringify(rollbackRelease.schema, null, 2);
+  refreshReleases();
+  selectedReleaseId.value = rollbackRelease.id;
+  setReleaseMessage(rollbackRelease, `已回滚发布自 ${release.pageVersion}`);
 }
 
 function releaseKindLabel(kind: LocalPageRelease["kind"]): string {
@@ -1774,19 +1845,48 @@ function formatReleaseTime(value: string): string {
           <span>本地版本</span>
         </div>
         <div v-if="releases.length" class="release-list">
-          <article v-for="release in releases" :key="release.id" class="release-card">
+          <article
+            v-for="release in releases"
+            :key="release.id"
+            class="release-card"
+            :class="{ selected: selectedReleaseId === release.id }"
+          >
             <div>
               <strong>{{ releaseKindLabel(release.kind) }}</strong>
               <span>{{ release.pageVersion }}</span>
             </div>
             <small>{{ formatReleaseTime(release.createdAt) }}</small>
             <div class="release-actions">
+              <button type="button" @click="selectRelease(release.id)">对比</button>
               <button type="button" @click="loadReleaseById(release.id)">载入</button>
               <button type="button" @click="openReleaseRuntime(release.id)">打开</button>
             </div>
           </article>
         </div>
         <div v-else class="empty-state">暂无本地版本</div>
+        <div v-if="selectedRelease" class="release-diff-panel">
+          <div class="release-diff-head">
+            <strong>版本对比</strong>
+            <span>{{ releaseDiffChangedCount ? `${releaseDiffChangedCount} 项差异` : "无摘要差异" }}</span>
+          </div>
+          <dl class="release-diff-list">
+            <div
+              v-for="item in releaseDiffItems"
+              :key="item.label"
+              :class="{ changed: item.changed }"
+            >
+              <dt>{{ item.label }}</dt>
+              <dd>
+                <span>{{ item.current }}</span>
+                <strong>{{ item.selected }}</strong>
+              </dd>
+            </div>
+          </dl>
+          <div class="release-diff-actions">
+            <button type="button" @click="loadSelectedRelease">载入所选</button>
+            <button type="button" class="danger" @click="rollbackPublishSelectedRelease">回滚发布</button>
+          </div>
+        </div>
       </section>
 
       <section class="panel-section">
