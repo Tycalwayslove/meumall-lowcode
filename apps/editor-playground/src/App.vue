@@ -5,7 +5,6 @@ import {
   ArrowUp,
   Code2,
   Copy,
-  Database,
   Download,
   Eye,
   ExternalLink,
@@ -208,6 +207,7 @@ import EditorPageSettingsPanel from "./components/EditorPageSettingsPanel.vue";
 import EditorPropGroupsPanel from "./components/EditorPropGroupsPanel.vue";
 import EditorPublishPanel from "./components/EditorPublishPanel.vue";
 import EditorResourcePanels from "./components/EditorResourcePanels.vue";
+import EditorSchemaConfigPanel from "./components/EditorSchemaConfigPanel.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -3870,93 +3870,23 @@ function rollbackPublishSelectedRelease(): void {
         <div v-else class="empty-state">未选择节点</div>
       </section>
 
-      <section class="panel-section">
-        <div class="panel-title">
-          <Database :size="16" />
-          <span>数据源</span>
-        </div>
-        <div class="data-source-list">
-          <div
-            v-for="(dataSourceItem, index) in dataSourceFormItems"
-            :key="dataSourceItem.id"
-            class="data-source-card"
-          >
-            <label class="field">
-              <span>ID</span>
-              <input :value="dataSourceItem.id" @input="updateDataSource(index, { id: ($event.target as HTMLInputElement).value })" />
-            </label>
-            <label class="field">
-              <span>类型</span>
-              <input :value="dataSourceItem.type" @input="updateDataSource(index, { type: ($event.target as HTMLInputElement).value })" />
-            </label>
-            <label class="field">
-              <span>绑定到</span>
-              <input :value="dataSourceItem.bindTo" @input="updateDataSource(index, { bindTo: ($event.target as HTMLInputElement).value })" />
-            </label>
-            <label class="field">
-              <span>参数 JSON</span>
-              <textarea
-                :value="dataSourceItem.paramsText"
-                rows="4"
-                @change="updateDataSourceParams(index, ($event.target as HTMLTextAreaElement).value)"
-              />
-            </label>
-            <div
-              class="data-source-status"
-              :class="`is-${dataSourceItem.status}`"
-            >
-              <strong>{{ dataSourceItem.statusText }}</strong>
-              <span>{{ dataSourceItem.statusDescription }}</span>
-            </div>
-            <button class="text-danger" @click="removeDataSource(index)">删除数据源</button>
-          </div>
-        </div>
-        <button class="reset-button" @click="addDataSource">
-          <Plus :size="16" />
-          <span>新增数据源</span>
-        </button>
-      </section>
-
-      <section class="panel-section">
-        <div class="panel-title">
-          <PanelRight :size="16" />
-          <span>动作</span>
-        </div>
-        <div class="data-source-list">
-          <div
-            v-for="(actionItem, index) in actionFormItems"
-            :key="actionItem.id"
-            class="action-card"
-          >
-            <label class="field">
-              <span>ID</span>
-              <input :value="actionItem.id" @input="updateActionId(index, ($event.target as HTMLInputElement).value)" />
-            </label>
-            <label class="field">
-              <span>类型</span>
-              <select :value="actionItem.type" @change="updateActionType(index, ($event.target as HTMLSelectElement).value)">
-                <option v-for="option in actionTypeOptions" :key="option.type" :value="option.type">
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-            <label class="field">
-              <span>参数 JSON</span>
-              <textarea
-                :value="actionItem.paramsText"
-                rows="4"
-                @change="updateActionParams(index, ($event.target as HTMLTextAreaElement).value)"
-              />
-            </label>
-            <button class="text-danger" @click="removeAction(index)">删除动作</button>
-          </div>
-        </div>
-        <button class="reset-button" @click="addAction()">
-          <Plus :size="16" />
-          <span>新增动作</span>
-        </button>
-        <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
-      </section>
+      <EditorSchemaConfigPanel
+        :data-source-items="dataSourceFormItems"
+        :action-items="actionFormItems"
+        :action-type-options="actionTypeOptions"
+        :action-message="actionMessage"
+        @add-data-source="addDataSource"
+        @update-data-source-id="(index, value) => updateDataSource(index, { id: value })"
+        @update-data-source-type="(index, value) => updateDataSource(index, { type: value })"
+        @update-data-source-bind-to="(index, value) => updateDataSource(index, { bindTo: value })"
+        @update-data-source-params="updateDataSourceParams"
+        @remove-data-source="removeDataSource"
+        @add-action="addAction"
+        @update-action-id="updateActionId"
+        @update-action-type="updateActionType"
+        @update-action-params="updateActionParams"
+        @remove-action="removeAction"
+      />
 
       <section class="panel-section">
         <div class="panel-title">

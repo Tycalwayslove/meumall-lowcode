@@ -195,10 +195,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不构造 URL、不访问剪贴板、不导出文件、不定位画布节点。
 - 不执行保存、预览、发布、载入版本、回滚、权限、协作锁定、审批、审计或服务端保存。
 
+### `EditorSchemaConfigPanel`
+
+路径：`apps/editor-playground/src/components/EditorSchemaConfigPanel.vue`
+
+职责：
+
+- 展示右侧 Schema 级配置区域，包括数据源配置和动作配置。
+- 接收 data source config API 和 action config API 派生后的表单项、动作类型选项和动作执行反馈文案。
+- 通过 emits 抛出数据源新增、字段更新、参数 JSON 更新、删除，以及动作新增、ID 更新、类型更新、参数 JSON 更新和删除。
+- 复用现有 `.data-source-*`、`.action-*`、`.field`、`.reset-button` 和 `.action-message` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生数据源表单项、动作表单项或动作类型选项。
+- 不解析 JSON。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不执行真实 data source resolver、action handler、事件绑定、权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 数据源、动作和事件配置：优先消费 data source config、action config 和 event binding API。
-2. 快捷命令、右键菜单和顶部工具栏：优先消费 command palette、node operation 和 workspace summary API。
+1. 快捷命令、右键菜单和顶部工具栏：优先消费 command palette、node operation 和 workspace summary API。
+2. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
 
 ## 抽 npm 包判断
 
