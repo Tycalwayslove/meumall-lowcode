@@ -230,7 +230,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `26c591e` | 补齐 Tabs 内部标签切换 primitive。 |
 | 2026-08-01 | `c3d5baf` | 补齐 Spacer 内部间距 primitive。 |
 | 2026-08-01 | `79cb395` | 增强 H5 renderer 局部降级兜底。 |
-| 2026-08-01 | `本提交` | 增强 Vue3 编辑器 H5 画布视口预设。 |
+| 2026-08-01 | `9208fe9` | 增强 Vue3 编辑器 H5 画布视口预设。 |
 
 ## 默认验证命令
 
