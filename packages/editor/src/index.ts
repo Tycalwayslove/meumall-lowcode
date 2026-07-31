@@ -525,6 +525,58 @@ export interface LowcodeEditorVersionDiffItem {
   changed: boolean;
 }
 
+export type LowcodeEditorReleaseKind = "draft" | "preview" | "published" | string;
+
+export interface LowcodeEditorReleaseRecord {
+  id: string;
+  kind: LowcodeEditorReleaseKind;
+  pageId: string;
+  pageVersion: string;
+  title: string;
+  note?: string;
+  createdAt: string;
+  schema: LowcodePageSchema;
+}
+
+export interface LowcodeEditorReleaseKindLabelOptions {
+  labels?: Partial<Record<"draft" | "preview" | "published", string>> & Record<string, string | undefined>;
+}
+
+export interface FormatLowcodeReleaseTimeOptions {
+  locale?: string;
+  formatOptions?: Intl.DateTimeFormatOptions;
+  fallbackText?: string;
+}
+
+export interface LowcodeEditorReleaseListItem<TRelease extends LowcodeEditorReleaseRecord = LowcodeEditorReleaseRecord> {
+  id: string;
+  kind: LowcodeEditorReleaseKind;
+  kindLabel: string;
+  pageVersion: string;
+  title: string;
+  note: string;
+  createdAt: string;
+  createdAtText: string;
+  selected: boolean;
+  searchText: string;
+  release: TRelease;
+}
+
+export interface CreateLowcodeReleaseListItemOptions extends LowcodeEditorReleaseKindLabelOptions, FormatLowcodeReleaseTimeOptions {
+  selectedReleaseId?: string;
+}
+
+export interface CreateLowcodeReleaseListItemsOptions extends CreateLowcodeReleaseListItemOptions {
+  keyword?: string;
+}
+
+export interface LowcodeEditorReleaseListSummary {
+  total: number;
+  visible: number;
+  statusText: string;
+  emptyText: string;
+}
+
 export interface LowcodeEditorSchemaPreviewNodeSummary {
   id: string;
   componentName: string;
@@ -2429,6 +2481,121 @@ export function parseLowcodeSchemaFileContent(
     ok: true,
     schema: options.cloneSchema === false ? schema : cloneLowcodePageSchema(schema),
   };
+}
+
+export function formatLowcodeReleaseKindLabel(
+  kind: LowcodeEditorReleaseKind,
+  options: LowcodeEditorReleaseKindLabelOptions = {},
+): string {
+  const labels: Record<string, string | undefined> = {
+    draft: "草稿",
+    preview: "预览",
+    published: "已发布",
+    ...options.labels,
+  };
+  return labels[kind] ?? kind;
+}
+
+export function formatLowcodeReleaseTime(
+  value: string,
+  options: FormatLowcodeReleaseTimeOptions = {},
+): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return options.fallbackText ?? "时间未知";
+  return new Intl.DateTimeFormat(options.locale ?? "zh-CN", options.formatOptions ?? {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function createLowcodeReleaseListItem<TRelease extends LowcodeEditorReleaseRecord>(
+  release: TRelease,
+  options: CreateLowcodeReleaseListItemOptions = {},
+): LowcodeEditorReleaseListItem<TRelease> {
+  const kindLabel = formatLowcodeReleaseKindLabel(release.kind, options);
+  const createdAtText = formatLowcodeReleaseTime(release.createdAt, options);
+  const note = release.note?.trim() ?? "";
+  const searchText = [
+    release.title,
+    release.pageId,
+    release.pageVersion,
+    release.kind,
+    kindLabel,
+    note,
+    createdAtText,
+  ].join(" ").toLowerCase();
+
+  return {
+    id: release.id,
+    kind: release.kind,
+    kindLabel,
+    pageVersion: release.pageVersion,
+    title: release.title,
+    note,
+    createdAt: release.createdAt,
+    createdAtText,
+    selected: options.selectedReleaseId === release.id,
+    searchText,
+    release,
+  };
+}
+
+export function createLowcodeReleaseListItems<TRelease extends LowcodeEditorReleaseRecord>(
+  releases: readonly TRelease[],
+  options: CreateLowcodeReleaseListItemsOptions = {},
+): LowcodeEditorReleaseListItem<TRelease>[] {
+  const keyword = options.keyword?.trim().toLowerCase() ?? "";
+  return releases
+    .map((release) => createLowcodeReleaseListItem(release, options))
+    .filter((item) => !keyword || item.searchText.includes(keyword));
+}
+
+export function summarizeLowcodeReleaseList(
+  total: number,
+  visible: number,
+  keyword?: string,
+): LowcodeEditorReleaseListSummary {
+  const hasKeyword = Boolean(keyword?.trim());
+  return {
+    total,
+    visible,
+    statusText: hasKeyword ? `${visible} / ${total}` : "按时间倒序",
+    emptyText: total > 0 ? "没有匹配的本地版本" : "暂无本地版本",
+  };
+}
+
+export function formatLowcodeVersionDiffSummary(changedCount: number): string {
+  return changedCount > 0 ? `${changedCount} 项差异` : "无摘要差异";
+}
+
+export function createLowcodeReleaseMessage(
+  release: Pick<LowcodeEditorReleaseRecord, "title" | "pageVersion" | "note">,
+  action: string,
+): string {
+  const note = release.note?.trim();
+  return `${action}：${release.title} / ${release.pageVersion}${note ? ` / ${note}` : ""}`;
+}
+
+export function createLowcodePublishBlockedMessage(
+  action: string,
+  checks: readonly Pick<LowcodeEditorPublishCheck, "title">[],
+): string {
+  return `${action}失败：${checks.map((check) => check.title).join("、")} 未通过`;
+}
+
+export function createLowcodeRollbackNote(
+  release: Pick<LowcodeEditorReleaseRecord, "pageVersion" | "note">,
+): string {
+  const note = release.note?.trim();
+  return `回滚自 ${release.pageVersion}${note ? `：${note}` : ""}`;
+}
+
+export function createLowcodeRollbackConfirmText(
+  release: Pick<LowcodeEditorReleaseRecord, "pageVersion">,
+): string {
+  return `确认将版本 ${release.pageVersion} 作为新的已发布版本吗？`;
 }
 
 export function createLowcodeVersionDiffItems(

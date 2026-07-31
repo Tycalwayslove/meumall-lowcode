@@ -64,9 +64,14 @@ import {
   createLowcodeEventBindingItems,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
+  createLowcodePublishBlockedMessage,
   createLowcodePageSettingsForm,
   createLowcodePageStartState,
   createLowcodePublishChecks,
+  createLowcodeReleaseListItems,
+  createLowcodeReleaseMessage,
+  createLowcodeRollbackConfirmText,
+  createLowcodeRollbackNote,
   createLowcodeSchemaPreviewItems,
   createLowcodeTemplateListItem,
   createLowcodeVersionDiffItems,
@@ -86,6 +91,8 @@ import {
   filterLowcodeEditorCommands,
   filterLowcodeMaterialCatalog,
   formatLowcodeEditorViewportTitle,
+  formatLowcodeReleaseTime,
+  formatLowcodeVersionDiffSummary,
   formatLowcodeMaterialCatalogSummary,
   getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
@@ -125,6 +132,7 @@ import {
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
+  summarizeLowcodeReleaseList,
   summarizeLowcodePreviewLinks,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
@@ -147,6 +155,7 @@ import {
   type LowcodeEditorPreviewLinkItem as PreviewLinkItem,
   type LowcodeEditorPropGroup as PropEditorGroup,
   type LowcodeEditorPropGroupKey as PropGroupKey,
+  type LowcodeEditorReleaseListItem as ReleaseListItem,
   type LowcodeEditorListField as ListEditorField,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
@@ -846,21 +855,15 @@ const autoSaveStatusTone = computed(() => {
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
-const visibleReleases = computed<LocalPageRelease[]>(() => {
-  const keyword = releaseKeyword.value.trim().toLowerCase();
-  if (!keyword) return releases.value;
-  return releases.value.filter((release) => {
-    const haystack = [
-      release.title,
-      release.pageVersion,
-      release.kind,
-      releaseKindLabel(release.kind),
-      release.note ?? "",
-      formatReleaseTime(release.createdAt),
-    ].join(" ").toLowerCase();
-    return haystack.includes(keyword);
-  });
-});
+const visibleReleaseItems = computed<ReleaseListItem<LocalPageRelease>[]>(() =>
+  createLowcodeReleaseListItems(releases.value, {
+    keyword: releaseKeyword.value,
+    selectedReleaseId: selectedReleaseId.value,
+  }),
+);
+const releaseListSummary = computed(() =>
+  summarizeLowcodeReleaseList(releases.value.length, visibleReleaseItems.value.length, releaseKeyword.value),
+);
 const latestPublishedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.kind === "published"),
 );
@@ -868,6 +871,7 @@ const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
   selectedRelease.value ? createLowcodeVersionDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
 );
 const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
+const releaseDiffSummaryText = computed(() => formatLowcodeVersionDiffSummary(releaseDiffChangedCount.value));
 const releaseSchemaPreviewItems = computed<ReleaseSchemaPreviewItem[]>(() =>
   selectedRelease.value
     ? createLowcodeSchemaPreviewItems(editorState.value.schema, selectedRelease.value.schema, {
@@ -894,7 +898,7 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() =>
     latestPublishedRelease.value ? {
       id: "published-runtime",
       title: "最近发布版本 H5",
-      description: `${latestPublishedRelease.value.pageVersion} / ${formatReleaseTime(latestPublishedRelease.value.createdAt)}`,
+      description: `${latestPublishedRelease.value.pageVersion} / ${formatLowcodeReleaseTime(latestPublishedRelease.value.createdAt)}`,
       url: createRuntimeUrl({ releaseId: latestPublishedRelease.value.id }),
     } : {
       id: "published-runtime",
@@ -3351,13 +3355,13 @@ async function copyTextToClipboard(text: string): Promise<void> {
 }
 
 function setReleaseMessage(release: LocalPageRelease, action: string): void {
-  releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}${release.note ? ` / ${release.note}` : ""}`;
+  releaseMessage.value = createLowcodeReleaseMessage(release, action);
 }
 
 function ensurePublishReady(action: string): boolean {
   const blockingErrors = publishChecks.value.filter((check) => check.status === "error");
   if (!blockingErrors.length) return true;
-  releaseMessage.value = `${action}失败：${blockingErrors.map((check) => check.title).join("、")} 未通过`;
+  releaseMessage.value = createLowcodePublishBlockedMessage(action, blockingErrors);
   return false;
 }
 
@@ -3431,7 +3435,7 @@ function loadSelectedRelease(): void {
 function rollbackPublishSelectedRelease(): void {
   const release = selectedRelease.value;
   if (!release) return;
-  if (!window.confirm(`确认将版本 ${release.pageVersion} 作为新的已发布版本吗？`)) return;
+  if (!window.confirm(createLowcodeRollbackConfirmText(release))) return;
   const rollbackRelease = configPlatformClient.publishPage({
     ...release.schema,
     status: "published",
@@ -3439,7 +3443,7 @@ function rollbackPublishSelectedRelease(): void {
       ...release.schema.publishMeta,
       environment: editorState.value.schema.publishMeta.environment,
     },
-  }, { note: `回滚自 ${release.pageVersion}${release.note ? `：${release.note}` : ""}` });
+  }, { note: createLowcodeRollbackNote(release) });
   markSchemaPersisted(rollbackRelease.schema);
   editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
     selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
@@ -3450,21 +3454,6 @@ function rollbackPublishSelectedRelease(): void {
   refreshReleases();
   selectedReleaseId.value = rollbackRelease.id;
   setReleaseMessage(rollbackRelease, `已回滚发布自 ${release.pageVersion}`);
-}
-
-function releaseKindLabel(kind: LocalPageRelease["kind"]): string {
-  if (kind === "published") return "已发布";
-  if (kind === "preview") return "预览";
-  return "草稿";
-}
-
-function formatReleaseTime(value: string): string {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
 }
 
 </script>
@@ -4540,34 +4529,33 @@ function formatReleaseTime(value: string): string {
             <Search :size="14" />
             <input v-model="releaseKeyword" placeholder="筛选版本、类型或备注" />
           </label>
-          <small>{{ releaseKeyword ? `${visibleReleases.length} / ${releases.length}` : "按时间倒序" }}</small>
+          <small>{{ releaseListSummary.statusText }}</small>
         </div>
-        <div v-if="visibleReleases.length" class="release-list">
+        <div v-if="visibleReleaseItems.length" class="release-list">
           <article
-            v-for="release in visibleReleases"
-            :key="release.id"
+            v-for="item in visibleReleaseItems"
+            :key="item.id"
             class="release-card"
-            :class="{ selected: selectedReleaseId === release.id }"
+            :class="{ selected: item.selected }"
           >
             <div>
-              <strong>{{ releaseKindLabel(release.kind) }}</strong>
-              <span>{{ release.pageVersion }}</span>
+              <strong>{{ item.kindLabel }}</strong>
+              <span>{{ item.pageVersion }}</span>
             </div>
-            <small>{{ formatReleaseTime(release.createdAt) }}</small>
-            <p v-if="release.note" class="release-note">{{ release.note }}</p>
+            <small>{{ item.createdAtText }}</small>
+            <p v-if="item.note" class="release-note">{{ item.note }}</p>
             <div class="release-actions">
-              <button type="button" @click="selectRelease(release.id)">对比</button>
-              <button type="button" @click="loadReleaseById(release.id)">载入</button>
-              <button type="button" @click="openReleaseRuntime(release.id)">打开</button>
+              <button type="button" @click="selectRelease(item.id)">对比</button>
+              <button type="button" @click="loadReleaseById(item.id)">载入</button>
+              <button type="button" @click="openReleaseRuntime(item.id)">打开</button>
             </div>
           </article>
         </div>
-        <div v-else-if="releases.length" class="empty-state">没有匹配的本地版本</div>
-        <div v-else class="empty-state">暂无本地版本</div>
+        <div v-else class="empty-state">{{ releaseListSummary.emptyText }}</div>
         <div v-if="selectedRelease" class="release-diff-panel">
           <div class="release-diff-head">
             <strong>版本对比</strong>
-            <span>{{ releaseDiffChangedCount ? `${releaseDiffChangedCount} 项差异` : "无摘要差异" }}</span>
+            <span>{{ releaseDiffSummaryText }}</span>
           </div>
           <dl class="release-diff-list">
             <div

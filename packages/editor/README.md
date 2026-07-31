@@ -69,6 +69,16 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeSchemaFileName`
 - `createLowcodeSchemaFileExport`
 - `parseLowcodeSchemaFileContent`
+- `formatLowcodeReleaseKindLabel`
+- `formatLowcodeReleaseTime`
+- `createLowcodeReleaseListItem`
+- `createLowcodeReleaseListItems`
+- `summarizeLowcodeReleaseList`
+- `formatLowcodeVersionDiffSummary`
+- `createLowcodeReleaseMessage`
+- `createLowcodePublishBlockedMessage`
+- `createLowcodeRollbackNote`
+- `createLowcodeRollbackConfirmText`
 - `createLowcodeVersionDiffItems`
 - `createLowcodeSchemaPreviewSnippet`
 - `createLowcodeSchemaPreviewItems`
@@ -261,7 +271,7 @@ Host shells remain responsible for file pickers, upload/download UI, overwrite c
 
 ## Version Summary API
 
-The version helpers keep local draft comparison, rollback confirmation, and future Java config platform version audit screens on one summary contract.
+The version helpers keep local draft comparison and future Java config platform version audit screens on one summary contract.
 
 `createLowcodeVersionDiffItems(current, selected)` compares the fields currently shown in the editor release diff panel:
 
@@ -276,6 +286,24 @@ The version helpers keep local draft comparison, rollback confirmation, and futu
 `createLowcodeSchemaPreviewSnippet(schema)` returns a compact JSON-safe summary with page metadata, layout, node summary, data source ids, and action ids.
 
 `createLowcodeSchemaPreviewItems(current, selected, options)` formats current and selected schema snippets for side-by-side preview panels.
+
+## Release History API
+
+The release history helpers keep local release lists, search, status labels, diff summaries, action messages, and rollback copy reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`formatLowcodeReleaseKindLabel(kind)` returns the default Chinese labels for `draft`, `preview`, and `published`, while preserving unknown kinds as-is.
+
+`formatLowcodeReleaseTime(createdAt, options)` formats release timestamps with a shared default `zh-CN` short date/time format and returns `时间未知` for invalid input.
+
+`createLowcodeReleaseListItem(release, options)` derives one display item from host-provided release metadata, including kind label, formatted time, selected state, normalized note, and search text.
+
+`createLowcodeReleaseListItems(releases, options)` creates and filters release list items by keyword. Keyword matching covers title, page id, page version, kind, kind label, note, and formatted time.
+
+`summarizeLowcodeReleaseList(total, visible, keyword)` returns the list count text and empty-state copy used by release panels.
+
+`formatLowcodeVersionDiffSummary(changedCount)`, `createLowcodeReleaseMessage(release, action)`, `createLowcodePublishBlockedMessage(action, checks)`, `createLowcodeRollbackNote(release)`, and `createLowcodeRollbackConfirmText(release)` provide the shared copy currently used by release diff, publish blocking, action feedback, and rollback confirmation surfaces.
+
+These helpers do not save drafts, create previews, publish pages, load releases, open runtime URLs, show confirmation dialogs, call Java APIs, perform service-side diff, validate permissions, or write audit records. Host shells remain responsible for storage, config platform clients, runtime URL construction, review flows, permissions, audit, and user-facing handlers.
 
 ## Template Summary API
 

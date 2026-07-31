@@ -221,6 +221,21 @@ Schema 文件 API：
 
 Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeType、字节大小和大小文案，并提供 JSON 文本解析与 Page Schema v1 校验结果。合法导入默认返回克隆后的 schema；非法 JSON 或非法 schema 返回失败结构和错误文案。API 不创建 `File`、`Blob`、下载链接或上传请求，不处理覆盖确认、权限、审计、存储、审批或 migration。
 
+发布历史模型 API：
+
+- `formatLowcodeReleaseKindLabel`
+- `formatLowcodeReleaseTime`
+- `createLowcodeReleaseListItem`
+- `createLowcodeReleaseListItems`
+- `summarizeLowcodeReleaseList`
+- `formatLowcodeVersionDiffSummary`
+- `createLowcodeReleaseMessage`
+- `createLowcodePublishBlockedMessage`
+- `createLowcodeRollbackNote`
+- `createLowcodeRollbackConfirmText`
+
+发布历史模型 API 从宿主提供的 release metadata 派生版本列表展示、类型文案、时间文案、关键词筛选、列表摘要、差异数量摘要、操作反馈、发布检查拦截和回滚确认文案。关键词匹配覆盖标题、pageId、页面版本、release 类型、类型文案、备注和格式化时间。API 不保存草稿、不生成预览、不发布页面、不载入版本、不打开 runtime URL、不执行确认弹窗、不调用 Java API、不处理服务端 diff、权限、审批、审计或真实回滚。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -245,6 +260,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 工作区状态摘要 API 只派生编辑器顶部状态展示模型，不依赖 DOM，不执行服务端发布校验，不处理权限、协作锁定或审批。
 - H5 预览链接 API 只处理宿主提供的 URL 展示模型，不依赖 DOM、adapters、renderer、runtime 地址或 Java 配置平台协议。
 - Schema 文件 API 只处理 JSON 字符串、文件名和 Page Schema 校验，不依赖 DOM，不依赖浏览器文件对象，不修改 Page Schema v1 契约。
+- 发布历史模型 API 只处理宿主提供的 release metadata 展示模型和文案，不依赖 DOM、浏览器存储、config platform client、runtime URL、Java API、权限、审批、审计或真实回滚。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式

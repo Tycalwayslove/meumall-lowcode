@@ -28,8 +28,14 @@ import {
   createLowcodeOutlineRowSearchText,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
+  createLowcodePublishBlockedMessage,
   createLowcodePageSettingsForm,
   createLowcodePageStartState,
+  createLowcodeReleaseListItem,
+  createLowcodeReleaseListItems,
+  createLowcodeReleaseMessage,
+  createLowcodeRollbackConfirmText,
+  createLowcodeRollbackNote,
   createLowcodePropGroups,
   createLowcodePreviewLinkItem,
   createLowcodePreviewLinkItems,
@@ -51,6 +57,9 @@ import {
   formatLowcodeDataSourceRecordLabel,
   formatLowcodeEditorViewportTitle,
   formatLowcodeEditorDraftStatusText,
+  formatLowcodeReleaseKindLabel,
+  formatLowcodeReleaseTime,
+  formatLowcodeVersionDiffSummary,
   formatLowcodeMaterialCatalogSummary,
   formatLowcodeTemplateSummary,
   formatLowcodeTemplateVersion,
@@ -91,6 +100,7 @@ import {
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePreviewLinks,
+  summarizeLowcodeReleaseList,
   summarizeLowcodePublishChecks,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
@@ -1174,6 +1184,74 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(previewItems[0].title, "当前草稿 Schema 片段");
     assert.equal(previewItems[1].description, "本地发布版本 / 0.1.0");
     assert.equal(previewItems[1].json.includes("banner_old"), true);
+  });
+
+  it("creates release history list models and release messages", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "release_page",
+      title: "夏日活动",
+      status: "draft",
+      pageVersion: "0.2.0",
+      nodes: [],
+      publishMeta: { environment: "pre", operator: "tester" },
+    });
+    const releases = [
+      {
+        id: "release_published",
+        kind: "published",
+        pageId: schema.pageId,
+        pageVersion: "prod-20260801T010000Z",
+        title: "夏日活动",
+        note: "正式发布",
+        createdAt: "2026-08-01T01:00:00.000Z",
+        schema: { ...schema, status: "published", pageVersion: "prod-20260801T010000Z" },
+      },
+      {
+        id: "release_preview",
+        kind: "preview",
+        pageId: schema.pageId,
+        pageVersion: "preview-20260801T000000Z",
+        title: "夏日活动预览",
+        createdAt: "2026-08-01T00:00:00.000Z",
+        schema: { ...schema, status: "preview", pageVersion: "preview-20260801T000000Z" },
+      },
+    ];
+
+    const item = createLowcodeReleaseListItem(releases[0], {
+      selectedReleaseId: "release_published",
+      locale: "en-US",
+      formatOptions: { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "UTC" },
+    });
+    const visibleItems = createLowcodeReleaseListItems(releases, {
+      keyword: "正式",
+      locale: "en-US",
+      formatOptions: { timeZone: "UTC" },
+    });
+    const summaryWithKeyword = summarizeLowcodeReleaseList(releases.length, visibleItems.length, "正式");
+    const summaryWithoutKeyword = summarizeLowcodeReleaseList(releases.length, releases.length);
+
+    assert.equal(formatLowcodeReleaseKindLabel("published"), "已发布");
+    assert.equal(formatLowcodeReleaseKindLabel("custom"), "custom");
+    assert.equal(formatLowcodeReleaseTime("bad-time"), "时间未知");
+    assert.equal(item.kindLabel, "已发布");
+    assert.equal(item.createdAtText.includes("08/01"), true);
+    assert.equal(item.selected, true);
+    assert.equal(item.note, "正式发布");
+    assert.equal(visibleItems.length, 1);
+    assert.equal(visibleItems[0].id, "release_published");
+    assert.deepEqual(summaryWithKeyword, {
+      total: 2,
+      visible: 1,
+      statusText: "1 / 2",
+      emptyText: "没有匹配的本地版本",
+    });
+    assert.equal(summaryWithoutKeyword.statusText, "按时间倒序");
+    assert.equal(formatLowcodeVersionDiffSummary(0), "无摘要差异");
+    assert.equal(formatLowcodeVersionDiffSummary(3), "3 项差异");
+    assert.equal(createLowcodeReleaseMessage(releases[0], "已发布"), "已发布：夏日活动 / prod-20260801T010000Z / 正式发布");
+    assert.equal(createLowcodePublishBlockedMessage("发布", [{ title: "页面 Schema" }, { title: "动作配置" }]), "发布失败：页面 Schema、动作配置 未通过");
+    assert.equal(createLowcodeRollbackNote(releases[0]), "回滚自 prod-20260801T010000Z：正式发布");
+    assert.equal(createLowcodeRollbackConfirmText(releases[0]), "确认将版本 prod-20260801T010000Z 作为新的已发布版本吗？");
   });
 
   it("creates template preview metadata and list summaries", () => {
