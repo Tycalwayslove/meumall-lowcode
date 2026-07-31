@@ -217,6 +217,7 @@ import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
+import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   localConfigPlatformClient,
@@ -4081,34 +4082,16 @@ function rollbackPublishSelectedRelease(): void {
         </div>
 
         <div v-if="selectedNode && selectedManifest" class="inspector">
-          <div class="selected-card">
-            <div class="selected-card-head">
-              <strong>{{ selectedNodeDisplayName }}</strong>
-              <small>{{ selectedManifest.title }} / {{ selectedManifest.category }}</small>
-            </div>
-            <label class="node-name-field">
-              <span>节点名称</span>
-              <input
-                :value="selectedNode.meta?.name ?? ''"
-                placeholder="例如：首屏主会场"
-                @change="renameSelectedNode(($event.target as HTMLInputElement).value)"
-              />
-            </label>
-            <dl class="selected-meta">
-              <div>
-                <dt>节点</dt>
-                <dd>{{ selectedNode.id }}</dd>
-              </div>
-              <div>
-                <dt>位置</dt>
-                <dd>{{ selectedPositionText }}</dd>
-              </div>
-              <div>
-                <dt>父级</dt>
-                <dd>{{ selectedParentTitle }}</dd>
-              </div>
-            </dl>
-          </div>
+          <EditorSelectedNodeCard
+            :display-name="selectedNodeDisplayName"
+            :material-title="selectedManifest.title"
+            :material-category="selectedManifest.category"
+            :node-name="selectedNode.meta?.name ?? ''"
+            :node-id="selectedNode.id"
+            :position-text="selectedPositionText"
+            :parent-title="selectedParentTitle"
+            @rename="renameSelectedNode"
+          />
 
           <div v-if="canUseAssetLibrary" class="resource-panel">
             <div class="resource-panel-head">

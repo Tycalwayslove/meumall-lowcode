@@ -103,10 +103,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行真实视口切换、权限、协作锁定、审计或服务端保存。
 
+### `EditorSelectedNodeCard`
+
+路径：`apps/editor-playground/src/components/EditorSelectedNodeCard.vue`
+
+职责：
+
+- 展示右侧属性区的当前节点信息卡，包括节点展示名、物料标题/分类、节点名称输入、节点 id、位置和父级。
+- 接收 `displayName`、`materialTitle`、`materialCategory`、`nodeName`、`nodeId`、`positionText` 和 `parentTitle`。
+- 通过 emits 抛出节点名称提交。
+- 复用现有 `.selected-card`、`.node-name-field` 和 `.selected-meta` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不计算节点展示名、物料信息、节点位置或父级文案。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不处理权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 右侧页面设置和属性面板：优先消费 page settings、prop groups、prop editor model API。
-2. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
+1. 右侧属性字段编辑器和资源选择器：优先消费 prop groups、prop editor model、event binding、data source config、action config API。
+2. 右侧页面设置：优先消费 page settings API。
+3. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
 
 ## 抽 npm 包判断
 
