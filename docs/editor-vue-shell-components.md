@@ -66,12 +66,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不打开资源选择器、不处理收藏偏好、不处理权限、协作锁定、审计或服务端保存。
 
+### `EditorOutlineTree`
+
+路径：`apps/editor-playground/src/components/EditorOutlineTree.vue`
+
+职责：
+
+- 展示左侧结构树搜索、可见摘要、多选摘要、节点行、折叠状态、搜索命中状态、多选状态、成组可拖拽状态和内联重命名输入。
+- 接收 `rows`、`keyword`、`visibleSummary`、`multiSelectSummary`、`selectedNodeId`、`collapsedNodeIds`、`searchMatchedNodeIds`、`multiSelectedNodeIds`、`groupDraggableNodeIds`、`renamingNodeId` 和 `renameDraft`。
+- 通过 emits 抛出搜索更新、重命名草稿更新、节点点击、节点 pointerdown、节点 dragstart、节点 drop、节点右键菜单、折叠切换、多选切换、重命名提交和重命名取消。
+- 复用 outline tree、node selection 和 node operation API 产出的展示模型，以及现有 `.outline-*` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不计算结构树行、搜索结果、折叠可见性或成组拖拽可用状态。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不执行真实节点选择、节点移动、重命名、右键菜单定位、画布滚动、权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 结构树和节点操作：优先消费 outline tree、node selection、node operation API。
-2. 画布顶部工具条和视口切换：优先消费 viewport preset、workspace summary API。
-3. 右侧页面设置和属性面板：优先消费 page settings、prop groups、prop editor model API。
-4. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
+1. 画布顶部工具条和视口切换：优先消费 viewport preset、workspace summary API。
+2. 右侧页面设置和属性面板：优先消费 page settings、prop groups、prop editor model API。
+3. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
 
 ## 抽 npm 包判断
 

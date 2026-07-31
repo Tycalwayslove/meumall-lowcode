@@ -216,6 +216,7 @@ import {
 } from "@meumall/lowcode-schema";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
+import EditorOutlineTree from "./components/EditorOutlineTree.vue";
 import EditorWorkspaceStats from "./components/EditorWorkspaceStats.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -650,6 +651,11 @@ const visibleOutlineRows = computed(() => outlineVisibility.value.rows);
 const outlineVisibleSummary = computed(() => outlineVisibility.value.summary);
 const multiSelection = computed(() => createLowcodeNodeSelectionModel(outlineRows.value, multiSelectedNodeIds.value));
 const multiSelectSummary = computed(() => multiSelection.value.summary);
+const groupDraggableOutlineNodeIds = computed(() =>
+  visibleOutlineRows.value
+    .filter((row) => canDragSelectedGroup(row.node.id))
+    .map((row) => row.node.id),
+);
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
@@ -1150,10 +1156,6 @@ function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefine
 
 function getNodeDisplayName(node: LowcodeNode): string {
   return getLowcodeNodeDisplayName(node, registry.get(node.componentName)?.manifest);
-}
-
-function getNodeSubtitle(row: OutlineRow): string {
-  return row.subtitle;
 }
 
 function commitPlaygroundSchemaChange(schema: LowcodePageSchema, action: string, selectedNodeId?: string): void {
@@ -3543,86 +3545,28 @@ function rollbackPublishSelectedRelease(): void {
         @material-dragend="onMaterialDragEnd"
       />
 
-      <section class="panel-section">
-        <div class="panel-title">
-          <Layers :size="16" />
-          <span>结构</span>
-          <small>{{ outlineVisibleSummary }}</small>
-        </div>
-        <label class="search-field outline-search">
-          <Search :size="14" />
-          <input v-model="outlineKeyword" placeholder="搜索节点" />
-        </label>
-        <div v-if="multiSelectSummary" class="outline-selection-summary">
-          {{ multiSelectSummary }}
-        </div>
-        <div
-          v-for="row in visibleOutlineRows"
-          :key="row.node.id"
-          class="outline-item"
-          role="button"
-          tabindex="0"
-          :class="{
-            selected: editorState.selectedNodeId === row.node.id,
-            'multi-selected': isNodeMultiSelected(row.node.id),
-            'group-draggable': canDragSelectedGroup(row.node.id),
-            'search-matched': isOutlineNodeSearchMatched(row.node.id),
-            'is-collapsed': isOutlineNodeCollapsed(row.node.id),
-          }"
-          :style="{ paddingLeft: `${12 + row.depth * 18}px` }"
-          draggable="true"
-          @pointerdown="onOutlineNodePointerDown($event, row.node.id)"
-          @dragstart="onNodeDragStart($event, row.node.id)"
-          @dragover.prevent
-          @drop.prevent="onNodeDrop($event, row)"
-          @contextmenu.prevent="openNodeContextMenu($event, row.node.id)"
-          @click="onOutlineNodeClick($event, row.node.id)"
-        >
-          <GripVertical :size="15" class="drag-icon" />
-          <span
-            v-if="row.hasChildren"
-            class="outline-collapse-toggle"
-            role="button"
-            tabindex="0"
-            :title="isOutlineNodeCollapsed(row.node.id) ? '展开节点' : '折叠节点'"
-            @click.stop="toggleOutlineCollapse(row.node.id)"
-            @keydown.enter.prevent.stop="toggleOutlineCollapse(row.node.id)"
-            @keydown.space.prevent.stop="toggleOutlineCollapse(row.node.id)"
-          >
-            {{ isOutlineNodeCollapsed(row.node.id) ? "›" : "⌄" }}
-          </span>
-          <span v-else class="outline-collapse-placeholder"></span>
-          <span
-            class="outline-check"
-            :class="{ checked: isNodeMultiSelected(row.node.id) }"
-            title="多选节点"
-            @click.stop="toggleMultiSelected(row.node.id)"
-          >
-            {{ isNodeMultiSelected(row.node.id) ? "✓" : "" }}
-          </span>
-          <span class="outline-index">{{ row.index + 1 }}</span>
-          <span v-if="renamingOutlineNodeId === row.node.id" class="outline-rename" @click.stop>
-            <input
-              v-model="outlineRenameDraft"
-              autofocus
-              placeholder="节点名称"
-              @keydown.enter.prevent="commitOutlineRename"
-              @keydown.escape.prevent="cancelOutlineRename"
-            />
-            <button type="button" title="确认重命名" @click="commitOutlineRename">
-              <Check :size="14" />
-            </button>
-            <button type="button" title="取消重命名" @click="cancelOutlineRename">
-              <X :size="14" />
-            </button>
-          </span>
-          <span v-else class="outline-main">
-            <strong>{{ getNodeDisplayName(row.node) }}</strong>
-            <small>{{ getNodeSubtitle(row) }}</small>
-          </span>
-        </div>
-        <div v-if="!visibleOutlineRows.length" class="mini-empty">没有匹配节点</div>
-      </section>
+      <EditorOutlineTree
+        v-model:keyword="outlineKeyword"
+        v-model:rename-draft="outlineRenameDraft"
+        :rows="visibleOutlineRows"
+        :visible-summary="outlineVisibleSummary"
+        :multi-select-summary="multiSelectSummary"
+        :selected-node-id="editorState.selectedNodeId"
+        :collapsed-node-ids="collapsedOutlineNodeIds"
+        :search-matched-node-ids="outlineVisibility.matchedNodeIds"
+        :multi-selected-node-ids="multiSelection.selectedNodeIds"
+        :group-draggable-node-ids="groupDraggableOutlineNodeIds"
+        :renaming-node-id="renamingOutlineNodeId"
+        @node-click="onOutlineNodeClick"
+        @node-pointerdown="onOutlineNodePointerDown"
+        @node-dragstart="onNodeDragStart"
+        @node-drop="onNodeDrop"
+        @node-contextmenu="openNodeContextMenu"
+        @toggle-collapse="toggleOutlineCollapse"
+        @toggle-multi-select="toggleMultiSelected"
+        @commit-rename="commitOutlineRename"
+        @cancel-rename="cancelOutlineRename"
+      />
     </aside>
 
     <section
