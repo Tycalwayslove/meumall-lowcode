@@ -131,6 +131,21 @@ interface LowcodeEditorState {
 
 属性字段模型 API 从 `LowcodePropSchema`、字段名、组件名和当前列表项派生属性面板控件类型、列表项字段模型、图片字段标记、默认新增项和输入值转换结果。API 不渲染 Vue/React 控件、不处理 DOM、不打开资源选择器、不执行保存、不处理权限、审计或服务端校验。
 
+数据源配置模型 API：
+
+- `LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS`
+- `createLowcodeDefaultDataSourceParams`
+- `createLowcodeDataSourceConfig`
+- `formatLowcodeDataSourceParamsText`
+- `formatLowcodeDataSourceRecordLabel`
+- `createLowcodeDataSourceFormItems`
+- `upsertLowcodeDataSourceConfigs`
+- `addLowcodeDataSource`
+- `updateLowcodeDataSource`
+- `removeLowcodeDataSource`
+
+数据源配置模型 API 提供 Page Schema `dataSources` 的默认类型、默认参数、默认绑定目标、参数 JSON 展示、解析状态展示模型和 data source 增删改 helper。新增、更新和删除数据源都返回新的 `LowcodeEditorState`；upsert helper 可按 data source id 更新或追加配置。API 不解析 textarea JSON、不渲染 Vue/React 控件、不执行 HTTP 请求、不解析数据、不调用 Java API，不处理鉴权、缓存、权限、风控、审计或服务端保存。
+
 动作配置模型 API：
 
 - `LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS`
@@ -203,6 +218,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。
+- 数据源配置模型 API 只派生 Page Schema dataSources 表单模型、预览解析状态展示模型和 data source 变更 helper，不执行 HTTP 请求，不依赖 DOM、Java API、鉴权、缓存、权限、风控或服务端保存。
 - 动作配置模型 API 只派生 Page Schema actions 表单模型和 action 变更 helper，不执行 action，不依赖 DOM、桥能力、业务接口、权限、风控或服务端保存。
 - 事件绑定模型 API 只派生物料事件到 Page Schema action 的绑定展示模型和节点 action ref 变更，不执行 action，不依赖 DOM、桥能力、业务接口、权限、风控或服务端保存。
 - 草稿持久化 API 只处理 Page Schema 草稿 payload、JSON 文本恢复和自动保存状态展示口径，不依赖 DOM、浏览器存储或 HTTP，不修改 Page Schema v1 契约。

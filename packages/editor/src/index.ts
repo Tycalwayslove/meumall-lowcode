@@ -2,6 +2,7 @@ import type {
   JsonObject,
   JsonValue,
   LowcodeActionConfig,
+  LowcodeDataSourceConfig,
   LowcodeNode,
   LowcodeMaterialManifest,
   LowcodeMaterialEventManifest,
@@ -111,6 +112,43 @@ export interface LowcodeEditorDataSourceResolutionRecord {
   status: "pending" | "resolved" | "skipped" | "error" | string;
   bindTo?: string;
   error?: string;
+}
+
+export interface LowcodeEditorDataSourceTypeOption {
+  type: string;
+  label: string;
+  description?: string;
+  defaultBindTo?: string;
+  defaultParams?: JsonObject;
+  defaultCache?: LowcodeDataSourceConfig["cache"];
+}
+
+export interface LowcodeEditorDataSourceFormItem {
+  id: string;
+  type: string;
+  typeLabel: string;
+  bindTo: string;
+  paramsText: string;
+  status: string;
+  statusText: string;
+  statusDescription: string;
+  dataSource: LowcodeDataSourceConfig;
+  record?: LowcodeEditorDataSourceResolutionRecord;
+}
+
+export interface CreateLowcodeDataSourceConfigOptions {
+  id?: string;
+  now?: Date;
+  bindTo?: string;
+  params?: JsonObject;
+  cache?: LowcodeDataSourceConfig["cache"];
+  typeOptions?: readonly LowcodeEditorDataSourceTypeOption[];
+}
+
+export interface CreateLowcodeDataSourceFormItemsOptions {
+  typeOptions?: readonly LowcodeEditorDataSourceTypeOption[];
+  records?: readonly LowcodeEditorDataSourceResolutionRecord[];
+  pendingLabel?: string;
 }
 
 export type LowcodeEditorPreviewLinkStatus = "ready" | "disabled";
@@ -596,6 +634,48 @@ const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
   { actionType: "tracking.click", paramName: "eventName", label: "eventName" },
 ];
+export const LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS: readonly LowcodeEditorDataSourceTypeOption[] = [
+  {
+    type: "product.byActivity",
+    label: "活动商品",
+    description: "按活动上下文拉取商品列表",
+    defaultBindTo: "products",
+    defaultParams: { activityId: "activity_demo", limit: 6 },
+    defaultCache: { ttlSeconds: 60, scope: "public" },
+  },
+  {
+    type: "product.byIds",
+    label: "指定商品",
+    description: "按商品 ID 列表拉取商品",
+    defaultBindTo: "products",
+    defaultParams: { ids: [], limit: 6 },
+    defaultCache: { ttlSeconds: 60, scope: "public" },
+  },
+  {
+    type: "store.byIds",
+    label: "指定门店",
+    description: "按门店 ID 列表拉取门店",
+    defaultBindTo: "stores",
+    defaultParams: { ids: [], limit: 4 },
+    defaultCache: { ttlSeconds: 120, scope: "public" },
+  },
+  {
+    type: "expert.byActivity",
+    label: "活动达人",
+    description: "按活动上下文拉取达人推荐",
+    defaultBindTo: "stores",
+    defaultParams: { activityId: "activity_demo", limit: 4 },
+    defaultCache: { ttlSeconds: 120, scope: "public" },
+  },
+  {
+    type: "custom.http",
+    label: "自定义接口",
+    description: "接入宿主提供的 HTTP 数据源",
+    defaultBindTo: "data",
+    defaultParams: {},
+    defaultCache: { ttlSeconds: 60, scope: "public" },
+  },
+];
 export const LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS: readonly LowcodeEditorActionTypeOption[] = [
   {
     type: "navigate",
@@ -898,6 +978,80 @@ export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEdit
   });
 }
 
+export function createLowcodeDefaultDataSourceParams(
+  dataSourceType: string,
+  typeOptions: readonly LowcodeEditorDataSourceTypeOption[] = LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
+): JsonObject {
+  const option = typeOptions.find((item) => item.type === dataSourceType);
+  return cloneJsonObject(option?.defaultParams ?? {});
+}
+
+export function createLowcodeDataSourceConfig(
+  dataSourceType = "custom.http",
+  options: CreateLowcodeDataSourceConfigOptions = {},
+): LowcodeDataSourceConfig {
+  const now = options.now ?? new Date();
+  const typeOption = (options.typeOptions ?? LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS)
+    .find((item) => item.type === dataSourceType);
+  const params = options.params ?? createLowcodeDefaultDataSourceParams(dataSourceType, options.typeOptions);
+  const cache = options.cache ?? typeOption?.defaultCache;
+  return {
+    id: options.id ?? `ds_${now.getTime().toString(36)}`,
+    type: dataSourceType,
+    bindTo: options.bindTo ?? typeOption?.defaultBindTo ?? "data",
+    params: cloneJsonObject(params),
+    ...(cache ? { cache: cloneJsonObject(cache) as LowcodeDataSourceConfig["cache"] } : {}),
+  };
+}
+
+export function formatLowcodeDataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
+  return JSON.stringify(dataSource.params ?? {}, null, 2);
+}
+
+export function formatLowcodeDataSourceRecordLabel(
+  record: LowcodeEditorDataSourceResolutionRecord | undefined,
+  pendingLabel = "等待解析",
+): string {
+  if (!record) return pendingLabel;
+  if (record.status === "resolved") return record.bindTo ? `已绑定到 ${record.bindTo}` : "已解析";
+  if (record.status === "skipped") return "已跳过";
+  if (record.status === "error") return "解析失败";
+  return String(record.status);
+}
+
+export function createLowcodeDataSourceFormItems(
+  dataSources: readonly LowcodeDataSourceConfig[] = [],
+  options: CreateLowcodeDataSourceFormItemsOptions = {},
+): LowcodeEditorDataSourceFormItem[] {
+  const typeOptions = options.typeOptions ?? LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS;
+  const typeLabelMap = new Map(typeOptions.map((item) => [item.type, item.label]));
+  const recordMap = new Map((options.records ?? []).map((record) => [record.id, record]));
+  return dataSources.map((dataSource) => {
+    const record = recordMap.get(dataSource.id);
+    return {
+      id: dataSource.id,
+      type: dataSource.type,
+      typeLabel: typeLabelMap.get(dataSource.type) ?? dataSource.type,
+      bindTo: dataSource.bindTo ?? "",
+      paramsText: formatLowcodeDataSourceParamsText(dataSource),
+      status: record?.status ?? "pending",
+      statusText: formatLowcodeDataSourceRecordLabel(record, options.pendingLabel),
+      statusDescription: record?.error ?? `${dataSource.type} / ${dataSource.bindTo || "未绑定"}`,
+      dataSource,
+      record,
+    };
+  });
+}
+
+export function upsertLowcodeDataSourceConfigs(
+  dataSources: readonly LowcodeDataSourceConfig[],
+  nextDataSource: LowcodeDataSourceConfig,
+): LowcodeDataSourceConfig[] {
+  const index = dataSources.findIndex((dataSource) => dataSource.id === nextDataSource.id);
+  if (index < 0) return [...dataSources, nextDataSource];
+  return dataSources.map((dataSource, currentIndex) => (currentIndex === index ? nextDataSource : dataSource));
+}
+
 export function createLowcodeActionOptions(
   actions: readonly LowcodeActionConfig[] = [],
 ): LowcodeEditorActionOption[] {
@@ -1109,6 +1263,61 @@ export function bindLowcodeNodeEvent(
       };
     },
     "bindNodeEvent",
+  );
+}
+
+export function addLowcodeDataSource(
+  state: LowcodeEditorState,
+  dataSourceType = "custom.http",
+  options: CreateLowcodeDataSourceConfigOptions = {},
+): LowcodeEditorState {
+  const nextDataSource = createLowcodeDataSourceConfig(dataSourceType, options);
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      dataSources: [...(state.schema.dataSources ?? []), nextDataSource],
+    },
+    "addDataSource",
+  );
+}
+
+export function updateLowcodeDataSource(
+  state: LowcodeEditorState,
+  index: number,
+  patch: Partial<LowcodeDataSourceConfig>,
+): LowcodeEditorState {
+  const dataSources = [...(state.schema.dataSources ?? [])];
+  const current = dataSources[index];
+  if (!current) return state;
+  dataSources[index] = {
+    ...current,
+    ...patch,
+  };
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      dataSources,
+    },
+    "updateDataSource",
+  );
+}
+
+export function removeLowcodeDataSource(
+  state: LowcodeEditorState,
+  index: number,
+): LowcodeEditorState {
+  const dataSources = [...(state.schema.dataSources ?? [])];
+  const [removed] = dataSources.splice(index, 1);
+  if (!removed) return state;
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      dataSources,
+    },
+    "removeDataSource",
   );
 }
 

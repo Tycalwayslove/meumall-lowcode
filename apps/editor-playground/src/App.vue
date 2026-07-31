@@ -50,6 +50,7 @@ import {
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
+  addLowcodeDataSource,
   addLowcodeAction,
   appendNode,
   cloneLowcodePageSchema,
@@ -57,6 +58,7 @@ import {
   copyNode,
   bindLowcodeNodeEvent,
   createLowcodeActionFormItems,
+  createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEventBindingItems,
@@ -93,6 +95,7 @@ import {
   isLowcodeListPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
   markSaved,
   moveNodeById,
@@ -107,6 +110,7 @@ import {
   redo,
   revealLowcodeOutlineNode,
   removeLowcodeAction,
+  removeLowcodeDataSource,
   removeNode,
   replaceNodeProps,
   renameLowcodeAction,
@@ -122,6 +126,8 @@ import {
   toLowcodePropInputText,
   undo,
   updateLowcodeAction,
+  updateLowcodeDataSource,
+  upsertLowcodeDataSourceConfigs,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
@@ -355,6 +361,7 @@ const sampleStoreExperts: LowcodeStoreExpertResource[] = [
 ];
 
 const actionTypeOptions = LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS;
+const dataSourceTypeOptions = LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS;
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
@@ -799,6 +806,13 @@ const selectedEventBindings = computed(() =>
 const actionFormItems = computed(() =>
   createLowcodeActionFormItems(editorState.value.schema.actions ?? [], {
     typeOptions: actionTypeOptions,
+  }),
+);
+const dataSourceFormItems = computed(() =>
+  createLowcodeDataSourceFormItems(editorState.value.schema.dataSources ?? [], {
+    typeOptions: dataSourceTypeOptions,
+    records: isPreviewDataResolving.value ? [] : previewDataSourceRecords.value,
+    pendingLabel: isPreviewDataResolving.value ? "解析中" : "待解析",
   }),
 );
 const workspaceStats = computed<WorkspaceStat[]>(() =>
@@ -1489,18 +1503,6 @@ async function refreshRuntimePreviewData(schema: LowcodePageSchema): Promise<voi
   runtimePreviewData.value = result.data;
   runtimeDataSourceRecords.value = result.records;
   isRuntimeDataResolving.value = false;
-}
-
-function dataSourceRecordFor(dataSourceId: string): DataSourceResolutionRecord | undefined {
-  return previewDataSourceRecords.value.find((record) => record.id === dataSourceId);
-}
-
-function dataSourceRecordLabel(record: DataSourceResolutionRecord | undefined): string {
-  if (isPreviewDataResolving.value) return "解析中";
-  if (!record) return "待解析";
-  if (record.status === "resolved") return `已绑定到 ${record.bindTo}`;
-  if (record.status === "skipped") return "已跳过";
-  return "解析失败";
 }
 
 function runtimeDataStatusText(): string {
@@ -2304,7 +2306,7 @@ function bindSelectedStoreExpertMaterialToDataSource(): void {
           items: "stores",
         },
       })),
-      dataSources: upsertDataSource(editorState.value.schema.dataSources ?? [], {
+      dataSources: upsertLowcodeDataSourceConfigs(editorState.value.schema.dataSources ?? [], {
         id: "ds_stores",
         type: "store.byIds",
         bindTo: "stores",
@@ -3141,50 +3143,13 @@ function updatePageMaxWidth(value: string): void {
 }
 
 function addDataSource(): void {
-  const nextDataSource: LowcodeDataSourceConfig = {
-    id: `ds_${Date.now().toString(36)}`,
-    type: "custom.http",
-    bindTo: "data",
-    params: {},
-    cache: {
-      ttlSeconds: 60,
-      scope: "public",
-    },
-  };
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      dataSources: [...(editorState.value.schema.dataSources ?? []), nextDataSource],
-    },
-    dirty: true,
-    lastAction: "addDataSource",
-  };
+  editorState.value = addLowcodeDataSource(editorState.value, "custom.http", {
+    typeOptions: dataSourceTypeOptions,
+  });
 }
 
-function upsertDataSource(dataSources: LowcodeDataSourceConfig[], nextDataSource: LowcodeDataSourceConfig): LowcodeDataSourceConfig[] {
-  const index = dataSources.findIndex((dataSource) => dataSource.id === nextDataSource.id);
-  if (index < 0) return [...dataSources, nextDataSource];
-  return dataSources.map((dataSource, currentIndex) => (currentIndex === index ? nextDataSource : dataSource));
-}
-
-function updateDataSource(index: number, patch: Partial<LowcodeDataSourceConfig>): void {
-  const dataSources = [...(editorState.value.schema.dataSources ?? [])];
-  const current = dataSources[index];
-  if (!current) return;
-  dataSources[index] = {
-    ...current,
-    ...patch,
-  };
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      dataSources,
-    },
-    dirty: true,
-    lastAction: "updateDataSource",
-  };
+function updateDataSource(index: number, patch: Parameters<typeof updateLowcodeDataSource>[2]): void {
+  editorState.value = updateLowcodeDataSource(editorState.value, index, patch);
 }
 
 function updateDataSourceParams(index: number, value: string): void {
@@ -3197,17 +3162,7 @@ function updateDataSourceParams(index: number, value: string): void {
 }
 
 function removeDataSource(index: number): void {
-  const dataSources = [...(editorState.value.schema.dataSources ?? [])];
-  dataSources.splice(index, 1);
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      dataSources,
-    },
-    dirty: true,
-    lastAction: "removeDataSource",
-  };
+  editorState.value = removeLowcodeDataSource(editorState.value, index);
 }
 
 function addAction(type = "navigate"): void {
@@ -3284,10 +3239,6 @@ function applySampleProducts(): void {
 
 function isStructured(propSchema: LowcodePropSchema): boolean {
   return getLowcodePropEditorControl(propSchema) === "json";
-}
-
-function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
-  return JSON.stringify(dataSource.params ?? {}, null, 2);
 }
 
 function refreshReleases(): void {
@@ -5183,37 +5134,36 @@ function formatReleaseTime(value: string): string {
         </div>
         <div class="data-source-list">
           <div
-            v-for="(dataSource, index) in editorState.schema.dataSources ?? []"
-            :key="dataSource.id"
+            v-for="(dataSourceItem, index) in dataSourceFormItems"
+            :key="dataSourceItem.id"
             class="data-source-card"
           >
             <label class="field">
               <span>ID</span>
-              <input :value="dataSource.id" @input="updateDataSource(index, { id: ($event.target as HTMLInputElement).value })" />
+              <input :value="dataSourceItem.id" @input="updateDataSource(index, { id: ($event.target as HTMLInputElement).value })" />
             </label>
             <label class="field">
               <span>类型</span>
-              <input :value="dataSource.type" @input="updateDataSource(index, { type: ($event.target as HTMLInputElement).value })" />
+              <input :value="dataSourceItem.type" @input="updateDataSource(index, { type: ($event.target as HTMLInputElement).value })" />
             </label>
             <label class="field">
               <span>绑定到</span>
-              <input :value="dataSource.bindTo" @input="updateDataSource(index, { bindTo: ($event.target as HTMLInputElement).value })" />
+              <input :value="dataSourceItem.bindTo" @input="updateDataSource(index, { bindTo: ($event.target as HTMLInputElement).value })" />
             </label>
             <label class="field">
               <span>参数 JSON</span>
               <textarea
-                :value="dataSourceParamsText(dataSource)"
+                :value="dataSourceItem.paramsText"
                 rows="4"
                 @change="updateDataSourceParams(index, ($event.target as HTMLTextAreaElement).value)"
               />
             </label>
             <div
               class="data-source-status"
-              :class="`is-${dataSourceRecordFor(dataSource.id)?.status ?? 'pending'}`"
+              :class="`is-${dataSourceItem.status}`"
             >
-              <strong>{{ dataSourceRecordLabel(dataSourceRecordFor(dataSource.id)) }}</strong>
-              <span v-if="dataSourceRecordFor(dataSource.id)?.error">{{ dataSourceRecordFor(dataSource.id)?.error }}</span>
-              <span v-else>{{ dataSource.type }} / {{ dataSource.bindTo || "未绑定" }}</span>
+              <strong>{{ dataSourceItem.statusText }}</strong>
+              <span>{{ dataSourceItem.statusDescription }}</span>
             </div>
             <button class="text-danger" @click="removeDataSource(index)">删除数据源</button>
           </div>

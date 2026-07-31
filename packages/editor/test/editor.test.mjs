@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  addLowcodeDataSource,
   addLowcodeAction,
   countLowcodeNodes,
   cloneLowcodePageSchema,
@@ -11,7 +12,10 @@ import {
   bindLowcodeNodeEvent,
   createLowcodeActionConfig,
   createLowcodeActionFormItems,
+  createLowcodeDataSourceConfig,
+  createLowcodeDataSourceFormItems,
   createLowcodeDefaultListItem,
+  createLowcodeDefaultDataSourceParams,
   createLowcodeDefaultActionParams,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
@@ -42,6 +46,8 @@ import {
   filterLowcodeMaterialCatalog,
   flattenLowcodeNodes,
   formatLowcodeActionParamsText,
+  formatLowcodeDataSourceParamsText,
+  formatLowcodeDataSourceRecordLabel,
   formatLowcodeEditorViewportTitle,
   formatLowcodeEditorDraftStatusText,
   formatLowcodeMaterialCatalogSummary,
@@ -58,6 +64,7 @@ import {
   isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
@@ -70,6 +77,7 @@ import {
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
   removeLowcodeAction,
+  removeLowcodeDataSource,
   removeLowcodeActionRefsFromNodes,
   renameLowcodeActionRefsInNodes,
   renameLowcodeAction,
@@ -82,6 +90,8 @@ import {
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
   updateLowcodeAction,
+  updateLowcodeDataSource,
+  upsertLowcodeDataSourceConfigs,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -832,6 +842,86 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     const cleanedNodes = removeLowcodeActionRefsFromNodes(boundState.schema.nodes, "go_home");
     assert.equal(cleanedNodes[0].children[0].events, undefined);
+  });
+
+  it("creates reusable data source config models and state helpers", () => {
+    assert.deepEqual(LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS.map((option) => option.label), [
+      "活动商品",
+      "指定商品",
+      "指定门店",
+      "活动达人",
+      "自定义接口",
+    ]);
+    assert.deepEqual(createLowcodeDefaultDataSourceParams("product.byActivity"), {
+      activityId: "activity_demo",
+      limit: 6,
+    });
+    assert.deepEqual(createLowcodeDefaultDataSourceParams("unknown.source"), {});
+
+    const createdDataSource = createLowcodeDataSourceConfig("store.byIds", {
+      id: "stores",
+      now: new Date("2026-08-01T00:00:00.000Z"),
+    });
+    assert.deepEqual(createdDataSource, {
+      id: "stores",
+      type: "store.byIds",
+      bindTo: "stores",
+      params: { ids: [], limit: 4 },
+      cache: { ttlSeconds: 120, scope: "public" },
+    });
+    assert.equal(formatLowcodeDataSourceParamsText(createdDataSource), "{\n  \"ids\": [],\n  \"limit\": 4\n}");
+    assert.equal(formatLowcodeDataSourceRecordLabel(undefined, "解析中"), "解析中");
+    assert.equal(formatLowcodeDataSourceRecordLabel({ id: "stores", status: "resolved", bindTo: "stores" }), "已绑定到 stores");
+    assert.equal(formatLowcodeDataSourceRecordLabel({ id: "stores", status: "error" }), "解析失败");
+
+    const formItems = createLowcodeDataSourceFormItems([createdDataSource], {
+      records: [{ id: "stores", status: "resolved", bindTo: "stores" }],
+    });
+    assert.equal(formItems[0].id, "stores");
+    assert.equal(formItems[0].typeLabel, "指定门店");
+    assert.equal(formItems[0].bindTo, "stores");
+    assert.equal(formItems[0].status, "resolved");
+    assert.equal(formItems[0].statusText, "已绑定到 stores");
+    assert.equal(formItems[0].statusDescription, "store.byIds / stores");
+    assert.equal(formItems[0].paramsText.includes("\"limit\": 4"), true);
+
+    const upsertedNew = upsertLowcodeDataSourceConfigs([], createdDataSource);
+    assert.equal(upsertedNew.length, 1);
+    const upsertedExisting = upsertLowcodeDataSourceConfigs(upsertedNew, {
+      ...createdDataSource,
+      params: { limit: 2 },
+    });
+    assert.equal(upsertedExisting.length, 1);
+    assert.deepEqual(upsertedExisting[0].params, { limit: 2 });
+
+    const state = createEditorState(createLowcodePageSchema({
+      pageId: "data_source_page",
+      title: "数据源页面",
+      nodes: [],
+      dataSources: [
+        { id: "products", type: "product.byActivity", bindTo: "products", params: { limit: 6 } },
+      ],
+    }));
+
+    const addedState = addLowcodeDataSource(state, "custom.http", { id: "custom_data" });
+    assert.equal(addedState.lastAction, "addDataSource");
+    assert.equal(addedState.dirty, true);
+    assert.equal(addedState.schema.dataSources.length, 2);
+    assert.equal(addedState.schema.dataSources[1].bindTo, "data");
+
+    const patchedState = updateLowcodeDataSource(addedState, 1, {
+      type: "product.byIds",
+      bindTo: "products",
+      params: { ids: ["sku_1"] },
+    });
+    assert.equal(patchedState.lastAction, "updateDataSource");
+    assert.equal(patchedState.schema.dataSources[1].type, "product.byIds");
+    assert.deepEqual(patchedState.schema.dataSources[1].params, { ids: ["sku_1"] });
+
+    const removedState = removeLowcodeDataSource(patchedState, 0);
+    assert.equal(removedState.lastAction, "removeDataSource");
+    assert.equal(removedState.schema.dataSources.length, 1);
+    assert.equal(removedState.schema.dataSources[0].id, "custom_data");
   });
 
   it("creates reusable action config models and state helpers", () => {

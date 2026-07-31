@@ -89,6 +89,16 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `toLowcodePropInputText`
 - `toLowcodePropInputBoolean`
 - `normalizeLowcodePropInputValue`
+- `LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS`
+- `createLowcodeDefaultDataSourceParams`
+- `createLowcodeDataSourceConfig`
+- `formatLowcodeDataSourceParamsText`
+- `formatLowcodeDataSourceRecordLabel`
+- `createLowcodeDataSourceFormItems`
+- `upsertLowcodeDataSourceConfigs`
+- `addLowcodeDataSource`
+- `updateLowcodeDataSource`
+- `removeLowcodeDataSource`
 - `LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS`
 - `createLowcodeDefaultActionParams`
 - `createLowcodeActionConfig`
@@ -148,6 +158,18 @@ The prop editor model helpers keep inspector field behavior reusable across the 
 `toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
+
+## Data Source Config API
+
+The data source config helpers keep Page Schema `dataSources` editing reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS` defines the default editor data source templates for product, store, expert, and custom HTTP sources, including labels, default `bindTo`, default params, and cache hints.
+
+`createLowcodeDefaultDataSourceParams(dataSourceType)`, `createLowcodeDataSourceConfig(dataSourceType, options)`, `formatLowcodeDataSourceParamsText(dataSource)`, `formatLowcodeDataSourceRecordLabel(record, pendingLabel)`, and `createLowcodeDataSourceFormItems(dataSources, options)` provide the shared model used by data source forms and preview-status panels.
+
+`upsertLowcodeDataSourceConfigs` updates or appends one data source config by id. `addLowcodeDataSource`, `updateLowcodeDataSource`, and `removeLowcodeDataSource` update `LowcodeEditorState` through the same immutable command style as node editing.
+
+These helpers do not parse textarea input, render forms, execute HTTP requests, resolve data, validate permissions, persist schema, or perform server review. Host shells remain responsible for UI, JSON parse errors, preview resolver execution, auth, caching, permissions, audit, and server-side data source validation.
 
 ## Action Config API
 
