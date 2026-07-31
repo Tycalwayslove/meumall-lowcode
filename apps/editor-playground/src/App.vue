@@ -66,6 +66,7 @@ import {
   createLowcodeMaterialDetailEventItems,
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
   createLowcodeMaterialCategories,
@@ -105,6 +106,7 @@ import {
   getLowcodePropEditorControl,
   getLowcodeNodeDisplayName,
   insertNode,
+  isLowcodeFavoriteMaterial,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
   isLowcodePropGroupCollapsed,
@@ -115,6 +117,7 @@ import {
   LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
   LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
   LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS,
+  LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
   markSaved,
   moveNodeById,
   normalizeLowcodePropInputValue,
@@ -122,6 +125,7 @@ import {
   formatLowcodeEditorDraftStatusText,
   getLowcodeEditorDraftStatusTone,
   parseLowcodeEditorDraftContent,
+  parseLowcodeMaterialPreferenceContent,
   parseLowcodeSchemaFileContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
@@ -140,6 +144,7 @@ import {
   summarizeLowcodePublishChecks,
   summarizeLowcodeReleaseList,
   summarizeLowcodePreviewLinks,
+  toggleLowcodeFavoriteMaterial,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
@@ -155,6 +160,7 @@ import {
   updateLowcodePageType,
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
+  recordLowcodeRecentMaterial,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
@@ -199,7 +205,6 @@ const MATERIAL_FAVORITES_KEY = "meumall-lowcode-material-favorites";
 const MATERIAL_RECENT_KEY = "meumall-lowcode-material-recent";
 const CUSTOM_TEMPLATES_KEY = "meumall-lowcode-custom-templates";
 const AUTO_SAVE_DELAY_MS = 700;
-const RECENT_MATERIAL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
@@ -384,6 +389,7 @@ const dataSourceTypeOptions = LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS;
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
+const availableMaterialComponentNames = materials.map((item) => item.manifest.componentName);
 const resourceLibraryClient = createStaticResourceLibraryClient({
   imageAssets: sampleAssets,
   products: sampleProducts,
@@ -1279,13 +1285,9 @@ function persistLocalDraft(schema: LowcodePageSchema): void {
 }
 
 function loadStoredMaterialComponentNames(key: string): string[] {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(key) ?? "[]") as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is string => typeof item === "string");
-  } catch {
-    return [];
-  }
+  return parseLowcodeMaterialPreferenceContent(window.localStorage.getItem(key), {
+    availableComponentNames: availableMaterialComponentNames,
+  });
 }
 
 function storeMaterialComponentNames(key: string, componentNames: string[]): void {
@@ -1337,10 +1339,6 @@ function createCurrentTemplateLibraryClient() {
   return createStaticTemplateLibraryClient({
     templates: getAllPageTemplates(),
   });
-}
-
-function isKnownMaterialComponentName(componentName: string): boolean {
-  return materials.some((item) => item.manifest.componentName === componentName);
 }
 
 function materialItemsFromComponentNames(componentNames: string[]): typeof materials {
@@ -1562,29 +1560,30 @@ function createNodeInput(manifest: LowcodeMaterialManifest) {
 }
 
 function isFavoriteMaterial(componentName: string): boolean {
-  return favoriteMaterialComponentNames.value.includes(componentName);
+  return isLowcodeFavoriteMaterial(favoriteMaterialComponentNames.value, componentName);
 }
 
 function toggleFavoriteMaterial(manifest: LowcodeMaterialManifest): void {
   const componentName = manifest.componentName;
-  const favorites = favoriteMaterialComponentNames.value;
-  const next = favorites.includes(componentName)
-    ? favorites.filter((item) => item !== componentName)
-    : [componentName, ...favorites];
-  favoriteMaterialComponentNames.value = next.filter(isKnownMaterialComponentName);
+  const wasFavorited = isLowcodeFavoriteMaterial(favoriteMaterialComponentNames.value, componentName);
+  favoriteMaterialComponentNames.value = toggleLowcodeFavoriteMaterial(
+    favoriteMaterialComponentNames.value,
+    componentName,
+    { availableComponentNames: availableMaterialComponentNames },
+  );
   storeMaterialComponentNames(MATERIAL_FAVORITES_KEY, favoriteMaterialComponentNames.value);
-  materialPreferenceMessage.value = favorites.includes(componentName)
-    ? `已取消收藏：${manifest.title}`
-    : `已收藏物料：${manifest.title}`;
+  materialPreferenceMessage.value = createLowcodeMaterialFavoriteMessage(manifest, !wasFavorited);
 }
 
 function recordRecentMaterial(manifest: LowcodeMaterialManifest): void {
-  const componentName = manifest.componentName;
-  if (!isKnownMaterialComponentName(componentName)) return;
-  recentMaterialComponentNames.value = [
-    componentName,
-    ...recentMaterialComponentNames.value.filter((item) => item !== componentName),
-  ].slice(0, RECENT_MATERIAL_LIMIT);
+  recentMaterialComponentNames.value = recordLowcodeRecentMaterial(
+    recentMaterialComponentNames.value,
+    manifest.componentName,
+    {
+      availableComponentNames: availableMaterialComponentNames,
+      limit: LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
+    },
+  );
   storeMaterialComponentNames(MATERIAL_RECENT_KEY, recentMaterialComponentNames.value);
 }
 

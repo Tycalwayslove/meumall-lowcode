@@ -29,6 +29,7 @@ import {
   createLowcodeMaterialDetailEventItems,
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
   createLowcodeOutlineRowSearchText,
@@ -77,6 +78,7 @@ import {
   getLowcodePropGroupKey,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
+  isLowcodeFavoriteMaterial,
   isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
@@ -90,10 +92,13 @@ import {
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
+  LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
+  normalizeLowcodeMaterialComponentNames,
   normalizeLowcodePropInputValue,
   normalizeLowcodePageMaxWidth,
   parseLowcodeSchemaFileContent,
   parseLowcodeEditorDraftContent,
+  parseLowcodeMaterialPreferenceContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
@@ -108,6 +113,7 @@ import {
   summarizeLowcodePreviewLinks,
   summarizeLowcodeReleaseList,
   summarizeLowcodePublishChecks,
+  toggleLowcodeFavoriteMaterial,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
@@ -122,6 +128,7 @@ import {
   updateLowcodePageType,
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
+  recordLowcodeRecentMaterial,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -557,6 +564,58 @@ describe("@meumall/lowcode-editor readiness", () => {
       "ActionButton",
       "ImageBanner",
     ]);
+  });
+
+  it("normalizes reusable material preference models", () => {
+    const availableComponentNames = manifests.map((manifest) => manifest.componentName);
+    const actionButton = manifests.find((manifest) => manifest.componentName === "ActionButton");
+    assert.ok(actionButton);
+
+    assert.equal(LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT, 6);
+    assert.deepEqual(normalizeLowcodeMaterialComponentNames([
+      "ActionButton",
+      "Missing",
+      "ImageBanner",
+      "ActionButton",
+      "",
+      "ProductList",
+    ], {
+      availableComponentNames,
+      limit: 2,
+    }), ["ActionButton", "ImageBanner"]);
+    assert.deepEqual(normalizeLowcodeMaterialComponentNames(["ActionButton"], { limit: 0 }), []);
+    assert.deepEqual(parseLowcodeMaterialPreferenceContent(
+      JSON.stringify(["ProductList", "Missing", "ProductList", 1, "ActionButton"]),
+      { availableComponentNames },
+    ), ["ProductList", "ActionButton"]);
+    assert.deepEqual(parseLowcodeMaterialPreferenceContent("{bad json", { availableComponentNames }), []);
+    assert.deepEqual(parseLowcodeMaterialPreferenceContent(JSON.stringify({ componentName: "ActionButton" })), []);
+    assert.equal(isLowcodeFavoriteMaterial(["ActionButton"], "ActionButton"), true);
+    assert.equal(isLowcodeFavoriteMaterial(["ActionButton"], "ImageBanner"), false);
+    assert.deepEqual(toggleLowcodeFavoriteMaterial(["ImageBanner"], "ActionButton", {
+      availableComponentNames,
+    }), ["ActionButton", "ImageBanner"]);
+    assert.deepEqual(toggleLowcodeFavoriteMaterial(["ActionButton", "ImageBanner"], "ActionButton", {
+      availableComponentNames,
+    }), ["ImageBanner"]);
+
+    const fullRecent = recordLowcodeRecentMaterial([
+      "ImageBanner",
+      "ProductList",
+      "ProductRankList",
+      "ActionButton",
+      "Missing",
+      "ImageBanner",
+    ], "ActionButton", {
+      availableComponentNames,
+      limit: 3,
+    });
+    assert.deepEqual(fullRecent, ["ActionButton", "ImageBanner", "ProductList"]);
+    assert.deepEqual(recordLowcodeRecentMaterial(["ImageBanner"], "Missing", {
+      availableComponentNames,
+    }), ["ImageBanner"]);
+    assert.equal(createLowcodeMaterialFavoriteMessage(actionButton, true), "已收藏物料：行动按钮");
+    assert.equal(createLowcodeMaterialFavoriteMessage(actionButton, false), "已取消收藏：行动按钮");
   });
 
   it("creates reusable material detail models and preview schemas", () => {

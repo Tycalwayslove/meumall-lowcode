@@ -384,6 +384,26 @@ The material catalog helpers keep material-library search, category filters, qui
 
 These helpers do not change Material Manifest, Page Schema, or renderer behavior.
 
+## Material Preference API
+
+The material preference helpers keep favorites and recent-material list rules reusable across editor shells.
+
+`LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT` is `6`, matching the current recent-material quick section size.
+
+`normalizeLowcodeMaterialComponentNames(componentNames, options)` removes empty names and duplicates, optionally filters unknown names through `availableComponentNames`, and applies an optional `limit`.
+
+`parseLowcodeMaterialPreferenceContent(content, options)` parses JSON storage content into a normalized component-name list. Invalid JSON, non-array content, and non-string entries are ignored safely.
+
+`isLowcodeFavoriteMaterial(componentNames, componentName)` checks whether a component name is currently favorited.
+
+`toggleLowcodeFavoriteMaterial(componentNames, componentName, options)` adds a component name to the front of the favorites list or removes it when already present, then normalizes the result.
+
+`recordLowcodeRecentMaterial(componentNames, componentName, options)` moves a component name to the front of the recent list, removes duplicates and unknown names, and defaults to `LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT`.
+
+`createLowcodeMaterialFavoriteMessage(material, favorited)` returns the current Chinese favorite or unfavorite operation message.
+
+These helpers do not read or write localStorage, call HTTP APIs, render UI, resolve users, sync devices, validate permissions, or write audit records. Host shells remain responsible for persistence, feedback display, user preference APIs, permissions, audit records, and preference migration.
+
 ## Material Detail API
 
 The material detail helpers keep material detail dialogs, manifest inspection panels, and default H5 previews reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.

@@ -316,6 +316,17 @@ export interface CreateLowcodeMaterialPreviewSchemaOptions extends CreateLowcode
   operator?: string;
 }
 
+export interface NormalizeLowcodeMaterialComponentNamesOptions {
+  availableComponentNames?: Iterable<string>;
+  limit?: number;
+}
+
+export interface ParseLowcodeMaterialPreferenceContentOptions extends NormalizeLowcodeMaterialComponentNamesOptions {}
+
+export interface ToggleLowcodeFavoriteMaterialOptions extends NormalizeLowcodeMaterialComponentNamesOptions {}
+
+export interface RecordLowcodeRecentMaterialOptions extends NormalizeLowcodeMaterialComponentNamesOptions {}
+
 export interface FilterLowcodeMaterialCatalogOptions {
   keyword?: string;
   category?: string;
@@ -754,6 +765,7 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
 export const LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT = 28;
+export const LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT = 6;
 export const LOWCODE_EDITOR_PROP_GROUP_ORDER = ["content", "style", "data", "behavior", "advanced"] as const satisfies readonly LowcodeEditorPropGroupKey[];
 export const LOWCODE_EDITOR_PROP_GROUP_META = {
   content: { label: "内容配置", description: "标题、文案、图片和按钮内容。" },
@@ -1262,6 +1274,85 @@ export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEdit
     const material = materialMap.get(componentName);
     return material ? [material] : [];
   });
+}
+
+export function normalizeLowcodeMaterialComponentNames(
+  componentNames: readonly string[],
+  options: NormalizeLowcodeMaterialComponentNamesOptions = {},
+): string[] {
+  const availableComponentNames = options.availableComponentNames
+    ? new Set(options.availableComponentNames)
+    : undefined;
+  const limit = Math.max(0, Math.floor(options.limit ?? Number.POSITIVE_INFINITY));
+  if (limit === 0) return [];
+  const normalized: string[] = [];
+
+  for (const componentName of componentNames) {
+    if (typeof componentName !== "string" || componentName.length === 0) continue;
+    if (availableComponentNames && !availableComponentNames.has(componentName)) continue;
+    if (normalized.includes(componentName)) continue;
+    normalized.push(componentName);
+    if (normalized.length >= limit) break;
+  }
+
+  return normalized;
+}
+
+export function parseLowcodeMaterialPreferenceContent(
+  content: string | null | undefined,
+  options: ParseLowcodeMaterialPreferenceContentOptions = {},
+): string[] {
+  if (!content) return [];
+  try {
+    const parsed = JSON.parse(content) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return normalizeLowcodeMaterialComponentNames(
+      parsed.filter((item): item is string => typeof item === "string"),
+      options,
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function isLowcodeFavoriteMaterial(
+  componentNames: readonly string[],
+  componentName: string,
+): boolean {
+  return componentNames.includes(componentName);
+}
+
+export function toggleLowcodeFavoriteMaterial(
+  componentNames: readonly string[],
+  componentName: string,
+  options: ToggleLowcodeFavoriteMaterialOptions = {},
+): string[] {
+  const exists = isLowcodeFavoriteMaterial(componentNames, componentName);
+  const next = exists
+    ? componentNames.filter((item) => item !== componentName)
+    : [componentName, ...componentNames];
+  return normalizeLowcodeMaterialComponentNames(next, options);
+}
+
+export function recordLowcodeRecentMaterial(
+  componentNames: readonly string[],
+  componentName: string,
+  options: RecordLowcodeRecentMaterialOptions = {},
+): string[] {
+  return normalizeLowcodeMaterialComponentNames([
+    componentName,
+    ...componentNames.filter((item) => item !== componentName),
+  ], {
+    ...options,
+    limit: options.limit ?? LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
+  });
+}
+
+export function createLowcodeMaterialFavoriteMessage(
+  material: Pick<LowcodeMaterialManifest, "title">,
+  favorited: boolean,
+): string {
+  return favorited ? `已收藏物料：${material.title}` : `已取消收藏：${material.title}`;
 }
 
 export function normalizeLowcodePageMaxWidth(
