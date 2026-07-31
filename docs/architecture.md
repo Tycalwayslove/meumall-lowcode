@@ -82,11 +82,11 @@ React H5 materials:
 - Promotion entry
 - Register guide
 - Rich text
+- Sticky action bar
 
 Materials should be layered as generic materials and business materials. Generic materials provide business-agnostic blocks such as section title, image banner, action button and spacer. Business materials compose business concepts such as product, coupon, brand, store, expert and live entry.
 
 基础组件、通用物料和业务物料的详细分层规则见 `docs/material-layering-architecture.md`。
-- Sticky action bar
 
 ### `@meumall/lowcode-renderer-vue-h5`
 
@@ -156,6 +156,24 @@ Java config platform should own:
 - Rollback and disable state
 
 H5 packages only consume published or preview schema.
+
+## Architecture Guardrails
+
+The repository root provides a local architecture check:
+
+```bash
+pnpm check:architecture
+```
+
+It verifies the current monorepo rules that are easy to break during ongoing editor and material expansion:
+
+- Publishable package shape: `package.json`, `README.md`, `src/index.*`, `main`, `types`, `exports`, `files`, and `publishConfig.access`.
+- Package-level `@meumall/*` workspace dependency direction.
+- Source-level `@meumall/*` import direction across `packages/` and `apps/`.
+- React/Vue H5 material `componentName` manifest parity.
+- Runtime primitive names such as `MlcButton` and `MlcInput` are not registered as low-code materials.
+
+`pnpm test` runs this architecture check after build, so boundary regressions fail with normal local verification. This is a lightweight guardrail, not a replacement for future linting, cycle detection, or full visual regression.
 
 ## Future Mini-Program Strategy
 
