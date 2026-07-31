@@ -112,6 +112,56 @@ export interface CreateLowcodeDeliverySummaryOptions {
   checks?: LowcodeEditorPublishCheck[];
 }
 
+export interface LowcodeEditorVersionDiffItem {
+  label: string;
+  current: string;
+  selected: string;
+  changed: boolean;
+}
+
+export interface LowcodeEditorSchemaPreviewNodeSummary {
+  id: string;
+  componentName: string;
+  name: string | null;
+  childCount: number;
+}
+
+export interface LowcodeEditorSchemaPreviewSnippet {
+  pageId: string;
+  title: string;
+  status: LowcodePageSchema["status"];
+  pageVersion: string;
+  pageType: LowcodePageSchema["pageType"] | null;
+  publishMeta: {
+    environment: LowcodePageSchema["publishMeta"]["environment"];
+    operator: string | null;
+    publishedAt: string | null;
+  };
+  layout: JsonObject;
+  nodeCount: number;
+  nodes: LowcodeEditorSchemaPreviewNodeSummary[];
+  dataSourceIds: string[];
+  actionIds: string[];
+}
+
+export interface LowcodeEditorSchemaPreviewItem {
+  id: string;
+  title: string;
+  description: string;
+  json: string;
+}
+
+export interface CreateLowcodeSchemaPreviewSnippetOptions {
+  maxNodes?: number;
+}
+
+export interface CreateLowcodeSchemaPreviewItemsOptions extends CreateLowcodeSchemaPreviewSnippetOptions {
+  currentTitle?: string;
+  selectedTitle?: string;
+  currentDescription?: string;
+  selectedDescription?: string;
+}
+
 type NodeInput = Omit<LowcodeNode, "id"> & { id?: string };
 
 const DEFAULT_VIEWPORT: LowcodeEditorViewport = {
@@ -603,6 +653,75 @@ export function formatLowcodeSchemaSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+export function createLowcodeVersionDiffItems(
+  current: LowcodePageSchema,
+  selected: LowcodePageSchema,
+): LowcodeEditorVersionDiffItem[] {
+  const items = [
+    { label: "标题", current: current.title, selected: selected.title },
+    { label: "状态", current: current.status, selected: selected.status },
+    { label: "环境", current: current.publishMeta.environment, selected: selected.publishMeta.environment },
+    { label: "页面版本", current: current.pageVersion, selected: selected.pageVersion },
+    { label: "节点数", current: String(countLowcodeNodes(current)), selected: String(countLowcodeNodes(selected)) },
+    { label: "数据源数", current: String(current.dataSources?.length ?? 0), selected: String(selected.dataSources?.length ?? 0) },
+    { label: "动作数", current: String(current.actions?.length ?? 0), selected: String(selected.actions?.length ?? 0) },
+  ];
+
+  return items.map((item) => ({
+    ...item,
+    changed: item.current !== item.selected,
+  }));
+}
+
+export function createLowcodeSchemaPreviewSnippet(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeSchemaPreviewSnippetOptions = {},
+): LowcodeEditorSchemaPreviewSnippet {
+  return {
+    pageId: schema.pageId,
+    title: schema.title,
+    status: schema.status,
+    pageVersion: schema.pageVersion,
+    pageType: schema.pageType ?? null,
+    publishMeta: {
+      environment: schema.publishMeta.environment,
+      operator: schema.publishMeta.operator ?? null,
+      publishedAt: schema.publishMeta.publishedAt ?? null,
+    },
+    layout: cloneJsonObject(schema.layout ?? {}),
+    nodeCount: countLowcodeNodes(schema),
+    nodes: schema.nodes.slice(0, options.maxNodes ?? 8).map((node) => ({
+      id: node.id,
+      componentName: node.componentName,
+      name: node.meta?.name ?? null,
+      childCount: node.children?.length ?? 0,
+    })),
+    dataSourceIds: (schema.dataSources ?? []).map((item) => item.id),
+    actionIds: (schema.actions ?? []).map((item) => item.id),
+  };
+}
+
+export function createLowcodeSchemaPreviewItems(
+  current: LowcodePageSchema,
+  selected: LowcodePageSchema,
+  options: CreateLowcodeSchemaPreviewItemsOptions = {},
+): LowcodeEditorSchemaPreviewItem[] {
+  return [
+    {
+      id: "current",
+      title: options.currentTitle ?? "当前草稿 Schema 片段",
+      description: options.currentDescription ?? `${current.title} / ${current.pageVersion}`,
+      json: JSON.stringify(createLowcodeSchemaPreviewSnippet(current, options), null, 2),
+    },
+    {
+      id: "selected",
+      title: options.selectedTitle ?? "所选版本 Schema 片段",
+      description: options.selectedDescription ?? `${selected.title} / ${selected.pageVersion}`,
+      json: JSON.stringify(createLowcodeSchemaPreviewSnippet(selected, options), null, 2),
+    },
+  ];
+}
+
 function commitSchemaChange(
   state: LowcodeEditorState,
   schema: LowcodePageSchema,
@@ -788,6 +907,10 @@ function createDeliveryStatusText(summary: LowcodeEditorPublishCheckSummary): st
   if (summary.error) return `${summary.error} 个阻塞项`;
   if (summary.warning) return `${summary.warning} 个提醒`;
   return "检查通过";
+}
+
+function cloneJsonObject(value: unknown): JsonObject {
+  return JSON.parse(JSON.stringify(value)) as JsonObject;
 }
 
 function encodedByteSize(value: string): number {

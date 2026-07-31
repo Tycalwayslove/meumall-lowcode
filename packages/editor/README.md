@@ -32,6 +32,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `summarizeLowcodePublishChecks`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
+- `createLowcodeVersionDiffItems`
+- `createLowcodeSchemaPreviewSnippet`
+- `createLowcodeSchemaPreviewItems`
 
 ## Readiness API
 
@@ -48,6 +51,24 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+## Version Summary API
+
+The version helpers keep local draft comparison, rollback confirmation, and future Java config platform version audit screens on one summary contract.
+
+`createLowcodeVersionDiffItems(current, selected)` compares the fields currently shown in the editor release diff panel:
+
+- Title.
+- Page status.
+- Publish environment.
+- Page version.
+- Node count.
+- Data source count.
+- Action count.
+
+`createLowcodeSchemaPreviewSnippet(schema)` returns a compact JSON-safe summary with page metadata, layout, node summary, data source ids, and action ids.
+
+`createLowcodeSchemaPreviewItems(current, selected, options)` formats current and selected schema snippets for side-by-side preview panels.
 
 ## Contract
 

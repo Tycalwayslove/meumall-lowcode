@@ -55,6 +55,8 @@ import {
   copyNode,
   createLowcodeDeliverySummary,
   createLowcodePublishChecks,
+  createLowcodeSchemaPreviewItems,
+  createLowcodeVersionDiffItems,
   createEditorState,
   duplicateNode,
   flattenLowcodeNodes,
@@ -74,6 +76,8 @@ import {
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
+  type LowcodeEditorSchemaPreviewItem as ReleaseSchemaPreviewItem,
+  type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -467,20 +471,6 @@ interface PointerCanvasDragState {
   dragging: boolean;
   componentName?: string;
   nodeId?: string;
-}
-
-interface ReleaseDiffItem {
-  label: string;
-  current: string;
-  selected: string;
-  changed: boolean;
-}
-
-interface ReleaseSchemaPreviewItem {
-  id: "current" | "selected";
-  title: string;
-  description: string;
-  json: string;
 }
 
 interface PreviewLinkItem {
@@ -946,11 +936,15 @@ const latestPublishedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.kind === "published"),
 );
 const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
-  selectedRelease.value ? createReleaseDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
+  selectedRelease.value ? createLowcodeVersionDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
 );
 const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
 const releaseSchemaPreviewItems = computed<ReleaseSchemaPreviewItem[]>(() =>
-  selectedRelease.value ? createReleaseSchemaPreviewItems(editorState.value.schema, selectedRelease.value) : [],
+  selectedRelease.value
+    ? createLowcodeSchemaPreviewItems(editorState.value.schema, selectedRelease.value.schema, {
+      selectedDescription: `${selectedRelease.value.title} / ${selectedRelease.value.pageVersion}`,
+    })
+    : [],
 );
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
@@ -1546,64 +1540,6 @@ function templateVersionText(template: TemplateListItem): string {
 
 function templateSummaryText(template: TemplateListItem): string {
   return `${template.nodeCount} 个节点 / ${template.dataSourceCount} 个数据源 / ${template.actionCount} 个动作`;
-}
-
-function createReleaseDiffItems(current: LowcodePageSchema, selected: LowcodePageSchema): ReleaseDiffItem[] {
-  const items = [
-    { label: "标题", current: current.title, selected: selected.title },
-    { label: "状态", current: current.status, selected: selected.status },
-    { label: "环境", current: current.publishMeta.environment, selected: selected.publishMeta.environment },
-    { label: "页面版本", current: current.pageVersion, selected: selected.pageVersion },
-    { label: "节点数", current: String(schemaNodeCount(current)), selected: String(schemaNodeCount(selected)) },
-    { label: "数据源数", current: String(current.dataSources?.length ?? 0), selected: String(selected.dataSources?.length ?? 0) },
-    { label: "动作数", current: String(current.actions?.length ?? 0), selected: String(selected.actions?.length ?? 0) },
-  ];
-  return items.map((item) => ({
-    ...item,
-    changed: item.current !== item.selected,
-  }));
-}
-
-function createSchemaPreviewSnippet(schema: LowcodePageSchema): JsonObject {
-  return {
-    pageId: schema.pageId,
-    title: schema.title,
-    status: schema.status,
-    pageVersion: schema.pageVersion,
-    pageType: schema.pageType ?? null,
-    publishMeta: {
-      environment: schema.publishMeta.environment,
-      operator: schema.publishMeta.operator ?? null,
-      publishedAt: schema.publishMeta.publishedAt ?? null,
-    },
-    layout: JSON.parse(JSON.stringify(schema.layout)) as JsonObject,
-    nodeCount: schemaNodeCount(schema),
-    nodes: schema.nodes.slice(0, 8).map((node) => ({
-      id: node.id,
-      componentName: node.componentName,
-      name: node.meta?.name ?? null,
-      childCount: node.children?.length ?? 0,
-    })),
-    dataSourceIds: (schema.dataSources ?? []).map((item) => item.id),
-    actionIds: (schema.actions ?? []).map((item) => item.id),
-  };
-}
-
-function createReleaseSchemaPreviewItems(current: LowcodePageSchema, release: LocalPageRelease): ReleaseSchemaPreviewItem[] {
-  return [
-    {
-      id: "current",
-      title: "当前草稿 Schema 片段",
-      description: `${current.title} / ${current.pageVersion}`,
-      json: JSON.stringify(createSchemaPreviewSnippet(current), null, 2),
-    },
-    {
-      id: "selected",
-      title: "所选版本 Schema 片段",
-      description: `${release.title} / ${release.pageVersion}`,
-      json: JSON.stringify(createSchemaPreviewSnippet(release.schema), null, 2),
-    },
-  ];
 }
 
 function getSiblingCount(parentId?: string): number {

@@ -5,6 +5,9 @@ import {
   countLowcodeNodes,
   createLowcodeDeliverySummary,
   createLowcodePublishChecks,
+  createLowcodeSchemaPreviewItems,
+  createLowcodeSchemaPreviewSnippet,
+  createLowcodeVersionDiffItems,
   flattenLowcodeNodes,
   getLowcodeNodeDisplayName,
   summarizeLowcodePublishChecks,
@@ -181,5 +184,80 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(delivery.schemaJson.includes("delivery_page"), true);
     assert.equal(delivery.schemaSizeBytes > 0, true);
     assert.match(delivery.schemaSizeText, /B|KB/);
+  });
+
+  it("creates version diff items and schema preview snippets", () => {
+    const current = createLowcodePageSchema({
+      pageId: "version_page",
+      title: "当前草稿",
+      status: "draft",
+      pageVersion: "0.2.0",
+      pageType: "activity",
+      layout: { safeArea: true, backgroundColor: "#ffffff" },
+      nodes: [
+        createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [
+            createLowcodeNode({
+              id: "banner_1",
+              componentName: "ImageBanner",
+              materialVersion: "1.0.0",
+              props: { imageUrl: "https://example.com/banner.jpg" },
+              meta: { name: "首屏 Banner" },
+            }),
+          ],
+        }),
+      ],
+      dataSources: [{ id: "products", type: "mock.products", bindTo: "products" }],
+      actions: [{ id: "go_detail", type: "navigate", params: { url: "/detail" } }],
+      publishMeta: { environment: "pre", operator: "tester" },
+    });
+    const selected = createLowcodePageSchema({
+      pageId: "version_page",
+      title: "已发布版本",
+      status: "published",
+      pageVersion: "0.1.0",
+      pageType: "activity",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_old",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/old.jpg" },
+        }),
+      ],
+      publishMeta: { environment: "prod", operator: "publisher", publishedAt: "2026-08-01T00:00:00.000Z" },
+    });
+
+    const diffItems = createLowcodeVersionDiffItems(current, selected);
+    const titleDiff = diffItems.find((item) => item.label === "标题");
+    const nodeCountDiff = diffItems.find((item) => item.label === "节点数");
+    const dataSourceDiff = diffItems.find((item) => item.label === "数据源数");
+    const actionDiff = diffItems.find((item) => item.label === "动作数");
+    const snippet = createLowcodeSchemaPreviewSnippet(current);
+    const previewItems = createLowcodeSchemaPreviewItems(current, selected, {
+      selectedDescription: "本地发布版本 / 0.1.0",
+    });
+
+    assert.deepEqual(titleDiff, { label: "标题", current: "当前草稿", selected: "已发布版本", changed: true });
+    assert.deepEqual(nodeCountDiff, { label: "节点数", current: "2", selected: "1", changed: true });
+    assert.deepEqual(dataSourceDiff, { label: "数据源数", current: "1", selected: "0", changed: true });
+    assert.deepEqual(actionDiff, { label: "动作数", current: "1", selected: "0", changed: true });
+    assert.equal(snippet.nodeCount, 2);
+    assert.deepEqual(snippet.nodes[0], {
+      id: "container_1",
+      componentName: "SectionContainer",
+      name: null,
+      childCount: 1,
+    });
+    assert.deepEqual(snippet.dataSourceIds, ["products"]);
+    assert.deepEqual(snippet.actionIds, ["go_detail"]);
+    assert.equal(previewItems.length, 2);
+    assert.equal(previewItems[0].title, "当前草稿 Schema 片段");
+    assert.equal(previewItems[1].description, "本地发布版本 / 0.1.0");
+    assert.equal(previewItems[1].json.includes("banner_old"), true);
   });
 });
