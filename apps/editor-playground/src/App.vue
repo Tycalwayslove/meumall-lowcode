@@ -6,7 +6,6 @@ import {
   Copy,
   ExternalLink,
   Layers,
-  MoreHorizontal,
   Plus,
   Save,
   Search,
@@ -189,6 +188,7 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import EditorCanvasContextToolbar from "./components/EditorCanvasContextToolbar.vue";
 import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorCommandPalette, { type EditorCommandPaletteItem } from "./components/EditorCommandPalette.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
@@ -639,6 +639,12 @@ const groupDraggableOutlineNodeIds = computed(() =>
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
+const canvasContextMaterialOptions = computed(() =>
+  materials.map((item) => ({
+    componentName: item.manifest.componentName,
+    title: item.manifest.title,
+  })),
+);
 const imagePropOptions = computed(() => {
   const manifest = selectedManifest.value;
   if (!manifest) return [];
@@ -3411,73 +3417,22 @@ function rollbackPublishSelectedRelease(): void {
       />
 
       <div v-if="editorState.mode !== 'outline'" class="phone-stage">
-        <div v-if="selectedNode && selectedManifest && editorState.mode === 'design'" class="canvas-context-toolbar">
-          <div class="context-title">
-            <strong>{{ selectedManifest.title }}</strong>
-            <span>{{ selectedNode.id }}</span>
-          </div>
-          <label>
-            <span>插入物料</span>
-            <select v-model="selectedInsertComponentName">
-              <option
-                v-for="material in materials"
-                :key="`insert-${material.manifest.componentName}`"
-                :value="material.manifest.componentName"
-              >
-                {{ material.manifest.title }}
-              </option>
-            </select>
-          </label>
-          <div class="context-actions">
-            <button
-              type="button"
-              title="在当前节点前插入"
-              :disabled="isNodeOperationDisabled('insertBefore')"
-              @click="insertMaterialAroundSelected('before')"
-            >
-              <ArrowUp :size="15" />
-              <span>前方插入</span>
-            </button>
-            <button
-              type="button"
-              title="在当前节点后插入"
-              :disabled="isNodeOperationDisabled('insertAfter')"
-              @click="insertMaterialAroundSelected('after')"
-            >
-              <ArrowDown :size="15" />
-              <span>后方插入</span>
-            </button>
-            <button
-              type="button"
-              title="加入选中容器"
-              :disabled="isNodeOperationDisabled('addInside')"
-              @click="insertMaterialInsideSelectedContainer"
-            >
-              <Plus :size="15" />
-              <span>加入容器</span>
-            </button>
-            <button type="button" title="上移当前节点" :disabled="isNodeOperationDisabled('moveUp')" @click="moveSelected(-1)">
-              <ArrowUp :size="15" />
-              <span>上移</span>
-            </button>
-            <button type="button" title="下移当前节点" :disabled="isNodeOperationDisabled('moveDown')" @click="moveSelected(1)">
-              <ArrowDown :size="15" />
-              <span>下移</span>
-            </button>
-            <button type="button" title="创建副本" @click="duplicateSelected">
-              <Copy :size="15" />
-              <span>副本</span>
-            </button>
-            <button type="button" title="更多节点操作" @click="openSelectedNodeContextMenu">
-              <MoreHorizontal :size="15" />
-              <span>更多</span>
-            </button>
-            <button type="button" title="删除节点" class="danger" @click="removeSelected">
-              <Trash2 :size="15" />
-              <span>删除</span>
-            </button>
-          </div>
-        </div>
+        <EditorCanvasContextToolbar
+          v-if="selectedNode && selectedManifest && editorState.mode === 'design'"
+          v-model:selected-insert-component-name="selectedInsertComponentName"
+          :material-title="selectedManifest.title"
+          :node-id="selectedNode.id"
+          :material-options="canvasContextMaterialOptions"
+          :operation-items="nodeContextMenuItems"
+          @insert-before="insertMaterialAroundSelected('before')"
+          @insert-after="insertMaterialAroundSelected('after')"
+          @add-inside="insertMaterialInsideSelectedContainer"
+          @move-up="moveSelected(-1)"
+          @move-down="moveSelected(1)"
+          @duplicate="duplicateSelected"
+          @open-more="openSelectedNodeContextMenu"
+          @remove="removeSelected"
+        />
         <div
           ref="phoneFrameRef"
           class="phone-frame"

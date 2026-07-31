@@ -158,6 +158,26 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行真实视口切换、权限、协作锁定、审计或服务端保存。
 
+### `EditorCanvasContextToolbar`
+
+路径：`apps/editor-playground/src/components/EditorCanvasContextToolbar.vue`
+
+职责：
+
+- 展示设计模式下选中节点的画布上下文工具条，包括选中物料标题、节点 id、插入物料下拉框和节点快捷操作按钮。
+- 接收选中物料标题、节点 id、插入物料选项、当前插入物料组件名和 node operation API 派生后的操作项。
+- 通过 emits 抛出插入物料更新、前方插入、后方插入、加入容器、上移、下移、创建副本、打开更多菜单和删除事件。
+- 复用 node operation API 产出的禁用态，以及现有 `.canvas-context-toolbar`、`.context-title` 和 `.context-actions` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生物料选项、选中节点、选中物料或操作项。
+- 不判断节点是否可移动、是否容器或是否可粘贴。
+- 不写入 Page Schema。
+- 不定位右键菜单。
+- 不读取或写入 localStorage。
+- 不执行真实插入、移动、复制、删除、权限、协作锁定、审计或服务端保存。
+
 ### `EditorSelectedNodeCard`
 
 路径：`apps/editor-playground/src/components/EditorSelectedNodeCard.vue`
@@ -310,7 +330,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-1. 画布上下文工具条：优先消费 node operation API，并继续保持真实节点操作在宿主 shell。
+当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域。后续优先治理样式隔离、设计 token、权限插槽、协作锁定状态、审批状态和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
 
 ## 抽 npm 包判断
 
