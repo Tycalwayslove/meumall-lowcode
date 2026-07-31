@@ -30,9 +30,27 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取 `LowcodeEditorState` 或 Page Schema。
 - 不处理点击、跳转、权限、协作锁定、审计或服务端保存。
 
+### `EditorMaterialCatalog`
+
+路径：`apps/editor-playground/src/components/EditorMaterialCatalog.vue`
+
+职责：
+
+- 展示左侧物料搜索、分类筛选、收藏物料、最近使用、物料卡片和当前容器快捷添加入口。
+- 接收 `materials`、`visibleMaterials`、`favoriteMaterials`、`recentMaterials`、`favoriteComponentNames`、`categories`、`keyword`、`category`、`preferenceMessage` 和 `selectedContainerTitle`。
+- 通过 emits 抛出关键词更新、分类更新、添加物料、向容器添加物料、收藏切换、打开详情、Pointer Events 拖拽、DragEvent 拖拽和拖拽结束。
+- 复用 material catalog summary helper 和现有 `.material-*`、`.container-target` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不启动真实拖拽流程，不处理 Pointer Events 阈值判断。
+- 不打开详情弹窗、不执行资源选择、不处理权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 物料目录和物料详情：优先消费 material catalog/detail/preference API。
+1. 物料详情弹窗：优先消费 material detail API。
 2. 结构树和节点操作：优先消费 outline tree、node selection、node operation API。
 3. 画布顶部工具条和视口切换：优先消费 viewport preset、workspace summary API。
 4. 右侧页面设置和属性面板：优先消费 page settings、prop groups、prop editor model API。

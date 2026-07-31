@@ -26,7 +26,6 @@ import {
   Save,
   Search,
   Smartphone,
-  Star,
   Trash2,
   Undo2,
   Upload,
@@ -73,7 +72,6 @@ import {
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
   createLowcodeMaterialCategories,
-  createLowcodeMaterialCatalogItem,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
   createLowcodeNodeSelectionModel,
@@ -106,7 +104,6 @@ import {
   formatLowcodeEditorViewportTitle,
   formatLowcodeReleaseTime,
   formatLowcodeVersionDiffSummary,
-  formatLowcodeMaterialCatalogSummary,
   getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
   getLowcodePropEditorControl,
@@ -217,6 +214,7 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorWorkspaceStats from "./components/EditorWorkspaceStats.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -1252,15 +1250,6 @@ function createCurrentTemplateLibraryClient() {
 
 function materialItemsFromComponentNames(componentNames: string[]): typeof materials {
   return pickLowcodeMaterialEntriesByComponentNames(materials, componentNames);
-}
-
-function materialCatalogSummary(manifest: LowcodeMaterialManifest): string {
-  return formatLowcodeMaterialCatalogSummary(manifest);
-}
-
-function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
-  const item = createLowcodeMaterialCatalogItem(manifest);
-  return `${item.title} / ${item.category} / ${item.componentName} / ${item.summary}`;
 }
 
 function markSchemaPersisted(schema: LowcodePageSchema): void {
@@ -3625,117 +3614,26 @@ function rollbackPublishSelectedRelease(): void {
         <div v-else-if="!visiblePageTemplates.length" class="mini-empty">没有匹配模板</div>
       </section>
 
-      <section class="panel-section">
-        <div class="panel-title">
-          <Plus :size="16" />
-          <span>物料</span>
-          <small>{{ visibleMaterials.length }} / {{ materials.length }}</small>
-        </div>
-        <div class="material-filters">
-          <label class="search-field">
-            <Search :size="14" />
-            <input v-model="materialKeyword" placeholder="搜索物料" />
-          </label>
-          <select v-model="materialCategory" aria-label="物料分类">
-            <option v-for="category in materialCategories" :key="category" :value="category">
-              {{ category }}
-            </option>
-          </select>
-        </div>
-        <p v-if="materialPreferenceMessage" class="material-preference-message">{{ materialPreferenceMessage }}</p>
-        <div v-if="favoriteMaterials.length" class="material-quick-section">
-          <div class="material-quick-head">
-            <strong>收藏物料</strong>
-            <small>{{ favoriteMaterials.length }} 个</small>
-          </div>
-          <button
-            v-for="material in favoriteMaterials"
-            :key="`favorite-${material.manifest.componentName}`"
-            type="button"
-            class="material-quick-chip"
-            @click="addMaterial(material.manifest)"
-          >
-            <Star :size="13" />
-            <span>{{ material.manifest.title }}</span>
-          </button>
-        </div>
-        <div v-if="recentMaterials.length" class="material-quick-section">
-          <div class="material-quick-head">
-            <strong>最近使用</strong>
-            <small>{{ recentMaterials.length }} 个</small>
-          </div>
-          <button
-            v-for="material in recentMaterials"
-            :key="`recent-${material.manifest.componentName}`"
-            type="button"
-            class="material-quick-chip"
-            @click="addMaterial(material.manifest)"
-          >
-            <Plus :size="13" />
-            <span>{{ material.manifest.title }}</span>
-          </button>
-        </div>
-        <article
-          v-for="material in visibleMaterials"
-          :key="material.manifest.componentName"
-          class="material-item"
-          :class="{ favorite: isFavoriteMaterial(material.manifest.componentName) }"
-          draggable="true"
-          @pointerdown="onMaterialPointerDown($event, material.manifest)"
-          @dragstart="onDragStart($event, material.manifest)"
-          @dragend="onMaterialDragEnd"
-        >
-          <button
-            type="button"
-            class="material-main-button"
-            :title="materialCatalogSearchTitle(material.manifest)"
-            @click="onMaterialClick($event, material.manifest)"
-          >
-            <span>
-              <strong>{{ material.manifest.title }}</strong>
-              <small>
-                <em>{{ material.manifest.category }}</em>
-                {{ material.manifest.componentName }}
-              </small>
-              <small>{{ materialCatalogSummary(material.manifest) }}</small>
-            </span>
-            <Plus :size="15" />
-          </button>
-          <button
-            type="button"
-            class="material-favorite-button"
-            :class="{ active: isFavoriteMaterial(material.manifest.componentName) }"
-            :title="isFavoriteMaterial(material.manifest.componentName) ? `取消收藏 ${material.manifest.title}` : `收藏 ${material.manifest.title}`"
-            @pointerdown.stop
-            @click.stop="toggleFavoriteMaterial(material.manifest)"
-          >
-            <Star :size="15" :fill="isFavoriteMaterial(material.manifest.componentName) ? 'currentColor' : 'none'" />
-          </button>
-          <button
-            type="button"
-            class="material-detail-button"
-            :title="`查看 ${material.manifest.title} 详情`"
-            @pointerdown.stop
-            @click.stop="openMaterialDetail(material.manifest)"
-          >
-            <Eye :size="15" />
-            <span>详情</span>
-          </button>
-        </article>
-        <div v-if="!visibleMaterials.length" class="mini-empty">没有匹配物料</div>
-        <div v-if="selectedNodeIsContainer" class="container-target">
-          <strong>当前容器：{{ selectedManifest?.title }}</strong>
-          <span>点击下方按钮可把物料加入选中容器</span>
-          <button
-            v-for="material in materials"
-            :key="`child-${material.manifest.componentName}`"
-            @click="addMaterialToSelectedContainer(material.manifest)"
-          >
-            <Plus :size="14" />
-            <span>{{ material.manifest.title }}</span>
-          </button>
-        </div>
-      </section>
+      <EditorMaterialCatalog
+        v-model:keyword="materialKeyword"
+        v-model:category="materialCategory"
+        :materials="materials"
+        :visible-materials="visibleMaterials"
+        :favorite-materials="favoriteMaterials"
+        :recent-materials="recentMaterials"
+        :favorite-component-names="favoriteMaterialComponentNames"
+        :categories="materialCategories"
+        :preference-message="materialPreferenceMessage"
+        :selected-container-title="selectedNodeIsContainer ? selectedManifest?.title : undefined"
+        @add="addMaterial"
+        @add-to-container="addMaterialToSelectedContainer"
+        @toggle-favorite="toggleFavoriteMaterial"
+        @open-detail="openMaterialDetail"
+        @material-click="onMaterialClick"
+        @material-pointerdown="onMaterialPointerDown"
+        @material-dragstart="onDragStart"
+        @material-dragend="onMaterialDragEnd"
+      />
 
       <section class="panel-section">
         <div class="panel-title">
