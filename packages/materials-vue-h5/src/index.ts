@@ -2,7 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcImage, MlcInput, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -1587,95 +1587,30 @@ export const ActivityRuleModal = defineComponent({
               ),
             ],
           ),
-          open.value
-            ? h(
-                "div",
-                {
-                  role: "dialog",
-                  "aria-modal": "true",
-                  "aria-label": text(runtimeProps.modalTitle, "活动规则"),
-                  style: {
-                    position: "fixed",
-                    inset: 0,
-                    zIndex: 1000,
-                    display: "grid",
-                    placeItems: "end center",
-                    padding: "20px 12px",
-                    background: "rgba(15, 23, 42, 0.42)",
-                  },
-                },
-                [
-                  h(
-                    "div",
-                    {
-                      style: {
-                        width: "100%",
-                        maxWidth: "420px",
-                        maxHeight: "72vh",
-                        overflow: "auto",
-                        borderRadius: "16px 16px 12px 12px",
-                        background: "#ffffff",
-                        boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
-                      },
-                    },
-                    [
-                      h(
-                        "div",
-                        {
-                          style: {
-                            position: "sticky",
-                            top: 0,
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: "12px",
-                            padding: "16px 16px 10px",
-                            background: "#ffffff",
-                          },
-                        },
-                        [
-                          h(MlcText, { as: "strong", size: 17, weight: 800, style: { color: "#111827" } }, () => text(runtimeProps.modalTitle, "活动规则")),
-                          h(
-                            MlcButton,
-                            {
-                              "aria-label": "关闭规则弹窗",
-                              size: "sm",
-                              radius: 999,
-                              onClick: () => {
-                                open.value = false;
-                              },
-                              style: {
-                                width: "32px",
-                                height: "32px",
-                                minHeight: "32px",
-                                border: 0,
-                                padding: 0,
-                                color: "#475569",
-                                background: "#f1f5f9",
-                                fontSize: "18px",
-                              },
-                            },
-                            () => "×",
-                          ),
-                        ],
-                      ),
-                      h(
-                        "ol",
-                        { style: { display: "grid", gap: "10px", margin: 0, padding: "0 18px 18px 36px" } },
-                        visibleRules.map((rule, index) => {
-                          const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
-                          const content = typeof rule === "string" ? "" : text(rule.content);
-                          return h("li", { style: { color: "#374151", lineHeight: 1.65, fontSize: "14px" } }, [
-                            h(MlcText, { as: "strong", size: 14, weight: 800, style: { color: "#111827" } }, () => title),
-                            content ? h(MlcText, { as: "span", size: 14, style: { display: "block", marginTop: "2px", color: "#374151" } }, () => content) : null,
-                          ]);
-                        }),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : null,
+          h(
+            MlcModal,
+            {
+              open: open.value,
+              title: text(runtimeProps.modalTitle, "活动规则"),
+              closeLabel: "关闭规则弹窗",
+              onClose: () => {
+                open.value = false;
+              },
+            },
+            () =>
+              h(
+                "ol",
+                { style: { display: "grid", gap: "10px", margin: 0, padding: "0 18px 18px 36px" } },
+                visibleRules.map((rule, index) => {
+                  const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
+                  const content = typeof rule === "string" ? "" : text(rule.content);
+                  return h("li", { style: { color: "#374151", lineHeight: 1.65, fontSize: "14px" } }, [
+                    h(MlcText, { as: "strong", size: 14, weight: 800, style: { color: "#111827" } }, () => title),
+                    content ? h(MlcText, { as: "span", size: 14, style: { display: "block", marginTop: "2px", color: "#374151" } }, () => content) : null,
+                  ]);
+                }),
+              ),
+          ),
         ],
       );
     };

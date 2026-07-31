@@ -19,6 +19,8 @@ Current internal primitives:
 - `MlcTextarea`
 - `MlcSwitch`
 - `MlcStepper`
+- `MlcOverlay`
+- `MlcModal`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5Materials`.
 

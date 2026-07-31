@@ -34,6 +34,7 @@ type ButtonVariant = "solid" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type InputType = "text" | "tel" | "email" | "number";
+type OverlayPlacement = "center" | "bottom";
 
 function toneColor(tone: Tone): string {
   if (tone === "accent") return h5Tokens.color.accent;
@@ -210,6 +211,156 @@ export function MlcText({
       },
     },
     children,
+  );
+}
+
+export interface MlcOverlayProps {
+  open?: boolean;
+  children?: React.ReactNode;
+  placement?: OverlayPlacement;
+  zIndex?: number;
+  backgroundColor?: string;
+  padding?: string | number;
+  className?: string;
+  style?: React.CSSProperties;
+  onBackdropClick?: React.MouseEventHandler<HTMLDivElement>;
+}
+
+export function MlcOverlay({
+  open = true,
+  children,
+  placement = "center",
+  zIndex = 1000,
+  backgroundColor = "rgba(15, 23, 42, 0.42)",
+  padding = "20px 12px",
+  className,
+  style,
+  onBackdropClick,
+}: MlcOverlayProps): React.ReactElement | null {
+  if (!open) return null;
+  return (
+    <div
+      className={className}
+      onClick={(event) => {
+        if (event.currentTarget === event.target) onBackdropClick?.(event);
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex,
+        display: "grid",
+        placeItems: placement === "bottom" ? "end center" : "center",
+        padding,
+        background: backgroundColor,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export interface MlcModalProps {
+  open?: boolean;
+  title?: React.ReactNode;
+  ariaLabel?: string;
+  closeLabel?: string;
+  children?: React.ReactNode;
+  footer?: React.ReactNode;
+  placement?: OverlayPlacement;
+  closeOnBackdrop?: boolean;
+  maxWidth?: number | string;
+  maxHeight?: number | string;
+  radius?: number | string;
+  zIndex?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  bodyStyle?: React.CSSProperties;
+  onClose?: () => void;
+}
+
+export function MlcModal({
+  open = true,
+  title,
+  ariaLabel,
+  closeLabel = "关闭弹窗",
+  children,
+  footer,
+  placement = "bottom",
+  closeOnBackdrop = false,
+  maxWidth = 420,
+  maxHeight = "72vh",
+  radius = "16px 16px 12px 12px",
+  zIndex = 1000,
+  className,
+  style,
+  bodyStyle,
+  onClose,
+}: MlcModalProps): React.ReactElement | null {
+  return (
+    <MlcOverlay open={open} placement={placement} zIndex={zIndex} onBackdropClick={closeOnBackdrop ? onClose : undefined}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel ?? (typeof title === "string" ? title : undefined)}
+        className={className}
+        style={{
+          width: "100%",
+          maxWidth,
+          maxHeight,
+          overflow: "auto",
+          borderRadius: radius,
+          background: h5Tokens.color.surface,
+          boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
+          ...style,
+        }}
+      >
+        {title || onClose ? (
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              padding: "16px 16px 10px",
+              background: h5Tokens.color.surface,
+            }}
+          >
+            {title ? (
+              <MlcText as="strong" size={17} weight={800} style={{ color: h5Tokens.color.text }}>
+                {title}
+              </MlcText>
+            ) : (
+              <span />
+            )}
+            {onClose ? (
+              <MlcButton
+                aria-label={closeLabel}
+                size="sm"
+                radius={h5Tokens.radius.pill}
+                onClick={onClose}
+                style={{
+                  width: 32,
+                  height: 32,
+                  minHeight: 32,
+                  border: 0,
+                  padding: 0,
+                  color: "#475569",
+                  background: "#f1f5f9",
+                  fontSize: 18,
+                }}
+              >
+                ×
+              </MlcButton>
+            ) : null}
+          </div>
+        ) : null}
+        <div style={bodyStyle}>{children}</div>
+        {footer ? <div>{footer}</div> : null}
+      </div>
+    </MlcOverlay>
   );
 }
 

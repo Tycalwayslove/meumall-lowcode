@@ -35,6 +35,7 @@ type ButtonSize = "sm" | "md" | "lg";
 type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type ImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type InputType = "text" | "tel" | "email" | "number";
+type OverlayPlacement = "center" | "bottom";
 
 function toneColor(tone: Tone): string {
   if (tone === "accent") return h5Tokens.color.accent;
@@ -191,6 +192,146 @@ export const MlcText = defineComponent({
         slots.default?.(),
       );
     };
+  },
+});
+
+export const MlcOverlay = defineComponent({
+  name: "MlcOverlay",
+  props: {
+    open: { type: Boolean, default: true },
+    placement: { type: String as PropType<OverlayPlacement>, default: "center" },
+    zIndex: { type: Number, default: 1000 },
+    backgroundColor: { type: String, default: "rgba(15, 23, 42, 0.42)" },
+    padding: { type: [String, Number] as PropType<string | number>, default: "20px 12px" },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onBackdropClick: { type: Function as PropType<(event: MouseEvent) => void>, default: undefined },
+  },
+  setup(props, { slots }) {
+    return () => {
+      if (!props.open) return null;
+      return h(
+        "div",
+        {
+          class: props.class,
+          style: {
+            position: "fixed",
+            inset: 0,
+            zIndex: props.zIndex,
+            display: "grid",
+            placeItems: props.placement === "bottom" ? "end center" : "center",
+            padding: typeof props.padding === "number" ? `${props.padding}px` : props.padding,
+            background: props.backgroundColor,
+            ...props.style,
+          } satisfies CSSProperties,
+          onClick: (event: MouseEvent) => {
+            if (event.currentTarget === event.target) props.onBackdropClick?.(event);
+          },
+        },
+        slots.default?.(),
+      );
+    };
+  },
+});
+
+export const MlcModal = defineComponent({
+  name: "MlcModal",
+  props: {
+    open: { type: Boolean, default: true },
+    title: { type: String, default: "" },
+    ariaLabel: { type: String, default: "" },
+    closeLabel: { type: String, default: "关闭弹窗" },
+    placement: { type: String as PropType<OverlayPlacement>, default: "bottom" },
+    closeOnBackdrop: { type: Boolean, default: false },
+    maxWidth: { type: [String, Number] as PropType<string | number>, default: 420 },
+    maxHeight: { type: [String, Number] as PropType<string | number>, default: "72vh" },
+    radius: { type: [String, Number] as PropType<string | number>, default: "16px 16px 12px 12px" },
+    zIndex: { type: Number, default: 1000 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    bodyStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onClose: { type: Function as PropType<() => void>, default: undefined },
+  },
+  setup(props, { slots }) {
+    const toSize = (value: string | number) => (typeof value === "number" ? `${value}px` : value);
+    return () =>
+      h(
+        MlcOverlay,
+        {
+          open: props.open,
+          placement: props.placement,
+          zIndex: props.zIndex,
+          onBackdropClick: props.closeOnBackdrop ? props.onClose : undefined,
+        },
+        () =>
+          h(
+            "div",
+            {
+              role: "dialog",
+              "aria-modal": "true",
+              "aria-label": props.ariaLabel || props.title || undefined,
+              class: props.class,
+              style: {
+                width: "100%",
+                maxWidth: toSize(props.maxWidth),
+                maxHeight: toSize(props.maxHeight),
+                overflow: "auto",
+                borderRadius: toSize(props.radius),
+                background: h5Tokens.color.surface,
+                boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
+                ...props.style,
+              } satisfies CSSProperties,
+            },
+            [
+              props.title || props.onClose
+                ? h(
+                    "div",
+                    {
+                      style: {
+                        position: "sticky",
+                        top: 0,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "16px 16px 10px",
+                        background: h5Tokens.color.surface,
+                      } satisfies CSSProperties,
+                    },
+                    [
+                      props.title
+                        ? h(MlcText, { as: "strong", size: 17, weight: 800, style: { color: h5Tokens.color.text } }, () => props.title)
+                        : h("span"),
+                      props.onClose
+                        ? h(
+                            MlcButton,
+                            {
+                              "aria-label": props.closeLabel,
+                              size: "sm",
+                              radius: h5Tokens.radius.pill,
+                              onClick: props.onClose,
+                              style: {
+                                width: "32px",
+                                height: "32px",
+                                minHeight: "32px",
+                                border: 0,
+                                padding: 0,
+                                color: "#475569",
+                                background: "#f1f5f9",
+                                fontSize: "18px",
+                              } satisfies CSSProperties,
+                            },
+                            () => "×",
+                          )
+                        : null,
+                    ],
+                  )
+                : null,
+              h("div", { style: props.bodyStyle }, slots.default?.()),
+              slots.footer ? h("div", slots.footer()) : null,
+            ],
+          ),
+      );
   },
 });
 

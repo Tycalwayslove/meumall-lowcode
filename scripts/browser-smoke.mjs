@@ -392,6 +392,15 @@ async function assertPage(page, url, checks) {
   }
 }
 
+async function assertActivityRuleModal(page, label) {
+  log(`检查活动规则弹窗：${label}`);
+  await page.clickByText(".phone-frame button", "查看规则");
+  await page.waitForExpression("document.querySelector('[role=\"dialog\"]') && document.body.innerText.includes('活动规则')");
+  await page.clickFirst("[role='dialog'] button");
+  await page.waitForExpression("!document.querySelector('[role=\"dialog\"]')");
+  log(`通过：${label} 可打开并关闭活动规则弹窗`);
+}
+
 async function assertEditorWorkflow(page) {
   log("检查 H5 预览入口");
   await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
@@ -781,6 +790,7 @@ async function main() {
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertActivityRuleModal(page, "Vue3 编辑器内置画布");
     await assertInspectorGroups(page);
     await assertOutlineNavigator(page);
     await assertEditorWorkflow(page);
@@ -816,6 +826,7 @@ async function main() {
       { label: "React H5 底部转化条已渲染", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertActivityRuleModal(page, "React H5 runtime");
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },

@@ -66,7 +66,19 @@ describe("MeuMall H5 material manifests", () => {
   });
 
   it("keeps runtime primitives out of material registries", () => {
-    const primitiveNames = ["MlcButton", "MlcImage", "MlcTag", "MlcText", "MlcPrice", "MlcInput", "MlcTextarea", "MlcSwitch", "MlcStepper"];
+    const primitiveNames = [
+      "MlcButton",
+      "MlcImage",
+      "MlcTag",
+      "MlcText",
+      "MlcPrice",
+      "MlcInput",
+      "MlcTextarea",
+      "MlcSwitch",
+      "MlcStepper",
+      "MlcOverlay",
+      "MlcModal",
+    ];
 
     for (const name of primitiveNames) {
       assert.equal(manifestNames(h5Materials).includes(name), false, `${name} should not be a React material`);
@@ -121,7 +133,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(storeExpertTypes.has("MlcText"), true);
     assert.equal(couponSectionTypes.has("MlcButton"), true);
     assert.equal(couponSectionTypes.has("MlcText"), true);
-    functionSourceIncludes(ActivityRuleModal, ["MlcButton", "MlcText"]);
+    functionSourceIncludes(ActivityRuleModal, ["MlcButton", "MlcModal", "MlcText"]);
     assert.equal(countdownTypes.has("MlcTag"), true);
     assert.equal(countdownTypes.has("MlcText"), true);
     assert.equal(navGridTypes.has("MlcButton"), true);

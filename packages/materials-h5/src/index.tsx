@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcImage, MlcInput, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -1125,79 +1125,20 @@ export function ActivityRuleModal({ props }: MaterialProps) {
         </MlcButton>
       </div>
 
-      {open ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={text(props.modalTitle, "活动规则")}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1000,
-            display: "grid",
-            placeItems: "end center",
-            padding: "20px 12px",
-            background: "rgba(15, 23, 42, 0.42)",
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 420,
-              maxHeight: "72vh",
-              overflow: "auto",
-              borderRadius: "16px 16px 12px 12px",
-              background: "#ffffff",
-              boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
-            }}
-          >
-            <div
-              style={{
-                position: "sticky",
-                top: 0,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 12,
-                padding: "16px 16px 10px",
-                background: "#ffffff",
-              }}
-            >
-              <MlcText as="strong" size={17} weight={800} style={{ color: "#111827" }}>{text(props.modalTitle, "活动规则")}</MlcText>
-              <MlcButton
-                aria-label="关闭规则弹窗"
-                size="sm"
-                radius={999}
-                onClick={() => setOpen(false)}
-                style={{
-                  width: 32,
-                  height: 32,
-                  border: 0,
-                  minHeight: 32,
-                  padding: 0,
-                  color: "#475569",
-                  background: "#f1f5f9",
-                  fontSize: 18,
-                }}
-              >
-                ×
-              </MlcButton>
-            </div>
-            <ol style={{ display: "grid", gap: 10, margin: 0, padding: "0 18px 18px 36px" }}>
-              {(rules.length ? rules : ["活动规则以页面展示和结算结果为准。"]).map((rule, index) => {
-                const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
-                const content = typeof rule === "string" ? "" : text(rule.content);
-                return (
-                  <li key={`${title}-${index}`} style={{ color: "#374151", lineHeight: 1.65, fontSize: 14 }}>
-                    <MlcText as="strong" size={14} weight={800} style={{ color: "#111827" }}>{title}</MlcText>
-                    {content ? <MlcText as="span" size={14} style={{ display: "block", marginTop: 2, color: "#374151" }}>{content}</MlcText> : null}
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        </div>
-      ) : null}
+      <MlcModal open={open} title={text(props.modalTitle, "活动规则")} closeLabel="关闭规则弹窗" onClose={() => setOpen(false)}>
+        <ol style={{ display: "grid", gap: 10, margin: 0, padding: "0 18px 18px 36px" }}>
+          {(rules.length ? rules : ["活动规则以页面展示和结算结果为准。"]).map((rule, index) => {
+            const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
+            const content = typeof rule === "string" ? "" : text(rule.content);
+            return (
+              <li key={`${title}-${index}`} style={{ color: "#374151", lineHeight: 1.65, fontSize: 14 }}>
+                <MlcText as="strong" size={14} weight={800} style={{ color: "#111827" }}>{title}</MlcText>
+                {content ? <MlcText as="span" size={14} style={{ display: "block", marginTop: 2, color: "#374151" }}>{content}</MlcText> : null}
+              </li>
+            );
+          })}
+        </ol>
+      </MlcModal>
     </section>
   );
 }
