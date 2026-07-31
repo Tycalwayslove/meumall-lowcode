@@ -203,6 +203,7 @@ import EditorPublishPanel from "./components/EditorPublishPanel.vue";
 import EditorResourcePanels from "./components/EditorResourcePanels.vue";
 import EditorSchemaConfigPanel from "./components/EditorSchemaConfigPanel.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
+import EditorSourcePanel from "./components/EditorSourcePanel.vue";
 import EditorTopToolbar from "./components/EditorTopToolbar.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -3568,16 +3569,15 @@ function rollbackPublishSelectedRelease(): void {
         </div>
       </div>
 
-      <div v-else class="schema-editor">
-        <textarea v-model="schemaDraft" spellcheck="false" />
-        <div class="schema-actions">
-          <button @click="applyJson">应用 JSON</button>
-          <button @click="exportCurrentSchema">导出 JSON</button>
-          <button @click="triggerSchemaImport">导入 JSON</button>
-          <span v-if="schemaTransferMessage" class="schema-transfer-message">{{ schemaTransferMessage }}</span>
-          <span v-if="jsonError">{{ jsonError }}</span>
-        </div>
-      </div>
+      <EditorSourcePanel
+        v-else
+        v-model:schema-draft="schemaDraft"
+        :schema-transfer-message="schemaTransferMessage"
+        :json-error="jsonError"
+        @apply-json="applyJson"
+        @export-schema="exportCurrentSchema"
+        @import-schema="triggerSchemaImport"
+      />
     </section>
 
     <aside class="right-panel">

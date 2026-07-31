@@ -269,9 +269,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行真实 data source resolver、action handler、事件绑定、权限、协作锁定、审计或服务端保存。
 
+### `EditorSourcePanel`
+
+路径：`apps/editor-playground/src/components/EditorSourcePanel.vue`
+
+职责：
+
+- 展示源码模式 JSON 文本域、应用 JSON、导出 JSON、导入 JSON、导入导出提示和 JSON 错误提示。
+- 接收 schema JSON 草稿、导入导出提示和 JSON 错误提示。
+- 通过 emits 抛出 schema 草稿更新、应用 JSON、导出 JSON 和导入 JSON。
+- 复用现有 `.schema-editor`、`.schema-actions` 和 `.schema-transfer-message` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不解析 JSON。
+- 不校验 Page Schema。
+- 不写入 Page Schema。
+- 不持有隐藏文件 input、不读取本地文件、不导出文件。
+- 不读取或写入 localStorage。
+- 不执行保存、预览、发布、权限、协作锁定、审批、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
+1. 状态面板：优先消费 workspace summary API，继续保持重置示例和真实 schema 写回在宿主 shell。
 2. 画布上下文工具条：优先消费 node operation API，并继续保持真实节点操作在宿主 shell。
 
 ## 抽 npm 包判断
