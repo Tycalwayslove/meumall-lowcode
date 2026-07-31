@@ -16,7 +16,7 @@
 - 将 React H5 runtime playground 的接入方式沉淀为 `hybird-meumall` 路由集成清单。
 - 将本地 URL schema handoff 替换为 Java 配置平台 previewId/pageId 查询协议。
 - 将 mock data source resolver 升级为真实 HTTP 请求预览、鉴权和缓存策略。
-- 补充 action 安全白名单。
+- 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。
 - 扩展组件级 DOM 测试、浏览器交互 smoke check 和 visual regression。
 
 ## P2

@@ -62,18 +62,27 @@ export function RichTextBlock({ props }: MaterialProps) {
 
 export function ProductList({ props }: MaterialProps) {
   const items = Array.isArray(props.items) ? props.items : [];
+  const onProductClick = props.onProductClick;
   return (
     <section style={{ padding: 12 }}>
       {items.map((item, index) => {
         const product = item as Record<string, unknown>;
         return (
-          <div
+          <button
+            type="button"
             key={String(product.id ?? index)}
+            onClick={() => {
+              if (typeof onProductClick === "function") onProductClick(product);
+            }}
             style={{
               display: "flex",
               gap: 12,
+              width: "100%",
+              border: 0,
               padding: "12px 0",
               borderBottom: "1px solid #eee",
+              background: "transparent",
+              textAlign: "left",
             }}
           >
             {typeof product.imageUrl === "string" ? (
@@ -83,7 +92,7 @@ export function ProductList({ props }: MaterialProps) {
               <div style={{ fontWeight: 600 }}>{String(product.title ?? "商品名称")}</div>
               <div style={{ color: "#e5484d", marginTop: 8 }}>{String(product.priceText ?? "")}</div>
             </div>
-          </div>
+          </button>
         );
       })}
     </section>
@@ -97,6 +106,10 @@ export function CouponSection({ props }: MaterialProps) {
       <h2 style={{ margin: "0 0 12px", fontSize: 18 }}>{title}</h2>
       <button
         type="button"
+        onClick={() => {
+          const handler = props.onReceive;
+          if (typeof handler === "function") handler();
+        }}
         style={{
           width: "100%",
           height: 44,

@@ -97,6 +97,23 @@ button {
   margin-top: 10px;
 }
 
+.runtime-action-logs {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.runtime-action-logs p {
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  color: #166534;
+  background: #f0fdf4;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .runtime-data-records p {
   display: grid;
   gap: 2px;

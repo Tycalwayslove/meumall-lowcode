@@ -3,12 +3,13 @@ import {
   type JsonObject,
   type JsonValue,
   type LowcodeActionConfig,
+  type LowcodeActionRef,
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
 
 export type DataSourceHandler = (config: LowcodeDataSourceConfig) => Promise<JsonValue> | JsonValue;
-export type ActionHandler = (config: LowcodeActionConfig) => Promise<void> | void;
+export type ActionHandler = (config: LowcodeActionConfig, context?: SafeActionExecutionContext) => Promise<void> | void;
 
 export interface DataSourceRegistry {
   register(type: string, handler: DataSourceHandler): void;
@@ -32,6 +33,32 @@ export interface DataSourceResolutionResult {
 export interface ResolveLowcodeDataSourcesOptions {
   initialData?: JsonObject;
   onError?: (error: Error, config: LowcodeDataSourceConfig) => void;
+}
+
+export interface SafeActionExecutionContext {
+  ref?: LowcodeActionRef;
+  data?: JsonObject;
+  schema?: LowcodePageSchema;
+}
+
+export interface SafeActionRegistry {
+  register(type: string, handler: ActionHandler): void;
+  execute(config: LowcodeActionConfig, context?: SafeActionExecutionContext): Promise<void> | void;
+  listTypes(): string[];
+}
+
+export interface RuntimeActionContextLike {
+  schema: LowcodePageSchema;
+  data: JsonObject;
+  actions?: Record<string, LowcodeActionConfig>;
+}
+
+export interface SafeActionExecutor {
+  execute(ref: LowcodeActionRef, context: RuntimeActionContextLike): Promise<void> | void;
+}
+
+export interface CreateSafeActionExecutorOptions {
+  onError?: (error: Error, ref: LowcodeActionRef, context: RuntimeActionContextLike) => void;
 }
 
 export function createDataSourceRegistry(initialHandlers: Record<string, DataSourceHandler> = {}): DataSourceRegistry {
@@ -100,21 +127,50 @@ export async function resolveLowcodeDataSources(
   return { data, records };
 }
 
-export function createSafeActionRegistry(initialHandlers: Record<string, ActionHandler> = {}) {
+export function createSafeActionRegistry(initialHandlers: Record<string, ActionHandler> = {}): SafeActionRegistry {
   const handlers = new Map<string, ActionHandler>(Object.entries(initialHandlers));
   return {
     register(type: string, handler: ActionHandler) {
       handlers.set(type, handler);
     },
-    execute(config: LowcodeActionConfig) {
+    execute(config: LowcodeActionConfig, context?: SafeActionExecutionContext) {
       const handler = handlers.get(config.type);
       if (!handler) {
         throw new Error(`Lowcode action handler not found: ${config.type}`);
       }
-      return handler(config);
+      return handler(config, context);
     },
     listTypes() {
       return [...handlers.keys()];
+    },
+  };
+}
+
+function getActionByRef(ref: LowcodeActionRef, context: RuntimeActionContextLike): LowcodeActionConfig | undefined {
+  return context.actions?.[ref.actionId] ?? context.schema.actions?.find((action) => action.id === ref.actionId);
+}
+
+export function createSafeActionExecutor(
+  registry: SafeActionRegistry,
+  options: CreateSafeActionExecutorOptions = {},
+): SafeActionExecutor {
+  return {
+    execute(ref, context) {
+      try {
+        const action = getActionByRef(ref, context);
+        if (!action) {
+          throw new Error(`Lowcode action not found: ${ref.actionId}`);
+        }
+        return registry.execute(action, {
+          ref,
+          data: context.data,
+          schema: context.schema,
+        });
+      } catch (error) {
+        const normalizedError = toError(error);
+        options.onError?.(normalizedError, ref, context);
+        throw normalizedError;
+      }
     },
   };
 }

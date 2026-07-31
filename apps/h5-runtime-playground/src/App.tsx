@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   createDataSourceRegistry,
+  createSafeActionExecutor,
+  createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
@@ -93,6 +95,9 @@ const sampleSchema = createLowcodePageSchema({
         backgroundColor: "#fff7ed",
         buttonColor: "#111827",
       },
+      events: {
+        onReceive: { actionId: "receive_coupon" },
+      },
     },
     {
       id: "node_container",
@@ -118,6 +123,9 @@ const sampleSchema = createLowcodePageSchema({
             wrapperBackgroundColor: "#ffffff",
             radius: 8,
             paddingY: 8,
+          },
+          events: {
+            onClick: { actionId: "go_topic" },
           },
         },
         {
@@ -176,6 +184,22 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
   ],
+  actions: [
+    {
+      id: "go_topic",
+      type: "navigate",
+      params: {
+        url: "/activity/summer-topic",
+      },
+    },
+    {
+      id: "receive_coupon",
+      type: "coupon.receive",
+      params: {
+        couponId: "new-user-coupon",
+      },
+    },
+  ],
   publishMeta: {
     environment: "prod",
     publishedAt: "2026-07-31T00:00:00.000Z",
@@ -227,16 +251,43 @@ function countNodes(schema: LowcodePageSchema): number {
   return walk(schema.nodes);
 }
 
+function getParamString(params: JsonObject | undefined, key: string, fallback: string): string {
+  const value = params?.[key];
+  return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
 export function App() {
   const [renderErrors, setRenderErrors] = useState<string[]>([]);
   const [runtimeData, setRuntimeData] = useState<JsonObject>({});
   const [dataSourceRecords, setDataSourceRecords] = useState<DataSourceResolutionRecord[]>([]);
   const [dataResolving, setDataResolving] = useState(true);
+  const [actionLogs, setActionLogs] = useState<string[]>([]);
   const runtimeSchema = useMemo(() => resolveRuntimeSchema(), []);
   const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
   const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
   const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
   const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
+  const actionExecutor = useMemo(() => {
+    const actionRegistry = createSafeActionRegistry({
+      navigate(action) {
+        setActionLogs((current) => [`模拟跳转：${getParamString(action.params, "url", "/")}`, ...current].slice(0, 5));
+      },
+      "coupon.receive"(action) {
+        setActionLogs((current) => [`模拟领券：${getParamString(action.params, "couponId", "coupon_demo")}`, ...current].slice(0, 5));
+      },
+      "tracking.click"(action) {
+        setActionLogs((current) => [`模拟埋点：${getParamString(action.params, "eventName", "lowcode_click")}`, ...current].slice(0, 5));
+      },
+      noop(action) {
+        setActionLogs((current) => [`已执行空动作：${action.id}`, ...current].slice(0, 5));
+      },
+    });
+    return createSafeActionExecutor(actionRegistry, {
+      onError(error) {
+        setActionLogs((current) => [`动作执行失败：${error.message}`, ...current].slice(0, 5));
+      },
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -292,6 +343,13 @@ export function App() {
           </div>
         </dl>
         {runtimeSchema.error ? <p className="runtime-warning">{runtimeSchema.error}</p> : null}
+        {actionLogs.length ? (
+          <div className="runtime-action-logs" aria-label="动作日志">
+            {actionLogs.map((log, index) => (
+              <p key={`${log}-${index}`}>{log}</p>
+            ))}
+          </div>
+        ) : null}
         {dataSourceRecords.length ? (
           <div className="runtime-data-records" aria-label="数据源状态">
             {dataSourceRecords.map((record) => (
@@ -313,6 +371,7 @@ export function App() {
           schema={runtimeSchema.schema}
           registry={registry}
           data={runtimeData}
+          actionExecutor={actionExecutor}
           fallback={<div className="runtime-empty">页面暂无内容</div>}
           onRenderError={(error, node) => {
             setRenderErrors((current) => [...current, `${node?.id ?? "unknown"}: ${error.message}`]);

@@ -21,6 +21,8 @@ import {
 } from "@lucide/vue";
 import {
   createDataSourceRegistry,
+  createSafeActionExecutor,
+  createSafeActionRegistry,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
@@ -50,6 +52,7 @@ import {
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
+  type LowcodeActionConfig,
   type LowcodeDataSourceConfig,
   type LowcodeMaterialManifest,
   type LowcodeNode,
@@ -113,6 +116,13 @@ const sampleProducts = [
   },
 ];
 
+const actionTypeOptions = [
+  { label: "页面跳转", value: "navigate" },
+  { label: "领取优惠券", value: "coupon.receive" },
+  { label: "点击埋点", value: "tracking.click" },
+  { label: "无动作", value: "noop" },
+];
+
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
 const previewDataSourceRegistry = createDataSourceRegistry({
@@ -147,8 +157,33 @@ const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
 const runtimeDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
 const isPreviewDataResolving = ref(false);
 const isRuntimeDataResolving = ref(false);
+const actionMessage = ref("");
 let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
+
+const safeActionRegistry = createSafeActionRegistry({
+  navigate(action) {
+    const url = getParamString(action.params, "url", "/");
+    actionMessage.value = `模拟跳转：${url}`;
+    if (getParamBoolean(action.params, "openInNewTab", false)) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  },
+  "coupon.receive"(action) {
+    actionMessage.value = `模拟领券：${getParamString(action.params, "couponId", "coupon_demo")}`;
+  },
+  "tracking.click"(action, context) {
+    actionMessage.value = `模拟埋点：${getParamString(action.params, "eventName", "lowcode_click")} / ${context?.schema?.pageId ?? "-"}`;
+  },
+  noop(action) {
+    actionMessage.value = `已执行空动作：${action.id}`;
+  },
+});
+const actionExecutor = createSafeActionExecutor(safeActionRegistry, {
+  onError(error) {
+    actionMessage.value = `动作执行失败：${error.message}`;
+  },
+});
 
 const validation = computed(() => validateLowcodePageSchema(editorState.value.schema));
 const selectedNode = computed(() => findNode(editorState.value.schema.nodes, editorState.value.selectedNodeId));
@@ -264,6 +299,16 @@ function runtimeDataStatusText(): string {
   const errors = runtimeDataSourceRecords.value.filter((record) => record.status === "error").length;
   if (errors > 0) return `数据源异常 ${errors} 个`;
   return `数据源已解析 ${runtimeDataSourceRecords.value.length} 个`;
+}
+
+function getParamString(params: JsonObject | undefined, key: string, fallback: string): string {
+  const value = params?.[key];
+  return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getParamBoolean(params: JsonObject | undefined, key: string, fallback: boolean): boolean {
+  const value = params?.[key];
+  return typeof value === "boolean" ? value : fallback;
 }
 
 function createNodeInput(manifest: LowcodeMaterialManifest) {
@@ -590,6 +635,159 @@ function removeDataSource(index: number): void {
   };
 }
 
+function defaultActionParams(type: string): JsonObject {
+  if (type === "navigate") return { url: "/activity/demo", openInNewTab: false };
+  if (type === "coupon.receive") return { couponId: "coupon_demo" };
+  if (type === "tracking.click") return { eventName: "lowcode_click" };
+  return {};
+}
+
+function addAction(type = "navigate"): void {
+  const nextAction: LowcodeActionConfig = {
+    id: `act_${Date.now().toString(36)}`,
+    type,
+    params: defaultActionParams(type),
+  };
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      actions: [...(editorState.value.schema.actions ?? []), nextAction],
+    },
+    dirty: true,
+    lastAction: "addAction",
+  };
+}
+
+function updateAction(index: number, patch: Partial<LowcodeActionConfig>): void {
+  const actions = [...(editorState.value.schema.actions ?? [])];
+  const current = actions[index];
+  if (!current) return;
+  actions[index] = {
+    ...current,
+    ...patch,
+  };
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      actions,
+    },
+    dirty: true,
+    lastAction: "updateAction",
+  };
+}
+
+function updateActionId(index: number, nextId: string): void {
+  const actions = [...(editorState.value.schema.actions ?? [])];
+  const current = actions[index];
+  if (!current) return;
+  actions[index] = {
+    ...current,
+    id: nextId,
+  };
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      actions,
+      nodes: renameActionRefs(editorState.value.schema.nodes, current.id, nextId),
+    },
+    dirty: true,
+    lastAction: "updateActionId",
+  };
+}
+
+function updateActionType(index: number, type: string): void {
+  updateAction(index, { type, params: defaultActionParams(type) });
+}
+
+function updateActionParams(index: number, value: string): void {
+  try {
+    updateAction(index, { params: JSON.parse(value) as JsonObject });
+    jsonError.value = "";
+  } catch {
+    jsonError.value = "动作参数不是合法 JSON";
+  }
+}
+
+function removeAction(index: number): void {
+  const actions = [...(editorState.value.schema.actions ?? [])];
+  const [removed] = actions.splice(index, 1);
+  if (!removed) return;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      actions,
+      nodes: removeActionRefs(editorState.value.schema.nodes, removed.id),
+    },
+    dirty: true,
+    lastAction: "removeAction",
+  };
+}
+
+function removeActionRefs(nodes: LowcodeNode[], actionId: string): LowcodeNode[] {
+  return nodes.map((node) => {
+    const events = Object.fromEntries(
+      Object.entries(node.events ?? {}).filter(([, ref]) => ref.actionId !== actionId),
+    );
+    return {
+      ...node,
+      events: Object.keys(events).length ? events : undefined,
+      children: node.children?.length ? removeActionRefs(node.children, actionId) : node.children,
+    };
+  });
+}
+
+function renameActionRefs(nodes: LowcodeNode[], previousActionId: string, nextActionId: string): LowcodeNode[] {
+  return nodes.map((node) => {
+    const events = Object.fromEntries(
+      Object.entries(node.events ?? {}).map(([eventName, ref]) => [
+        eventName,
+        ref.actionId === previousActionId ? { ...ref, actionId: nextActionId } : ref,
+      ]),
+    );
+    return {
+      ...node,
+      events: Object.keys(events).length ? events : undefined,
+      children: node.children?.length ? renameActionRefs(node.children, previousActionId, nextActionId) : node.children,
+    };
+  });
+}
+
+function actionParamsText(action: LowcodeActionConfig): string {
+  return JSON.stringify(action.params ?? {}, null, 2);
+}
+
+function selectedEventActionId(eventName: string): string {
+  return selectedNode.value?.events?.[eventName]?.actionId ?? "";
+}
+
+function bindSelectedEvent(eventName: string, actionId: string): void {
+  if (!selectedNode.value) return;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => {
+        const events = { ...(node.events ?? {}) };
+        if (!actionId) {
+          delete events[eventName];
+        } else {
+          events[eventName] = { actionId };
+        }
+        return {
+          ...node,
+          events: Object.keys(events).length ? events : undefined,
+        };
+      }),
+    },
+    dirty: true,
+    lastAction: "bindSelectedEvent",
+  };
+}
+
 function asText(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
 }
@@ -736,8 +934,10 @@ function formatReleaseTime(value: string): string {
         :schema="runtimeSchema"
         :registry="registry"
         :data="runtimePreviewData"
+        :action-executor="actionExecutor"
         :fallback="'页面未发布'"
       />
+      <p v-if="actionMessage" class="runtime-action-message">{{ actionMessage }}</p>
     </div>
   </main>
 
@@ -963,6 +1163,7 @@ function formatReleaseTime(value: string): string {
             :schema="editorState.schema"
             :registry="registry"
             :data="previewData"
+            :action-executor="actionExecutor"
             :editable="editorState.mode === 'design'"
             :selected-node-id="editorState.selectedNodeId"
             :fallback="'暂无内容'"
@@ -1088,6 +1289,33 @@ function formatReleaseTime(value: string): string {
             </div>
           </label>
 
+          <div v-if="selectedManifest.events?.length" class="event-binding-list">
+            <div class="panel-title compact-title">
+              <PanelRight :size="15" />
+              <span>事件</span>
+            </div>
+            <label
+              v-for="event in selectedManifest.events"
+              :key="event.name"
+              class="field"
+            >
+              <span>{{ event.title }}</span>
+              <select
+                :value="selectedEventActionId(event.name)"
+                @change="bindSelectedEvent(event.name, ($event.target as HTMLSelectElement).value)"
+              >
+                <option value="">未绑定</option>
+                <option
+                  v-for="action in editorState.schema.actions ?? []"
+                  :key="`${event.name}-${action.id}`"
+                  :value="action.id"
+                >
+                  {{ action.id }} / {{ action.type }}
+                </option>
+              </select>
+            </label>
+          </div>
+
           <div class="toolbar inspector-actions">
             <button title="上移节点" :disabled="!canMoveSelectedUp" @click="moveSelected(-1)">
               <ArrowUp :size="16" />
@@ -1165,6 +1393,47 @@ function formatReleaseTime(value: string): string {
           <Plus :size="16" />
           <span>新增数据源</span>
         </button>
+      </section>
+
+      <section class="panel-section">
+        <div class="panel-title">
+          <PanelRight :size="16" />
+          <span>动作</span>
+        </div>
+        <div class="data-source-list">
+          <div
+            v-for="(action, index) in editorState.schema.actions ?? []"
+            :key="action.id"
+            class="action-card"
+          >
+            <label class="field">
+              <span>ID</span>
+              <input :value="action.id" @input="updateActionId(index, ($event.target as HTMLInputElement).value)" />
+            </label>
+            <label class="field">
+              <span>类型</span>
+              <select :value="action.type" @change="updateActionType(index, ($event.target as HTMLSelectElement).value)">
+                <option v-for="option in actionTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="field">
+              <span>参数 JSON</span>
+              <textarea
+                :value="actionParamsText(action)"
+                rows="4"
+                @change="updateActionParams(index, ($event.target as HTMLTextAreaElement).value)"
+              />
+            </label>
+            <button class="text-danger" @click="removeAction(index)">删除动作</button>
+          </div>
+        </div>
+        <button class="reset-button" @click="addAction()">
+          <Plus :size="16" />
+          <span>新增动作</span>
+        </button>
+        <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
       </section>
 
       <section class="panel-section">

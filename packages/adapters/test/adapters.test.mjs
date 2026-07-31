@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { createLowcodePageSchema } from "../../schema/dist/index.js";
 import {
   createDataSourceRegistry,
+  createSafeActionExecutor,
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
   encodePageSchemaToUrlParam,
@@ -113,17 +114,63 @@ describe("@meumall/lowcode-adapters", () => {
   it("executes safe action handlers by type", async () => {
     const calls = [];
     const registry = createSafeActionRegistry({
-      navigate(config) {
-        calls.push(config.params);
+      navigate(config, context) {
+        calls.push({ params: config.params, pageId: context?.schema?.pageId });
       },
     });
 
     registry.register("noop", () => undefined);
-    await registry.execute({ id: "go", type: "navigate", params: { url: "/topic" } });
+    await registry.execute(
+      { id: "go", type: "navigate", params: { url: "/topic" } },
+      { schema: createLowcodePageSchema({ pageId: "action_page", title: "动作页" }) },
+    );
 
-    assert.deepEqual(calls, [{ url: "/topic" }]);
+    assert.deepEqual(calls, [{ params: { url: "/topic" }, pageId: "action_page" }]);
     assert.deepEqual(registry.listTypes(), ["navigate", "noop"]);
     assert.throws(() => registry.execute({ id: "bad", type: "unsafe" }), /action handler not found/);
+  });
+
+  it("adapts safe action registry to renderer action executor", async () => {
+    const calls = [];
+    const schema = createLowcodePageSchema({
+      pageId: "executor_page",
+      title: "执行器页面",
+      actions: [{ id: "go", type: "navigate", params: { url: "/activity" } }],
+    });
+    const registry = createSafeActionRegistry({
+      navigate(config, context) {
+        calls.push({
+          actionId: config.id,
+          url: config.params?.url,
+          refActionId: context?.ref?.actionId,
+          dataChannel: context?.data?.channel,
+          pageId: context?.schema?.pageId,
+        });
+      },
+    });
+    const errors = [];
+    const executor = createSafeActionExecutor(registry, {
+      onError(error, ref) {
+        errors.push(`${ref.actionId}:${error.message}`);
+      },
+    });
+
+    await executor.execute({ actionId: "go" }, { schema, data: { channel: "h5" } });
+
+    assert.deepEqual(calls, [
+      {
+        actionId: "go",
+        url: "/activity",
+        refActionId: "go",
+        dataChannel: "h5",
+        pageId: "executor_page",
+      },
+    ]);
+    assert.throws(
+      () => executor.execute({ actionId: "missing" }, { schema, data: {} }),
+      /Lowcode action not found: missing/,
+    );
+    assert.deepEqual(errors, ["missing:Lowcode action not found: missing"]);
   });
 
   it("round-trips a valid schema through URL safe encoding", () => {
