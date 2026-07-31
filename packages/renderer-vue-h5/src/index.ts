@@ -16,6 +16,7 @@ import type { JsonObject, LowcodeNode, LowcodePageSchema } from "@meumall/lowcod
 
 export type VueH5MaterialComponent = Component;
 export type RuntimeMaterialProps = Record<string, unknown>;
+export type LowcodeVueRendererNodeDragHandler = (node: LowcodeNode, event: DragEvent) => void;
 
 export const LowcodeVueRenderer = defineComponent({
   name: "LowcodeVueRenderer",
@@ -50,6 +51,18 @@ export const LowcodeVueRenderer = defineComponent({
     },
     onNodeSelect: {
       type: Function as PropType<(node: LowcodeNode) => void>,
+      default: undefined,
+    },
+    nodeDraggable: {
+      type: Boolean,
+      default: false,
+    },
+    onNodeDragStart: {
+      type: Function as PropType<LowcodeVueRendererNodeDragHandler>,
+      default: undefined,
+    },
+    onNodeDragEnd: {
+      type: Function as PropType<LowcodeVueRendererNodeDragHandler>,
       default: undefined,
     },
   },
@@ -98,9 +111,18 @@ export const LowcodeVueRenderer = defineComponent({
             "is-selected": props.selectedNodeId === node.id,
           },
           "data-lowcode-node-id": node.id,
+          draggable: props.nodeDraggable,
           onClick: (event: MouseEvent) => {
             event.stopPropagation();
             props.onNodeSelect?.(node);
+          },
+          onDragstart: (event: DragEvent) => {
+            event.stopPropagation();
+            props.onNodeDragStart?.(node, event);
+          },
+          onDragend: (event: DragEvent) => {
+            event.stopPropagation();
+            props.onNodeDragEnd?.(node, event);
           },
         },
         [renderedNode],

@@ -224,8 +224,10 @@ let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
+type CanvasDragSource = "material" | "node";
 
 interface CanvasDropHint {
+  source: CanvasDragSource;
   placement: CanvasDropPlacement;
   targetNodeId?: string;
   targetTitle: string;
@@ -233,6 +235,9 @@ interface CanvasDropHint {
 }
 
 const canvasDropHint = ref<CanvasDropHint>();
+
+const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
+const NODE_DRAG_TYPE = "application/x-meumall-node";
 
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
@@ -366,6 +371,11 @@ function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefine
   return undefined;
 }
 
+function nodeContains(node: LowcodeNode | undefined, nodeId: string): boolean {
+  if (!node) return false;
+  return Boolean(findNode(node.children ?? [], nodeId));
+}
+
 interface OutlineRow {
   node: LowcodeNode;
   index: number;
@@ -485,13 +495,23 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
 }
 
 function onDragStart(event: DragEvent, manifest: LowcodeMaterialManifest): void {
-  event.dataTransfer?.setData("application/x-meumall-material", manifest.componentName);
+  event.dataTransfer?.setData(MATERIAL_DRAG_TYPE, manifest.componentName);
   event.dataTransfer?.setData("text/plain", manifest.componentName);
   if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
 }
 
 function isMaterialDrag(event: DragEvent): boolean {
-  return Array.from(event.dataTransfer?.types ?? []).includes("application/x-meumall-material");
+  return Array.from(event.dataTransfer?.types ?? []).includes(MATERIAL_DRAG_TYPE);
+}
+
+function isNodeDrag(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes(NODE_DRAG_TYPE);
+}
+
+function getCanvasDragSource(event: DragEvent): CanvasDragSource | undefined {
+  if (isMaterialDrag(event)) return "material";
+  if (isNodeDrag(event)) return "node";
+  return undefined;
 }
 
 function findOutlineRowByNodeId(nodeId: string): OutlineRow | undefined {
@@ -534,15 +554,23 @@ function createDropHintStyle(nodeElement: HTMLElement, placement: CanvasDropPlac
 }
 
 function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
-  if (!isMaterialDrag(event)) {
+  const source = getCanvasDragSource(event);
+  if (!source) {
     canvasDropHint.value = undefined;
     return undefined;
   }
   const nodeElement = getRuntimeNodeElement(event);
   const nodeId = nodeElement?.dataset.lowcodeNodeId;
   const node = nodeId ? findNode(editorState.value.schema.nodes, nodeId) : undefined;
+  const draggedNodeId = source === "node" ? event.dataTransfer?.getData(NODE_DRAG_TYPE) : undefined;
+  const draggedNode = draggedNodeId ? findNode(editorState.value.schema.nodes, draggedNodeId) : undefined;
+  if (source === "node" && node && draggedNodeId && (node.id === draggedNodeId || nodeContains(draggedNode, node.id))) {
+    canvasDropHint.value = undefined;
+    return undefined;
+  }
   if (!node || !nodeElement) {
     canvasDropHint.value = {
+      source,
       placement: "append",
       targetTitle: "页面末尾",
       style: {},
@@ -552,6 +580,7 @@ function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
   const placement = getDropPlacement(event, node, nodeElement);
   const manifest = registry.get(node.componentName)?.manifest;
   canvasDropHint.value = {
+    source,
     placement,
     targetNodeId: node.id,
     targetTitle: manifest?.title ?? node.componentName,
@@ -561,8 +590,9 @@ function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
 }
 
 function onCanvasDragOver(event: DragEvent): void {
-  if (!isMaterialDrag(event)) return;
-  if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  const source = getCanvasDragSource(event);
+  if (!source) return;
+  if (event.dataTransfer) event.dataTransfer.dropEffect = source === "material" ? "copy" : "move";
   updateCanvasDropHint(event);
 }
 
@@ -573,27 +603,75 @@ function onCanvasDragLeave(event: DragEvent): void {
   canvasDropHint.value = undefined;
 }
 
-function onMaterialDragEnd(): void {
+function clearCanvasDragState(): void {
   canvasDropHint.value = undefined;
+  draggedNodeId.value = undefined;
+}
+
+function onMaterialDragEnd(): void {
+  clearCanvasDragState();
+}
+
+function getAdjustedMoveIndex(sourceRow: OutlineRow, targetRow: OutlineRow, placement: Exclude<CanvasDropPlacement, "inside" | "append">): number {
+  let index = placement === "before" ? targetRow.index : targetRow.index + 1;
+  if (sourceRow.parentId === targetRow.parentId && sourceRow.index < index) {
+    index -= 1;
+  }
+  return index;
+}
+
+function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
+  const sourceRow = findOutlineRowByNodeId(nodeId);
+  if (!sourceRow) return;
+  if (!hint.targetNodeId || hint.placement === "append") {
+    editorState.value = moveNodeById(editorState.value, {
+      nodeId,
+      index: editorState.value.schema.nodes.length,
+    });
+    return;
+  }
+  const targetRow = findOutlineRowByNodeId(hint.targetNodeId);
+  if (!targetRow || targetRow.node.id === nodeId) return;
+  if (hint.placement === "inside") {
+    editorState.value = moveNodeById(editorState.value, {
+      nodeId,
+      targetParentId: targetRow.node.id,
+      index: targetRow.node.children?.length ?? 0,
+    });
+    return;
+  }
+  editorState.value = moveNodeById(editorState.value, {
+    nodeId,
+    targetParentId: targetRow.parentId,
+    index: getAdjustedMoveIndex(sourceRow, targetRow, hint.placement),
+  });
 }
 
 function onCanvasDrop(event: DragEvent): void {
-  const componentName = event.dataTransfer?.getData("application/x-meumall-material");
+  const source = getCanvasDragSource(event);
+  if (source === "node") {
+    const nodeId = event.dataTransfer?.getData(NODE_DRAG_TYPE) || draggedNodeId.value;
+    const hint = canvasDropHint.value ?? updateCanvasDropHint(event);
+    if (nodeId && hint) moveCanvasNode(nodeId, hint);
+    clearCanvasDragState();
+    return;
+  }
+  const componentName = event.dataTransfer?.getData(MATERIAL_DRAG_TYPE);
   const material = materials.find((item) => item.manifest.componentName === componentName);
   if (!material) {
-    canvasDropHint.value = undefined;
+    clearCanvasDragState();
     return;
   }
   const hint = canvasDropHint.value ?? updateCanvasDropHint(event);
   if (!hint?.targetNodeId || hint.placement === "append") {
     addMaterial(material.manifest);
-    canvasDropHint.value = undefined;
+    clearCanvasDragState();
     return;
   }
   const row = findOutlineRowByNodeId(hint.targetNodeId);
   if (!row) {
     addMaterial(material.manifest);
-    canvasDropHint.value = undefined;
+    clearCanvasDragState();
     return;
   }
   if (hint.placement === "inside") {
@@ -609,17 +687,26 @@ function onCanvasDrop(event: DragEvent): void {
       select: true,
     });
   }
-  canvasDropHint.value = undefined;
+  clearCanvasDragState();
 }
 
 function onNodeDragStart(event: DragEvent, nodeId: string): void {
   draggedNodeId.value = nodeId;
-  event.dataTransfer?.setData("application/x-meumall-node", nodeId);
+  event.dataTransfer?.setData(NODE_DRAG_TYPE, nodeId);
   if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
 }
 
+function onCanvasNodeDragStart(node: LowcodeNode, event: DragEvent): void {
+  select(node.id);
+  onNodeDragStart(event, node.id);
+}
+
+function onCanvasNodeDragEnd(): void {
+  clearCanvasDragState();
+}
+
 function onNodeDrop(event: DragEvent, target: OutlineRow): void {
-  const nodeId = event.dataTransfer?.getData("application/x-meumall-node") || draggedNodeId.value;
+  const nodeId = event.dataTransfer?.getData(NODE_DRAG_TYPE) || draggedNodeId.value;
   if (!nodeId) return;
   if (target.node.id === nodeId) return;
   editorState.value = moveNodeById(editorState.value, {
@@ -1474,15 +1561,15 @@ function formatReleaseTime(value: string): string {
             <span>
               {{
                 canvasDropHint.placement === "inside"
-                  ? `加入容器：${canvasDropHint.targetTitle}`
+                  ? `${canvasDropHint.source === "node" ? "移动到容器" : "加入容器"}：${canvasDropHint.targetTitle}`
                   : canvasDropHint.placement === "before"
-                    ? `插入到 ${canvasDropHint.targetTitle} 前方`
-                    : `插入到 ${canvasDropHint.targetTitle} 后方`
+                    ? `${canvasDropHint.source === "node" ? "移动到" : "插入到"} ${canvasDropHint.targetTitle} 前方`
+                    : `${canvasDropHint.source === "node" ? "移动到" : "插入到"} ${canvasDropHint.targetTitle} 后方`
               }}
             </span>
           </div>
           <div v-if="canvasDropHint?.placement === 'append'" class="canvas-drop-append" aria-hidden="true">
-            <span>追加到页面末尾</span>
+            <span>{{ canvasDropHint.source === "node" ? "移动到页面末尾" : "追加到页面末尾" }}</span>
           </div>
           <LowcodeVueRenderer
             :schema="editorState.schema"
@@ -1490,9 +1577,12 @@ function formatReleaseTime(value: string): string {
             :data="previewData"
             :action-executor="actionExecutor"
             :editable="editorState.mode === 'design'"
+            :node-draggable="editorState.mode === 'design'"
             :selected-node-id="editorState.selectedNodeId"
             :fallback="'暂无内容'"
             :on-node-select="(node) => select(node.id)"
+            :on-node-drag-start="onCanvasNodeDragStart"
+            :on-node-drag-end="onCanvasNodeDragEnd"
           />
         </div>
       </div>

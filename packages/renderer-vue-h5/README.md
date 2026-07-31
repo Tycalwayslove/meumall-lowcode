@@ -11,5 +11,8 @@ This package renders `LowcodePageSchema` with a Vue material registry. It is int
 - `editable`
 - `selectedNodeId`
 - `onNodeSelect`
+- `nodeDraggable`
+- `onNodeDragStart`
+- `onNodeDragEnd`
 
-These props are intended for editor preview selection and highlighting.
+These props are intended for editor preview selection, highlighting and canvas-level drag orchestration. The renderer only exposes generic node callbacks; editor packages or host apps decide how to move schema nodes.

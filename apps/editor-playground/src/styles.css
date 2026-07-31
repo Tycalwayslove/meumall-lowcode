@@ -542,11 +542,15 @@ button:disabled {
 
 .mlc-runtime-node {
   position: relative;
-  cursor: pointer;
+  cursor: grab;
   outline: 1px solid transparent;
   transition:
     outline-color 0.12s ease,
     box-shadow 0.12s ease;
+}
+
+.mlc-runtime-node:active {
+  cursor: grabbing;
 }
 
 .mlc-runtime-node:hover {

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器和画布拖拽插入线。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线和已有节点画布拖拽移动。
 
 ## 当前维护范围
 
@@ -54,12 +54,14 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Runtime schema loader：`@meumall/lowcode-adapters` 提供 `loadLowcodeRuntimeSchema`，统一支持 encoded schema、releaseId、pageId 和 fallback schema；React H5 runtime playground 已切换为同一 loader。
 - Vue3 编辑器资源选择器：右侧属性区已提供 mock 素材库和商品选择器，支持搜索、分类、多选、静态商品写回和恢复绑定 `products` 数据源。
 - Vue3 编辑器画布拖拽：从物料区拖到画布节点时可显示前/后插入线，拖到 `SectionContainer` 中间区域可显示容器投放高亮，拖到空白区域可追加到页面末尾。
+- Vue3 编辑器已有节点拖拽：设计模式下画布节点可直接拖动，支持移动到目标节点前/后、移动进 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
+- Vue H5 renderer 编辑态拖拽回调：`LowcodeVueRenderer` 新增可选 `nodeDraggable`、`onNodeDragStart` 和 `onNodeDragEnd`，生产渲染默认不受影响。
 
 ## 已知缺口
 
 - 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器，但还不是正式管理台组件。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
-- 容器内拖拽插入已支持物料投放到 `SectionContainer` 内部；尚未支持画布中已有节点直接拖入/拖出容器。
+- 画布拖拽已支持新物料投放和已有节点移动；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
 - Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批和分页。
 - 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
@@ -95,7 +97,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `760b5dc` | 沉淀 Java 配置平台 API 草案和配置平台客户端抽象。 |
 | 2026-07-31 | `b6208c1` | 沉淀 H5 runtime 集成契约和 runtime schema loader。 |
 | 2026-07-31 | `f88d21c` | 增强 Vue3 编辑器 mock 素材库和商品选择器。 |
-| 2026-07-31 | 本提交 | 增强 Vue3 编辑器画布拖拽插入线。 |
+| 2026-07-31 | `90509a4` | 增强 Vue3 编辑器画布拖拽插入线。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器已有节点画布拖拽移动。 |
 
 ## 默认验证命令
 

@@ -25,6 +25,8 @@
 - `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - Vue3 编辑器 playground 右侧属性区已提供 mock 素材库和商品选择器：图片类节点可搜索/分类选择图片，`ProductList`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items`，也可以重新绑定 `products` 数据源。
 - Vue3 编辑器 playground 画布已支持物料拖拽插入线：拖到节点上半区插入前方，下半区插入后方，拖到 `SectionContainer` 中间区域加入容器，拖到空白区域追加页面末尾。
+- Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
+- `@meumall/lowcode-renderer-vue-h5` 的 editable wrapper 已提供可选 `nodeDraggable`、`onNodeDragStart`、`onNodeDragEnd`，供编辑器 shell 编排拖拽，不影响默认生产渲染。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定
