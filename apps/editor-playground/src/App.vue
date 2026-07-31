@@ -207,6 +207,7 @@ import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
+import EditorPageSettingsPanel from "./components/EditorPageSettingsPanel.vue";
 import EditorPropGroupsPanel from "./components/EditorPropGroupsPanel.vue";
 import EditorResourcePanels from "./components/EditorResourcePanels.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
@@ -3701,135 +3702,19 @@ function rollbackPublishSelectedRelease(): void {
     </section>
 
     <aside class="right-panel">
-      <section class="panel-section">
-        <div class="panel-title">
-          <PanelRight :size="16" />
-          <span>页面</span>
-        </div>
-        <div class="page-settings-card">
-          <strong>基础配置</strong>
-          <label class="field">
-            <span>标题</span>
-            <input
-              :value="pageSettingsForm.title"
-              placeholder="请输入页面标题"
-              @input="updatePageTitle(($event.target as HTMLInputElement).value)"
-            />
-          </label>
-          <label class="field">
-            <span>描述</span>
-            <textarea
-              :value="pageSettingsForm.description"
-              placeholder="请输入页面描述，方便运营和验收识别"
-              @input="updatePageDescription(($event.target as HTMLTextAreaElement).value)"
-            ></textarea>
-          </label>
-          <div class="page-settings-grid">
-            <label class="field">
-              <span>页面类型</span>
-              <select
-                :value="pageSettingsForm.pageType"
-                @change="updatePageType(($event.target as HTMLSelectElement).value as LowcodePageType)"
-              >
-                <option
-                  v-for="option in pageSettingsForm.pageTypeOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-            <label class="field">
-              <span>Page ID</span>
-              <input :value="pageSettingsForm.pageId" readonly />
-            </label>
-          </div>
-        </div>
-
-        <div class="page-settings-card">
-          <strong>布局配置</strong>
-          <label class="field">
-            <span>背景色</span>
-            <input
-              class="page-color-input"
-              type="color"
-              :value="pageSettingsForm.backgroundColor"
-              @input="updatePageBackgroundColor(($event.target as HTMLInputElement).value)"
-            />
-          </label>
-          <div class="page-color-swatches" aria-label="页面背景快捷色板">
-            <button
-              v-for="color in pageSettingsForm.backgroundSwatches"
-              :key="color"
-              type="button"
-              :class="{ active: pageSettingsForm.backgroundColor === color }"
-              :style="{ backgroundColor: color }"
-              :title="`设置背景色 ${color}`"
-              @click="updatePageBackgroundColor(color)"
-            ></button>
-          </div>
-          <label class="switch-field page-safe-switch">
-            <input
-              type="checkbox"
-              :checked="pageSettingsForm.safeArea"
-              @change="updatePageSafeArea(($event.target as HTMLInputElement).checked)"
-            />
-            <span class="switch-track"><i></i></span>
-            <em>启用安全区</em>
-          </label>
-          <label class="field">
-            <span>H5 最大宽度</span>
-            <input
-              type="number"
-              min="320"
-              max="960"
-              step="1"
-              :value="pageSettingsForm.maxWidth"
-              @input="updatePageMaxWidth(($event.target as HTMLInputElement).value)"
-            />
-          </label>
-        </div>
-
-        <div class="page-settings-card">
-          <strong>发布配置</strong>
-          <div class="page-settings-grid">
-            <label class="field">
-              <span>状态</span>
-              <select :value="pageSettingsForm.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
-                <option
-                  v-for="option in pageSettingsForm.statusOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-            <label class="field">
-              <span>环境</span>
-              <select :value="pageSettingsForm.publishEnvironment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as LowcodeEnvironment)">
-                <option
-                  v-for="option in pageSettingsForm.publishEnvironmentOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  {{ option.label }}
-                </option>
-              </select>
-            </label>
-          </div>
-          <label class="field release-note-field">
-            <span>版本备注</span>
-            <textarea
-              v-model="releaseNoteDraft"
-              rows="3"
-              placeholder="例如：设计走查版、产品验收版、上线发布版"
-            ></textarea>
-          </label>
-        </div>
-        <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
-      </section>
+      <EditorPageSettingsPanel
+        v-model:release-note-draft="releaseNoteDraft"
+        :form="pageSettingsForm"
+        :release-message="releaseMessage"
+        @update:title="updatePageTitle"
+        @update:description="updatePageDescription"
+        @update:page-type="updatePageType"
+        @update:background-color="updatePageBackgroundColor"
+        @update:safe-area="updatePageSafeArea"
+        @update:max-width="updatePageMaxWidth"
+        @update:status="updatePageStatus"
+        @update:publish-environment="updatePublishEnvironment"
+      />
 
       <section class="panel-section preview-link-panel">
         <div class="panel-title">

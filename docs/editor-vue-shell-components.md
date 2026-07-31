@@ -158,10 +158,28 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不处理权限、协作锁定、审计或服务端保存。
 
+### `EditorPageSettingsPanel`
+
+路径：`apps/editor-playground/src/components/EditorPageSettingsPanel.vue`
+
+职责：
+
+- 展示右侧页面设置面板，包括基础配置、布局配置、发布配置、版本备注和发布操作反馈。
+- 接收 `LowcodeEditorPageSettingsForm`、版本备注草稿和发布操作反馈文案。
+- 通过 emits 抛出标题、描述、页面类型、背景色、安全区、H5 最大宽度、状态、发布环境和版本备注草稿更新。
+- 复用 page settings API 产出的展示模型，以及现有 `.page-settings-*`、`.field`、`.switch-field` 和 `.publish-message` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生页面设置表单模型。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不执行发布、预览、保存、权限、协作锁定、审批、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 右侧页面设置：优先消费 page settings API。
-2. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
+1. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
+2. 数据源、动作和事件配置：优先消费 data source config、action config 和 event binding API。
 
 ## 抽 npm 包判断
 
