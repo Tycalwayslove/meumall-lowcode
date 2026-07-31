@@ -213,7 +213,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `baca97f` | 打通 React H5 runtime 本地 pageId/releaseId 加载。 |
 | 2026-08-01 | `bb8a9e2` | 补充编辑器和 H5 runtime 可视化截图 smoke。 |
 | 2026-08-01 | `e45a4b2` | 补充低代码包边界和物料分层架构检查。 |
-| 2026-08-01 | `本提交` | 沉淀编辑器发布检查和交付摘要 API。 |
+| 2026-08-01 | `309a3d6` | 沉淀编辑器发布检查和交付摘要 API。 |
 
 ## 默认验证命令
 
