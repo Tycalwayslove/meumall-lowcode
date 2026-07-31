@@ -2,6 +2,25 @@
 
 本仓库是 MeuMall 低代码平台独立工作区。
 
+## 必读规则
+
+正式业务、架构、跨包协作、schema、契约、发布、npm、GitHub、CI 或长期维护任务开始前，必须先读取：
+
+1. `.ai-workspace/README.md`
+2. `.ai-workspace/AI_OPERATING_MODEL.md`
+3. `.ai-workspace/PROJECT_MAP.md`
+4. `.ai-workspace/TASK_SCHEMA.md`
+5. `.ai-workspace/STATE_FLOW.md`
+6. `.ai-workspace/ACCEPTANCE_STANDARD.md`
+7. `.ai-workspace/MEMORY_PROTOCOL.md`
+8. `.ai-workspace/CROSS_PROJECT_CONTRACTS.md`
+9. `.ai-workspace/RELEASE_GOVERNANCE.md`
+10. `.ai/PROJECT_STATE.md`
+11. `.ai/AI_CONTEXT.md`
+12. `.ai/TODO.md`
+
+没有 `ready` 状态的正式工作项，不开始实现。没有验证记录，不声称完成。
+
 ## 工作语言
 
 默认使用中文沟通；代码标识、npm 包名、接口字段和命令保留英文。
@@ -35,4 +54,6 @@
 - 架构决策写入 `docs/architecture.md` 或新增 ADR。
 - npm/GitHub 发布规则写入 `docs/release-and-publish.md`。
 - 拆仓策略写入 `docs/repo-split-plan.md`。
-
+- 正式任务写入 `.ai-workspace/tasks/`。
+- 长期项目事实写入 `.ai/PROJECT_STATE.md`。
+- 测试和人工验证结果写入 `.ai/test-reports/` 或任务文件。

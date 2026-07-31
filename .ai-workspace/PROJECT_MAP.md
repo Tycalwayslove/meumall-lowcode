@@ -1,0 +1,80 @@
+# 低代码工作区地图
+
+## 总览
+
+```text
+editor -> schema
+renderer-h5 -> core -> schema
+materials-h5 -> core -> schema
+adapters -> schema
+
+Java config platform -> stores and publishes PageSchema
+hybird-meumall -> consumes renderer-h5/materials-h5/schema
+future mini-program runtime -> consumes schema/core
+```
+
+## 当前维护包
+
+### `packages/schema`
+
+npm 包：`@meumall/lowcode-schema`
+
+负责 Page Schema、Node Schema、Material Manifest、DataSource、Action、Tracking、PublishMeta 等公共协议。
+
+### `packages/core`
+
+npm 包：`@meumall/lowcode-core`
+
+负责框架无关的 runtime 能力：物料注册、节点遍历、默认 props 合并、可见性判断、数据绑定和 action 执行协议。
+
+### `packages/renderer-h5`
+
+npm 包：`@meumall/lowcode-renderer-h5`
+
+负责 React H5 渲染：递归渲染节点、物料查找、事件绑定和组件级错误兜底。
+
+### `packages/materials-h5`
+
+npm 包：`@meumall/lowcode-materials-h5`
+
+负责 MeuMall H5 运营页面物料。物料必须声明 manifest，不得依赖 `hybird-meumall` 内部模块。
+
+### `packages/editor`
+
+npm 包：`@meumall/lowcode-editor`
+
+负责编辑器基础状态、画布协议、节点选择、增删移动、schema import/export。后续 UI shell 可以在此包或单独 app 中扩展。
+
+### `packages/adapters`
+
+npm 包：`@meumall/lowcode-adapters`
+
+负责 action registry、data source registry 和宿主能力适配协议。
+
+## 外部系统
+
+### Java 配置平台
+
+负责草稿保存、预览查询、发布审批、已发布 schema 查询、素材/商品/优惠券/活动选择、回滚和禁用。
+
+本仓库只维护前端/运行时消费协议，不实现 Java 服务端。
+
+### `hybird-meumall`
+
+H5 消费方。通过 npm 引入 schema、renderer、materials 和 adapters，不把低代码平台源码复制进 H5 仓库。
+
+### 未来小程序
+
+复用 `schema` 和 `core`，新增 `renderer-miniapp` 和 `materials-miniapp`。H5 物料默认不自动跨端，必须显式声明平台支持。
+
+## 依赖方向
+
+- `schema` 不依赖任何业务包。
+- `core` 只依赖 `schema`。
+- `renderer-*` 可以依赖 `core` 和 `schema`，不得依赖 `editor`。
+- `materials-*` 可以依赖 `core` 和 `schema`，不得依赖业务项目。
+- `editor` 可以依赖 `core` 和 `schema`，不得依赖 renderer 的私有实现。
+- `adapters` 可以依赖 `schema`，宿主实现通过注册注入。
+
+违反依赖方向必须先写决策记录。
+

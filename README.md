@@ -4,6 +4,12 @@ MeuMall low-code monorepo for H5 activity pages, promotion pages, product topic 
 
 This repository is intentionally structured as a single source of truth first, with clean npm package boundaries so packages can later be published or split into independent GitHub repositories.
 
+## AI Workflow
+
+This repository keeps AI and human collaboration rules in [`.ai-workspace/README.md`](.ai-workspace/README.md).
+
+Before formal architecture, schema, package, release, GitHub, npm, CI, or cross-system work, read root [AGENTS.md](AGENTS.md) and the `.ai-workspace` files in the documented order. Long-lived project facts are stored in [`.ai/PROJECT_STATE.md`](.ai/PROJECT_STATE.md), [`.ai/AI_CONTEXT.md`](.ai/AI_CONTEXT.md), and [`.ai/TODO.md`](.ai/TODO.md).
+
 ## Goals
 
 - Keep all low-code source code in one workspace during the early architecture phase.
@@ -59,4 +65,3 @@ pnpm build
 ## Release
 
 See [docs/release-and-publish.md](docs/release-and-publish.md).
-
