@@ -74,10 +74,12 @@ import {
   type JsonValue,
   type LowcodeActionConfig,
   type LowcodeDataSourceConfig,
+  type LowcodeEnvironment,
   type LowcodeMaterialManifest,
   type LowcodeNode,
   type LowcodePageSchema,
   type LowcodePageStatus,
+  type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
 import { cloneTemplateSchema, pageTemplates, type PageTemplate } from "./pageTemplates";
@@ -94,6 +96,19 @@ const RECENT_MATERIAL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
+const pageTypeOptions: Array<{ label: string; value: LowcodePageType }> = [
+  { label: "活动页", value: "activity" },
+  { label: "推广页", value: "promotion" },
+  { label: "商品专题", value: "topic" },
+  { label: "落地页", value: "landing" },
+  { label: "自定义", value: "custom" },
+];
+const publishEnvironmentOptions: Array<{ label: string; value: LowcodeEnvironment }> = [
+  { label: "测试环境", value: "test" },
+  { label: "预发环境", value: "pre" },
+  { label: "生产环境", value: "prod" },
+];
+const pageBackgroundSwatches = ["#f8fafc", "#f3f4f6", "#fff7ed", "#fef2f2", "#f0fdfa", "#eff6ff", "#111827"];
 
 const sampleAssets: LowcodeImageAssetResource[] = [
   {
@@ -3213,43 +3228,83 @@ function applyJson(): void {
   }
 }
 
-function updatePageTitle(value: string): void {
+function commitPageSchema(schema: LowcodePageSchema, action: string): void {
   editorState.value = {
     ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      title: value,
-    },
+    schema,
     dirty: true,
-    lastAction: "updatePageTitle",
+    lastAction: action,
   };
+}
+
+function updatePageTitle(value: string): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    title: value,
+  }, "updatePageTitle");
+}
+
+function updatePageDescription(value: string): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    description: value,
+  }, "updatePageDescription");
 }
 
 function updatePageStatus(status: LowcodePageStatus): void {
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      status,
-    },
-    dirty: true,
-    lastAction: "updatePageStatus",
-  };
+  commitPageSchema({
+    ...editorState.value.schema,
+    status,
+  }, "updatePageStatus");
 }
 
-function updatePublishEnvironment(environment: "test" | "pre" | "prod"): void {
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      publishMeta: {
-        ...editorState.value.schema.publishMeta,
-        environment,
-      },
+function updatePageType(pageType: LowcodePageType): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    pageType,
+  }, "updatePageType");
+}
+
+function updatePublishEnvironment(environment: LowcodeEnvironment): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    publishMeta: {
+      ...editorState.value.schema.publishMeta,
+      environment,
     },
-    dirty: true,
-    lastAction: "updatePublishEnvironment",
-  };
+  }, "updatePublishEnvironment");
+}
+
+function updatePageBackgroundColor(backgroundColor: string): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    layout: {
+      ...editorState.value.schema.layout,
+      backgroundColor,
+    },
+  }, "updatePageBackgroundColor");
+}
+
+function updatePageSafeArea(safeArea: boolean): void {
+  commitPageSchema({
+    ...editorState.value.schema,
+    layout: {
+      ...editorState.value.schema.layout,
+      safeArea,
+    },
+  }, "updatePageSafeArea");
+}
+
+function updatePageMaxWidth(value: string): void {
+  const maxWidth = Number(value);
+  if (!Number.isFinite(maxWidth) || maxWidth < 320 || maxWidth > 960) return;
+  commitPageSchema({
+    ...editorState.value.schema,
+    layout: {
+      ...editorState.value.schema.layout,
+      maxWidth,
+    },
+  }, "updatePageMaxWidth");
 }
 
 function addDataSource(): void {
@@ -4341,31 +4396,117 @@ function formatAutoSaveTime(value: string): string {
           <PanelRight :size="16" />
           <span>页面</span>
         </div>
-        <label class="field">
-          <span>标题</span>
-          <input :value="editorState.schema.title" @input="updatePageTitle(($event.target as HTMLInputElement).value)" />
-        </label>
-        <label class="field">
-          <span>Page ID</span>
-          <input :value="editorState.schema.pageId" readonly />
-        </label>
-        <label class="field">
-          <span>状态</span>
-          <select :value="editorState.schema.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
-            <option value="draft">draft</option>
-            <option value="preview">preview</option>
-            <option value="published">published</option>
-            <option value="disabled">disabled</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>环境</span>
-          <select :value="editorState.schema.publishMeta.environment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as 'test' | 'pre' | 'prod')">
-            <option value="test">test</option>
-            <option value="pre">pre</option>
-            <option value="prod">prod</option>
-          </select>
-        </label>
+        <div class="page-settings-card">
+          <strong>基础配置</strong>
+          <label class="field">
+            <span>标题</span>
+            <input
+              :value="editorState.schema.title"
+              placeholder="请输入页面标题"
+              @input="updatePageTitle(($event.target as HTMLInputElement).value)"
+            />
+          </label>
+          <label class="field">
+            <span>描述</span>
+            <textarea
+              :value="editorState.schema.description ?? ''"
+              placeholder="请输入页面描述，方便运营和验收识别"
+              @input="updatePageDescription(($event.target as HTMLTextAreaElement).value)"
+            ></textarea>
+          </label>
+          <div class="page-settings-grid">
+            <label class="field">
+              <span>页面类型</span>
+              <select
+                :value="editorState.schema.pageType ?? 'custom'"
+                @change="updatePageType(($event.target as HTMLSelectElement).value as LowcodePageType)"
+              >
+                <option
+                  v-for="option in pageTypeOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Page ID</span>
+              <input :value="editorState.schema.pageId" readonly />
+            </label>
+          </div>
+        </div>
+
+        <div class="page-settings-card">
+          <strong>布局配置</strong>
+          <label class="field">
+            <span>背景色</span>
+            <input
+              class="page-color-input"
+              type="color"
+              :value="editorState.schema.layout.backgroundColor ?? '#f8fafc'"
+              @input="updatePageBackgroundColor(($event.target as HTMLInputElement).value)"
+            />
+          </label>
+          <div class="page-color-swatches" aria-label="页面背景快捷色板">
+            <button
+              v-for="color in pageBackgroundSwatches"
+              :key="color"
+              type="button"
+              :class="{ active: editorState.schema.layout.backgroundColor === color }"
+              :style="{ backgroundColor: color }"
+              :title="`设置背景色 ${color}`"
+              @click="updatePageBackgroundColor(color)"
+            ></button>
+          </div>
+          <label class="switch-field page-safe-switch">
+            <input
+              type="checkbox"
+              :checked="editorState.schema.layout.safeArea !== false"
+              @change="updatePageSafeArea(($event.target as HTMLInputElement).checked)"
+            />
+            <span class="switch-track"><i></i></span>
+            <em>启用安全区</em>
+          </label>
+          <label class="field">
+            <span>H5 最大宽度</span>
+            <input
+              type="number"
+              min="320"
+              max="960"
+              step="1"
+              :value="editorState.schema.layout.maxWidth ?? 430"
+              @input="updatePageMaxWidth(($event.target as HTMLInputElement).value)"
+            />
+          </label>
+        </div>
+
+        <div class="page-settings-card">
+          <strong>发布配置</strong>
+          <div class="page-settings-grid">
+            <label class="field">
+              <span>状态</span>
+              <select :value="editorState.schema.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
+                <option value="draft">draft</option>
+                <option value="preview">preview</option>
+                <option value="published">published</option>
+                <option value="disabled">disabled</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>环境</span>
+              <select :value="editorState.schema.publishMeta.environment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as LowcodeEnvironment)">
+                <option
+                  v-for="option in publishEnvironmentOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+          </div>
+        </div>
         <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
       </section>
 

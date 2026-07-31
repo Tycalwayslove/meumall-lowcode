@@ -248,6 +248,47 @@ class CdpPage {
     if (!filled) fail(`未找到 placeholder 为 ${placeholder} 的输入框`);
   }
 
+  async fillFieldByLabel(label, value) {
+    const expression = `(() => {
+      const field = Array.from(document.querySelectorAll('label.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
+      const input = field?.querySelector('input, textarea');
+      if (!input) return false;
+      input.focus();
+      input.value = ${jsString(value)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`;
+    const filled = await this.evaluate(expression);
+    if (!filled) fail(`未找到标签为 ${label} 的字段`);
+  }
+
+  async selectFieldByLabel(label, value) {
+    const expression = `(() => {
+      const field = Array.from(document.querySelectorAll('label.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
+      const select = field?.querySelector('select');
+      if (!select) return false;
+      select.value = ${jsString(value)};
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`;
+    const selected = await this.evaluate(expression);
+    if (!selected) fail(`未找到标签为 ${label} 的下拉字段`);
+  }
+
+  async setSwitchByText(text, checked) {
+    const expression = `(() => {
+      const field = Array.from(document.querySelectorAll('label.switch-field')).find((item) => (item.innerText || '').includes(${jsString(text)}));
+      const input = field?.querySelector('input[type="checkbox"]');
+      if (!input) return false;
+      input.checked = ${checked ? "true" : "false"};
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`;
+    const switched = await this.evaluate(expression);
+    if (!switched) fail(`未找到文本为 ${text} 的开关`);
+  }
+
   async clickByText(selector, text) {
     const expression = `(() => {
       const elements = Array.from(document.querySelectorAll(${jsString(selector)}));
@@ -343,6 +384,24 @@ async function assertEditorWorkflow(page) {
   await page.clickChildByText(".preview-link-card", "当前草稿 React H5", ".preview-copy-button");
   await page.waitForExpression("document.body.innerText.includes('已复制预览链接：当前草稿 React H5') || document.body.innerText.includes('复制失败：请手动复制 当前草稿 React H5')");
   log("通过：H5 预览入口展示链接并提供复制反馈");
+
+  log("检查页面设置面板");
+  await page.fillFieldByLabel("标题", "夏日好物节-页面设置");
+  await page.fillFieldByLabel("描述", "页面设置 smoke 验证");
+  await page.selectFieldByLabel("页面类型", "promotion");
+  await page.fillFieldByLabel("H5 最大宽度", "390");
+  await page.setSwitchByText("启用安全区", false);
+  await page.selectFieldByLabel("环境", "pre");
+  await page.evaluate(`(() => {
+    const target = Array.from(document.querySelectorAll('.page-color-swatches button')).find((item) => item.getAttribute('title')?.includes('#eff6ff'));
+    target?.click();
+  })()`);
+  await page.waitForExpression("document.body.innerText.includes('夏日好物节-页面设置')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('页面设置 smoke 验证') && item.value.includes('\"pageType\": \"promotion\"') && item.value.includes('\"backgroundColor\": \"#eff6ff\"') && item.value.includes('\"safeArea\": false') && item.value.includes('\"maxWidth\": 390') && item.value.includes('\"environment\": \"pre\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：页面设置可写入标题、描述、类型、布局和发布环境");
 
   log("检查物料收藏和最近使用");
   const nodeCountBeforeMaterialPreference = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
