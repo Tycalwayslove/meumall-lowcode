@@ -307,6 +307,8 @@ const templateKeyword = ref("");
 const templateCategory = ref("全部");
 const materialKeyword = ref("");
 const materialCategory = ref("全部");
+const outlineKeyword = ref("");
+const collapsedOutlineNodeIds = ref<string[]>([]);
 const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
 const nodeContextMenu = ref<NodeContextMenuState | undefined>();
@@ -581,6 +583,37 @@ const selectedPropGroups = computed<PropEditorGroup[]>(() => {
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
 const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
+const outlineKeywordNormalized = computed(() => outlineKeyword.value.trim().toLowerCase());
+const collapsedOutlineNodeIdSet = computed(() => new Set(collapsedOutlineNodeIds.value));
+const outlineMatchedNodeIdSet = computed(() => {
+  const keyword = outlineKeywordNormalized.value;
+  if (!keyword) return new Set<string>();
+  return new Set(outlineRows.value.filter((row) => outlineRowMatchesKeyword(row, keyword)).map((row) => row.node.id));
+});
+const outlineSearchVisibleNodeIdSet = computed(() => {
+  const keyword = outlineKeywordNormalized.value;
+  if (!keyword) return new Set<string>();
+  const visible = new Set<string>();
+  outlineRows.value.forEach((row) => {
+    if (!outlineMatchedNodeIdSet.value.has(row.node.id)) return;
+    visible.add(row.node.id);
+    row.ancestorIds.forEach((nodeId) => visible.add(nodeId));
+  });
+  return visible;
+});
+const selectedOutlinePathNodeIdSet = computed(() => {
+  const row = selectedOutlineRow.value;
+  return new Set(row ? [...row.ancestorIds, row.node.id] : []);
+});
+const visibleOutlineRows = computed(() => {
+  const hasKeyword = Boolean(outlineKeywordNormalized.value);
+  return outlineRows.value.filter((row) => {
+    if (hasKeyword) return outlineSearchVisibleNodeIdSet.value.has(row.node.id);
+    const hasCollapsedAncestor = row.ancestorIds.some((nodeId) => collapsedOutlineNodeIdSet.value.has(nodeId));
+    return !hasCollapsedAncestor || selectedOutlinePathNodeIdSet.value.has(row.node.id);
+  });
+});
+const outlineVisibleSummary = computed(() => `${visibleOutlineRows.value.length} / ${outlineRows.value.length}`);
 const multiSelectedNodeIdSet = computed(() => new Set(multiSelectedNodeIds.value));
 const multiSelectedRows = computed(() => outlineRows.value.filter((row) => multiSelectedNodeIdSet.value.has(row.node.id)));
 const multiSelectSameParent = computed(() => {
@@ -878,6 +911,15 @@ watch(
   outlineRows,
   () => {
     pruneMultiSelection();
+    pruneCollapsedOutlineNodes();
+  },
+  { immediate: true },
+);
+
+watch(
+  () => editorState.value.selectedNodeId,
+  (nodeId) => {
+    revealOutlineNode(nodeId);
   },
   { immediate: true },
 );
@@ -996,13 +1038,37 @@ interface OutlineRow {
   index: number;
   depth: number;
   parentId?: string;
+  ancestorIds: string[];
+  hasChildren: boolean;
 }
 
-function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): OutlineRow[] {
+function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string, ancestorIds: string[] = []): OutlineRow[] {
   return nodes.flatMap((node, index) => [
-    { node, index, depth, parentId },
-    ...flattenNodes(node.children ?? [], depth + 1, node.id),
+    {
+      node,
+      index,
+      depth,
+      parentId,
+      ancestorIds,
+      hasChildren: Boolean(node.children?.length),
+    },
+    ...flattenNodes(node.children ?? [], depth + 1, node.id, [...ancestorIds, node.id]),
   ]);
+}
+
+function outlineRowMatchesKeyword(row: OutlineRow, keyword: string): boolean {
+  const manifest = registry.get(row.node.componentName)?.manifest;
+  return [
+    row.node.id,
+    row.node.componentName,
+    row.node.meta?.name,
+    manifest?.title,
+    manifest?.category,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .includes(keyword);
 }
 
 function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
@@ -1400,6 +1466,7 @@ function onOutlineNodeClick(event: MouseEvent, nodeId: string): void {
     return;
   }
   select(nodeId);
+  scrollCanvasNodeIntoView(nodeId);
 }
 
 function onDragStart(event: DragEvent, manifest: LowcodeMaterialManifest): void {
@@ -1579,6 +1646,51 @@ function pruneMultiSelection(): void {
 
 function findOutlineRowByNodeId(nodeId: string): OutlineRow | undefined {
   return outlineRows.value.find((row) => row.node.id === nodeId);
+}
+
+function isOutlineNodeCollapsed(nodeId: string): boolean {
+  return collapsedOutlineNodeIdSet.value.has(nodeId);
+}
+
+function isOutlineNodeSearchMatched(nodeId: string): boolean {
+  return outlineMatchedNodeIdSet.value.has(nodeId);
+}
+
+function toggleOutlineCollapse(nodeId: string): void {
+  const collapsed = new Set(collapsedOutlineNodeIds.value);
+  if (collapsed.has(nodeId)) {
+    collapsed.delete(nodeId);
+  } else {
+    collapsed.add(nodeId);
+  }
+  collapsedOutlineNodeIds.value = [...collapsed];
+}
+
+function pruneCollapsedOutlineNodes(): void {
+  const available = new Set(outlineRows.value.filter((row) => row.hasChildren).map((row) => row.node.id));
+  const nextCollapsed = collapsedOutlineNodeIds.value.filter((nodeId) => available.has(nodeId));
+  if (nextCollapsed.join("|") !== collapsedOutlineNodeIds.value.join("|")) {
+    collapsedOutlineNodeIds.value = nextCollapsed;
+  }
+}
+
+function revealOutlineNode(nodeId?: string): void {
+  if (!nodeId) return;
+  const row = findOutlineRowByNodeId(nodeId);
+  if (!row?.ancestorIds.length) return;
+  const collapsed = new Set(collapsedOutlineNodeIds.value);
+  row.ancestorIds.forEach((ancestorId) => collapsed.delete(ancestorId));
+  collapsedOutlineNodeIds.value = [...collapsed];
+}
+
+function scrollCanvasNodeIntoView(nodeId: string): void {
+  void nextTick(() => {
+    const nodeElement = phoneFrameRef.value?.querySelector<HTMLElement>(`.mlc-runtime-node[data-lowcode-node-id="${CSS.escape(nodeId)}"]`);
+    nodeElement?.scrollIntoView({
+      block: "center",
+      behavior: "smooth",
+    });
+  });
 }
 
 function getRuntimeNodeElementFromTarget(target: EventTarget | null | undefined): HTMLElement | undefined {
@@ -3349,18 +3461,25 @@ function formatReleaseTime(value: string): string {
         <div class="panel-title">
           <Layers :size="16" />
           <span>结构</span>
+          <small>{{ outlineVisibleSummary }}</small>
         </div>
+        <label class="search-field outline-search">
+          <Search :size="14" />
+          <input v-model="outlineKeyword" placeholder="搜索节点" />
+        </label>
         <div v-if="multiSelectSummary" class="outline-selection-summary">
           {{ multiSelectSummary }}
         </div>
         <button
-          v-for="row in outlineRows"
+          v-for="row in visibleOutlineRows"
           :key="row.node.id"
           class="outline-item"
           :class="{
             selected: editorState.selectedNodeId === row.node.id,
             'multi-selected': isNodeMultiSelected(row.node.id),
             'group-draggable': canDragSelectedGroup(row.node.id),
+            'search-matched': isOutlineNodeSearchMatched(row.node.id),
+            'is-collapsed': isOutlineNodeCollapsed(row.node.id),
           }"
           :style="{ paddingLeft: `${12 + row.depth * 18}px` }"
           draggable="true"
@@ -3373,6 +3492,19 @@ function formatReleaseTime(value: string): string {
         >
           <GripVertical :size="15" class="drag-icon" />
           <span
+            v-if="row.hasChildren"
+            class="outline-collapse-toggle"
+            role="button"
+            tabindex="0"
+            :title="isOutlineNodeCollapsed(row.node.id) ? '展开节点' : '折叠节点'"
+            @click.stop="toggleOutlineCollapse(row.node.id)"
+            @keydown.enter.prevent.stop="toggleOutlineCollapse(row.node.id)"
+            @keydown.space.prevent.stop="toggleOutlineCollapse(row.node.id)"
+          >
+            {{ isOutlineNodeCollapsed(row.node.id) ? "›" : "⌄" }}
+          </span>
+          <span v-else class="outline-collapse-placeholder"></span>
+          <span
             class="outline-check"
             :class="{ checked: isNodeMultiSelected(row.node.id) }"
             title="多选节点"
@@ -3381,8 +3513,12 @@ function formatReleaseTime(value: string): string {
             {{ isNodeMultiSelected(row.node.id) ? "✓" : "" }}
           </span>
           <span class="outline-index">{{ row.index + 1 }}</span>
-          <strong>{{ registry.get(row.node.componentName)?.manifest.title ?? row.node.componentName }}</strong>
+          <span class="outline-main">
+            <strong>{{ registry.get(row.node.componentName)?.manifest.title ?? row.node.componentName }}</strong>
+            <small>{{ row.node.meta?.name ?? row.node.id }}</small>
+          </span>
         </button>
+        <div v-if="!visibleOutlineRows.length" class="mini-empty">没有匹配节点</div>
       </section>
     </aside>
 

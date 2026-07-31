@@ -556,6 +556,10 @@ button:focus-visible {
   min-height: 42px;
 }
 
+.outline-search {
+  margin-bottom: 10px;
+}
+
 .outline-selection-summary {
   margin: -2px 0 8px;
   padding: 7px 9px;
@@ -570,6 +574,31 @@ button:focus-visible {
 .drag-icon {
   flex: 0 0 auto;
   color: #94a3b8;
+}
+
+.outline-collapse-toggle,
+.outline-collapse-placeholder {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.outline-collapse-toggle {
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.outline-collapse-toggle:hover,
+.outline-collapse-toggle:focus-visible {
+  color: #111827;
+  background: #e2e8f0;
+  outline: 0;
 }
 
 .outline-item .outline-check,
@@ -614,8 +643,32 @@ button:focus-visible {
   box-shadow: inset 3px 0 0 #14b8a6;
 }
 
-.outline-item strong {
+.outline-item.search-matched {
+  border-color: #facc15;
+  background: #fffbeb;
+}
+
+.outline-main {
+  display: grid;
+  gap: 2px;
   min-width: 0;
+}
+
+.outline-main strong,
+.outline-main small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.outline-main strong {
+  color: #111827;
+  font-size: 12px;
+}
+
+.outline-main small {
+  color: #64748b;
+  font-size: 11px;
 }
 
 .container-target {

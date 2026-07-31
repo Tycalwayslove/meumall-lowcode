@@ -260,6 +260,19 @@ class CdpPage {
     if (!clicked) fail(`未找到包含文本 ${text} 的元素：${selector}`);
   }
 
+  async clickChildByText(selector, text, childSelector) {
+    const expression = `(() => {
+      const elements = Array.from(document.querySelectorAll(${jsString(selector)}));
+      const target = elements.find((item) => (item.innerText || item.textContent || '').includes(${jsString(text)}));
+      const child = target?.querySelector(${jsString(childSelector)});
+      if (!child) return false;
+      child.click();
+      return true;
+    })()`;
+    const clicked = await this.evaluate(expression);
+    if (!clicked) fail(`未找到包含文本 ${text} 的子元素：${selector} -> ${childSelector}`);
+  }
+
   async clickFirst(selector) {
     const expression = `(() => {
       const target = document.querySelector(${jsString(selector)});
@@ -406,6 +419,21 @@ async function assertInspectorGroups(page) {
   log("通过：属性面板分组可折叠展开");
 }
 
+async function assertOutlineNavigator(page) {
+  log("检查结构树搜索、折叠和定位");
+  await page.waitForExpression("document.querySelector('input[placeholder=\"搜索节点\"]')");
+  await page.clickChildByText(".outline-item", "容器区块", ".outline-collapse-toggle");
+  await page.waitForExpression("(() => { const item = Array.from(document.querySelectorAll('.outline-item')).find((node) => node.innerText.includes('容器区块')); return Boolean(item && item.classList.contains('is-collapsed')); })()");
+  await page.fillByPlaceholder("搜索节点", "行动按钮");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.outline-item')).some((item) => item.innerText.includes('行动按钮'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.outline-item')).some((item) => item.innerText.includes('容器区块'))");
+  await page.clickByText(".outline-item", "行动按钮");
+  await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('行动按钮')); })()");
+  await page.fillByPlaceholder("搜索节点", "");
+  await page.waitForExpression("document.querySelectorAll('.outline-item').length >= 3");
+  log("通过：结构树可搜索命中折叠容器内节点并定位选中");
+}
+
 async function cleanup() {
   for (const child of [...children].reverse()) {
     if (!child.killed) child.kill("SIGTERM");
@@ -451,6 +479,7 @@ async function main() {
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
     await assertInspectorGroups(page);
+    await assertOutlineNavigator(page);
     await assertEditorWorkflow(page);
 
     await assertPage(page, editorRuntimeUrl, [
