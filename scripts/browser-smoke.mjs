@@ -344,6 +344,18 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('已复制预览链接：当前草稿 React H5') || document.body.innerText.includes('复制失败：请手动复制 当前草稿 React H5')");
   log("通过：H5 预览入口展示链接并提供复制反馈");
 
+  log("检查物料收藏和最近使用");
+  const nodeCountBeforeMaterialPreference = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.clickChildByText(".material-item", "图片 Banner", ".material-favorite-button");
+  await page.waitForExpression("document.body.innerText.includes('已收藏物料：图片 Banner')");
+  await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-material-favorites'); return Boolean(raw && raw.includes('ImageBanner')); })()");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-quick-chip')).some((item) => item.innerText.includes('图片 Banner'))");
+  await page.clickByText(".material-main-button", "图片 Banner");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreference)}`);
+  await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-material-recent'); return Boolean(raw && raw.includes('ImageBanner')); })()");
+  await page.waitForExpression("document.body.innerText.includes('最近使用') && Array.from(document.querySelectorAll('.material-quick-chip')).some((item) => item.innerText.includes('图片 Banner'))");
+  log("通过：物料可收藏、最近使用可更新并持久化");
+
   log("检查快捷命令面板");
   const nodeCountBeforeCommand = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });

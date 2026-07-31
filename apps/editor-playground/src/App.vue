@@ -25,6 +25,7 @@ import {
   Save,
   Search,
   Smartphone,
+  Star,
   Trash2,
   Undo2,
   X,
@@ -85,7 +86,10 @@ import {
 } from "./mockPlatform";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
+const MATERIAL_FAVORITES_KEY = "meumall-lowcode-material-favorites";
+const MATERIAL_RECENT_KEY = "meumall-lowcode-material-recent";
 const AUTO_SAVE_DELAY_MS = 700;
+const RECENT_MATERIAL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
@@ -326,6 +330,9 @@ const templateKeyword = ref("");
 const templateCategory = ref("全部");
 const materialKeyword = ref("");
 const materialCategory = ref("全部");
+const favoriteMaterialComponentNames = ref<string[]>(loadStoredMaterialComponentNames(MATERIAL_FAVORITES_KEY));
+const recentMaterialComponentNames = ref<string[]>(loadStoredMaterialComponentNames(MATERIAL_RECENT_KEY));
+const materialPreferenceMessage = ref("");
 const outlineKeyword = ref("");
 const collapsedOutlineNodeIds = ref<string[]>([]);
 const renamingOutlineNodeId = ref<string>();
@@ -766,6 +773,8 @@ const publishCheckSummary = computed(() => {
 });
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
 const materialCategories = computed(() => ["全部", ...Array.from(new Set(materials.map((item) => item.manifest.category)))]);
+const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
+const recentMaterials = computed(() => materialItemsFromComponentNames(recentMaterialComponentNames.value));
 const visibleMaterials = computed(() => {
   const keyword = materialKeyword.value.trim().toLowerCase();
   return materials.filter((item) => {
@@ -1242,6 +1251,30 @@ function persistLocalDraft(schema: LowcodePageSchema): void {
   }
 }
 
+function loadStoredMaterialComponentNames(key: string): string[] {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) ?? "[]") as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+}
+
+function storeMaterialComponentNames(key: string, componentNames: string[]): void {
+  window.localStorage.setItem(key, JSON.stringify(componentNames));
+}
+
+function isKnownMaterialComponentName(componentName: string): boolean {
+  return materials.some((item) => item.manifest.componentName === componentName);
+}
+
+function materialItemsFromComponentNames(componentNames: string[]): typeof materials {
+  return componentNames
+    .map((componentName) => materials.find((item) => item.manifest.componentName === componentName))
+    .filter((item): item is (typeof materials)[number] => Boolean(item));
+}
+
 function markSchemaPersisted(schema: LowcodePageSchema): void {
   if (autoSaveTimer) {
     window.clearTimeout(autoSaveTimer);
@@ -1633,8 +1666,36 @@ function createNodeInput(manifest: LowcodeMaterialManifest) {
   return node;
 }
 
+function isFavoriteMaterial(componentName: string): boolean {
+  return favoriteMaterialComponentNames.value.includes(componentName);
+}
+
+function toggleFavoriteMaterial(manifest: LowcodeMaterialManifest): void {
+  const componentName = manifest.componentName;
+  const favorites = favoriteMaterialComponentNames.value;
+  const next = favorites.includes(componentName)
+    ? favorites.filter((item) => item !== componentName)
+    : [componentName, ...favorites];
+  favoriteMaterialComponentNames.value = next.filter(isKnownMaterialComponentName);
+  storeMaterialComponentNames(MATERIAL_FAVORITES_KEY, favoriteMaterialComponentNames.value);
+  materialPreferenceMessage.value = favorites.includes(componentName)
+    ? `已取消收藏：${manifest.title}`
+    : `已收藏物料：${manifest.title}`;
+}
+
+function recordRecentMaterial(manifest: LowcodeMaterialManifest): void {
+  const componentName = manifest.componentName;
+  if (!isKnownMaterialComponentName(componentName)) return;
+  recentMaterialComponentNames.value = [
+    componentName,
+    ...recentMaterialComponentNames.value.filter((item) => item !== componentName),
+  ].slice(0, RECENT_MATERIAL_LIMIT);
+  storeMaterialComponentNames(MATERIAL_RECENT_KEY, recentMaterialComponentNames.value);
+}
+
 function addMaterial(manifest: LowcodeMaterialManifest): void {
   editorState.value = appendNode(editorState.value, createNodeInput(manifest));
+  recordRecentMaterial(manifest);
 }
 
 function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void {
@@ -1646,6 +1707,7 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
     parentId: selectedNode.value.id,
     select: true,
   });
+  recordRecentMaterial(manifest);
 }
 
 function onMaterialClick(event: MouseEvent, manifest: LowcodeMaterialManifest): void {
@@ -2240,6 +2302,7 @@ function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: Canva
       index: row.node.children?.length ?? 0,
       select: true,
     });
+    recordRecentMaterial(manifest);
     return;
   }
   editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
@@ -2247,6 +2310,7 @@ function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: Canva
     index: hint.placement === "before" ? row.index : row.index + 1,
     select: true,
   });
+  recordRecentMaterial(manifest);
 }
 
 function onCanvasDrop(event: DragEvent): void {
@@ -2853,6 +2917,7 @@ function insertMaterialAroundSelected(placement: "before" | "after"): void {
     index: placement === "before" ? row.index : row.index + 1,
     select: true,
   });
+  recordRecentMaterial(manifest);
 }
 
 function insertMaterialInsideSelectedContainer(): void {
@@ -3729,25 +3794,74 @@ function formatAutoSaveTime(value: string): string {
             </option>
           </select>
         </div>
-        <button
+        <p v-if="materialPreferenceMessage" class="material-preference-message">{{ materialPreferenceMessage }}</p>
+        <div v-if="favoriteMaterials.length" class="material-quick-section">
+          <div class="material-quick-head">
+            <strong>收藏物料</strong>
+            <small>{{ favoriteMaterials.length }} 个</small>
+          </div>
+          <button
+            v-for="material in favoriteMaterials"
+            :key="`favorite-${material.manifest.componentName}`"
+            type="button"
+            class="material-quick-chip"
+            @click="addMaterial(material.manifest)"
+          >
+            <Star :size="13" />
+            <span>{{ material.manifest.title }}</span>
+          </button>
+        </div>
+        <div v-if="recentMaterials.length" class="material-quick-section">
+          <div class="material-quick-head">
+            <strong>最近使用</strong>
+            <small>{{ recentMaterials.length }} 个</small>
+          </div>
+          <button
+            v-for="material in recentMaterials"
+            :key="`recent-${material.manifest.componentName}`"
+            type="button"
+            class="material-quick-chip"
+            @click="addMaterial(material.manifest)"
+          >
+            <Plus :size="13" />
+            <span>{{ material.manifest.title }}</span>
+          </button>
+        </div>
+        <article
           v-for="material in visibleMaterials"
           :key="material.manifest.componentName"
           class="material-item"
+          :class="{ favorite: isFavoriteMaterial(material.manifest.componentName) }"
           draggable="true"
           @pointerdown="onMaterialPointerDown($event, material.manifest)"
           @dragstart="onDragStart($event, material.manifest)"
           @dragend="onMaterialDragEnd"
-          @click="onMaterialClick($event, material.manifest)"
         >
-          <span>
-            <strong>{{ material.manifest.title }}</strong>
-            <small>
-              <em>{{ material.manifest.category }}</em>
-              {{ material.manifest.componentName }}
-            </small>
-          </span>
-          <Plus :size="15" />
-        </button>
+          <button
+            type="button"
+            class="material-main-button"
+            @click="onMaterialClick($event, material.manifest)"
+          >
+            <span>
+              <strong>{{ material.manifest.title }}</strong>
+              <small>
+                <em>{{ material.manifest.category }}</em>
+                {{ material.manifest.componentName }}
+              </small>
+            </span>
+            <Plus :size="15" />
+          </button>
+          <button
+            type="button"
+            class="material-favorite-button"
+            :class="{ active: isFavoriteMaterial(material.manifest.componentName) }"
+            :title="isFavoriteMaterial(material.manifest.componentName) ? `取消收藏 ${material.manifest.title}` : `收藏 ${material.manifest.title}`"
+            @pointerdown.stop
+            @click.stop="toggleFavoriteMaterial(material.manifest)"
+          >
+            <Star :size="15" :fill="isFavoriteMaterial(material.manifest.componentName) ? 'currentColor' : 'none'" />
+          </button>
+        </article>
         <div v-if="!visibleMaterials.length" class="mini-empty">没有匹配物料</div>
         <div v-if="selectedNodeIsContainer" class="container-target">
           <strong>当前容器：{{ selectedManifest?.title }}</strong>
