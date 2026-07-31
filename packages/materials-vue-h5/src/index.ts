@@ -1,4 +1,4 @@
-import { defineComponent, h, type CSSProperties, type PropType } from "vue";
+import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
@@ -26,6 +26,10 @@ function number(value: unknown, fallback: number): number {
 
 function list(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+}
+
+function ruleList(value: unknown): Array<Record<string, unknown> | string> {
+  return Array.isArray(value) ? (value as Array<Record<string, unknown> | string>) : [];
 }
 
 export const ActivityHero = defineComponent({
@@ -244,6 +248,158 @@ export const CouponSection = defineComponent({
             },
             text(runtimeProps.buttonText, "领取优惠券"),
           ),
+        ],
+      );
+    };
+  },
+});
+
+export const ActivityRuleModal = defineComponent({
+  name: "ActivityRuleModal",
+  props: materialPropOptions,
+  setup(props) {
+    const open = ref(false);
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const rules = ruleList(runtimeProps.rules);
+      const visibleRules = rules.length ? rules : ["活动规则以页面展示和结算结果为准。"];
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-activity-rule-modal",
+          style: {
+            padding: "12px 16px",
+            color: text(runtimeProps.textColor, "#374151"),
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+          },
+        },
+        [
+          h(
+            "div",
+            { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" } },
+            [
+              h("div", { style: { minWidth: 0 } }, [
+                h("strong", { style: { display: "block", color: "#111827", fontSize: "15px" } }, text(runtimeProps.title, "活动规则")),
+                h(
+                  "span",
+                  { style: { display: "block", marginTop: "4px", color: "#6b7280", fontSize: "12px", lineHeight: 1.5 } },
+                  text(runtimeProps.summary, "查看活动参与条件、优惠说明和有效时间。"),
+                ),
+              ]),
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onOpen;
+                    if (typeof handler === "function") handler();
+                    open.value = true;
+                  },
+                  style: {
+                    flex: "0 0 auto",
+                    minHeight: "34px",
+                    border: 0,
+                    borderRadius: "999px",
+                    padding: "0 14px",
+                    color: "#ffffff",
+                    background: text(runtimeProps.primaryColor, "#111827"),
+                    fontSize: "13px",
+                    fontWeight: 700,
+                  } satisfies CSSProperties,
+                },
+                text(runtimeProps.buttonText, "查看规则"),
+              ),
+            ],
+          ),
+          open.value
+            ? h(
+                "div",
+                {
+                  role: "dialog",
+                  "aria-modal": "true",
+                  "aria-label": text(runtimeProps.modalTitle, "活动规则"),
+                  style: {
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 1000,
+                    display: "grid",
+                    placeItems: "end center",
+                    padding: "20px 12px",
+                    background: "rgba(15, 23, 42, 0.42)",
+                  },
+                },
+                [
+                  h(
+                    "div",
+                    {
+                      style: {
+                        width: "100%",
+                        maxWidth: "420px",
+                        maxHeight: "72vh",
+                        overflow: "auto",
+                        borderRadius: "16px 16px 12px 12px",
+                        background: "#ffffff",
+                        boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
+                      },
+                    },
+                    [
+                      h(
+                        "div",
+                        {
+                          style: {
+                            position: "sticky",
+                            top: 0,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "16px 16px 10px",
+                            background: "#ffffff",
+                          },
+                        },
+                        [
+                          h("strong", { style: { color: "#111827", fontSize: "17px" } }, text(runtimeProps.modalTitle, "活动规则")),
+                          h(
+                            "button",
+                            {
+                              type: "button",
+                              "aria-label": "关闭规则弹窗",
+                              onClick: () => {
+                                open.value = false;
+                              },
+                              style: {
+                                width: "32px",
+                                height: "32px",
+                                border: 0,
+                                borderRadius: "999px",
+                                color: "#475569",
+                                background: "#f1f5f9",
+                                fontSize: "18px",
+                              },
+                            },
+                            "×",
+                          ),
+                        ],
+                      ),
+                      h(
+                        "ol",
+                        { style: { display: "grid", gap: "10px", margin: 0, padding: "0 18px 18px 36px" } },
+                        visibleRules.map((rule, index) => {
+                          const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
+                          const content = typeof rule === "string" ? "" : text(rule.content);
+                          return h("li", { style: { color: "#374151", lineHeight: 1.65, fontSize: "14px" } }, [
+                            h("strong", { style: { color: "#111827" } }, title),
+                            content ? h("span", { style: { display: "block", marginTop: "2px" } }, content) : null,
+                          ]);
+                        }),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : null,
         ],
       );
     };
@@ -746,6 +902,41 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: ActivityRuleModal,
+    manifest: createMaterialManifest({
+      componentName: "ActivityRuleModal",
+      materialVersion: "0.1.0",
+      title: "活动规则弹窗",
+      category: "content",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "活动规则",
+        summary: "查看活动参与条件、优惠说明和有效时间。",
+        buttonText: "查看规则",
+        modalTitle: "活动规则",
+        primaryColor: "#111827",
+        backgroundColor: "#ffffff",
+        textColor: "#374151",
+        rules: [
+          { title: "活动时间", content: "以页面展示时间为准，逾期自动失效。" },
+          { title: "参与条件", content: "同一用户仅可享受一次指定活动优惠。" },
+          { title: "优惠说明", content: "优惠不可叠加，最终以结算页展示为准。" },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "活动规则" },
+        summary: { label: "摘要", type: "string", setter: "textarea", defaultValue: "查看活动参与条件、优惠说明和有效时间。" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看规则" },
+        modalTitle: { label: "弹窗标题", type: "string", setter: "input", defaultValue: "活动规则" },
+        primaryColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#111827" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#374151" },
+        rules: { label: "规则列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onOpen", title: "打开规则" }],
     }),
   },
   {

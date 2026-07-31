@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+
+import { h5Materials } from "../dist/index.js";
+import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
+
+function manifestNames(materials) {
+  return materials.map((material) => material.manifest.componentName);
+}
+
+describe("MeuMall H5 material manifests", () => {
+  it("keeps React and Vue material component names aligned", () => {
+    assert.deepEqual(manifestNames(h5Materials), manifestNames(h5VueMaterials));
+  });
+
+  it("registers the activity rule modal material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "ActivityRuleModal");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "活动规则弹窗");
+    assert.equal(material.manifest.defaultProps.buttonText, "查看规则");
+    assert.equal(material.manifest.events?.[0]?.name, "onOpen");
+  });
+});

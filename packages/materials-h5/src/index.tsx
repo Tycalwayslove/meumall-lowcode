@@ -20,6 +20,10 @@ function list(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 }
 
+function ruleList(value: unknown): Array<Record<string, unknown> | string> {
+  return Array.isArray(value) ? (value as Array<Record<string, unknown> | string>) : [];
+}
+
 export function ActivityHero({ props, children }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
   return (
@@ -126,6 +130,127 @@ export function CouponSection({ props }: MaterialProps) {
       >
         {text(props.buttonText, "领取优惠券")}
       </button>
+    </section>
+  );
+}
+
+export function ActivityRuleModal({ props }: MaterialProps) {
+  const [open, setOpen] = React.useState(false);
+  const rules = ruleList(props.rules);
+
+  const openModal = () => {
+    const handler = props.onOpen;
+    if (typeof handler === "function") handler();
+    setOpen(true);
+  };
+
+  return (
+    <section
+      style={{
+        padding: "12px 16px",
+        color: text(props.textColor, "#374151"),
+        background: text(props.backgroundColor, "#ffffff"),
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ display: "block", color: "#111827", fontSize: 15 }}>
+            {text(props.title, "活动规则")}
+          </strong>
+          <span style={{ display: "block", marginTop: 4, color: "#6b7280", fontSize: 12, lineHeight: 1.5 }}>
+            {text(props.summary, "查看活动参与条件、优惠说明和有效时间。")}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={openModal}
+          style={{
+            flex: "0 0 auto",
+            minHeight: 34,
+            border: 0,
+            borderRadius: 999,
+            padding: "0 14px",
+            color: "#ffffff",
+            background: text(props.primaryColor, "#111827"),
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          {text(props.buttonText, "查看规则")}
+        </button>
+      </div>
+
+      {open ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={text(props.modalTitle, "活动规则")}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "grid",
+            placeItems: "end center",
+            padding: "20px 12px",
+            background: "rgba(15, 23, 42, 0.42)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 420,
+              maxHeight: "72vh",
+              overflow: "auto",
+              borderRadius: "16px 16px 12px 12px",
+              background: "#ffffff",
+              boxShadow: "0 18px 48px rgba(15, 23, 42, 0.24)",
+            }}
+          >
+            <div
+              style={{
+                position: "sticky",
+                top: 0,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                padding: "16px 16px 10px",
+                background: "#ffffff",
+              }}
+            >
+              <strong style={{ color: "#111827", fontSize: 17 }}>{text(props.modalTitle, "活动规则")}</strong>
+              <button
+                type="button"
+                aria-label="关闭规则弹窗"
+                onClick={() => setOpen(false)}
+                style={{
+                  width: 32,
+                  height: 32,
+                  border: 0,
+                  borderRadius: 999,
+                  color: "#475569",
+                  background: "#f1f5f9",
+                  fontSize: 18,
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <ol style={{ display: "grid", gap: 10, margin: 0, padding: "0 18px 18px 36px" }}>
+              {(rules.length ? rules : ["活动规则以页面展示和结算结果为准。"]).map((rule, index) => {
+                const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
+                const content = typeof rule === "string" ? "" : text(rule.content);
+                return (
+                  <li key={`${title}-${index}`} style={{ color: "#374151", lineHeight: 1.65, fontSize: 14 }}>
+                    <strong style={{ color: "#111827" }}>{title}</strong>
+                    {content ? <span style={{ display: "block", marginTop: 2 }}>{content}</span> : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -515,6 +640,41 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: ActivityRuleModal,
+    manifest: createMaterialManifest({
+      componentName: "ActivityRuleModal",
+      materialVersion: "0.1.0",
+      title: "活动规则弹窗",
+      category: "content",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "活动规则",
+        summary: "查看活动参与条件、优惠说明和有效时间。",
+        buttonText: "查看规则",
+        modalTitle: "活动规则",
+        primaryColor: "#111827",
+        backgroundColor: "#ffffff",
+        textColor: "#374151",
+        rules: [
+          { title: "活动时间", content: "以页面展示时间为准，逾期自动失效。" },
+          { title: "参与条件", content: "同一用户仅可享受一次指定活动优惠。" },
+          { title: "优惠说明", content: "优惠不可叠加，最终以结算页展示为准。" },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "活动规则" },
+        summary: { label: "摘要", type: "string", setter: "textarea", defaultValue: "查看活动参与条件、优惠说明和有效时间。" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看规则" },
+        modalTitle: { label: "弹窗标题", type: "string", setter: "input", defaultValue: "活动规则" },
+        primaryColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#111827" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#374151" },
+        rules: { label: "规则列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onOpen", title: "打开规则" }],
     }),
   },
   {

@@ -90,6 +90,28 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_rules",
+      componentName: "ActivityRuleModal",
+      materialVersion: "0.1.0",
+      props: {
+        title: "活动规则",
+        summary: "查看补贴时间、参与条件和优惠说明。",
+        buttonText: "查看规则",
+        modalTitle: "夏日好物节规则",
+        primaryColor: "#111827",
+        backgroundColor: "#ffffff",
+        textColor: "#374151",
+        rules: [
+          { title: "活动时间", content: "2026-07-31 10:00 至 2026-08-07 23:59。" },
+          { title: "参与条件", content: "活动商品数量有限，同一用户限享一次平台补贴。" },
+          { title: "优惠说明", content: "优惠不可叠加，最终以结算页展示金额为准。" },
+        ],
+      },
+      events: {
+        onOpen: { actionId: "track_rule_open" },
+      },
+    },
+    {
       id: "node_countdown",
       componentName: "CountdownTimer",
       materialVersion: "0.1.0",
@@ -260,6 +282,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "flash_sale_product_click",
+      },
+    },
+    {
+      id: "track_rule_open",
+      type: "tracking.click",
+      params: {
+        eventName: "activity_rule_open",
       },
     },
   ],

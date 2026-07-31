@@ -75,6 +75,25 @@ export const pageTemplates: PageTemplate[] = [
           },
         },
         {
+          id: "summer_rules",
+          componentName: "ActivityRuleModal",
+          materialVersion: "0.1.0",
+          props: {
+            title: "活动规则",
+            summary: "查看补贴时间、参与条件和优惠说明。",
+            buttonText: "查看规则",
+            modalTitle: "夏日好物节规则",
+            primaryColor: "#111827",
+            backgroundColor: "#ffffff",
+            textColor: "#374151",
+            rules: [
+              { title: "活动时间", content: "2026-07-31 10:00 至 2026-08-07 23:59。" },
+              { title: "参与条件", content: "活动商品数量有限，同一用户限享一次平台补贴。" },
+              { title: "优惠说明", content: "优惠不可叠加，最终以结算页展示金额为准。" },
+            ],
+          },
+        },
+        {
           id: "summer_countdown",
           componentName: "CountdownTimer",
           materialVersion: "0.1.0",
@@ -250,6 +269,25 @@ export const pageTemplates: PageTemplate[] = [
             content: "优惠券领取后 7 天内有效，每个用户限领一次。",
             backgroundColor: "#fff7ed",
             textColor: "#9a3412",
+          },
+        },
+        {
+          id: "new_user_rules",
+          componentName: "ActivityRuleModal",
+          materialVersion: "0.1.0",
+          props: {
+            title: "新人礼规则",
+            summary: "领取前可查看有效期、使用门槛和限制说明。",
+            buttonText: "查看规则",
+            modalTitle: "新人专享礼规则",
+            primaryColor: "#ea580c",
+            backgroundColor: "#fff7ed",
+            textColor: "#7c2d12",
+            rules: [
+              { title: "领取限制", content: "每个新用户账号仅可领取一次新人礼包。" },
+              { title: "有效时间", content: "优惠券领取后 7 天内有效，逾期自动失效。" },
+              { title: "使用说明", content: "优惠券适用范围以商品详情页和结算页展示为准。" },
+            ],
           },
         },
         {
