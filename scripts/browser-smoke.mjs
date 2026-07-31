@@ -303,6 +303,17 @@ async function assertEditorWorkflow(page) {
   log("通过：可切回设计模式");
 }
 
+async function assertInspectorGroups(page) {
+  log("检查属性面板分组折叠");
+  await page.waitForExpression("document.body.innerText.includes('内容配置')");
+  await page.waitForExpression("document.body.innerText.includes('样式配置')");
+  await page.clickByText(".property-group-head", "样式配置");
+  await page.waitForExpression("(() => { const group = Array.from(document.querySelectorAll('.property-group')).find((item) => item.innerText.includes('样式配置')); return Boolean(group && group.classList.contains('collapsed')); })()");
+  await page.clickByText(".property-group-head", "样式配置");
+  await page.waitForExpression("(() => { const group = Array.from(document.querySelectorAll('.property-group')).find((item) => item.innerText.includes('样式配置')); return Boolean(group && !group.classList.contains('collapsed')); })()");
+  log("通过：属性面板分组可折叠展开");
+}
+
 async function cleanup() {
   for (const child of [...children].reverse()) {
     if (!child.killed) child.kill("SIGTERM");
@@ -338,8 +349,10 @@ async function main() {
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
+      { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertInspectorGroups(page);
     await assertEditorWorkflow(page);
 
     await assertPage(page, editorRuntimeUrl, [

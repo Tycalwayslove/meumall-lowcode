@@ -41,6 +41,7 @@
 - Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、门店/达人推荐等常见数组配置，并保留 JSON 高级编辑兜底。
 - Vue3 编辑器 playground 数组属性列表项已支持同一属性内 HTML5 拖拽排序，并保留上移、下移、复制、删除和 JSON 高级编辑。
 - Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
+- Vue3 编辑器 playground 属性面板已支持分组折叠：当前物料 props 会按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，组内显示字段数量并可折叠/展开；新 profile 首次打开会默认选中当前 schema 的首个节点，避免属性区为空。
 - React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会搜索并应用 `商品专题页` 模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`，以及源码/预览/设计模式切换。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。

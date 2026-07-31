@@ -1499,6 +1499,88 @@ button:focus-visible {
   background: #fff5f5;
 }
 
+.property-groups {
+  display: grid;
+  gap: 10px;
+}
+
+.property-group {
+  overflow: hidden;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.property-group-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+  padding: 9px 10px;
+  color: #111827;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.property-group-head span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.property-group-head strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.property-group-head small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.property-group-head em {
+  flex: 0 0 auto;
+  border-radius: 6px;
+  padding: 3px 6px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.property-group-head svg {
+  color: #64748b;
+  transition: transform 0.16s ease;
+}
+
+.property-group.collapsed .property-group-head {
+  border-bottom-color: transparent;
+}
+
+.property-group.collapsed .property-group-head svg {
+  transform: rotate(-90deg);
+}
+
+.property-group-body {
+  display: grid;
+  gap: 12px;
+  padding: 10px;
+}
+
+.property-group-body .field {
+  margin-bottom: 0;
+}
+
 .mini-empty {
   display: grid;
   min-height: 42px;

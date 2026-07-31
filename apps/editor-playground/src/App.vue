@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, shallowRef, watch, type CSSPrope
 import {
   ArrowDown,
   ArrowUp,
+  ChevronDown,
   Code2,
   Copy,
   Database,
@@ -289,7 +290,8 @@ function loadSchema(): LowcodePageSchema {
   }
 }
 
-const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadSchema(), { selectedNodeId: "node_hero" }));
+const loadedSchema = loadSchema();
+const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadedSchema, { selectedNodeId: loadedSchema.nodes[0]?.id }));
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
@@ -346,6 +348,7 @@ type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
 type PublishCheckStatus = "pass" | "warning" | "error";
 type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
+type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -400,6 +403,18 @@ interface WorkspaceStat {
   tone?: "neutral" | "success" | "warning" | "danger";
 }
 
+interface PropEditorEntry {
+  name: string;
+  schema: LowcodePropSchema;
+}
+
+interface PropEditorGroup {
+  key: PropGroupKey;
+  label: string;
+  description: string;
+  entries: PropEditorEntry[];
+}
+
 interface ListEditorField {
   name: string;
   label: string;
@@ -417,12 +432,46 @@ const canvasDropHint = ref<CanvasDropHint>();
 const listItemDragState = ref<ListItemDragState>();
 const pointerCanvasDragState = ref<PointerCanvasDragState>();
 const multiSelectedNodeIds = ref<string[]>([]);
+const collapsedPropGroups = ref<Partial<Record<PropGroupKey, boolean>>>({
+  advanced: true,
+});
 
 const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
 const NODE_DRAG_TYPE = "application/x-meumall-node";
 const LIST_ITEM_DRAG_TYPE = "application/x-meumall-list-item";
 const POINTER_DRAG_START_DISTANCE = 8;
 let suppressNextClick = false;
+
+const propGroupOrder: PropGroupKey[] = ["content", "style", "data", "behavior", "advanced"];
+const propGroupMeta: Record<PropGroupKey, Pick<PropEditorGroup, "label" | "description">> = {
+  content: { label: "内容配置", description: "标题、文案、图片和按钮内容。" },
+  style: { label: "样式配置", description: "颜色、圆角、间距和排版表现。" },
+  data: { label: "数据配置", description: "商品、券、规则、导航项和数据源字段。" },
+  behavior: { label: "行为配置", description: "跳转链接、吸顶、平滑滚动等交互行为。" },
+  advanced: { label: "其他配置", description: "暂未归类的物料字段。" },
+};
+
+const contentPropNames = new Set([
+  "title",
+  "subtitle",
+  "summary",
+  "content",
+  "label",
+  "text",
+  "html",
+  "buttonText",
+  "receiveText",
+  "receiveAllText",
+  "statusText",
+  "viewerText",
+  "badgeText",
+  "modalTitle",
+  "alt",
+  "imageUrl",
+  "coverImageUrl",
+]);
+const dataPropNames = new Set(["items", "coupons", "rules"]);
+const behaviorPropNames = new Set(["linkUrl", "sticky", "smooth", "offsetTop"]);
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -477,6 +526,22 @@ const selectedNode = computed(() => findNode(editorState.value.schema.nodes, edi
 const selectedManifest = computed(() =>
   selectedNode.value ? registry.get(selectedNode.value.componentName)?.manifest : undefined,
 );
+const selectedPropGroups = computed<PropEditorGroup[]>(() => {
+  const manifest = selectedManifest.value;
+  if (!manifest) return [];
+  const groups = new Map<PropGroupKey, PropEditorEntry[]>();
+  Object.entries(manifest.propsSchema).forEach(([name, propSchema]) => {
+    const groupKey = propGroupKeyFor(name, propSchema);
+    groups.set(groupKey, [...(groups.get(groupKey) ?? []), { name, schema: propSchema }]);
+  });
+  return propGroupOrder
+    .map((key) => ({
+      key,
+      ...propGroupMeta[key],
+      entries: groups.get(key) ?? [],
+    }))
+    .filter((group) => group.entries.length > 0);
+});
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
 const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
@@ -1902,6 +1967,31 @@ function getListItems(propName: string): Record<string, JsonValue>[] {
   return getPropArray(propName).map((item) => toEditableListItem(item));
 }
 
+function propGroupKeyFor(propName: string, propSchema: LowcodePropSchema): PropGroupKey {
+  const normalized = propName.toLowerCase();
+  if (dataPropNames.has(propName) || propSchema.setter === "dataSourceSelector" || propSchema.type === "array") return "data";
+  if (
+    propSchema.setter === "color" ||
+    /(color|radius|padding|height|width|size|columns|background|accent)/.test(normalized)
+  ) {
+    return "style";
+  }
+  if (behaviorPropNames.has(propName) || propSchema.type === "boolean" || propSchema.setter === "switch") return "behavior";
+  if (contentPropNames.has(propName) || ["image", "richText", "textarea"].includes(propSchema.setter)) return "content";
+  return "advanced";
+}
+
+function isPropGroupCollapsed(key: PropGroupKey): boolean {
+  return Boolean(collapsedPropGroups.value[key]);
+}
+
+function togglePropGroup(key: PropGroupKey): void {
+  collapsedPropGroups.value = {
+    ...collapsedPropGroups.value,
+    [key]: !collapsedPropGroups.value[key],
+  };
+}
+
 function isListPropEditor(propSchema: LowcodePropSchema): boolean {
   return propSchema.type === "array" && propSchema.setter === "textarea";
 }
@@ -3310,117 +3400,136 @@ function formatReleaseTime(value: string): string {
             </div>
           </div>
 
-          <div
-            v-for="(propSchema, propName) in selectedManifest.propsSchema"
-            :key="String(propName)"
-            class="field"
-          >
-            <span>{{ propSchema.label }}</span>
-            <div v-if="isListPropEditor(propSchema)" class="list-prop-editor">
-              <div class="list-prop-head">
-                <small>已配置 {{ getListItems(String(propName)).length }} 项</small>
-                <button type="button" @click="addListItem(String(propName), propSchema)">新增一项</button>
-              </div>
-              <div v-if="!getListItems(String(propName)).length" class="mini-empty">暂无列表项，点击新增开始配置</div>
-              <article
-                v-for="(item, itemIndex) in getListItems(String(propName))"
-                :key="`${String(propName)}-${itemIndex}`"
-                class="list-item-editor"
-                :class="listItemDragClass(String(propName), itemIndex)"
-                draggable="true"
-                @dragstart="onListItemDragStart($event, String(propName), itemIndex)"
-                @dragover="onListItemDragOver($event, String(propName), itemIndex)"
-                @drop="onListItemDrop($event, String(propName), propSchema, itemIndex)"
-                @dragend="onListItemDragEnd"
-              >
-                <div class="list-item-head">
-                  <strong>
-                    <GripVertical :size="14" />
-                    <span>第 {{ itemIndex + 1 }} 项</span>
-                  </strong>
-                  <div>
-                    <button type="button" :disabled="itemIndex === 0" @click="moveListItem(String(propName), propSchema, itemIndex, -1)">上移</button>
-                    <button
-                      type="button"
-                      :disabled="itemIndex === getListItems(String(propName)).length - 1"
-                      @click="moveListItem(String(propName), propSchema, itemIndex, 1)"
+          <div class="property-groups">
+            <section
+              v-for="group in selectedPropGroups"
+              :key="group.key"
+              class="property-group"
+              :class="{ collapsed: isPropGroupCollapsed(group.key) }"
+            >
+              <button type="button" class="property-group-head" @click="togglePropGroup(group.key)">
+                <span>
+                  <strong>{{ group.label }}</strong>
+                  <small>{{ group.description }}</small>
+                </span>
+                <em>{{ group.entries.length }} 项</em>
+                <ChevronDown :size="15" />
+              </button>
+              <div v-if="!isPropGroupCollapsed(group.key)" class="property-group-body">
+                <div
+                  v-for="entry in group.entries"
+                  :key="entry.name"
+                  class="field"
+                >
+                  <span>{{ entry.schema.label }}</span>
+                  <div v-if="isListPropEditor(entry.schema)" class="list-prop-editor">
+                    <div class="list-prop-head">
+                      <small>已配置 {{ getListItems(entry.name).length }} 项</small>
+                      <button type="button" @click="addListItem(entry.name, entry.schema)">新增一项</button>
+                    </div>
+                    <div v-if="!getListItems(entry.name).length" class="mini-empty">暂无列表项，点击新增开始配置</div>
+                    <article
+                      v-for="(item, itemIndex) in getListItems(entry.name)"
+                      :key="`${entry.name}-${itemIndex}`"
+                      class="list-item-editor"
+                      :class="listItemDragClass(entry.name, itemIndex)"
+                      draggable="true"
+                      @dragstart="onListItemDragStart($event, entry.name, itemIndex)"
+                      @dragover="onListItemDragOver($event, entry.name, itemIndex)"
+                      @drop="onListItemDrop($event, entry.name, entry.schema, itemIndex)"
+                      @dragend="onListItemDragEnd"
                     >
-                      下移
-                    </button>
-                    <button type="button" @click="duplicateListItem(String(propName), propSchema, itemIndex)">复制</button>
-                    <button type="button" class="danger" @click="removeListItem(String(propName), propSchema, itemIndex)">删除</button>
+                      <div class="list-item-head">
+                        <strong>
+                          <GripVertical :size="14" />
+                          <span>第 {{ itemIndex + 1 }} 项</span>
+                        </strong>
+                        <div>
+                          <button type="button" :disabled="itemIndex === 0" @click="moveListItem(entry.name, entry.schema, itemIndex, -1)">上移</button>
+                          <button
+                            type="button"
+                            :disabled="itemIndex === getListItems(entry.name).length - 1"
+                            @click="moveListItem(entry.name, entry.schema, itemIndex, 1)"
+                          >
+                            下移
+                          </button>
+                          <button type="button" @click="duplicateListItem(entry.name, entry.schema, itemIndex)">复制</button>
+                          <button type="button" class="danger" @click="removeListItem(entry.name, entry.schema, itemIndex)">删除</button>
+                        </div>
+                      </div>
+                      <div class="list-field-grid">
+                        <label
+                          v-for="field in listEditorFields(entry.name)"
+                          :key="`${entry.name}-${itemIndex}-${field.name}`"
+                          class="mini-field"
+                          :class="{ wide: field.multiline || field.name === 'imageUrl' || field.name === 'content' }"
+                        >
+                          <span>{{ field.label }}</span>
+                          <textarea
+                            v-if="field.multiline"
+                            rows="2"
+                            :placeholder="field.placeholder"
+                            :value="asText(item[field.name])"
+                            @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLTextAreaElement).value)"
+                          />
+                          <input
+                            v-else
+                            type="text"
+                            :placeholder="field.placeholder"
+                            :value="asText(item[field.name])"
+                            @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
+                          />
+                        </label>
+                      </div>
+                    </article>
+                    <details class="json-fallback">
+                      <summary>JSON 高级编辑</summary>
+                      <textarea
+                        :value="asText(selectedNode.props[entry.name])"
+                        rows="5"
+                        @input="updateProp(entry.name, entry.schema, ($event.target as HTMLTextAreaElement).value)"
+                      />
+                    </details>
+                  </div>
+                  <textarea
+                    v-else-if="isStructured(entry.schema) || entry.schema.setter === 'textarea' || entry.schema.setter === 'richText'"
+                    :value="asText(selectedNode.props[entry.name])"
+                    rows="5"
+                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLTextAreaElement).value)"
+                  />
+                  <div
+                    v-else-if="entry.schema.setter === 'switch' || entry.schema.type === 'boolean'"
+                    class="switch-field"
+                  >
+                    <input
+                      type="checkbox"
+                      :checked="asBoolean(selectedNode.props[entry.name])"
+                      @change="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).checked)"
+                    />
+                    <span class="switch-track" aria-hidden="true">
+                      <i />
+                    </span>
+                    <em>{{ asBoolean(selectedNode.props[entry.name]) ? "开启" : "关闭" }}</em>
+                  </div>
+                  <input
+                    v-else-if="entry.schema.setter === 'color'"
+                    type="color"
+                    :value="asText(selectedNode.props[entry.name]) || '#111827'"
+                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
+                  />
+                  <input
+                    v-else
+                    :type="entry.schema.type === 'number' ? 'number' : 'text'"
+                    :value="asText(selectedNode.props[entry.name])"
+                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
+                  />
+                  <div v-if="['ProductList', 'FlashSaleList'].includes(selectedNode.componentName) && entry.name === 'items'" class="quick-actions">
+                    <button type="button" @click="applySampleProducts">使用示例商品</button>
+                    <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
                   </div>
                 </div>
-                <div class="list-field-grid">
-                  <label
-                    v-for="field in listEditorFields(String(propName))"
-                    :key="`${String(propName)}-${itemIndex}-${field.name}`"
-                    class="mini-field"
-                    :class="{ wide: field.multiline || field.name === 'imageUrl' || field.name === 'content' }"
-                  >
-                    <span>{{ field.label }}</span>
-                    <textarea
-                      v-if="field.multiline"
-                      rows="2"
-                      :placeholder="field.placeholder"
-                      :value="asText(item[field.name])"
-                      @input="updateListItemField(String(propName), propSchema, itemIndex, field.name, ($event.target as HTMLTextAreaElement).value)"
-                    />
-                    <input
-                      v-else
-                      type="text"
-                      :placeholder="field.placeholder"
-                      :value="asText(item[field.name])"
-                      @input="updateListItemField(String(propName), propSchema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
-                    />
-                  </label>
-                </div>
-              </article>
-              <details class="json-fallback">
-                <summary>JSON 高级编辑</summary>
-                <textarea
-                  :value="asText(selectedNode.props[String(propName)])"
-                  rows="5"
-                  @input="updateProp(String(propName), propSchema, ($event.target as HTMLTextAreaElement).value)"
-                />
-              </details>
-            </div>
-            <textarea
-              v-else-if="isStructured(propSchema) || propSchema.setter === 'textarea' || propSchema.setter === 'richText'"
-              :value="asText(selectedNode.props[String(propName)])"
-              rows="5"
-              @input="updateProp(String(propName), propSchema, ($event.target as HTMLTextAreaElement).value)"
-            />
-            <div
-              v-else-if="propSchema.setter === 'switch' || propSchema.type === 'boolean'"
-              class="switch-field"
-            >
-              <input
-                type="checkbox"
-                :checked="asBoolean(selectedNode.props[String(propName)])"
-                @change="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).checked)"
-              />
-              <span class="switch-track" aria-hidden="true">
-                <i />
-              </span>
-              <em>{{ asBoolean(selectedNode.props[String(propName)]) ? "开启" : "关闭" }}</em>
-            </div>
-            <input
-              v-else-if="propSchema.setter === 'color'"
-              type="color"
-              :value="asText(selectedNode.props[String(propName)]) || '#111827'"
-              @input="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).value)"
-            />
-            <input
-              v-else
-              :type="propSchema.type === 'number' ? 'number' : 'text'"
-              :value="asText(selectedNode.props[String(propName)])"
-              @input="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).value)"
-            />
-            <div v-if="['ProductList', 'FlashSaleList'].includes(selectedNode.componentName) && String(propName) === 'items'" class="quick-actions">
-              <button type="button" @click="applySampleProducts">使用示例商品</button>
-              <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
-            </div>
+              </div>
+            </section>
           </div>
 
           <div v-if="selectedManifest.events?.length" class="event-binding-list">
