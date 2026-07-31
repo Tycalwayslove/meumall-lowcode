@@ -44,7 +44,7 @@
 - Vue3 编辑器 playground 属性面板已支持 `switch` setter 和 `boolean` 类型字段的开关控件，写入真实 boolean，并兼容旧草稿中的 `"false"`、`"0"`、`"off"` 字符串。
 - Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、图片卡片宫格、门店/达人推荐等常见数组配置；图片字段展示缩略图并支持素材库选择，仍保留 URL 输入和 JSON 高级编辑兜底。
 - Vue3 编辑器 playground 数组属性列表项已支持同一属性内 HTML5 拖拽排序，并保留上移、下移、复制、删除和 JSON 高级编辑。
-- Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
+- Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底；顶部工作区状态摘要已复用 editor workspace summary API。
 - Vue3 编辑器 playground 已支持 H5 画布视口预设：画布顶部可切换 360 紧凑屏、390 标准屏和 430 大屏，手机框宽度和状态栏同步当前预设；该状态只属于编辑器 shell 的 `editorState.viewport`，不进入 Page Schema，避免与 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议混淆。
 - Vue3 编辑器 playground 属性面板已支持分组折叠：当前物料 props 会按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，组内显示字段数量并可折叠/展开；字段归类、默认文案、稳定顺序和折叠状态 helper 已复用 editor prop groups API。新 profile 首次打开会默认选中当前 schema 的首个节点，避免属性区为空。
 - Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板；命令搜索和默认 28 条展示限制已复用 editor command palette API，命令执行函数仍在 playground shell 内。
@@ -67,6 +67,7 @@
 - `@meumall/lowcode-editor` 已沉淀框架无关 schema file API：`createLowcodeSchemaFileName`、`createLowcodeSchemaFileExport` 和 `parseLowcodeSchemaFileContent`；Vue3 editor playground 的 Page Schema 文件名、导出内容、mimeType、字节大小、大小文案和导入解析校验已改为复用这些 API，后续管理台接入时不要复制 JSON 解析和校验口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 draft persistence API：`createLowcodeEditorDraftPayload`、`parseLowcodeEditorDraftContent`、`formatLowcodeEditorDraftStatusText` 和 `getLowcodeEditorDraftStatusTone`；Vue3 editor playground 的本地自动保存 payload、旧草稿恢复兼容、恢复校验、状态文案和 tone 已改为复用这些 API，后续管理台接入时不要复制草稿 JSON 解析和自动保存展示口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 preview links API：`createLowcodePreviewLinkItem`、`createLowcodePreviewLinkItems` 和 `summarizeLowcodePreviewLinks`；Vue3 editor playground 的 H5 预览入口列表、ready/disabled 状态、打开/复制能力和交付入口摘要已改为复用这些 API，后续管理台接入时不要复制预览入口展示模型。
+- `@meumall/lowcode-editor` 已沉淀框架无关 workspace summary API：`createLowcodeWorkspaceStats`；Vue3 editor playground 的顶部节点数、当前选中、校验、发布和保存状态摘要已改为复用该 API，后续管理台接入时不要复制状态条文案和 tone 口径。
 - Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时复用 editor schema file API 解析并校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。

@@ -87,6 +87,23 @@ export interface LowcodeEditorPublishCheckSummary {
   error: number;
 }
 
+export type LowcodeEditorWorkspaceStatTone = "neutral" | "success" | "warning" | "danger";
+
+export interface LowcodeEditorWorkspaceStat {
+  id: string;
+  label: string;
+  value: string;
+  tone: LowcodeEditorWorkspaceStatTone;
+}
+
+export interface CreateLowcodeWorkspaceStatsOptions {
+  selectedTitle?: string;
+  validationValid?: boolean;
+  publishCheckSummary?: LowcodeEditorPublishCheckSummary;
+  dirty?: boolean;
+  nodeCount?: number;
+}
+
 export interface LowcodeEditorDataSourceResolutionRecord {
   id: string;
   status: "pending" | "resolved" | "skipped" | "error" | string;
@@ -607,6 +624,43 @@ export function setEditorViewportPreset(
   preset: LowcodeEditorViewportPreset,
 ): LowcodeEditorState {
   return setEditorViewport(state, createLowcodeEditorViewportFromPreset(preset));
+}
+
+export function createLowcodeWorkspaceStats(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeWorkspaceStatsOptions = {},
+): LowcodeEditorWorkspaceStat[] {
+  const validationValid = options.validationValid ?? validateLowcodePageSchema(schema).valid;
+  const publish = createWorkspacePublishStat(options.publishCheckSummary);
+  const dirty = options.dirty ?? false;
+
+  return [
+    {
+      id: "nodes",
+      label: "节点",
+      value: `${options.nodeCount ?? countLowcodeNodes(schema)} 个`,
+      tone: "neutral",
+    },
+    {
+      id: "selected",
+      label: "选中",
+      value: options.selectedTitle || "未选择",
+      tone: options.selectedTitle ? "success" : "neutral",
+    },
+    {
+      id: "validation",
+      label: "校验",
+      value: validationValid ? "通过" : "异常",
+      tone: validationValid ? "success" : "danger",
+    },
+    publish,
+    {
+      id: "save",
+      label: "保存",
+      value: dirty ? "未保存" : "已保存",
+      tone: dirty ? "warning" : "success",
+    },
+  ];
 }
 
 export function createLowcodePreviewLinkItem(
@@ -1900,6 +1954,41 @@ function createDeliveryStatusText(summary: LowcodeEditorPublishCheckSummary): st
   if (summary.error) return `${summary.error} 个阻塞项`;
   if (summary.warning) return `${summary.warning} 个提醒`;
   return "检查通过";
+}
+
+function createWorkspacePublishStat(
+  summary: LowcodeEditorPublishCheckSummary | undefined,
+): LowcodeEditorWorkspaceStat {
+  if (!summary) {
+    return {
+      id: "publish",
+      label: "发布",
+      value: "未检查",
+      tone: "neutral",
+    };
+  }
+  if (summary.error) {
+    return {
+      id: "publish",
+      label: "发布",
+      value: `${summary.error} 个错误`,
+      tone: "danger",
+    };
+  }
+  if (summary.warning) {
+    return {
+      id: "publish",
+      label: "发布",
+      value: `${summary.warning} 个提醒`,
+      tone: "warning",
+    };
+  }
+  return {
+    id: "publish",
+    label: "发布",
+    value: "可预览",
+    tone: "success",
+  };
 }
 
 function pickFirstTemplateNodeText(nodes: LowcodeNode[], propNames: string[]): string {

@@ -126,6 +126,12 @@ interface LowcodeEditorState {
 
 草稿持久化 API 从 Page Schema 派生可存储的草稿 payload，包含版本、更新时间、schema、schema JSON、字节大小和大小文案，并提供草稿 JSON 文本解析、Page Schema v1 校验、旧版 Page Schema 直存格式兼容、自动保存状态文案和 tone。API 不执行定时器、不读写 `localStorage`、不发 HTTP 请求、不处理草稿冲突合并、权限、审计或审批。
 
+工作区状态摘要 API：
+
+- `createLowcodeWorkspaceStats`
+
+工作区状态摘要 API 从 Page Schema、选中物料标题、校验结果、发布检查摘要和 dirty 状态派生顶部状态条展示模型，覆盖节点数、选中、校验、发布和保存状态。每个状态项包含稳定 id、label、value 和 tone。API 不渲染 UI、不处理 DOM、不执行服务端发布检查、不处理权限、协作锁定、审批或审计。
+
 H5 预览链接 API：
 
 - `createLowcodePreviewLinkItem`
@@ -158,6 +164,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 草稿持久化 API 只处理 Page Schema 草稿 payload、JSON 文本恢复和自动保存状态展示口径，不依赖 DOM、浏览器存储或 HTTP，不修改 Page Schema v1 契约。
+- 工作区状态摘要 API 只派生编辑器顶部状态展示模型，不依赖 DOM，不执行服务端发布校验，不处理权限、协作锁定或审批。
 - H5 预览链接 API 只处理宿主提供的 URL 展示模型，不依赖 DOM、adapters、renderer、runtime 地址或 Java 配置平台协议。
 - Schema 文件 API 只处理 JSON 字符串、文件名和 Page Schema 校验，不依赖 DOM，不依赖浏览器文件对象，不修改 Page Schema v1 契约。
 - 移动节点时禁止将节点移动到自身或自身后代。

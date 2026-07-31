@@ -52,7 +52,6 @@ import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
   appendNode,
   cloneLowcodePageSchema,
-  countLowcodeNodes,
   createLowcodeBlankPageSchema,
   copyNode,
   createLowcodeDeliverySummary,
@@ -64,6 +63,7 @@ import {
   createLowcodeSchemaPreviewItems,
   createLowcodeTemplateListItem,
   createLowcodeVersionDiffItems,
+  createLowcodeWorkspaceStats,
   createEditorState,
   createLowcodeEditorViewportFromPreset,
   createLowcodeOutlineRows,
@@ -118,6 +118,7 @@ import {
   type LowcodeEditorTemplateListItem as TemplateListItem,
   type LowcodeEditorViewportPreset,
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
+  type LowcodeEditorWorkspaceStat as WorkspaceStat,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -498,12 +499,6 @@ interface PointerCanvasDragState {
   nodeId?: string;
 }
 
-interface WorkspaceStat {
-  label: string;
-  value: string;
-  tone?: "neutral" | "success" | "warning" | "danger";
-}
-
 interface NodeContextMenuState {
   nodeId: string;
   x: number;
@@ -814,31 +809,14 @@ const selectedPositionText = computed(() => {
   if (!row) return "未选择";
   return `第 ${row.index + 1} 个 / 第 ${row.depth + 1} 层`;
 });
-const workspaceStats = computed<WorkspaceStat[]>(() => [
-  {
-    label: "节点",
-    value: `${schemaNodeCount(editorState.value.schema)} 个`,
-  },
-  {
-    label: "选中",
-    value: selectedManifest.value?.title ?? "未选择",
-  },
-  {
-    label: "校验",
-    value: validation.value.valid ? "通过" : "异常",
-    tone: validation.value.valid ? "success" : "danger",
-  },
-  {
-    label: "发布",
-    value: hasPublishBlockingErrors.value ? `${publishCheckSummary.value.error} 个错误` : "可预览",
-    tone: hasPublishBlockingErrors.value ? "danger" : publishCheckSummary.value.warning ? "warning" : "success",
-  },
-  {
-    label: "保存",
-    value: editorState.value.dirty ? "未保存" : "已保存",
-    tone: editorState.value.dirty ? "warning" : "success",
-  },
-]);
+const workspaceStats = computed<WorkspaceStat[]>(() =>
+  createLowcodeWorkspaceStats(editorState.value.schema, {
+    selectedTitle: selectedManifest.value?.title,
+    validationValid: validation.value.valid,
+    publishCheckSummary: publishCheckSummary.value,
+    dirty: editorState.value.dirty,
+  }),
+);
 const autoSaveStatusText = computed(() => {
   return formatLowcodeEditorDraftStatusText(autoSaveStatus.value, {
     lastSavedAt: lastAutoSavedAt.value,
@@ -1353,10 +1331,6 @@ function markSchemaPersisted(schema: LowcodePageSchema): void {
   }
   persistLocalDraft(schema);
   suppressNextAutoSave = true;
-}
-
-function schemaNodeCount(schema: LowcodePageSchema): number {
-  return countLowcodeNodes(schema);
 }
 
 const templateTags = sliceLowcodeTemplateTags;

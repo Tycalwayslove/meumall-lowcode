@@ -27,6 +27,7 @@ import {
   createLowcodeTemplateListItem,
   createLowcodeTemplatePreviewMeta,
   createLowcodeVersionDiffItems,
+  createLowcodeWorkspaceStats,
   findLowcodeEditorViewportPreset,
   filterLowcodeEditorCommands,
   filterLowcodeMaterialCatalog,
@@ -400,6 +401,63 @@ describe("@meumall/lowcode-editor readiness", () => {
       readyTitles: ["当前草稿 React H5"],
     });
     assert.equal(summarizeLowcodePreviewLinks(createLowcodePreviewLinkItems(sources, { includeDisabled: false })).statusText, "1 个可用入口");
+  });
+
+  it("creates reusable workspace status summaries", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "workspace_page",
+      title: "工作区页面",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/banner.jpg" },
+        }),
+      ],
+    });
+
+    assert.deepEqual(createLowcodeWorkspaceStats(schema, {
+      selectedTitle: "图片 Banner",
+      validationValid: true,
+      publishCheckSummary: { pass: 5, warning: 0, error: 0 },
+      dirty: false,
+    }), [
+      { id: "nodes", label: "节点", value: "1 个", tone: "neutral" },
+      { id: "selected", label: "选中", value: "图片 Banner", tone: "success" },
+      { id: "validation", label: "校验", value: "通过", tone: "success" },
+      { id: "publish", label: "发布", value: "可预览", tone: "success" },
+      { id: "save", label: "保存", value: "已保存", tone: "success" },
+    ]);
+
+    const warningStats = createLowcodeWorkspaceStats(schema, {
+      validationValid: false,
+      publishCheckSummary: { pass: 3, warning: 2, error: 0 },
+      dirty: true,
+      nodeCount: 9,
+    });
+    assert.deepEqual(warningStats, [
+      { id: "nodes", label: "节点", value: "9 个", tone: "neutral" },
+      { id: "selected", label: "选中", value: "未选择", tone: "neutral" },
+      { id: "validation", label: "校验", value: "异常", tone: "danger" },
+      { id: "publish", label: "发布", value: "2 个提醒", tone: "warning" },
+      { id: "save", label: "保存", value: "未保存", tone: "warning" },
+    ]);
+
+    assert.deepEqual(createLowcodeWorkspaceStats(schema, {
+      publishCheckSummary: { pass: 1, warning: 4, error: 3 },
+    }).find((item) => item.id === "publish"), {
+      id: "publish",
+      label: "发布",
+      value: "3 个错误",
+      tone: "danger",
+    });
+    assert.deepEqual(createLowcodeWorkspaceStats(schema).find((item) => item.id === "publish"), {
+      id: "publish",
+      label: "发布",
+      value: "未检查",
+      tone: "neutral",
+    });
   });
 
   it("creates reusable material catalog items, categories and filters", () => {

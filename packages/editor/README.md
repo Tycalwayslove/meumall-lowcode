@@ -58,6 +58,7 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `summarizeLowcodePublishChecks`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
+- `createLowcodeWorkspaceStats`
 - `createLowcodePreviewLinkItem`
 - `createLowcodePreviewLinkItems`
 - `summarizeLowcodePreviewLinks`
@@ -95,6 +96,22 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+## Workspace Summary API
+
+The workspace summary helper keeps top-bar editor status chips reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeWorkspaceStats(schema, options)` returns a stable list of status stats for:
+
+- Node count.
+- Current selected material title.
+- Page Schema validation status.
+- Publish readiness status from a publish-check summary.
+- Draft save status.
+
+Each item includes `id`, `label`, `value`, and a tone of `neutral`, `success`, `warning`, or `danger`.
+
+This helper does not render UI, inspect DOM, run server publish checks, enforce permissions, or mutate editor state. Host shells remain responsible for layout, icons, click handlers, live collaboration locks, permissions, and server-side review/approval state.
 
 ## Preview Link API
 
