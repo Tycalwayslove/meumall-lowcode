@@ -260,6 +260,34 @@ class CdpPage {
     if (!clicked) fail(`未找到包含文本 ${text} 的元素：${selector}`);
   }
 
+  async clickFirst(selector) {
+    const expression = `(() => {
+      const target = document.querySelector(${jsString(selector)});
+      if (!target) return false;
+      target.click();
+      return true;
+    })()`;
+    const clicked = await this.evaluate(expression);
+    if (!clicked) fail(`未找到元素：${selector}`);
+  }
+
+  async contextMenuFirst(selector) {
+    const expression = `(() => {
+      const target = document.querySelector(${jsString(selector)});
+      if (!target) return false;
+      const rect = target.getBoundingClientRect();
+      target.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: rect.left + Math.min(24, rect.width / 2),
+        clientY: rect.top + Math.min(18, rect.height / 2)
+      }));
+      return true;
+    })()`;
+    const opened = await this.evaluate(expression);
+    if (!opened) fail(`未找到可右键元素：${selector}`);
+  }
+
   async pressShortcut(key, options = {}) {
     const pressed = await this.evaluate(`(() => {
       const eventOptions = {
@@ -312,6 +340,27 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "切换到设计模式");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   log("通过：快捷命令可切换编辑模式");
+
+  log("检查节点右键菜单和键盘快捷键");
+  const nodeCountBeforeNodeActions = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.contextMenuFirst(".outline-item");
+  await page.waitForExpression("document.querySelector('.node-context-menu') && document.body.innerText.includes('创建副本')");
+  await page.clickByText(".node-context-menu button", "创建副本");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeNodeActions)}`);
+  const nodeCountAfterDuplicate = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("Backspace");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
+  await page.pressShortcut("z", { ctrlKey: true });
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountAfterDuplicate)}`);
+  await page.pressShortcut("z", { ctrlKey: true, shiftKey: true });
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
+  await page.clickFirst(".outline-item");
+  await page.pressShortcut("c", { ctrlKey: true });
+  await page.pressShortcut("v", { ctrlKey: true });
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeNodeActions)}`);
+  await page.pressShortcut("z", { ctrlKey: true });
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
+  log("通过：节点菜单、删除、复制、粘贴、撤销和重做快捷键可用");
 
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "保存草稿");

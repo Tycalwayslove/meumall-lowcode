@@ -11,6 +11,7 @@ import {
   GripVertical,
   Image,
   Layers,
+  MoreHorizontal,
   MonitorSmartphone,
   PanelRight,
   Plus,
@@ -308,6 +309,7 @@ const materialKeyword = ref("");
 const materialCategory = ref("全部");
 const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
+const nodeContextMenu = ref<NodeContextMenuState | undefined>();
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
 const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
@@ -353,6 +355,7 @@ type PublishCheckStatus = "pass" | "warning" | "error";
 type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
+type NodeContextAction = "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -405,6 +408,19 @@ interface WorkspaceStat {
   label: string;
   value: string;
   tone?: "neutral" | "success" | "warning" | "danger";
+}
+
+interface NodeContextMenuState {
+  nodeId: string;
+  x: number;
+  y: number;
+}
+
+interface NodeContextMenuItem {
+  action: NodeContextAction;
+  label: string;
+  disabled?: boolean;
+  danger?: boolean;
 }
 
 interface CommandPaletteItem {
@@ -615,6 +631,59 @@ const canMoveSelectedDown = computed(() => {
   if (!row) return false;
   return row.index < getSiblingCount(row.parentId) - 1;
 });
+const nodeContextMenuStyle = computed<CSSProperties>(() => {
+  const menu = nodeContextMenu.value;
+  if (!menu) return {};
+  return {
+    left: `${menu.x}px`,
+    top: `${menu.y}px`,
+  };
+});
+const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => [
+  {
+    action: "insertBefore",
+    label: "前方插入",
+    disabled: !selectedInsertManifest.value,
+  },
+  {
+    action: "insertAfter",
+    label: "后方插入",
+    disabled: !selectedInsertManifest.value,
+  },
+  {
+    action: "addInside",
+    label: "加入容器",
+    disabled: !selectedNodeIsContainer.value || !selectedInsertManifest.value,
+  },
+  {
+    action: "moveUp",
+    label: "上移节点",
+    disabled: !canMoveSelectedUp.value,
+  },
+  {
+    action: "moveDown",
+    label: "下移节点",
+    disabled: !canMoveSelectedDown.value,
+  },
+  {
+    action: "copy",
+    label: "复制节点",
+  },
+  {
+    action: "paste",
+    label: "粘贴节点",
+    disabled: !editorState.value.clipboard,
+  },
+  {
+    action: "duplicate",
+    label: "创建副本",
+  },
+  {
+    action: "delete",
+    label: "删除节点",
+    danger: true,
+  },
+]);
 const publishChecks = computed(() => createPublishChecks());
 const publishCheckSummary = computed(() => {
   return publishChecks.value.reduce(
@@ -2313,6 +2382,7 @@ function select(nodeId: string): void {
 function removeSelected(): void {
   if (!selectedNode.value) return;
   editorState.value = removeNode(editorState.value, selectedNode.value.id);
+  closeNodeContextMenu();
 }
 
 function duplicateSelected(): void {
@@ -2327,6 +2397,78 @@ function copySelected(): void {
 
 function pasteCopied(): void {
   editorState.value = pasteNode(editorState.value);
+}
+
+function clampContextMenuPosition(event: MouseEvent): Pick<NodeContextMenuState, "x" | "y"> {
+  const menuWidth = 224;
+  const menuHeight = 360;
+  const gap = 10;
+  return {
+    x: Math.max(gap, Math.min(event.clientX, window.innerWidth - menuWidth - gap)),
+    y: Math.max(gap, Math.min(event.clientY, window.innerHeight - menuHeight - gap)),
+  };
+}
+
+function openNodeContextMenu(event: MouseEvent, nodeId: string): void {
+  if (!findOutlineRowByNodeId(nodeId)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  select(nodeId);
+  nodeContextMenu.value = {
+    nodeId,
+    ...clampContextMenuPosition(event),
+  };
+}
+
+function closeNodeContextMenu(): void {
+  nodeContextMenu.value = undefined;
+}
+
+function onCanvasContextMenu(event: MouseEvent): void {
+  if (editorState.value.mode !== "design") return;
+  const nodeElement = getRuntimeNodeElementFromTarget(event.target);
+  const nodeId = nodeElement?.dataset.lowcodeNodeId;
+  if (!nodeId) return;
+  openNodeContextMenu(event, nodeId);
+}
+
+function openSelectedNodeContextMenu(event: MouseEvent): void {
+  if (!selectedNode.value) return;
+  openNodeContextMenu(event, selectedNode.value.id);
+}
+
+function runNodeContextMenuAction(item: NodeContextMenuItem): void {
+  if (item.disabled) return;
+  switch (item.action) {
+    case "insertBefore":
+      insertMaterialAroundSelected("before");
+      break;
+    case "insertAfter":
+      insertMaterialAroundSelected("after");
+      break;
+    case "addInside":
+      insertMaterialInsideSelectedContainer();
+      break;
+    case "moveUp":
+      moveSelected(-1);
+      break;
+    case "moveDown":
+      moveSelected(1);
+      break;
+    case "copy":
+      copySelected();
+      break;
+    case "paste":
+      pasteCopied();
+      break;
+    case "duplicate":
+      duplicateSelected();
+      break;
+    case "delete":
+      removeSelected();
+      break;
+  }
+  closeNodeContextMenu();
 }
 
 function insertMaterialAroundSelected(placement: "before" | "after"): void {
@@ -2408,18 +2550,69 @@ function isEditableKeyboardTarget(target: EventTarget | null): boolean {
 
 function onGlobalKeydown(event: KeyboardEvent): void {
   if (isRuntimeMode) return;
+  if (event.key === "Escape" && nodeContextMenu.value) {
+    event.preventDefault();
+    closeNodeContextMenu();
+    return;
+  }
   if (event.key === "Escape" && commandPaletteOpen.value) {
     event.preventDefault();
     closeCommandPalette();
     return;
   }
-  if (event.key.toLowerCase() !== "k" || (!event.metaKey && !event.ctrlKey)) return;
-  if (isEditableKeyboardTarget(event.target)) return;
-  event.preventDefault();
-  if (commandPaletteOpen.value) {
-    closeCommandPalette();
-  } else {
-    openCommandPalette();
+  if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
+    if (isEditableKeyboardTarget(event.target)) return;
+    event.preventDefault();
+    if (commandPaletteOpen.value) {
+      closeCommandPalette();
+    } else {
+      openCommandPalette();
+    }
+    return;
+  }
+  handleEditorNodeShortcut(event);
+}
+
+function handleEditorNodeShortcut(event: KeyboardEvent): void {
+  if (commandPaletteOpen.value || isEditableKeyboardTarget(event.target)) return;
+  const key = event.key.toLowerCase();
+  const hasCommandModifier = event.metaKey || event.ctrlKey;
+
+  if ((event.key === "Delete" || event.key === "Backspace") && selectedNode.value) {
+    event.preventDefault();
+    removeSelected();
+    return;
+  }
+
+  if (!hasCommandModifier) return;
+
+  if (key === "c" && selectedNode.value) {
+    event.preventDefault();
+    copySelected();
+    return;
+  }
+
+  if (key === "v" && editorState.value.clipboard) {
+    event.preventDefault();
+    pasteCopied();
+    return;
+  }
+
+  if (key === "d" && selectedNode.value) {
+    event.preventDefault();
+    duplicateSelected();
+    return;
+  }
+
+  if (key === "z") {
+    event.preventDefault();
+    editorState.value = event.shiftKey ? redo(editorState.value) : undo(editorState.value);
+    return;
+  }
+
+  if (key === "y" && event.ctrlKey) {
+    event.preventDefault();
+    editorState.value = redo(editorState.value);
   }
 }
 
@@ -3029,6 +3222,44 @@ function formatReleaseTime(value: string): string {
       </section>
     </div>
 
+    <div
+      v-if="nodeContextMenu"
+      class="node-context-backdrop"
+      aria-hidden="true"
+      @click="closeNodeContextMenu"
+      @contextmenu.prevent="closeNodeContextMenu"
+    ></div>
+    <div
+      v-if="nodeContextMenu && selectedNode"
+      class="node-context-menu"
+      :style="nodeContextMenuStyle"
+      role="menu"
+      aria-label="节点操作"
+      @click.stop
+      @contextmenu.prevent.stop
+    >
+      <div class="node-context-head">
+        <strong>{{ selectedManifest?.title ?? selectedNode.componentName }}</strong>
+        <span>{{ selectedNode.id }}</span>
+      </div>
+      <button
+        v-for="item in nodeContextMenuItems"
+        :key="item.action"
+        type="button"
+        role="menuitem"
+        :disabled="item.disabled"
+        :class="{ danger: item.danger }"
+        @click="runNodeContextMenuAction(item)"
+      >
+        <ArrowUp v-if="item.action === 'insertBefore' || item.action === 'moveUp'" :size="15" />
+        <ArrowDown v-else-if="item.action === 'insertAfter' || item.action === 'moveDown'" :size="15" />
+        <Plus v-else-if="item.action === 'addInside' || item.action === 'paste'" :size="15" />
+        <Copy v-else-if="item.action === 'copy' || item.action === 'duplicate'" :size="15" />
+        <Trash2 v-else-if="item.action === 'delete'" :size="15" />
+        <span>{{ item.label }}</span>
+      </button>
+    </div>
+
     <aside class="left-panel">
       <section class="panel-section">
         <div class="panel-title">
@@ -3137,6 +3368,7 @@ function formatReleaseTime(value: string): string {
           @dragstart="onNodeDragStart($event, row.node.id)"
           @dragover.prevent
           @drop.prevent="onNodeDrop($event, row)"
+          @contextmenu.prevent="openNodeContextMenu($event, row.node.id)"
           @click="onOutlineNodeClick($event, row.node.id)"
         >
           <GripVertical :size="15" class="drag-icon" />
@@ -3244,6 +3476,10 @@ function formatReleaseTime(value: string): string {
               <Copy :size="15" />
               <span>副本</span>
             </button>
+            <button type="button" title="更多节点操作" @click="openSelectedNodeContextMenu">
+              <MoreHorizontal :size="15" />
+              <span>更多</span>
+            </button>
             <button type="button" title="删除节点" class="danger" @click="removeSelected">
               <Trash2 :size="15" />
               <span>删除</span>
@@ -3256,6 +3492,7 @@ function formatReleaseTime(value: string): string {
           :class="{ 'is-touch-drag-enabled': editorState.mode === 'design' }"
           :style="{ width: `${editorState.viewport.width}px` }"
           @pointerdown="onPhoneFramePointerDown"
+          @contextmenu.prevent="onCanvasContextMenu"
         >
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
