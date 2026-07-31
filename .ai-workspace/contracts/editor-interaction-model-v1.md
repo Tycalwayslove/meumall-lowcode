@@ -77,6 +77,16 @@ interface LowcodeEditorState {
 
 当前 H5 预设包含 360 紧凑屏、390 标准屏和 430 大屏。预设只服务编辑器 shell 的画布展示，不写入 Page Schema。
 
+物料目录 API：
+
+- `createLowcodeMaterialCatalogItem`
+- `createLowcodeMaterialCategories`
+- `filterLowcodeMaterialCatalog`
+- `pickLowcodeMaterialEntriesByComponentNames`
+- `formatLowcodeMaterialCatalogSummary`
+
+物料目录 API 从 `LowcodeMaterialManifest` 派生列表展示、分类、搜索和摘要信息。关键词匹配覆盖标题、组件名、分类、版本和平台；这些 API 不修改 Material Manifest、Page Schema 或 renderer 行为。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -88,6 +98,7 @@ interface LowcodeEditorState {
 - command 不依赖 H5 业务项目内部代码。
 - 历史记录只保存 schema 快照，不保存 UI 临时状态。
 - 视口预设只改变 `LowcodeEditorState.viewport`，不改变 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议。
+- 物料目录 API 只派生编辑器展示模型，不新增或改写物料 manifest 字段。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式

@@ -100,6 +100,29 @@ export interface CreateLowcodePublishChecksOptions {
   actionParamRules?: LowcodeEditorActionParamRule[];
 }
 
+export interface LowcodeEditorMaterialEntry {
+  manifest: LowcodeMaterialManifest;
+}
+
+export interface LowcodeEditorMaterialCatalogItem {
+  componentName: string;
+  title: string;
+  category: string;
+  materialVersion: string;
+  platforms: LowcodePlatform[];
+  propCount: number;
+  eventCount: number;
+  dataSourceSlotCount: number;
+  summary: string;
+  searchText: string;
+}
+
+export interface FilterLowcodeMaterialCatalogOptions {
+  keyword?: string;
+  category?: string;
+  allCategoryLabel?: string;
+}
+
 export interface LowcodeEditorActionParamRule {
   actionType: string;
   paramName: string;
@@ -344,6 +367,75 @@ export function setEditorViewportPreset(
   preset: LowcodeEditorViewportPreset,
 ): LowcodeEditorState {
   return setEditorViewport(state, createLowcodeEditorViewportFromPreset(preset));
+}
+
+export function createLowcodeMaterialCatalogItem(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialCatalogItem {
+  const propCount = Object.keys(manifest.propsSchema).length;
+  const eventCount = manifest.events?.length ?? 0;
+  const dataSourceSlotCount = manifest.dataSourceSlots?.length ?? 0;
+  const platforms = manifest.platforms.slice();
+  const summary = formatLowcodeMaterialCatalogSummary(manifest);
+  return {
+    componentName: manifest.componentName,
+    title: manifest.title,
+    category: manifest.category,
+    materialVersion: manifest.materialVersion,
+    platforms,
+    propCount,
+    eventCount,
+    dataSourceSlotCount,
+    summary,
+    searchText: [
+      manifest.title,
+      manifest.componentName,
+      manifest.category,
+      manifest.materialVersion,
+      ...platforms,
+    ].join(" ").toLowerCase(),
+  };
+}
+
+export function formatLowcodeMaterialCatalogSummary(manifest: LowcodeMaterialManifest): string {
+  const propCount = Object.keys(manifest.propsSchema).length;
+  const eventCount = manifest.events?.length ?? 0;
+  const dataSourceSlotCount = manifest.dataSourceSlots?.length ?? 0;
+  return `${propCount} 个配置 / ${eventCount} 个事件 / ${dataSourceSlotCount} 个数据槽`;
+}
+
+export function createLowcodeMaterialCategories(
+  manifests: Iterable<LowcodeMaterialManifest>,
+  allCategoryLabel = "全部",
+): string[] {
+  return [allCategoryLabel, ...Array.from(new Set(Array.from(manifests, (manifest) => manifest.category)))];
+}
+
+export function filterLowcodeMaterialCatalog<T extends LowcodeEditorMaterialEntry>(
+  materials: readonly T[],
+  options: FilterLowcodeMaterialCatalogOptions = {},
+): T[] {
+  const allCategoryLabel = options.allCategoryLabel ?? "全部";
+  const category = options.category ?? allCategoryLabel;
+  const keyword = options.keyword?.trim().toLowerCase() ?? "";
+  return materials.filter((item) => {
+    const catalogItem = createLowcodeMaterialCatalogItem(item.manifest);
+    const matchesCategory = category === allCategoryLabel || catalogItem.category === category;
+    if (!matchesCategory) return false;
+    if (!keyword) return true;
+    return catalogItem.searchText.includes(keyword);
+  });
+}
+
+export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEditorMaterialEntry>(
+  materials: readonly T[],
+  componentNames: readonly string[],
+): T[] {
+  const materialMap = new Map(materials.map((item) => [item.manifest.componentName, item]));
+  return componentNames.flatMap((componentName) => {
+    const material = materialMap.get(componentName);
+    return material ? [material] : [];
+  });
 }
 
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {

@@ -16,6 +16,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `findLowcodeEditorViewportPreset`
 - `createLowcodeEditorViewportFromPreset`
 - `formatLowcodeEditorViewportTitle`
+- `createLowcodeMaterialCatalogItem`
+- `createLowcodeMaterialCategories`
+- `filterLowcodeMaterialCatalog`
+- `pickLowcodeMaterialEntriesByComponentNames`
+- `formatLowcodeMaterialCatalogSummary`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -140,6 +145,22 @@ The viewport helpers keep H5 canvas device presets reusable across the Vue3 play
 `formatLowcodeEditorViewportTitle(viewport)` returns labels such as `标准屏 390`, with `自定义 {width}` as the fallback.
 
 `setEditorViewportPreset(state, preset)` applies a preset through the existing viewport state command. Viewport presets are editor-shell state only; they do not write to Page Schema or material manifests.
+
+## Material Catalog API
+
+The material catalog helpers keep material-library search, category filters, quick sections, and card summaries reusable across editor shells.
+
+`createLowcodeMaterialCatalogItem(manifest)` returns display and search metadata derived from a `LowcodeMaterialManifest`, including component name, title, category, version, platforms, prop count, event count, data-source slot count, summary text, and search text.
+
+`createLowcodeMaterialCategories(manifests, allCategoryLabel)` returns a stable category list with `全部` by default.
+
+`filterLowcodeMaterialCatalog(materials, options)` filters entries that contain a `manifest` field by category and keyword. Keyword matching covers title, component name, category, version, and platforms.
+
+`pickLowcodeMaterialEntriesByComponentNames(materials, componentNames)` resolves quick sections such as favorites or recent materials while preserving the provided component-name order and ignoring missing materials.
+
+`formatLowcodeMaterialCatalogSummary(manifest)` returns card text such as `3 个配置 / 1 个事件 / 0 个数据槽`.
+
+These helpers do not change Material Manifest, Page Schema, or renderer behavior.
 
 ## Contract
 

@@ -801,6 +801,7 @@ async function main() {
       { label: "图片卡片宫格物料存在", expression: "document.body.innerText.includes('图片卡片宫格')" },
       { label: "标签内容切换物料存在", expression: "document.body.innerText.includes('标签内容切换')" },
       { label: "留资表单物料存在", expression: "document.body.innerText.includes('留资表单')" },
+      { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
       { label: "默认大促模板包含品牌专题", expression: "document.body.innerText.includes('夏日品牌馆')" },

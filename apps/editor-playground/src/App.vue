@@ -56,6 +56,8 @@ import {
   createLowcodeBlankPageSchema,
   copyNode,
   createLowcodeDeliverySummary,
+  createLowcodeMaterialCategories,
+  createLowcodeMaterialCatalogItem,
   createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
@@ -66,7 +68,9 @@ import {
   duplicateNode,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
+  filterLowcodeMaterialCatalog,
   formatLowcodeEditorViewportTitle,
+  formatLowcodeMaterialCatalogSummary,
   getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
@@ -75,6 +79,7 @@ import {
   markSaved,
   moveNodeById,
   pasteNode,
+  pickLowcodeMaterialEntriesByComponentNames,
   redo,
   removeNode,
   replaceNodeProps,
@@ -811,22 +816,13 @@ const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => [
 const publishChecks = computed(() => createPublishChecks());
 const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
-const materialCategories = computed(() => ["全部", ...Array.from(new Set(materials.map((item) => item.manifest.category)))]);
+const materialCategories = computed(() => createLowcodeMaterialCategories(materials.map((item) => item.manifest)));
 const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
 const recentMaterials = computed(() => materialItemsFromComponentNames(recentMaterialComponentNames.value));
-const visibleMaterials = computed(() => {
-  const keyword = materialKeyword.value.trim().toLowerCase();
-  return materials.filter((item) => {
-    const manifest = item.manifest;
-    const matchesCategory = materialCategory.value === "全部" || manifest.category === materialCategory.value;
-    if (!matchesCategory) return false;
-    if (!keyword) return true;
-    return [manifest.title, manifest.componentName, manifest.category]
-      .join(" ")
-      .toLowerCase()
-      .includes(keyword);
-  });
-});
+const visibleMaterials = computed(() => filterLowcodeMaterialCatalog(materials, {
+  keyword: materialKeyword.value,
+  category: materialCategory.value,
+}));
 const canvasStarterMaterials = computed(() => {
   const order = new Map(canvasStarterComponentNames.map((componentName, index) => [componentName, index]));
   return materials
@@ -1453,9 +1449,16 @@ function isKnownMaterialComponentName(componentName: string): boolean {
 }
 
 function materialItemsFromComponentNames(componentNames: string[]): typeof materials {
-  return componentNames
-    .map((componentName) => materials.find((item) => item.manifest.componentName === componentName))
-    .filter((item): item is (typeof materials)[number] => Boolean(item));
+  return pickLowcodeMaterialEntriesByComponentNames(materials, componentNames);
+}
+
+function materialCatalogSummary(manifest: LowcodeMaterialManifest): string {
+  return formatLowcodeMaterialCatalogSummary(manifest);
+}
+
+function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
+  const item = createLowcodeMaterialCatalogItem(manifest);
+  return `${item.title} / ${item.category} / ${item.componentName} / ${item.summary}`;
 }
 
 function markSchemaPersisted(schema: LowcodePageSchema): void {
@@ -4393,6 +4396,7 @@ function formatAutoSaveTime(value: string): string {
           <button
             type="button"
             class="material-main-button"
+            :title="materialCatalogSearchTitle(material.manifest)"
             @click="onMaterialClick($event, material.manifest)"
           >
             <span>
@@ -4401,6 +4405,7 @@ function formatAutoSaveTime(value: string): string {
                 <em>{{ material.manifest.category }}</em>
                 {{ material.manifest.componentName }}
               </small>
+              <small>{{ materialCatalogSummary(material.manifest) }}</small>
             </span>
             <Plus :size="15" />
           </button>

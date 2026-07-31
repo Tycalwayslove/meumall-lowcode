@@ -8,6 +8,8 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   createLowcodeDeliverySummary,
+  createLowcodeMaterialCatalogItem,
+  createLowcodeMaterialCategories,
   createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
@@ -16,13 +18,16 @@ import {
   createLowcodeTemplatePreviewMeta,
   createLowcodeVersionDiffItems,
   findLowcodeEditorViewportPreset,
+  filterLowcodeMaterialCatalog,
   flattenLowcodeNodes,
   formatLowcodeEditorViewportTitle,
+  formatLowcodeMaterialCatalogSummary,
   formatLowcodeTemplateSummary,
   formatLowcodeTemplateVersion,
   getLowcodeEditorViewportPreset,
   getLowcodeNodeDisplayName,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  pickLowcodeMaterialEntriesByComponentNames,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
@@ -199,6 +204,40 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(delivery.schemaJson.includes("delivery_page"), true);
     assert.equal(delivery.schemaSizeBytes > 0, true);
     assert.match(delivery.schemaSizeText, /B|KB/);
+  });
+
+  it("creates reusable material catalog items, categories and filters", () => {
+    const entries = manifests.map((manifest) => ({ manifest }));
+    const actionButton = manifests.find((manifest) => manifest.componentName === "ActionButton");
+    assert.ok(actionButton);
+
+    const catalogItem = createLowcodeMaterialCatalogItem(actionButton);
+    assert.equal(catalogItem.componentName, "ActionButton");
+    assert.equal(catalogItem.title, "行动按钮");
+    assert.equal(catalogItem.category, "basic");
+    assert.equal(catalogItem.propCount, 1);
+    assert.equal(catalogItem.eventCount, 1);
+    assert.equal(catalogItem.dataSourceSlotCount, 0);
+    assert.equal(catalogItem.summary, "1 个配置 / 1 个事件 / 0 个数据槽");
+    assert.ok(catalogItem.searchText.includes("actionbutton"));
+    assert.ok(catalogItem.searchText.includes("h5"));
+    assert.equal(formatLowcodeMaterialCatalogSummary(actionButton), catalogItem.summary);
+
+    assert.deepEqual(createLowcodeMaterialCategories(manifests), ["全部", "marketing", "commerce", "basic"]);
+    assert.deepEqual(filterLowcodeMaterialCatalog(entries, { category: "commerce" }).map((item) => item.manifest.componentName), [
+      "ProductList",
+      "ProductRankList",
+    ]);
+    assert.deepEqual(filterLowcodeMaterialCatalog(entries, { keyword: "榜单" }).map((item) => item.manifest.componentName), [
+      "ProductRankList",
+    ]);
+    assert.deepEqual(filterLowcodeMaterialCatalog(entries, { keyword: "1.0.0 h5", category: "basic" }).map((item) => item.manifest.componentName), [
+      "ActionButton",
+    ]);
+    assert.deepEqual(pickLowcodeMaterialEntriesByComponentNames(entries, ["ActionButton", "Missing", "ImageBanner"]).map((item) => item.manifest.componentName), [
+      "ActionButton",
+      "ImageBanner",
+    ]);
   });
 
   it("creates version diff items and schema preview snippets", () => {
