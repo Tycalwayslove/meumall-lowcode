@@ -45,6 +45,7 @@
 - Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、图片卡片宫格、门店/达人推荐等常见数组配置；图片字段展示缩略图并支持素材库选择，仍保留 URL 输入和 JSON 高级编辑兜底。
 - Vue3 编辑器 playground 数组属性列表项已支持同一属性内 HTML5 拖拽排序，并保留上移、下移、复制、删除和 JSON 高级编辑。
 - Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
+- Vue3 编辑器 playground 已支持 H5 画布视口预设：画布顶部可切换 360 紧凑屏、390 标准屏和 430 大屏，手机框宽度和状态栏同步当前预设；该状态只属于编辑器 shell 的 `editorState.viewport`，不进入 Page Schema，避免与 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议混淆。
 - Vue3 编辑器 playground 属性面板已支持分组折叠：当前物料 props 会按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，组内显示字段数量并可折叠/展开；新 profile 首次打开会默认选中当前 schema 的首个节点，避免属性区为空。
 - Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板。
 - Vue3 编辑器 playground 已支持节点快捷操作：H5 画布节点和左侧结构树节点可右键打开操作菜单，画布上下文工具条有“更多”入口；全局快捷键支持 Delete/Backspace 删除、Ctrl/Meta+C 复制、Ctrl/Meta+V 粘贴、Ctrl/Meta+D 创建副本、Ctrl/Meta+Z 撤销、Ctrl/Meta+Shift+Z 或 Ctrl+Y 重做，并会避开输入框、textarea、select、contenteditable 和命令面板输入。
@@ -80,7 +81,7 @@
 - React/Vue H5 materials 内部 primitives 已新增 `MlcTabs`，`TabsBlock` 已改造为复用该 primitive；当前不实现 tab 面板内嵌低代码节点，也不改变 `TabsBlock` manifest 和旧 schema 语义。
 - React/Vue H5 materials 内部 primitives 已新增 `MlcSpacer`，`SpacerBlock` 已改造为复用该 primitive；当前不扩展复杂布局容器、分割线或响应式规则，也不改变 `SpacerBlock` manifest 和旧 schema 语义。
 - React/Vue H5 物料包已新增 `LeadFormBlock` 留资表单通用物料，复用内部 `MlcInput`、`MlcTextarea`、`MlcSwitch`、`MlcStepper`、`MlcButton` 和 `MlcText` primitives，支持姓名、手机号、人数、备注、协议开关、提交按钮和 `onSubmit` 安全 action；当前只做本地运行时交互，不接真实表单提交接口。
-- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、留资表单物料、活动规则弹窗打开/关闭、交付分享清单、本地版本备注/筛选/差异对比、React H5 runtime 诊断面板、pageId published 命中、releaseId preview 命中、missing pageId fallback、empty demo 空态、broken demo 未知物料和渲染异常局部兜底、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览、本地自定义模板保存、模板 H5 预览入口不会替换当前画布、应用模板、`通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、本地模板、模板缩略预览和模板起点。
+- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证 H5 画布视口预设切换、区块标题物料、图片卡片宫格物料、留资表单物料、活动规则弹窗打开/关闭、交付分享清单、本地版本备注/筛选/差异对比、React H5 runtime 诊断面板、pageId published 命中、releaseId preview 命中、missing pageId fallback、empty demo 空态、broken demo 未知物料和渲染异常局部兜底、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览、本地自定义模板保存、模板 H5 预览入口不会替换当前画布、应用模板、`通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、本地模板、模板缩略预览和模板起点。
 - 根目录已提供 `pnpm smoke:visual`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，截取 Vue3 编辑器 playground、React H5 runtime `?pageId=summer-campaign-demo` published 入口、React H5 runtime `?releaseId=preview_demo` preview 入口，并写入 `.ai/test-reports/latest-visual/index.md` 本地报告。该命令是协作可见性护栏，不改变 Page Schema、包边界、materials 分层或 npm 公开 API；生成报告和截图不进入 Git 历史。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 - 新增业务物料前必须先按 `docs/material-layering-architecture.md` 判断：是否能通过通用物料和模板解决，是否需要新增业务无关 primitives，是否应该落在 Generic Materials 还是 Business Materials。

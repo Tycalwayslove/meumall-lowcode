@@ -348,7 +348,12 @@ function loadSchema(): LoadedSchemaResult {
 
 const loadedSchemaResult = loadSchema();
 const loadedSchema = loadedSchemaResult.schema;
-const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadedSchema, { selectedNodeId: loadedSchema.nodes[0]?.id }));
+const editorState = shallowRef<LowcodeEditorState>(
+  createEditorState(loadedSchema, {
+    selectedNodeId: loadedSchema.nodes[0]?.id,
+    viewport: { width: 390 },
+  }),
+);
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
@@ -582,6 +587,13 @@ const contentPropNames = new Set([
 const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
 const behaviorPropNames = new Set(["linkUrl", "primaryLinkUrl", "secondaryLinkUrl", "sticky", "smooth", "offsetTop", "safeArea", "showSecondary"]);
 const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
+const h5ViewportPresets = [
+  { id: "compact", title: "紧凑屏", width: 360 },
+  { id: "standard", title: "标准屏", width: 390 },
+  { id: "large", title: "大屏", width: 430 },
+] as const;
+
+type H5ViewportPreset = (typeof h5ViewportPresets)[number];
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -820,6 +832,16 @@ const canvasStarterMaterials = computed(() => {
     .filter((item) => order.has(item.manifest.componentName))
     .sort((a, b) => (order.get(a.manifest.componentName) ?? 0) - (order.get(b.manifest.componentName) ?? 0));
 });
+const activeH5ViewportPreset = computed<H5ViewportPreset | undefined>(() =>
+  h5ViewportPresets.find((preset) => preset.width === editorState.value.viewport.width),
+);
+const activeH5ViewportTitle = computed(() => {
+  const preset = activeH5ViewportPreset.value;
+  return preset ? `${preset.title} ${preset.width}` : `自定义 ${editorState.value.viewport.width}`;
+});
+const phoneFrameStyle = computed<CSSProperties>(() => ({
+  width: `${editorState.value.viewport.width}px`,
+}));
 const materialDetailPropEntries = computed(() => {
   const manifest = selectedMaterialDetailManifest.value;
   if (!manifest) return [];
@@ -2913,6 +2935,10 @@ function closeNodeContextMenu(): void {
   nodeContextMenu.value = undefined;
 }
 
+function applyH5ViewportPreset(preset: H5ViewportPreset): void {
+  editorState.value = setEditorViewport(editorState.value, { width: preset.width });
+}
+
 function onCanvasContextMenu(event: MouseEvent): void {
   if (editorState.value.mode !== "design") return;
   const nodeElement = getRuntimeNodeElementFromTarget(event.target);
@@ -4520,22 +4546,21 @@ function formatAutoSaveTime(value: string): string {
             <strong>{{ stat.value }}</strong>
           </span>
         </div>
-        <div class="viewport-switch">
+        <div class="viewport-switch" role="group" aria-label="H5 画布视口">
+          <span class="viewport-switch-label">视口</span>
           <button
-            title="iPhone 视口"
-            :class="{ active: editorState.viewport.width === 375 }"
-            @click="editorState = setEditorViewport(editorState, { width: 375 })"
+            v-for="preset in h5ViewportPresets"
+            :key="preset.id"
+            type="button"
+            :title="`${preset.title} ${preset.width}px`"
+            :class="{ active: activeH5ViewportPreset?.id === preset.id }"
+            @click="applyH5ViewportPreset(preset)"
           >
             <Smartphone :size="16" />
-            <span>375</span>
-          </button>
-          <button
-            title="大屏 H5 视口"
-            :class="{ active: editorState.viewport.width === 430 }"
-            @click="editorState = setEditorViewport(editorState, { width: 430 })"
-          >
-            <PanelRight :size="16" />
-            <span>430</span>
+            <span>
+              <b>{{ preset.width }}</b>
+              <small>{{ preset.title }}</small>
+            </span>
           </button>
         </div>
       </div>
@@ -4602,13 +4627,13 @@ function formatAutoSaveTime(value: string): string {
           ref="phoneFrameRef"
           class="phone-frame"
           :class="{ 'is-touch-drag-enabled': editorState.mode === 'design' }"
-          :style="{ width: `${editorState.viewport.width}px` }"
+          :style="phoneFrameStyle"
           @pointerdown="onPhoneFramePointerDown"
           @contextmenu.prevent="onCanvasContextMenu"
         >
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
-            <span>H5</span>
+            <span>{{ activeH5ViewportTitle }}</span>
           </div>
           <div
             v-for="guide in canvasDropHint?.guides ?? []"

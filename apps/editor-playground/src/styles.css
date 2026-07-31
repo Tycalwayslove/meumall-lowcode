@@ -248,6 +248,49 @@ button:focus-visible {
   background: #111827;
 }
 
+.viewport-switch {
+  justify-content: flex-end;
+  min-width: 286px;
+}
+
+.viewport-switch-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.viewport-switch button {
+  gap: 7px;
+  min-width: 70px;
+  padding: 0 9px;
+}
+
+.viewport-switch button > span {
+  display: grid;
+  gap: 1px;
+  margin-top: 0;
+  text-align: left;
+}
+
+.viewport-switch b,
+.viewport-switch small {
+  line-height: 1;
+}
+
+.viewport-switch b {
+  font-size: 12px;
+}
+
+.viewport-switch small {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.viewport-switch button.active small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .toolbar .command-trigger {
   border-color: #111827;
   color: #111827;
@@ -3802,6 +3845,12 @@ button:focus-visible {
 
   .workspace-stat {
     min-width: 76px;
+  }
+
+  .viewport-switch {
+    justify-content: flex-start;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   .left-panel,

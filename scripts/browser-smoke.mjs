@@ -409,6 +409,20 @@ async function assertTabsBlockSwitch(page, label) {
   log(`通过：${label} 可切换到参与方式标签`);
 }
 
+async function assertEditorViewportSwitch(page) {
+  log("检查 Vue3 编辑器 H5 画布视口预设");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '紧凑屏 360px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '标准屏 390px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '大屏 430px')");
+  await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '390px'");
+  await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('标准屏 390')");
+  await page.clickByText(".viewport-switch button", "360");
+  await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '360px'");
+  await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('紧凑屏 360')");
+  await page.clickByText(".viewport-switch button", "430");
+  await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '430px'");
+  await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('大屏 430')");
+  log("通过：Vue3 编辑器 H5 画布视口预设可切换并同步到手机框");
+}
+
 async function assertEditorWorkflow(page) {
   log("检查 H5 预览入口");
   await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
@@ -800,6 +814,7 @@ async function main() {
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertEditorViewportSwitch(page);
     await assertActivityRuleModal(page, "Vue3 编辑器内置画布");
     await assertTabsBlockSwitch(page, "Vue3 编辑器内置画布");
     await assertInspectorGroups(page);
