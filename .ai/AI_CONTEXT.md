@@ -51,6 +51,7 @@
 - Vue3 编辑器 playground 已支持 H5 预览入口：右侧发布区域集中展示当前草稿 React H5 链接、页面草稿/最新版本内置 H5 链接和最近发布版本 H5 链接，并支持打开和复制反馈。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。
+- Vue3 编辑器 playground 已支持模板视觉缩略预览：左侧模板卡片和新建页面向导模板起点会从模板 schema 常见图片与文案字段派生缩略图、首屏标题、副标题和节点数标签；后续 Java 模板市场提供独立缩略图字段时可优先使用服务端字段。
 - Vue3 编辑器 playground 已支持模板 H5 预览入口：左侧模板卡片拆分为应用主区域和独立预览按钮，点击预览会通过 React H5 runtime schema URL handoff 打开模板渲染效果，不替换当前画布。
 - Vue3 编辑器 playground 已支持新建页面向导：顶部“新建”和快捷命令可打开向导，运营可以从空白 H5 页面或已有模板开始搭建；空白页使用 `createLowcodePageSchema` 生成本地草稿，模板起点复用 Template Library Client 和 `applyTemplate`。
 - Vue3 编辑器 playground 已支持空白画布起步引导：空白 H5 页面在手机画布内展示活动头图、图片 Banner、商品列表和优惠券区块快捷入口，点击后复用物料添加链路生成首个节点，并隐藏空白态。
@@ -60,7 +61,7 @@
 - React/Vue H5 物料包已新增 `ProductRankList` 商品榜单，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `StickyActionBar` 底部转化条，支持标题、说明、主/副按钮、安全区、sticky 开关、跳转链接、`onPrimaryClick` 和 `onSecondaryClick` 事件；Vue3 编辑器大促模板、React H5 runtime 示例和 browser smoke check 已接入。
-- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步和模板起点。
+- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、模板缩略预览和模板起点。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定

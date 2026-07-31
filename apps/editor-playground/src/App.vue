@@ -412,6 +412,13 @@ interface TemplateListItem {
   nodeCount: number;
   dataSourceCount: number;
   actionCount: number;
+  preview: TemplatePreviewMeta;
+}
+interface TemplatePreviewMeta {
+  imageUrl: string;
+  title: string;
+  subtitle: string;
+  nodeCountText: string;
 }
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
@@ -1359,7 +1366,58 @@ function schemaNodeCount(schema: LowcodePageSchema): number {
   return flattenNodeList(schema.nodes).length;
 }
 
+function pickTemplatePreviewText(value: JsonValue | undefined): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function createTemplatePreviewMeta(template: LowcodeTemplateResource): TemplatePreviewMeta {
+  const nodes = flattenNodeList(template.schema.nodes);
+  const imageNode = nodes.find((node) =>
+    Boolean(
+      pickTemplatePreviewText(node.props.imageUrl) ||
+      pickTemplatePreviewText(node.props.coverImageUrl) ||
+      pickTemplatePreviewText(node.props.logoImageUrl),
+    ),
+  );
+  const titleNode = nodes.find((node) =>
+    Boolean(
+      pickTemplatePreviewText(node.props.title) ||
+      pickTemplatePreviewText(node.props.brandName) ||
+      pickTemplatePreviewText(node.props.text),
+    ),
+  );
+  const subtitleNode = nodes.find((node) =>
+    Boolean(
+      pickTemplatePreviewText(node.props.subtitle) ||
+      pickTemplatePreviewText(node.props.description) ||
+      pickTemplatePreviewText(node.props.summary),
+    ),
+  );
+  const imageUrl = imageNode
+    ? pickTemplatePreviewText(imageNode.props.imageUrl) ||
+      pickTemplatePreviewText(imageNode.props.coverImageUrl) ||
+      pickTemplatePreviewText(imageNode.props.logoImageUrl)
+    : "";
+  const title = titleNode
+    ? pickTemplatePreviewText(titleNode.props.title) ||
+      pickTemplatePreviewText(titleNode.props.brandName) ||
+      pickTemplatePreviewText(titleNode.props.text)
+    : template.title;
+  const subtitle = subtitleNode
+    ? pickTemplatePreviewText(subtitleNode.props.subtitle) ||
+      pickTemplatePreviewText(subtitleNode.props.description) ||
+      pickTemplatePreviewText(subtitleNode.props.summary)
+    : template.description;
+  return {
+    imageUrl,
+    title: title || template.title,
+    subtitle: subtitle || template.description,
+    nodeCountText: `${schemaNodeCount(template.schema)} 节点`,
+  };
+}
+
 function createTemplateListItem(template: LowcodeTemplateResource): TemplateListItem {
+  const nodeCount = schemaNodeCount(template.schema);
   return {
     id: template.id,
     title: template.title,
@@ -1367,9 +1425,10 @@ function createTemplateListItem(template: LowcodeTemplateResource): TemplateList
     category: template.category,
     tags: template.tags ?? [],
     version: template.version,
-    nodeCount: schemaNodeCount(template.schema),
+    nodeCount,
     dataSourceCount: template.schema.dataSources?.length ?? 0,
     actionCount: template.schema.actions?.length ?? 0,
+    preview: createTemplatePreviewMeta(template),
   };
 }
 
@@ -3993,6 +4052,15 @@ function formatAutoSaveTime(value: string): string {
             class="page-start-template"
             @click="applyTemplateFromStartWizard(template)"
           >
+            <span class="page-start-template-preview">
+              <img
+                v-if="template.preview.imageUrl"
+                :src="template.preview.imageUrl"
+                :alt="template.preview.title"
+              />
+              <span v-else>{{ template.category }}</span>
+              <em>{{ template.preview.nodeCountText }}</em>
+            </span>
             <span class="page-start-template-head">
               <strong>{{ template.title }}</strong>
               <em>{{ templateVersionText(template) }}</em>
@@ -4186,10 +4254,23 @@ function formatAutoSaveTime(value: string): string {
             type="button"
             @click="applyTemplate(template)"
           >
-            <span>
+            <span class="template-preview-card">
+              <img
+                v-if="template.preview.imageUrl"
+                :src="template.preview.imageUrl"
+                :alt="template.preview.title"
+              />
+              <span v-else>{{ template.category }}</span>
+              <em>{{ template.preview.nodeCountText }}</em>
+            </span>
+            <span class="template-item-content">
               <span class="template-item-head">
                 <strong>{{ template.title }}</strong>
                 <em>{{ templateVersionText(template) }}</em>
+              </span>
+              <span class="template-preview-copy">
+                <b>{{ template.preview.title }}</b>
+                <small>{{ template.preview.subtitle }}</small>
               </span>
               <small>{{ template.category }} / {{ template.description }}</small>
               <span v-if="templateTags(template).length" class="template-tags">

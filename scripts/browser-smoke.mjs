@@ -489,7 +489,8 @@ async function assertEditorWorkflow(page) {
   log("检查模板卡片摘要");
   await page.fillByPlaceholder("搜索模板", "");
   await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('大促活动页') && item.innerText.includes('v1.0.0') && item.innerText.includes('大促') && item.innerText.includes('节点') && item.innerText.includes('数据源') && item.innerText.includes('动作'))");
-  log("通过：模板卡片展示标签、版本和结构摘要");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('大促活动页') && item.querySelector('.template-preview-card img') && item.querySelector('.template-preview-copy') && item.innerText.includes('夏日好物节'))");
+  log("通过：模板卡片展示标签、版本、结构摘要和视觉缩略预览");
 
   log("检查编辑器模板应用和模式切换操作流");
   await page.fillByPlaceholder("搜索模板", "商品");
@@ -526,7 +527,8 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".toolbar button", "新建");
   await page.waitForExpression("document.querySelector('.page-start-dialog') && document.body.innerText.includes('空白 H5 页面') && document.body.innerText.includes('从模板开始')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('商品专题页') && item.innerText.includes('节点'))");
-  log("通过：新建页面向导可打开并展示空白页与模板起点");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('商品专题页') && item.querySelector('.page-start-template-preview img'))");
+  log("通过：新建页面向导可打开并展示空白页、模板起点和模板缩略预览");
 
   await page.clickByText(".page-start-blank", "空白 H5 页面");
   await page.waitForExpression("document.body.innerText.includes('已创建空白 H5 页面')");
