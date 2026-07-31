@@ -25,9 +25,13 @@ import {
   createDataSourceRegistry,
   createSafeActionExecutor,
   createSafeActionRegistry,
+  createStaticResourceLibraryClient,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
+  type LowcodeImageAssetResource,
+  type LowcodeProductResource,
+  type LowcodeResourceSearchResult,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
@@ -73,24 +77,7 @@ const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http:
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 
-interface SampleAsset {
-  id: string;
-  title: string;
-  category: string;
-  url: string;
-  tags: string[];
-}
-
-interface SampleProduct {
-  id: string;
-  title: string;
-  priceText: string;
-  originPriceText?: string;
-  desc: string;
-  imageUrl: string;
-}
-
-const sampleAssets: SampleAsset[] = [
+const sampleAssets: LowcodeImageAssetResource[] = [
   {
     id: "asset_hero_fashion",
     title: "活动女装横幅",
@@ -128,7 +115,7 @@ const sampleAssets: SampleAsset[] = [
   },
 ];
 
-const sampleProducts: SampleProduct[] = [
+const sampleProducts: LowcodeProductResource[] = [
   {
     id: "sku_001",
     title: "轻盈通勤手提包",
@@ -180,6 +167,10 @@ const actionTypeOptions = [
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
+const resourceLibraryClient = createStaticResourceLibraryClient({
+  imageAssets: sampleAssets,
+  products: sampleProducts,
+});
 const previewDataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
@@ -214,6 +205,11 @@ const assetCategory = ref("全部");
 const assetTargetPropName = ref("");
 const productKeyword = ref("");
 const selectedProductIds = ref<string[]>([]);
+const filteredAssets = ref<LowcodeImageAssetResource[]>([]);
+const filteredProducts = ref<LowcodeProductResource[]>([]);
+const resourceProductCatalog = ref<LowcodeProductResource[]>([]);
+const isAssetSearching = ref(false);
+const isProductSearching = ref(false);
 const previewData = ref<JsonObject>({});
 const runtimePreviewData = ref<JsonObject>({});
 const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
@@ -223,6 +219,8 @@ const isRuntimeDataResolving = ref(false);
 const actionMessage = ref("");
 let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
+let assetSearchSeq = 0;
+let productSearchSeq = 0;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
@@ -380,29 +378,12 @@ const imagePropOptions = computed(() => {
 });
 const canUseAssetLibrary = computed(() => Boolean(selectedNode.value && imagePropOptions.value.length));
 const assetCategories = computed(() => ["全部", ...Array.from(new Set(sampleAssets.map((asset) => asset.category)))]);
-const filteredAssets = computed(() => {
-  const keyword = assetKeyword.value.trim().toLowerCase();
-  return sampleAssets.filter((asset) => {
-    const categoryMatched = assetCategory.value === "全部" || asset.category === assetCategory.value;
-    const keywordMatched =
-      !keyword ||
-      [asset.title, asset.category, ...asset.tags].some((value) => value.toLowerCase().includes(keyword));
-    return categoryMatched && keywordMatched;
-  });
-});
 const isProductMaterialSelected = computed(() =>
   Boolean(selectedNode.value && ["ProductList", "FlashSaleList"].includes(selectedNode.value.componentName)),
 );
-const filteredProducts = computed(() => {
-  const keyword = productKeyword.value.trim().toLowerCase();
-  if (!keyword) return sampleProducts;
-  return sampleProducts.filter((product) =>
-    [product.id, product.title, product.desc].some((value) => value.toLowerCase().includes(keyword)),
-  );
-});
 const selectedProducts = computed(() => {
   const selected = new Set(selectedProductIds.value);
-  return sampleProducts.filter((product) => selected.has(product.id));
+  return resourceProductCatalog.value.filter((product) => selected.has(product.id));
 });
 const canMoveSelectedUp = computed(() => Boolean(selectedOutlineRow.value && selectedOutlineRow.value.index > 0));
 const canMoveSelectedDown = computed(() => {
@@ -464,6 +445,22 @@ watch(
   () => selectedNode.value?.id,
   () => {
     selectedProductIds.value = getProductIdsFromNode(selectedNode.value);
+  },
+  { immediate: true },
+);
+
+watch(
+  [assetKeyword, assetCategory],
+  () => {
+    void refreshImageAssets();
+  },
+  { immediate: true },
+);
+
+watch(
+  productKeyword,
+  () => {
+    void refreshProducts();
   },
   { immediate: true },
 );
@@ -603,9 +600,54 @@ function getSiblingCount(parentId?: string): number {
   return findNode(editorState.value.schema.nodes, parentId)?.children?.length ?? 0;
 }
 
+async function toResourceSearchResult<T>(
+  result: LowcodeResourceSearchResult<T> | Promise<LowcodeResourceSearchResult<T>>,
+): Promise<LowcodeResourceSearchResult<T>> {
+  return Promise.resolve(result);
+}
+
+async function refreshImageAssets(): Promise<void> {
+  const seq = ++assetSearchSeq;
+  isAssetSearching.value = true;
+  try {
+    const result = await toResourceSearchResult(resourceLibraryClient.searchImageAssets({
+      keyword: assetKeyword.value,
+      category: assetCategory.value,
+    }));
+    if (seq !== assetSearchSeq) return;
+    filteredAssets.value = result.items;
+  } catch {
+    if (seq === assetSearchSeq) filteredAssets.value = [];
+  } finally {
+    if (seq === assetSearchSeq) isAssetSearching.value = false;
+  }
+}
+
+async function refreshProducts(): Promise<void> {
+  const seq = ++productSearchSeq;
+  isProductSearching.value = true;
+  try {
+    const [catalogResult, searchResult] = await Promise.all([
+      toResourceSearchResult(resourceLibraryClient.searchProducts()),
+      toResourceSearchResult(resourceLibraryClient.searchProducts({ keyword: productKeyword.value })),
+    ]);
+    if (seq !== productSearchSeq) return;
+    resourceProductCatalog.value = catalogResult.items;
+    filteredProducts.value = searchResult.items;
+  } catch {
+    if (seq === productSearchSeq) {
+      resourceProductCatalog.value = [];
+      filteredProducts.value = [];
+    }
+  } finally {
+    if (seq === productSearchSeq) isProductSearching.value = false;
+  }
+}
+
 function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
-  const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
-  return sampleProducts.slice(0, limit).map((product) => ({ ...product })) as unknown as JsonValue;
+  const catalog = resourceProductCatalog.value.length ? resourceProductCatalog.value : sampleProducts;
+  const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : catalog.length;
+  return catalog.slice(0, limit).map((product) => ({ ...product })) as unknown as JsonValue;
 }
 
 function getProductIdsFromNode(node: LowcodeNode | undefined): string[] {
@@ -1977,13 +2019,14 @@ function applyAsset(propName: string, url: string): void {
   updateProp(propName, propSchema, url);
 }
 
-function applyAssetToSelected(asset: SampleAsset): void {
+function applyAssetToSelected(asset: LowcodeImageAssetResource): void {
   if (!assetTargetPropName.value) return;
   applyAsset(assetTargetPropName.value, asset.url);
 }
 
 function applySampleProducts(): void {
-  selectedProductIds.value = sampleProducts.slice(0, 3).map((product) => product.id);
+  const catalog = resourceProductCatalog.value.length ? resourceProductCatalog.value : sampleProducts;
+  selectedProductIds.value = catalog.slice(0, 3).map((product) => product.id);
   applySelectedProductsToNode();
 }
 
@@ -2631,7 +2674,8 @@ function formatReleaseTime(value: string): string {
                 </span>
               </button>
             </div>
-            <div v-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
+            <div v-if="isAssetSearching" class="mini-empty">素材搜索中</div>
+            <div v-else-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
           </div>
 
           <div v-if="isProductMaterialSelected" class="resource-panel">
@@ -2672,7 +2716,8 @@ function formatReleaseTime(value: string): string {
                 </span>
               </label>
             </div>
-            <div v-if="!filteredProducts.length" class="mini-empty">没有匹配商品</div>
+            <div v-if="isProductSearching" class="mini-empty">商品搜索中</div>
+            <div v-else-if="!filteredProducts.length" class="mini-empty">没有匹配商品</div>
             <div class="resource-actions">
               <button type="button" @click="applySelectedProductsToNode">应用选中商品</button>
               <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>

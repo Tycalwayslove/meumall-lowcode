@@ -11,6 +11,7 @@ Utilities:
 - `createSafeActionRegistry`
 - `createSafeActionExecutor`
 - `createHttpConfigPlatformClient`
+- `createStaticResourceLibraryClient`
 - `encodePageSchemaToUrlParam`
 - `decodePageSchemaFromUrlParam`
 
@@ -53,3 +54,19 @@ Handlers receive the action config plus safe context containing the action ref, 
 - `GET /api/lowcode/pages/{pageId}/published`
 
 The Vue editor playground currently uses a localStorage implementation of the same client interface, so real Java integration should replace only the client instance rather than the editor workflow.
+
+## Resource Library Client
+
+`LowcodeResourceLibraryClient` describes editor-facing resource search for assets and products:
+
+- `searchImageAssets(query)`
+- `searchProducts(query)`
+
+The first integration stage supports:
+
+- keyword search by id/title/category/tags/description.
+- image asset category filtering.
+- tag and id filtering.
+- result limiting.
+
+`createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape and keep UI logic unchanged.

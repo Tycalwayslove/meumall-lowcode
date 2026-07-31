@@ -5,6 +5,7 @@ import { createLowcodePageSchema } from "../../schema/dist/index.js";
 import {
   createDataSourceRegistry,
   createHttpConfigPlatformClient,
+  createStaticResourceLibraryClient,
   createSafeActionExecutor,
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
@@ -111,6 +112,58 @@ describe("@meumall/lowcode-adapters", () => {
       },
       { id: "ds_broken", type: "broken", bindTo: "brokenData", status: "error", error: "接口异常" },
     ]);
+  });
+
+  it("searches static image assets and products through a resource library client", () => {
+    const client = createStaticResourceLibraryClient({
+      imageAssets: [
+        {
+          id: "asset_hero",
+          title: "活动横幅",
+          category: "活动横幅",
+          url: "https://example.com/hero.png",
+          tags: ["大促", "首屏"],
+        },
+        {
+          id: "asset_coupon",
+          title: "优惠券视觉",
+          category: "优惠券",
+          url: "https://example.com/coupon.png",
+          tags: ["新人"],
+        },
+      ],
+      products: [
+        {
+          id: "sku_001",
+          title: "轻盈通勤手提包",
+          priceText: "¥199",
+          desc: "活动价",
+          imageUrl: "https://example.com/bag.png",
+          tags: ["包袋", "精选"],
+        },
+        {
+          id: "sku_002",
+          title: "夏季舒适凉鞋",
+          priceText: "¥129",
+          desc: "限时补贴",
+          imageUrl: "https://example.com/shoes.png",
+          tags: ["鞋履"],
+        },
+      ],
+    });
+
+    const bannerResult = client.searchImageAssets({ category: "活动横幅", keyword: "首屏" });
+    const couponResult = client.searchImageAssets({ ids: ["asset_coupon"] });
+    const productResult = client.searchProducts({ keyword: "sku_00", limit: 1 });
+    const taggedProductResult = client.searchProducts({ tags: ["鞋履"] });
+
+    assert.equal(bannerResult.total, 1);
+    assert.equal(bannerResult.items[0].id, "asset_hero");
+    assert.equal(couponResult.items[0].url, "https://example.com/coupon.png");
+    assert.equal(productResult.total, 2);
+    assert.equal(productResult.items.length, 1);
+    assert.equal(productResult.items[0].id, "sku_001");
+    assert.equal(taggedProductResult.items[0].id, "sku_002");
   });
 
   it("executes safe action handlers by type", async () => {

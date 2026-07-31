@@ -127,6 +127,47 @@ export interface RuntimeSchemaLoadResult {
   error?: string;
 }
 
+export interface LowcodeResourceQuery {
+  keyword?: string;
+  category?: string;
+  tags?: string[];
+  ids?: string[];
+  limit?: number;
+}
+
+export interface LowcodeResourceSearchResult<T> {
+  items: T[];
+  total: number;
+}
+
+export interface LowcodeImageAssetResource {
+  id: string;
+  title: string;
+  category: string;
+  url: string;
+  tags?: string[];
+}
+
+export interface LowcodeProductResource {
+  id: string;
+  title: string;
+  priceText: string;
+  originPriceText?: string;
+  desc?: string;
+  imageUrl: string;
+  tags?: string[];
+}
+
+export interface LowcodeResourceLibraryClient {
+  searchImageAssets(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeImageAssetResource>>;
+  searchProducts(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeProductResource>>;
+}
+
+export interface CreateStaticResourceLibraryClientInput {
+  imageAssets?: LowcodeImageAssetResource[];
+  products?: LowcodeProductResource[];
+}
+
 export function createDataSourceRegistry(initialHandlers: Record<string, DataSourceHandler> = {}): DataSourceRegistry {
   const handlers = new Map<string, DataSourceHandler>(Object.entries(initialHandlers));
   return {
@@ -142,6 +183,69 @@ export function createDataSourceRegistry(initialHandlers: Record<string, DataSou
     },
     listTypes() {
       return [...handlers.keys()];
+    },
+  };
+}
+
+function normalizeSearchText(value: string | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function resourceMatchesKeyword(values: Array<string | undefined>, keyword: string): boolean {
+  if (!keyword) return true;
+  return values.some((value) => normalizeSearchText(value).includes(keyword));
+}
+
+function resourceMatchesTags(resourceTags: string[] | undefined, queryTags: string[] | undefined): boolean {
+  if (!queryTags?.length) return true;
+  const tagSet = new Set((resourceTags ?? []).map((tag) => normalizeSearchText(tag)));
+  return queryTags.some((tag) => tagSet.has(normalizeSearchText(tag)));
+}
+
+function resourceMatchesIds(id: string, ids: string[] | undefined): boolean {
+  if (!ids?.length) return true;
+  return ids.includes(id);
+}
+
+function applyResourceLimit<T>(items: T[], limit: number | undefined): T[] {
+  if (limit === undefined) return items;
+  if (!Number.isFinite(limit) || limit < 0) return items;
+  return items.slice(0, limit);
+}
+
+export function createStaticResourceLibraryClient(input: CreateStaticResourceLibraryClientInput = {}): LowcodeResourceLibraryClient {
+  const imageAssets = input.imageAssets ?? [];
+  const products = input.products ?? [];
+
+  return {
+    searchImageAssets(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const category = query.category && query.category !== "全部" ? query.category : undefined;
+      const items = imageAssets.filter((asset) => {
+        if (category && asset.category !== category) return false;
+        if (!resourceMatchesIds(asset.id, query.ids)) return false;
+        if (!resourceMatchesTags(asset.tags, query.tags)) return false;
+        return resourceMatchesKeyword([asset.id, asset.title, asset.category, ...(asset.tags ?? [])], keyword);
+      });
+      return {
+        items: applyResourceLimit(items, query.limit),
+        total: items.length,
+      };
+    },
+    searchProducts(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const items = products.filter((product) => {
+        if (!resourceMatchesIds(product.id, query.ids)) return false;
+        if (!resourceMatchesTags(product.tags, query.tags)) return false;
+        return resourceMatchesKeyword(
+          [product.id, product.title, product.desc, product.priceText, product.originPriceText, ...(product.tags ?? [])],
+          keyword,
+        );
+      });
+      return {
+        items: applyResourceLimit(items, query.limit),
+        total: items.length,
+      };
     },
   };
 }
