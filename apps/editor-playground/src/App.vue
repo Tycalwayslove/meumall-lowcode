@@ -217,6 +217,7 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import EditorWorkspaceStats from "./components/EditorWorkspaceStats.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   localConfigPlatformClient,
@@ -3829,17 +3830,7 @@ function rollbackPublishSelectedRelease(): void {
           <strong>{{ editorState.mode === "outline" ? "Schema" : "H5 画布" }}</strong>
           <span>{{ selectedNode ? `${selectedParentTitle} / ${selectedPositionText}` : validation.valid ? "校验通过" : validation.errors[0] }}</span>
         </div>
-        <div class="workspace-stats" aria-label="编辑器状态摘要">
-          <span
-            v-for="stat in workspaceStats"
-            :key="stat.label"
-            class="workspace-stat"
-            :class="stat.tone ? `is-${stat.tone}` : ''"
-          >
-            <small>{{ stat.label }}</small>
-            <strong>{{ stat.value }}</strong>
-          </span>
-        </div>
+        <EditorWorkspaceStats :stats="workspaceStats" />
         <div class="viewport-switch" role="group" aria-label="H5 画布视口">
           <span class="viewport-switch-label">视口</span>
           <button
