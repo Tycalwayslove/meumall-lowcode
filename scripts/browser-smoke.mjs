@@ -515,6 +515,16 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
   log("通过：快捷命令可保存草稿");
 
+  log("检查本地版本差异详情");
+  await page.fillFieldByLabel("标题", "版本差异 Smoke 当前草稿");
+  await page.clickByText(".release-actions button", "对比");
+  await page.waitForExpression("document.querySelector('.release-diff-panel') && document.body.innerText.includes('版本对比')");
+  await page.waitForExpression("document.body.innerText.includes('当前草稿') && document.body.innerText.includes('所选版本')");
+  await page.waitForExpression("document.body.innerText.includes('版本差异 Smoke 当前草稿') && document.body.innerText.includes('夏日好物节-页面设置')");
+  await page.waitForExpression("document.body.innerText.includes('当前草稿 Schema 片段') && document.body.innerText.includes('所选版本 Schema 片段')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.release-schema-preview pre')).some((item) => item.innerText.includes('nodeCount') && item.innerText.includes('pageId'))");
+  log("通过：本地版本对比展示字段差异和 schema 片段详情");
+
   log("检查模板卡片摘要");
   await page.fillByPlaceholder("搜索模板", "");
   await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('大促活动页') && item.innerText.includes('v1.0.0') && item.innerText.includes('大促') && item.innerText.includes('节点') && item.innerText.includes('数据源') && item.innerText.includes('动作'))");
@@ -532,6 +542,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('夏日好物节')");
   log("通过：商品专题页模板可先打开 H5 预览且不替换当前画布");
 
+  await page.evaluate("window.confirm = () => true");
   await page.clickByText(".template-main-button", "商品专题页");
   await page.waitForExpression("document.body.innerText.includes('通勤好物专题')");
   await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");

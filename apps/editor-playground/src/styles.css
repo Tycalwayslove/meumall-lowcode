@@ -3381,7 +3381,7 @@ button:focus-visible {
 
 .release-diff-list div {
   display: grid;
-  gap: 4px;
+  gap: 7px;
   padding: 7px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -3399,23 +3399,49 @@ button:focus-visible {
 }
 
 .release-diff-list dt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   color: #475569;
   font-size: 12px;
   font-weight: 700;
 }
 
+.release-diff-list dt em {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: #64748b;
+  background: #eef2f7;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.release-diff-list div.changed dt em {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
 .release-diff-list dd {
   display: grid;
-  gap: 3px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   min-width: 0;
 }
 
 .release-diff-list dd span,
 .release-diff-list dd strong {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
   overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  border-radius: 7px;
+  padding: 6px;
+  background: #fff;
   font-size: 12px;
+  font-weight: 600;
 }
 
 .release-diff-list dd span {
@@ -3424,6 +3450,68 @@ button:focus-visible {
 
 .release-diff-list dd strong {
   color: #111827;
+}
+
+.release-diff-list dd small {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.release-diff-list dd b {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+
+.release-schema-preview-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.release-schema-preview {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fafc;
+}
+
+.release-schema-preview > div {
+  display: grid;
+  gap: 2px;
+}
+
+.release-schema-preview strong {
+  color: #111827;
+  font-size: 12px;
+}
+
+.release-schema-preview span {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.release-schema-preview pre {
+  max-height: 190px;
+  overflow: auto;
+  margin: 0;
+  border-radius: 7px;
+  padding: 8px;
+  color: #dbeafe;
+  background: #111827;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .release-diff-actions {

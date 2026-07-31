@@ -477,6 +477,13 @@ interface ReleaseDiffItem {
   changed: boolean;
 }
 
+interface ReleaseSchemaPreviewItem {
+  id: "current" | "selected";
+  title: string;
+  description: string;
+  json: string;
+}
+
 interface PreviewLinkItem {
   id: string;
   title: string;
@@ -936,6 +943,9 @@ const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
   selectedRelease.value ? createReleaseDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
 );
 const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
+const releaseSchemaPreviewItems = computed<ReleaseSchemaPreviewItem[]>(() =>
+  selectedRelease.value ? createReleaseSchemaPreviewItems(editorState.value.schema, selectedRelease.value) : [],
+);
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 const previewLinkItems = computed<PreviewLinkItem[]>(() => {
@@ -1488,6 +1498,48 @@ function createReleaseDiffItems(current: LowcodePageSchema, selected: LowcodePag
     ...item,
     changed: item.current !== item.selected,
   }));
+}
+
+function createSchemaPreviewSnippet(schema: LowcodePageSchema): JsonObject {
+  return {
+    pageId: schema.pageId,
+    title: schema.title,
+    status: schema.status,
+    pageVersion: schema.pageVersion,
+    pageType: schema.pageType ?? null,
+    publishMeta: {
+      environment: schema.publishMeta.environment,
+      operator: schema.publishMeta.operator ?? null,
+      publishedAt: schema.publishMeta.publishedAt ?? null,
+    },
+    layout: JSON.parse(JSON.stringify(schema.layout)) as JsonObject,
+    nodeCount: schemaNodeCount(schema),
+    nodes: schema.nodes.slice(0, 8).map((node) => ({
+      id: node.id,
+      componentName: node.componentName,
+      name: node.meta?.name ?? null,
+      childCount: node.children?.length ?? 0,
+    })),
+    dataSourceIds: (schema.dataSources ?? []).map((item) => item.id),
+    actionIds: (schema.actions ?? []).map((item) => item.id),
+  };
+}
+
+function createReleaseSchemaPreviewItems(current: LowcodePageSchema, release: LocalPageRelease): ReleaseSchemaPreviewItem[] {
+  return [
+    {
+      id: "current",
+      title: "当前草稿 Schema 片段",
+      description: `${current.title} / ${current.pageVersion}`,
+      json: JSON.stringify(createSchemaPreviewSnippet(current), null, 2),
+    },
+    {
+      id: "selected",
+      title: "所选版本 Schema 片段",
+      description: `${release.title} / ${release.pageVersion}`,
+      json: JSON.stringify(createSchemaPreviewSnippet(release.schema), null, 2),
+    },
+  ];
 }
 
 function getSiblingCount(parentId?: string): number {
@@ -5088,13 +5140,35 @@ function formatAutoSaveTime(value: string): string {
               :key="item.label"
               :class="{ changed: item.changed }"
             >
-              <dt>{{ item.label }}</dt>
+              <dt>
+                <span>{{ item.label }}</span>
+                <em>{{ item.changed ? "已变更" : "一致" }}</em>
+              </dt>
               <dd>
-                <span>{{ item.current }}</span>
-                <strong>{{ item.selected }}</strong>
+                <span>
+                  <small>当前草稿</small>
+                  <b>{{ item.current }}</b>
+                </span>
+                <strong>
+                  <small>所选版本</small>
+                  <b>{{ item.selected }}</b>
+                </strong>
               </dd>
             </div>
           </dl>
+          <div class="release-schema-preview-grid">
+            <article
+              v-for="item in releaseSchemaPreviewItems"
+              :key="item.id"
+              class="release-schema-preview"
+            >
+              <div>
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.description }}</span>
+              </div>
+              <pre>{{ item.json }}</pre>
+            </article>
+          </div>
           <div class="release-diff-actions">
             <button type="button" @click="loadSelectedRelease">载入所选</button>
             <button type="button" class="danger" @click="rollbackPublishSelectedRelease">回滚发布</button>
