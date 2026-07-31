@@ -41,6 +41,9 @@ importers:
       '@lucide/vue':
         specifier: 1.28.0
         version: 1.28.0(vue@3.5.40(typescript@5.9.3))
+      '@meumall/lowcode-adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -72,6 +75,9 @@ importers:
 
   apps/h5-runtime-playground:
     dependencies:
+      '@meumall/lowcode-adapters':
+        specifier: workspace:*
+        version: link:../../packages/adapters
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../../packages/core

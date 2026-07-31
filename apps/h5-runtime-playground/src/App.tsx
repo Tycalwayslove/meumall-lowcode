@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { decodePageSchemaFromUrlParam } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import { h5Materials } from "@meumall/lowcode-materials-h5";
 import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
@@ -142,6 +143,36 @@ const sampleSchema = createLowcodePageSchema({
 
 const registry = createMaterialRegistry(h5Materials);
 
+interface RuntimeSchemaSource {
+  schema: LowcodePageSchema;
+  source: "sample" | "url";
+  error?: string;
+}
+
+function resolveRuntimeSchema(): RuntimeSchemaSource {
+  const params = new URLSearchParams(window.location.search);
+  const encodedSchema = params.get("schema");
+  if (!encodedSchema) {
+    return {
+      schema: sampleSchema,
+      source: "sample",
+    };
+  }
+
+  try {
+    return {
+      schema: decodePageSchemaFromUrlParam(encodedSchema),
+      source: "url",
+    };
+  } catch (error) {
+    return {
+      schema: sampleSchema,
+      source: "sample",
+      error: error instanceof Error ? error.message : "URL schema 解析失败",
+    };
+  }
+}
+
 function countNodes(schema: LowcodePageSchema): number {
   const walk = (nodes: LowcodePageSchema["nodes"]): number => {
     return nodes.reduce((total, node) => total + 1 + walk(node.children ?? []), 0);
@@ -151,40 +182,46 @@ function countNodes(schema: LowcodePageSchema): number {
 
 export function App() {
   const [renderErrors, setRenderErrors] = useState<string[]>([]);
-  const validation = useMemo(() => validateLowcodePageSchema(sampleSchema), []);
-  const nodeCount = useMemo(() => countNodes(sampleSchema), []);
+  const runtimeSchema = useMemo(() => resolveRuntimeSchema(), []);
+  const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
+  const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
 
   return (
     <main className="runtime-shell">
       <section className="runtime-status" aria-label="运行时状态">
-        <strong>{sampleSchema.title}</strong>
+        <strong>{runtimeSchema.schema.title}</strong>
         <dl>
+          <div>
+            <dt>Source</dt>
+            <dd>{runtimeSchema.source === "url" ? "editor url" : "sample"}</dd>
+          </div>
           <div>
             <dt>Schema</dt>
             <dd>{validation.valid ? "valid" : "invalid"}</dd>
           </div>
           <div>
             <dt>Version</dt>
-            <dd>{sampleSchema.pageVersion}</dd>
+            <dd>{runtimeSchema.schema.pageVersion}</dd>
           </div>
           <div>
             <dt>Env</dt>
-            <dd>{sampleSchema.publishMeta.environment}</dd>
+            <dd>{runtimeSchema.schema.publishMeta.environment}</dd>
           </div>
           <div>
             <dt>Nodes</dt>
             <dd>{nodeCount}</dd>
           </div>
         </dl>
+        {runtimeSchema.error ? <p className="runtime-warning">{runtimeSchema.error}</p> : null}
       </section>
 
       <section className="phone-frame" aria-label="H5 页面">
         <div className="phone-status">
-          <span>{sampleSchema.title}</span>
+          <span>{runtimeSchema.schema.title}</span>
           <span>React H5</span>
         </div>
         <LowcodeRenderer
-          schema={sampleSchema}
+          schema={runtimeSchema.schema}
           registry={registry}
           data={runtimeData}
           fallback={<div className="runtime-empty">页面暂无内容</div>}

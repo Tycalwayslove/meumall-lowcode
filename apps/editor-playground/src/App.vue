@@ -19,6 +19,7 @@ import {
   Trash2,
   Undo2,
 } from "@lucide/vue";
+import { encodePageSchemaToUrlParam } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
   appendNode,
@@ -64,6 +65,7 @@ import {
 } from "./mockPlatform";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
+const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 
@@ -647,6 +649,17 @@ function openRuntime(params: { pageId?: string; releaseId?: string } = { pageId:
   window.open(createRuntimeUrl(params), "_blank", "noopener,noreferrer");
 }
 
+function createReactH5RuntimeUrl(schema: LowcodePageSchema): string {
+  const url = new URL(REACT_H5_RUNTIME_URL, window.location.href);
+  url.searchParams.set("schema", encodePageSchemaToUrlParam(schema));
+  url.searchParams.set("source", "editor");
+  return url.toString();
+}
+
+function openReactH5Runtime(schema: LowcodePageSchema = editorState.value.schema): void {
+  window.open(createReactH5RuntimeUrl(schema), "_blank", "noopener,noreferrer");
+}
+
 function setReleaseMessage(release: LocalPageRelease, action: string): void {
   releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}`;
 }
@@ -783,6 +796,10 @@ function formatReleaseTime(value: string): string {
         <button title="打开已发布 H5" @click="openRuntime()">
           <MonitorSmartphone :size="17" />
           <span>打开 H5</span>
+        </button>
+        <button title="用 React H5 runtime 打开当前页面" @click="openReactH5Runtime()">
+          <MonitorSmartphone :size="17" />
+          <span>React H5</span>
         </button>
       </div>
     </header>

@@ -28,6 +28,14 @@ http://localhost:5174/
 
 该入口位于 `apps/h5-runtime-playground`，只消费 React H5 renderer/materials/core/schema，不依赖 Vue 编辑器。
 
+Vue3 编辑器可以通过 URL handoff 打开 React H5 runtime：
+
+```text
+http://localhost:5174/?schema={base64url-page-schema}&source=editor
+```
+
+本地 handoff 使用 `@meumall/lowcode-adapters` 提供的 `encodePageSchemaToUrlParam` 和 `decodePageSchemaFromUrlParam`。该方式只适合本地 demo 和中小型 schema；正式环境应由 Java 配置平台返回 `previewId` 或 `pageId`，H5 runtime 再通过 API 拉取 schema。
+
 ## Suggested Routes
 
 ```text
@@ -58,6 +66,7 @@ POST /platform/lowcode/pages/{pageId}/track
 ```text
 /?runtime=1&pageId=summer-campaign-demo
 /?runtime=1&releaseId=preview_xxx
+http://localhost:5174/?schema=encoded_schema
 ```
 
 后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage 实现替换为 HTTP adapter。

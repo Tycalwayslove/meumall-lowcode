@@ -13,6 +13,7 @@
 - 设计 Java 配置平台 API 契约。
 - 设计 `hybird-meumall` 接入方式。
 - 将 React H5 runtime playground 的接入方式沉淀为 `hybird-meumall` 路由集成清单。
+- 将本地 URL schema handoff 替换为 Java 配置平台 previewId/pageId 查询协议。
 - 补充 data source resolver 生命周期和真实请求预览。
 - 补充 action 安全白名单。
 

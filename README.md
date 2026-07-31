@@ -68,6 +68,7 @@ apps/editor-playground
 
 apps/h5-runtime-playground
   -> runnable React H5 runtime playground
+  -> accepts editor handoff URL: http://localhost:5174/?schema=...
 ```
 
 ## Local Development

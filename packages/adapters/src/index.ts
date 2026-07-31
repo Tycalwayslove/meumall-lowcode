@@ -1,4 +1,10 @@
-import type { JsonObject, LowcodeActionConfig, LowcodeDataSourceConfig } from "@meumall/lowcode-schema";
+import {
+  validateLowcodePageSchema,
+  type JsonObject,
+  type LowcodeActionConfig,
+  type LowcodeDataSourceConfig,
+  type LowcodePageSchema,
+} from "@meumall/lowcode-schema";
 
 export type DataSourceHandler = (config: LowcodeDataSourceConfig) => Promise<JsonObject> | JsonObject;
 export type ActionHandler = (config: LowcodeActionConfig) => Promise<void> | void;
@@ -41,3 +47,32 @@ export function createSafeActionRegistry(initialHandlers: Record<string, ActionH
   };
 }
 
+function toBase64Url(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(value: string): string {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+export function encodePageSchemaToUrlParam(schema: LowcodePageSchema): string {
+  return toBase64Url(JSON.stringify(schema));
+}
+
+export function decodePageSchemaFromUrlParam(value: string): LowcodePageSchema {
+  const parsed = JSON.parse(fromBase64Url(value)) as LowcodePageSchema;
+  const validation = validateLowcodePageSchema(parsed);
+  if (!validation.valid) {
+    throw new Error(`Invalid lowcode page schema: ${validation.errors.join("; ")}`);
+  }
+  return parsed;
+}

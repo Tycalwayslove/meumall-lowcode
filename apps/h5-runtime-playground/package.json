@@ -10,6 +10,7 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
+    "@meumall/lowcode-adapters": "workspace:*",
     "@meumall/lowcode-core": "workspace:*",
     "@meumall/lowcode-materials-h5": "workspace:*",
     "@meumall/lowcode-renderer-h5": "workspace:*",

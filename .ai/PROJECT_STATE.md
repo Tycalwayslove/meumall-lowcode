@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐，并新增独立 React H5 runtime playground。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground，以及编辑器到 React H5 runtime 的 schema URL handoff。
 
 ## 当前维护范围
 
@@ -41,6 +41,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器发布链路 mock：保存草稿、生成预览、发布页面、本地版本列表和独立 H5 runtime 入口。
 - Vue3 编辑器画布上下文操作：选中节点后可前后插入物料、向容器加入物料、同级上移/下移、复制和删除。
 - React H5 runtime playground：独立消费 React H5 renderer/materials/core/schema，验证基础物料、容器嵌套和 dataBinding。
+- 编辑器到 React H5 runtime handoff：通过 URL schema 参数打开当前编辑 schema 的 React H5 渲染结果。
 
 ## 已知缺口
 
@@ -50,6 +51,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
 - 尚未定义 Java 配置平台 API 契约。
 - 当前发布链路仍是 localStorage mock，尚未对接真实 Java 配置平台。
+- 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - 尚未接入 `hybird-meumall`。
 - 尚未配置 npm registry/token。
 - 尚未建立单元测试体系。
@@ -67,7 +69,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `edda161` | 增强容器、素材/商品选择和数据源预览。 |
 | 2026-07-31 | `c3035f7` | 补充本地 mock 发布预览链路和独立 H5 runtime 入口。 |
 | 2026-07-31 | `8d4cf89` | 对齐 React H5 容器物料并增强画布上下文操作。 |
-| 2026-07-31 | 待提交 | 新增独立 React H5 runtime playground。 |
+| 2026-07-31 | `54b2ccf` | 新增独立 React H5 runtime playground。 |
+| 2026-07-31 | 待提交 | 打通编辑器到 React H5 runtime 的 schema handoff。 |
 
 ## 默认验证命令
 
