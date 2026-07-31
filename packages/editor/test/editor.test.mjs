@@ -7,10 +7,13 @@ import {
   createEditorState,
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
+  bindLowcodeNodeEvent,
   createLowcodeDefaultListItem,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
+  createLowcodeActionOptions,
+  createLowcodeEventBindingItems,
   createLowcodeListEditorFields,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
@@ -60,6 +63,8 @@ import {
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
+  removeLowcodeActionRefsFromNodes,
+  renameLowcodeActionRefsInNodes,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePreviewLinks,
@@ -750,6 +755,73 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(toLowcodePropInputBoolean("yes"), true);
     assert.equal(toLowcodePropInputText({ title: "结构化" }).includes("\n  "), true);
     assert.equal(toLowcodePropInputText(undefined), "");
+  });
+
+  it("creates reusable event binding models and action ref helpers", () => {
+    const actions = [
+      { id: "go_home", type: "navigate", params: { url: "/" } },
+      { id: "track_click", type: "tracking.click", params: { eventName: "tap_button" } },
+    ];
+    const events = [
+      { name: "click", title: "点击", description: "点击按钮时触发" },
+      { name: "exposure", title: "曝光" },
+      { name: "submit", title: "提交" },
+    ];
+    const bindings = createLowcodeEventBindingItems(events, actions, {
+      click: { actionId: "go_home" },
+      submit: { actionId: "missing_action" },
+    });
+
+    assert.deepEqual(createLowcodeActionOptions(actions).map((action) => action.label), [
+      "go_home / navigate",
+      "track_click / tracking.click",
+    ]);
+    assert.equal(bindings[0].name, "click");
+    assert.equal(bindings[0].actionId, "go_home");
+    assert.equal(bindings[0].actionLabel, "go_home / navigate");
+    assert.equal(bindings[0].bound, true);
+    assert.equal(bindings[0].missingAction, false);
+    assert.equal(bindings[1].actionId, "");
+    assert.equal(bindings[1].actionLabel, "未绑定");
+    assert.equal(bindings[1].bound, false);
+    assert.equal(bindings[2].actionLabel, "缺失动作：missing_action");
+    assert.equal(bindings[2].missingAction, true);
+
+    const state = createEditorState(createLowcodePageSchema({
+      pageId: "event_page",
+      title: "事件页面",
+      nodes: [
+        createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [
+            createLowcodeNode({
+              id: "button_1",
+              componentName: "ActionButton",
+              materialVersion: "1.0.0",
+              props: { text: "去首页" },
+            }),
+          ],
+        }),
+      ],
+      actions,
+    }));
+
+    const boundState = bindLowcodeNodeEvent(state, "button_1", "click", "go_home");
+    assert.equal(boundState.lastAction, "bindNodeEvent");
+    assert.equal(boundState.dirty, true);
+    assert.equal(boundState.schema.nodes[0].children[0].events.click.actionId, "go_home");
+
+    const unboundState = bindLowcodeNodeEvent(boundState, "button_1", "click", undefined);
+    assert.equal(unboundState.schema.nodes[0].children[0].events, undefined);
+
+    const renamedNodes = renameLowcodeActionRefsInNodes(boundState.schema.nodes, "go_home", "go_home_new");
+    assert.equal(renamedNodes[0].children[0].events.click.actionId, "go_home_new");
+
+    const cleanedNodes = removeLowcodeActionRefsFromNodes(boundState.schema.nodes, "go_home");
+    assert.equal(cleanedNodes[0].children[0].events, undefined);
   });
 
   it("creates version diff items and schema preview snippets", () => {

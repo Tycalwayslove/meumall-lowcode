@@ -89,6 +89,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `toLowcodePropInputText`
 - `toLowcodePropInputBoolean`
 - `normalizeLowcodePropInputValue`
+- `createLowcodeActionOptions`
+- `createLowcodeEventBindingItems`
+- `bindLowcodeNodeEvent`
+- `renameLowcodeActionRefsInNodes`
+- `removeLowcodeActionRefsFromNodes`
 
 ## Readiness API
 
@@ -133,6 +138,18 @@ The prop editor model helpers keep inspector field behavior reusable across the 
 `toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
+
+## Event Binding API
+
+The event binding helpers keep material-event to Page Schema action binding reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeActionOptions(actions)` creates stable select options from `schema.actions`.
+
+`createLowcodeEventBindingItems(events, actions, nodeEvents)` derives one binding item per material event, including the current `actionId`, display label, available action options, and whether the current binding points to a missing action.
+
+`bindLowcodeNodeEvent(state, nodeId, eventName, actionId)` writes or clears one node event binding. `renameLowcodeActionRefsInNodes(nodes, previousActionId, nextActionId)` and `removeLowcodeActionRefsFromNodes(nodes, actionId)` keep node event refs aligned when the host renames or deletes actions.
+
+These helpers do not execute actions, render select controls, validate permissions, call bridges, call coupon APIs, emit tracking events, or persist schema. Host shells remain responsible for UI, action editing forms, permissions, audit, risk control, and runtime action handlers.
 
 ## Preview Link API
 

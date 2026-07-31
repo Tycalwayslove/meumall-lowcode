@@ -54,8 +54,10 @@ import {
   cloneLowcodePageSchema,
   createLowcodeBlankPageSchema,
   copyNode,
+  bindLowcodeNodeEvent,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
+  createLowcodeEventBindingItems,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
   createLowcodePageStartState,
@@ -102,7 +104,9 @@ import {
   redo,
   revealLowcodeOutlineNode,
   removeNode,
+  removeLowcodeActionRefsFromNodes,
   replaceNodeProps,
+  renameLowcodeActionRefsInNodes,
   selectNode,
   setEditorMode,
   setEditorViewportPreset,
@@ -786,6 +790,13 @@ const selectedPositionText = computed(() => {
   if (!row) return "未选择";
   return `第 ${row.index + 1} 个 / 第 ${row.depth + 1} 层`;
 });
+const selectedEventBindings = computed(() =>
+  createLowcodeEventBindingItems(
+    selectedManifest.value?.events ?? [],
+    editorState.value.schema.actions ?? [],
+    selectedNode.value?.events,
+  ),
+);
 const workspaceStats = computed<WorkspaceStat[]>(() =>
   createLowcodeWorkspaceStats(editorState.value.schema, {
     selectedTitle: selectedManifest.value?.title,
@@ -3251,7 +3262,7 @@ function updateActionId(index: number, nextId: string): void {
     schema: {
       ...editorState.value.schema,
       actions,
-      nodes: renameActionRefs(editorState.value.schema.nodes, current.id, nextId),
+      nodes: renameLowcodeActionRefsInNodes(editorState.value.schema.nodes, current.id, nextId),
     },
     dirty: true,
     lastAction: "updateActionId",
@@ -3280,72 +3291,20 @@ function removeAction(index: number): void {
     schema: {
       ...editorState.value.schema,
       actions,
-      nodes: removeActionRefs(editorState.value.schema.nodes, removed.id),
+      nodes: removeLowcodeActionRefsFromNodes(editorState.value.schema.nodes, removed.id),
     },
     dirty: true,
     lastAction: "removeAction",
   };
 }
 
-function removeActionRefs(nodes: LowcodeNode[], actionId: string): LowcodeNode[] {
-  return nodes.map((node) => {
-    const events = Object.fromEntries(
-      Object.entries(node.events ?? {}).filter(([, ref]) => ref.actionId !== actionId),
-    );
-    return {
-      ...node,
-      events: Object.keys(events).length ? events : undefined,
-      children: node.children?.length ? removeActionRefs(node.children, actionId) : node.children,
-    };
-  });
-}
-
-function renameActionRefs(nodes: LowcodeNode[], previousActionId: string, nextActionId: string): LowcodeNode[] {
-  return nodes.map((node) => {
-    const events = Object.fromEntries(
-      Object.entries(node.events ?? {}).map(([eventName, ref]) => [
-        eventName,
-        ref.actionId === previousActionId ? { ...ref, actionId: nextActionId } : ref,
-      ]),
-    );
-    return {
-      ...node,
-      events: Object.keys(events).length ? events : undefined,
-      children: node.children?.length ? renameActionRefs(node.children, previousActionId, nextActionId) : node.children,
-    };
-  });
-}
-
 function actionParamsText(action: LowcodeActionConfig): string {
   return JSON.stringify(action.params ?? {}, null, 2);
 }
 
-function selectedEventActionId(eventName: string): string {
-  return selectedNode.value?.events?.[eventName]?.actionId ?? "";
-}
-
 function bindSelectedEvent(eventName: string, actionId: string): void {
   if (!selectedNode.value) return;
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => {
-        const events = { ...(node.events ?? {}) };
-        if (!actionId) {
-          delete events[eventName];
-        } else {
-          events[eventName] = { actionId };
-        }
-        return {
-          ...node,
-          events: Object.keys(events).length ? events : undefined,
-        };
-      }),
-    },
-    dirty: true,
-    lastAction: "bindSelectedEvent",
-  };
+  editorState.value = bindLowcodeNodeEvent(editorState.value, selectedNode.value.id, eventName, actionId || undefined);
 }
 
 function asText(value: JsonValue | undefined): string {
@@ -5217,30 +5176,31 @@ function formatReleaseTime(value: string): string {
             </section>
           </div>
 
-          <div v-if="selectedManifest.events?.length" class="event-binding-list">
+          <div v-if="selectedEventBindings.length" class="event-binding-list">
             <div class="panel-title compact-title">
               <PanelRight :size="15" />
               <span>事件</span>
             </div>
             <label
-              v-for="event in selectedManifest.events"
+              v-for="event in selectedEventBindings"
               :key="event.name"
               class="field"
             >
               <span>{{ event.title }}</span>
               <select
-                :value="selectedEventActionId(event.name)"
+                :value="event.actionId"
                 @change="bindSelectedEvent(event.name, ($event.target as HTMLSelectElement).value)"
               >
                 <option value="">未绑定</option>
                 <option
-                  v-for="action in editorState.schema.actions ?? []"
+                  v-for="action in event.actionOptions"
                   :key="`${event.name}-${action.id}`"
                   :value="action.id"
                 >
-                  {{ action.id }} / {{ action.type }}
+                  {{ action.label }}
                 </option>
               </select>
+              <small v-if="event.missingAction">{{ event.actionLabel }}</small>
             </label>
           </div>
 

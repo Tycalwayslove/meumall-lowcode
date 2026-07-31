@@ -1,8 +1,10 @@
 import type {
   JsonObject,
   JsonValue,
+  LowcodeActionConfig,
   LowcodeNode,
   LowcodeMaterialManifest,
+  LowcodeMaterialEventManifest,
   LowcodePageSchema,
   LowcodePlatform,
   LowcodePropSchema,
@@ -281,6 +283,29 @@ export interface CreateLowcodeDefaultListItemOptions {
   targetNodeId?: string;
   now?: Date;
   id?: string;
+}
+
+export interface LowcodeEditorActionOption {
+  id: string;
+  type: string;
+  label: string;
+  description: string;
+}
+
+export interface LowcodeEditorEventBindingItem {
+  name: string;
+  title: string;
+  description?: string;
+  actionId: string;
+  actionLabel: string;
+  bound: boolean;
+  missingAction: boolean;
+  actionOptions: LowcodeEditorActionOption[];
+}
+
+export interface CreateLowcodeEventBindingItemsOptions {
+  emptyActionLabel?: string;
+  missingActionLabelPrefix?: string;
 }
 
 export interface LowcodeEditorActionParamRule {
@@ -821,6 +846,44 @@ export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEdit
   });
 }
 
+export function createLowcodeActionOptions(
+  actions: readonly LowcodeActionConfig[] = [],
+): LowcodeEditorActionOption[] {
+  return actions.map((action) => ({
+    id: action.id,
+    type: action.type,
+    label: `${action.id} / ${action.type}`,
+    description: action.params ? JSON.stringify(action.params) : "",
+  }));
+}
+
+export function createLowcodeEventBindingItems(
+  events: readonly LowcodeMaterialEventManifest[] = [],
+  actions: readonly LowcodeActionConfig[] = [],
+  nodeEvents: LowcodeNode["events"] = {},
+  options: CreateLowcodeEventBindingItemsOptions = {},
+): LowcodeEditorEventBindingItem[] {
+  const actionOptions = createLowcodeActionOptions(actions);
+  const actionMap = new Map(actionOptions.map((action) => [action.id, action]));
+  const emptyActionLabel = options.emptyActionLabel ?? "未绑定";
+  const missingActionLabelPrefix = options.missingActionLabelPrefix ?? "缺失动作";
+
+  return events.map((event) => {
+    const actionId = nodeEvents?.[event.name]?.actionId ?? "";
+    const action = actionId ? actionMap.get(actionId) : undefined;
+    return {
+      name: event.name,
+      title: event.title,
+      description: event.description,
+      actionId,
+      actionLabel: action?.label ?? (actionId ? `${missingActionLabelPrefix}：${actionId}` : emptyActionLabel),
+      bound: Boolean(actionId),
+      missingAction: Boolean(actionId && !action),
+      actionOptions,
+    };
+  });
+}
+
 export function createLowcodeEditorCommandSearchText(command: LowcodeEditorCommandEntry): string {
   return [
     command.title,
@@ -931,6 +994,64 @@ export function setNodeVisibility(
   visibility: LowcodeVisibilityRule | undefined,
 ): LowcodeEditorState {
   return updateNode(state, nodeId, (node) => ({ ...node, visibility }), "setNodeVisibility");
+}
+
+export function bindLowcodeNodeEvent(
+  state: LowcodeEditorState,
+  nodeId: string,
+  eventName: string,
+  actionId: string | undefined,
+): LowcodeEditorState {
+  return updateNode(
+    state,
+    nodeId,
+    (node) => {
+      const events = { ...(node.events ?? {}) };
+      if (!actionId) {
+        delete events[eventName];
+      } else {
+        events[eventName] = { actionId };
+      }
+      return {
+        ...node,
+        events: Object.keys(events).length ? events : undefined,
+      };
+    },
+    "bindNodeEvent",
+  );
+}
+
+export function removeLowcodeActionRefsFromNodes(nodes: readonly LowcodeNode[], actionId: string): LowcodeNode[] {
+  return nodes.map((node) => {
+    const events = Object.fromEntries(
+      Object.entries(node.events ?? {}).filter(([, ref]) => ref.actionId !== actionId),
+    );
+    return {
+      ...node,
+      events: Object.keys(events).length ? events : undefined,
+      children: node.children?.length ? removeLowcodeActionRefsFromNodes(node.children, actionId) : node.children,
+    };
+  });
+}
+
+export function renameLowcodeActionRefsInNodes(
+  nodes: readonly LowcodeNode[],
+  previousActionId: string,
+  nextActionId: string,
+): LowcodeNode[] {
+  return nodes.map((node) => {
+    const events = Object.fromEntries(
+      Object.entries(node.events ?? {}).map(([eventName, ref]) => [
+        eventName,
+        ref.actionId === previousActionId ? { ...ref, actionId: nextActionId } : ref,
+      ]),
+    );
+    return {
+      ...node,
+      events: Object.keys(events).length ? events : undefined,
+      children: node.children?.length ? renameLowcodeActionRefsInNodes(node.children, previousActionId, nextActionId) : node.children,
+    };
+  });
 }
 
 export function copyNode(state: LowcodeEditorState, nodeId: string): LowcodeEditorState {
