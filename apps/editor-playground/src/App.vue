@@ -343,6 +343,8 @@ const lastAutoSavedAt = ref<string>();
 const configPlatformClient = localConfigPlatformClient;
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
+const releaseNoteDraft = ref("");
+const releaseKeyword = ref("");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 const templateKeyword = ref("");
 const templateCategory = ref("全部");
@@ -940,6 +942,21 @@ const autoSaveStatusTone = computed(() => {
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
+const visibleReleases = computed<LocalPageRelease[]>(() => {
+  const keyword = releaseKeyword.value.trim().toLowerCase();
+  if (!keyword) return releases.value;
+  return releases.value.filter((release) => {
+    const haystack = [
+      release.title,
+      release.pageVersion,
+      release.kind,
+      releaseKindLabel(release.kind),
+      release.note ?? "",
+      formatReleaseTime(release.createdAt),
+    ].join(" ").toLowerCase();
+    return haystack.includes(keyword);
+  });
+});
 const latestPublishedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.kind === "published"),
 );
@@ -4092,7 +4109,7 @@ async function copyTextToClipboard(text: string): Promise<void> {
 }
 
 function setReleaseMessage(release: LocalPageRelease, action: string): void {
-  releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}`;
+  releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}${release.note ? ` / ${release.note}` : ""}`;
 }
 
 function ensurePublishReady(action: string): boolean {
@@ -4103,7 +4120,8 @@ function ensurePublishReady(action: string): boolean {
 }
 
 function saveSchema(): void {
-  const release = configPlatformClient.saveDraft(editorState.value.schema);
+  const release = configPlatformClient.saveDraft(editorState.value.schema, { note: releaseNoteDraft.value });
+  releaseNoteDraft.value = "";
   markSchemaPersisted(release.schema);
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
@@ -4117,7 +4135,8 @@ function saveSchema(): void {
 
 function createPreviewRelease(): void {
   if (!ensurePublishReady("生成预览")) return;
-  const release = configPlatformClient.createPreview(editorState.value.schema);
+  const release = configPlatformClient.createPreview(editorState.value.schema, { note: releaseNoteDraft.value });
+  releaseNoteDraft.value = "";
   refreshReleases();
   setReleaseMessage(release, "已生成预览");
   openRuntime({ releaseId: release.id });
@@ -4125,7 +4144,8 @@ function createPreviewRelease(): void {
 
 function publishCurrentPage(): void {
   if (!ensurePublishReady("发布")) return;
-  const release = configPlatformClient.publishPage(editorState.value.schema);
+  const release = configPlatformClient.publishPage(editorState.value.schema, { note: releaseNoteDraft.value });
+  releaseNoteDraft.value = "";
   markSchemaPersisted(release.schema);
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
@@ -4177,7 +4197,7 @@ function rollbackPublishSelectedRelease(): void {
       ...release.schema.publishMeta,
       environment: editorState.value.schema.publishMeta.environment,
     },
-  });
+  }, { note: `回滚自 ${release.pageVersion}${release.note ? `：${release.note}` : ""}` });
   markSchemaPersisted(rollbackRelease.schema);
   editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
     selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
@@ -5156,6 +5176,14 @@ function formatAutoSaveTime(value: string): string {
               </select>
             </label>
           </div>
+          <label class="field release-note-field">
+            <span>版本备注</span>
+            <textarea
+              v-model="releaseNoteDraft"
+              rows="3"
+              placeholder="例如：设计走查版、产品验收版、上线发布版"
+            ></textarea>
+          </label>
         </div>
         <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
       </section>
@@ -5265,10 +5293,18 @@ function formatAutoSaveTime(value: string): string {
         <div class="panel-title">
           <Save :size="16" />
           <span>本地版本</span>
+          <small>{{ releases.length }} 个版本</small>
         </div>
-        <div v-if="releases.length" class="release-list">
+        <div v-if="releases.length" class="release-tools">
+          <label class="release-search-field">
+            <Search :size="14" />
+            <input v-model="releaseKeyword" placeholder="筛选版本、类型或备注" />
+          </label>
+          <small>{{ releaseKeyword ? `${visibleReleases.length} / ${releases.length}` : "按时间倒序" }}</small>
+        </div>
+        <div v-if="visibleReleases.length" class="release-list">
           <article
-            v-for="release in releases"
+            v-for="release in visibleReleases"
             :key="release.id"
             class="release-card"
             :class="{ selected: selectedReleaseId === release.id }"
@@ -5278,6 +5314,7 @@ function formatAutoSaveTime(value: string): string {
               <span>{{ release.pageVersion }}</span>
             </div>
             <small>{{ formatReleaseTime(release.createdAt) }}</small>
+            <p v-if="release.note" class="release-note">{{ release.note }}</p>
             <div class="release-actions">
               <button type="button" @click="selectRelease(release.id)">对比</button>
               <button type="button" @click="loadReleaseById(release.id)">载入</button>
@@ -5285,6 +5322,7 @@ function formatAutoSaveTime(value: string): string {
             </div>
           </article>
         </div>
+        <div v-else-if="releases.length" class="empty-state">没有匹配的本地版本</div>
         <div v-else class="empty-state">暂无本地版本</div>
         <div v-if="selectedRelease" class="release-diff-panel">
           <div class="release-diff-head">

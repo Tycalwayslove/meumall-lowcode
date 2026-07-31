@@ -17,8 +17,13 @@ export interface LocalPageRelease {
   pageId: string;
   pageVersion: string;
   title: string;
+  note?: string;
   createdAt: string;
   schema: LowcodePageSchema;
+}
+
+interface LocalReleaseOptions {
+  note?: string;
 }
 
 function cloneSchema(schema: LowcodePageSchema): LowcodePageSchema {
@@ -81,7 +86,7 @@ function writeReleases(releases: LocalPageRelease[]): void {
   writeJson(RELEASES_KEY, releases);
 }
 
-function saveRelease(schema: LowcodePageSchema, kind: LocalReleaseKind, pageStatus: LowcodePageStatus): LocalPageRelease {
+function saveRelease(schema: LowcodePageSchema, kind: LocalReleaseKind, pageStatus: LowcodePageStatus, options: LocalReleaseOptions = {}): LocalPageRelease {
   const releaseSchema = createSchemaForRelease(schema, kind, pageStatus);
   const release: LocalPageRelease = {
     id: createReleaseId(kind),
@@ -89,6 +94,7 @@ function saveRelease(schema: LowcodePageSchema, kind: LocalReleaseKind, pageStat
     pageId: releaseSchema.pageId,
     pageVersion: releaseSchema.pageVersion,
     title: releaseSchema.title,
+    note: options.note?.trim() || undefined,
     createdAt: new Date().toISOString(),
     schema: releaseSchema,
   };
@@ -108,25 +114,29 @@ function writeIndex(key: string, pageId: string, releaseId: string): void {
   });
 }
 
-export function saveDraft(schema: LowcodePageSchema): LocalPageRelease {
-  const release = saveRelease(schema, "draft", "draft");
+export function saveDraft(schema: LowcodePageSchema, options: LocalReleaseOptions = {}): LocalPageRelease {
+  const release = saveRelease(schema, "draft", "draft", options);
   writeIndex(DRAFT_INDEX_KEY, release.pageId, release.id);
   return release;
 }
 
-export function createPreview(schema: LowcodePageSchema): LocalPageRelease {
-  return saveRelease(schema, "preview", "preview");
+export function createPreview(schema: LowcodePageSchema, options: LocalReleaseOptions = {}): LocalPageRelease {
+  return saveRelease(schema, "preview", "preview", options);
 }
 
-export function publishPage(schema: LowcodePageSchema): LocalPageRelease {
-  const release = saveRelease(schema, "published", "published");
+export function publishPage(schema: LowcodePageSchema, options: LocalReleaseOptions = {}): LocalPageRelease {
+  const release = saveRelease(schema, "published", "published", options);
   writeIndex(PUBLISHED_INDEX_KEY, release.pageId, release.id);
   return release;
 }
 
 export function listReleases(pageId?: string): LocalPageRelease[] {
   const releases = readReleases();
-  return pageId ? releases.filter((release) => release.pageId === pageId) : releases;
+  const normalizedReleases = releases.map((release) => ({
+    ...release,
+    note: typeof release.note === "string" ? release.note : undefined,
+  }));
+  return pageId ? normalizedReleases.filter((release) => release.pageId === pageId) : normalizedReleases;
 }
 
 export function getRelease(releaseId: string): LocalPageRelease | undefined {
@@ -144,25 +154,25 @@ export function getPublished(pageId: string): LowcodePageSchema | undefined {
 }
 
 export const localConfigPlatformClient = {
-  saveDraft(schema) {
-    return saveDraft(schema);
+  saveDraft(schema: LowcodePageSchema, options: LocalReleaseOptions = {}) {
+    return saveDraft(schema, options);
   },
-  createPreview(schema) {
-    return createPreview(schema);
+  createPreview(schema: LowcodePageSchema, options: LocalReleaseOptions = {}) {
+    return createPreview(schema, options);
   },
-  publishPage(schema) {
-    return publishPage(schema);
+  publishPage(schema: LowcodePageSchema, options: LocalReleaseOptions = {}) {
+    return publishPage(schema, options);
   },
-  listReleases(pageId) {
+  listReleases(pageId?: string) {
     return listReleases(pageId);
   },
-  getRelease(releaseId) {
+  getRelease(releaseId: string) {
     return getRelease(releaseId);
   },
-  getDraft(pageId) {
+  getDraft(pageId: string) {
     return getDraft(pageId);
   },
-  getPublished(pageId) {
+  getPublished(pageId: string) {
     return getPublished(pageId);
   },
 } satisfies LowcodeConfigPlatformClient;

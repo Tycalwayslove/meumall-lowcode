@@ -2145,6 +2145,11 @@ button:focus-visible {
   line-height: 1.5;
 }
 
+.release-note-field textarea {
+  min-height: 74px;
+  font-family: inherit;
+}
+
 .page-settings-card {
   display: grid;
   gap: 10px;
@@ -3428,6 +3433,39 @@ button:focus-visible {
   gap: 9px;
 }
 
+.release-tools {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 9px;
+}
+
+.release-search-field {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  background: #fff;
+}
+
+.release-search-field input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: none;
+  color: #111827;
+  background: transparent;
+  font-size: 12px;
+}
+
+.release-tools small {
+  color: #64748b;
+  font-size: 11px;
+}
+
 .release-card {
   display: grid;
   gap: 8px;
@@ -3458,6 +3496,16 @@ button:focus-visible {
 .release-card small {
   color: #64748b;
   font-size: 12px;
+}
+
+.release-note {
+  margin: 0;
+  padding: 7px 8px;
+  border-radius: 7px;
+  color: #475569;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .release-actions {

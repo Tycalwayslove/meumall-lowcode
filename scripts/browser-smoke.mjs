@@ -532,20 +532,35 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
   log("通过：节点菜单、删除、复制、粘贴、撤销和重做快捷键可用");
 
+  await page.fillFieldByLabel("版本备注", "Smoke 设计验收版");
+  await page.evaluate("document.activeElement?.blur()");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "保存草稿");
   await page.clickByText(".command-palette-item", "保存草稿");
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('Smoke 设计验收版'))");
   log("通过：快捷命令可保存草稿");
 
   log("检查本地版本差异详情");
   await page.fillFieldByLabel("标题", "版本差异 Smoke 当前草稿");
+  await page.fillByPlaceholder("筛选版本、类型或备注", "Smoke 设计验收版");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).length === 1 && document.body.innerText.includes('Smoke 设计验收版')");
   await page.clickByText(".release-actions button", "对比");
   await page.waitForExpression("document.querySelector('.release-diff-panel') && document.body.innerText.includes('版本对比')");
   await page.waitForExpression("document.body.innerText.includes('当前草稿') && document.body.innerText.includes('所选版本')");
   await page.waitForExpression("document.body.innerText.includes('版本差异 Smoke 当前草稿') && document.body.innerText.includes('夏日好物节-页面设置')");
   await page.waitForExpression("document.body.innerText.includes('当前草稿 Schema 片段') && document.body.innerText.includes('所选版本 Schema 片段')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-schema-preview pre')).some((item) => item.innerText.includes('nodeCount') && item.innerText.includes('pageId'))");
+  await page.fillByPlaceholder("筛选版本、类型或备注", "不存在的版本关键词");
+  await page.waitForExpression("document.body.innerText.includes('没有匹配的本地版本')");
+  await page.fillByPlaceholder("筛选版本、类型或备注", "");
+  const firstReleaseVersion = await page.evaluate("document.querySelector('.release-card span')?.innerText || ''");
+  if (!firstReleaseVersion) fail("本地版本卡片缺少版本号");
+  await page.fillByPlaceholder("筛选版本、类型或备注", firstReleaseVersion);
+  await page.waitForExpression(`Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes(${jsString(firstReleaseVersion)}))`);
+  await page.fillByPlaceholder("筛选版本、类型或备注", "草稿");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('草稿'))");
+  await page.fillByPlaceholder("筛选版本、类型或备注", "");
   log("通过：本地版本对比展示字段差异和 schema 片段详情");
 
   log("检查本地自定义模板");
