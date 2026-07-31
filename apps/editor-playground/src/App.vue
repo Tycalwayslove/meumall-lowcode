@@ -5,21 +5,14 @@ import {
   ArrowUp,
   Code2,
   Copy,
-  Download,
-  Eye,
   ExternalLink,
   Layers,
   MoreHorizontal,
-  MonitorSmartphone,
-  PanelRight,
   Plus,
-  Redo2,
   RotateCcw,
   Save,
   Search,
   Trash2,
-  Undo2,
-  Upload,
   X,
 } from "@lucide/vue";
 import {
@@ -164,6 +157,7 @@ import {
   type LowcodeEditorCanvasPoint as CanvasPoint,
   type LowcodeEditorCanvasRect as CanvasRect,
   type LowcodeEditorDraftPersistenceStatus,
+  type LowcodeEditorMode,
   type LowcodeEditorOutlineRow as OutlineRow,
   type LowcodeEditorPreviewLinkItem as PreviewLinkItem,
   type LowcodeEditorPropGroup as PropEditorGroup,
@@ -209,6 +203,7 @@ import EditorPublishPanel from "./components/EditorPublishPanel.vue";
 import EditorResourcePanels from "./components/EditorResourcePanels.vue";
 import EditorSchemaConfigPanel from "./components/EditorSchemaConfigPanel.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
+import EditorTopToolbar from "./components/EditorTopToolbar.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   localConfigPlatformClient,
@@ -2566,6 +2561,10 @@ function closeCommandPalette(): void {
   commandPaletteOpen.value = false;
 }
 
+function applyEditorMode(mode: LowcodeEditorMode): void {
+  editorState.value = setEditorMode(editorState.value, mode);
+}
+
 async function executeCommandPaletteItem(item: EditorCommandPaletteItem): Promise<void> {
   if (item.disabled) return;
   await Promise.resolve(item.run());
@@ -3142,89 +3141,35 @@ function rollbackPublishSelectedRelease(): void {
   </main>
 
   <main v-else class="editor-shell">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark">M</span>
-        <div>
-          <strong>MeuMall Lowcode</strong>
-          <span>{{ editorState.schema.title }}</span>
-        </div>
-        <span class="save-pill" :class="{ dirty: editorState.dirty }">
-          {{ editorState.dirty ? "未保存" : "已保存" }}
-        </span>
-        <span class="auto-save-pill" :class="`is-${autoSaveStatusTone}`">
-          {{ autoSaveStatusText }}
-        </span>
-      </div>
-
-      <div class="toolbar" aria-label="编辑器工具栏">
-        <button type="button" title="打开快捷命令" class="command-trigger" @click="openCommandPalette">
-          <Search :size="17" />
-          <span>命令</span>
-        </button>
-        <button type="button" title="新建页面" class="page-start-trigger" @click="openPageStartWizard">
-          <Plus :size="17" />
-          <span>新建</span>
-        </button>
-        <button title="设计" :class="{ active: editorState.mode === 'design' }" @click="editorState = setEditorMode(editorState, 'design')">
-          <MonitorSmartphone :size="17" />
-          <span>设计</span>
-        </button>
-        <button title="预览" :class="{ active: editorState.mode === 'preview' }" @click="editorState = setEditorMode(editorState, 'preview')">
-          <Eye :size="17" />
-          <span>预览</span>
-        </button>
-        <button title="源码" :class="{ active: editorState.mode === 'outline' }" @click="editorState = setEditorMode(editorState, 'outline')">
-          <Code2 :size="17" />
-          <span>源码</span>
-        </button>
-      </div>
-
-      <div class="toolbar compact" aria-label="历史与保存">
-        <button title="撤销" :disabled="!editorState.history.past.length" @click="editorState = undo(editorState)">
-          <Undo2 :size="17" />
-        </button>
-        <button title="重做" :disabled="!editorState.history.future.length" @click="editorState = redo(editorState)">
-          <Redo2 :size="17" />
-        </button>
-        <button title="保存草稿" @click="saveSchema">
-          <Save :size="17" />
-          <span>{{ editorState.dirty ? "保存草稿" : "已保存" }}</span>
-        </button>
-        <button title="导出当前页面 Schema" @click="exportCurrentSchema">
-          <Download :size="17" />
-          <span>导出</span>
-        </button>
-        <button title="导入页面 Schema" @click="triggerSchemaImport">
-          <Upload :size="17" />
-          <span>导入</span>
-        </button>
-        <button title="生成预览版本" @click="createPreviewRelease">
-          <Eye :size="17" />
-          <span>预览链接</span>
-        </button>
-        <button title="发布当前页面" @click="publishCurrentPage">
-          <PanelRight :size="17" />
-          <span>发布</span>
-        </button>
-        <button title="打开已发布 H5" @click="openRuntime()">
-          <MonitorSmartphone :size="17" />
-          <span>打开 H5</span>
-        </button>
-        <button title="用 React H5 runtime 打开当前页面" @click="openReactH5Runtime()">
-          <MonitorSmartphone :size="17" />
-          <span>React H5</span>
-        </button>
-      </div>
-      <input
-        ref="schemaFileInputRef"
-        data-testid="schema-import-input"
-        class="visually-hidden"
-        type="file"
-        accept="application/json,.json"
-        @change="onSchemaFileChange"
-      />
-    </header>
+    <EditorTopToolbar
+      :title="editorState.schema.title"
+      :dirty="editorState.dirty"
+      :auto-save-status-text="autoSaveStatusText"
+      :auto-save-status-tone="autoSaveStatusTone"
+      :mode="editorState.mode"
+      :can-undo="Boolean(editorState.history.past.length)"
+      :can-redo="Boolean(editorState.history.future.length)"
+      @open-command="openCommandPalette"
+      @open-page-start="openPageStartWizard"
+      @set-mode="applyEditorMode"
+      @undo="editorState = undo(editorState)"
+      @redo="editorState = redo(editorState)"
+      @save="saveSchema"
+      @export-schema="exportCurrentSchema"
+      @import-schema="triggerSchemaImport"
+      @create-preview="createPreviewRelease"
+      @publish="publishCurrentPage"
+      @open-runtime="openRuntime()"
+      @open-react-runtime="openReactH5Runtime()"
+    />
+    <input
+      ref="schemaFileInputRef"
+      data-testid="schema-import-input"
+      class="visually-hidden"
+      type="file"
+      accept="application/json,.json"
+      @change="onSchemaFileChange"
+    />
 
     <EditorCommandPalette
       ref="commandPaletteRef"

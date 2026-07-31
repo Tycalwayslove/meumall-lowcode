@@ -49,6 +49,24 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不写入 Page Schema。
 - 不读取或写入 localStorage。
 
+### `EditorTopToolbar`
+
+路径：`apps/editor-playground/src/components/EditorTopToolbar.vue`
+
+职责：
+
+- 展示顶部品牌、页面标题、保存状态、自动保存状态、主工具栏和历史/保存/发布工具栏。
+- 接收页面标题、dirty 状态、自动保存文案和 tone、当前模式、撤销/重做可用状态。
+- 通过 emits 抛出打开快捷命令、新建页面、模式切换、撤销、重做、保存草稿、导出 schema、导入 schema、生成预览、发布、打开 H5 和打开 React H5。
+- 复用现有 `.topbar`、`.brand`、`.toolbar`、`.save-pill` 和 `.auto-save-pill` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不写入 `LowcodeEditorState` 或 Page Schema。
+- 不读取或写入 localStorage。
+- 不持有隐藏文件 input、不解析导入文件、不构造 H5 URL。
+- 不执行真实保存、预览、发布、回滚、权限、协作锁定、审批、审计或服务端保存。
+
 ### `EditorMaterialCatalog`
 
 路径：`apps/editor-playground/src/components/EditorMaterialCatalog.vue`
@@ -253,8 +271,8 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-1. 顶部工具栏：优先消费 workspace summary、schema file、draft persistence、preview links 和 release history API。
-2. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
+1. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
+2. 画布上下文工具条：优先消费 node operation API，并继续保持真实节点操作在宿主 shell。
 
 ## 抽 npm 包判断
 
