@@ -58,6 +58,8 @@ import {
   copyNode,
   bindLowcodeNodeEvent,
   canLowcodeDragSelectedGroup,
+  createLowcodeCanvasAppendDropHint,
+  createLowcodeCanvasTargetDropHint,
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
@@ -111,6 +113,7 @@ import {
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
   insertNode,
+  isLowcodeInvalidNodeDropTarget,
   isLowcodeFavoriteMaterial,
   isLowcodeNodeSelected,
   isLowcodeListImageField,
@@ -143,6 +146,7 @@ import {
   removeNode,
   replaceNodeProps,
   renameLowcodeAction,
+  resolveLowcodeCanvasDropPlacement,
   resolveLowcodeNodeShortcutAction,
   selectNode,
   setEditorMode,
@@ -171,6 +175,12 @@ import {
   upsertLowcodeDataSourceConfigs,
   recordLowcodeRecentMaterial,
   type LowcodeEditorCommandEntry,
+  type LowcodeEditorCanvasDragSource as CanvasDragSource,
+  type LowcodeEditorCanvasDropHint as CanvasDropHint,
+  type LowcodeEditorCanvasDropPlacement as CanvasDropPlacement,
+  type LowcodeEditorCanvasFrameMetrics as CanvasFrameMetrics,
+  type LowcodeEditorCanvasPoint as CanvasPoint,
+  type LowcodeEditorCanvasRect as CanvasRect,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
   type LowcodeEditorPreviewLinkItem as PreviewLinkItem,
@@ -515,29 +525,9 @@ let storeExpertSearchSeq = 0;
 let autoSaveTimer: number | undefined;
 let suppressNextAutoSave = false;
 
-type CanvasDropPlacement = "before" | "after" | "inside" | "append";
-type CanvasDragSource = "material" | "node";
-type CanvasSnapGuideAxis = "x" | "y";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
 
-interface CanvasSnapGuide {
-  axis: CanvasSnapGuideAxis;
-  label: string;
-  style: CSSProperties;
-}
-
-interface CanvasDropHint {
-  source: CanvasDragSource;
-  placement: CanvasDropPlacement;
-  targetNodeId?: string;
-  targetTitle: string;
-  style: CSSProperties;
-  guides: CanvasSnapGuide[];
-}
-
-interface CanvasDragPoint {
-  clientX: number;
-  clientY: number;
+interface CanvasDragPoint extends CanvasPoint {
   target?: EventTarget | null;
 }
 
@@ -1861,93 +1851,33 @@ function isPointInsidePhoneFrame(point: CanvasDragPoint): boolean {
   return point.clientX >= rect.left && point.clientX <= rect.right && point.clientY >= rect.top && point.clientY <= rect.bottom;
 }
 
-function getDropPlacement(point: CanvasDragPoint, node: LowcodeNode, nodeElement: HTMLElement): CanvasDropPlacement {
-  const rect = nodeElement.getBoundingClientRect();
-  const ratio = rect.height > 0 ? (point.clientY - rect.top) / rect.height : 0.5;
-  if (node.componentName === "SectionContainer" && ratio > 0.28 && ratio < 0.72) return "inside";
-  return ratio < 0.5 ? "before" : "after";
-}
-
-function createDropHintStyle(nodeElement: HTMLElement, placement: CanvasDropPlacement): CSSProperties {
+function getCanvasFrameMetrics(): CanvasFrameMetrics | undefined {
   const frame = phoneFrameRef.value;
-  if (!frame) return {};
+  if (!frame) return undefined;
   const frameRect = frame.getBoundingClientRect();
-  const nodeRect = nodeElement.getBoundingClientRect();
-  const top = nodeRect.top - frameRect.top + frame.scrollTop;
-  const left = nodeRect.left - frameRect.left + frame.scrollLeft;
-  if (placement === "inside") {
-    return {
-      top: `${top}px`,
-      left: `${left}px`,
-      width: `${nodeRect.width}px`,
-      height: `${nodeRect.height}px`,
-    };
-  }
   return {
-    top: `${top + (placement === "after" ? nodeRect.height : 0)}px`,
-    left: `${left}px`,
-    width: `${nodeRect.width}px`,
+    top: frameRect.top,
+    left: frameRect.left,
+    scrollTop: frame.scrollTop,
+    scrollLeft: frame.scrollLeft,
+    clientWidth: frame.clientWidth,
+    clientHeight: frame.clientHeight,
+    scrollHeight: frame.scrollHeight,
   };
 }
 
-function createSnapGuides(nodeElement: HTMLElement, placement: CanvasDropPlacement): CanvasSnapGuide[] {
-  const frame = phoneFrameRef.value;
-  if (!frame) return [];
-  const frameRect = frame.getBoundingClientRect();
-  const nodeRect = nodeElement.getBoundingClientRect();
-  const top = nodeRect.top - frameRect.top + frame.scrollTop;
-  const left = nodeRect.left - frameRect.left + frame.scrollLeft;
-  const width = nodeRect.width;
-  const height = nodeRect.height;
-  const frameWidth = frame.clientWidth;
-  const frameHeight = Math.max(frame.scrollHeight, frame.clientHeight);
-  const targetCenterX = left + width / 2;
-  const targetCenterY = top + height / 2;
+function getCanvasElementRect(element: HTMLElement): CanvasRect {
+  const rect = element.getBoundingClientRect();
+  return {
+    top: rect.top,
+    left: rect.left,
+    width: rect.width,
+    height: rect.height,
+  };
+}
 
-  if (placement === "inside") {
-    return [
-      {
-        axis: "y",
-        label: "容器中心",
-        style: {
-          top: `${targetCenterY}px`,
-          left: "0px",
-          width: `${frameWidth}px`,
-        },
-      },
-      {
-        axis: "x",
-        label: "容器中心",
-        style: {
-          top: "0px",
-          left: `${targetCenterX}px`,
-          height: `${frameHeight}px`,
-        },
-      },
-    ];
-  }
-
-  const edgeTop = top + (placement === "after" ? height : 0);
-  return [
-    {
-      axis: "y",
-      label: placement === "before" ? "吸附到上边缘" : "吸附到下边缘",
-      style: {
-        top: `${edgeTop}px`,
-        left: "0px",
-        width: `${frameWidth}px`,
-      },
-    },
-    {
-      axis: "x",
-      label: "目标中心",
-      style: {
-        top: "0px",
-        left: `${targetCenterX}px`,
-        height: `${frameHeight}px`,
-      },
-    },
-  ];
+function toCanvasStyle(style: CanvasDropHint["style"]): CSSProperties {
+  return style as CSSProperties;
 }
 
 function updateCanvasDropHintAtPoint(
@@ -1968,31 +1898,30 @@ function updateCanvasDropHintAtPoint(
   const nodeElement = isInsideFrame ? getRuntimeNodeElement(point) : undefined;
   const nodeId = nodeElement?.dataset.lowcodeNodeId;
   const node = nodeId ? findNode(editorState.value.schema.nodes, nodeId) : undefined;
-  const draggedNode = draggedNodeId ? findNode(editorState.value.schema.nodes, draggedNodeId) : undefined;
-  if (source === "node" && node && draggedNodeId && (node.id === draggedNodeId || nodeContains(draggedNode, node.id))) {
+  if (source === "node" && isLowcodeInvalidNodeDropTarget(editorState.value.schema.nodes, draggedNodeId, node?.id)) {
     canvasDropHint.value = undefined;
     return undefined;
   }
   if (!node || !nodeElement) {
-    canvasDropHint.value = {
-      source,
-      placement: "append",
-      targetTitle: "页面末尾",
-      style: {},
-      guides: [],
-    };
+    canvasDropHint.value = createLowcodeCanvasAppendDropHint(source);
     return canvasDropHint.value;
   }
-  const placement = getDropPlacement(point, node, nodeElement);
+  const frame = getCanvasFrameMetrics();
+  if (!frame) {
+    canvasDropHint.value = undefined;
+    return undefined;
+  }
+  const targetRect = getCanvasElementRect(nodeElement);
+  const placement = resolveLowcodeCanvasDropPlacement(point, node, targetRect);
   const manifest = registry.get(node.componentName)?.manifest;
-  canvasDropHint.value = {
+  canvasDropHint.value = createLowcodeCanvasTargetDropHint({
     source,
     placement,
     targetNodeId: node.id,
     targetTitle: manifest?.title ?? node.componentName,
-    style: createDropHintStyle(nodeElement, placement),
-    guides: createSnapGuides(nodeElement, placement),
-  };
+    frame,
+    targetRect,
+  });
   return canvasDropHint.value;
 }
 
@@ -4168,7 +4097,7 @@ function rollbackPublishSelectedRelease(): void {
             :key="`${guide.axis}-${guide.label}-${guide.style.top ?? guide.style.left}`"
             class="canvas-snap-guide"
             :class="`is-${guide.axis}`"
-            :style="guide.style"
+            :style="toCanvasStyle(guide.style)"
             aria-hidden="true"
           >
             <span>{{ guide.label }}</span>
@@ -4177,7 +4106,7 @@ function rollbackPublishSelectedRelease(): void {
             v-if="canvasDropHint && canvasDropHint.placement !== 'append'"
             class="canvas-drop-indicator"
             :class="`is-${canvasDropHint.placement}`"
-            :style="canvasDropHint.style"
+            :style="toCanvasStyle(canvasDropHint.style)"
             aria-hidden="true"
           >
             <span>

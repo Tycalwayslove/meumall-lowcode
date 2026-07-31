@@ -45,6 +45,12 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `isLowcodeNodeSelected`
 - `canLowcodeDragSelectedGroup`
 - `getLowcodeSelectedGroupNodeIdsForDrag`
+- `resolveLowcodeCanvasDropPlacement`
+- `createLowcodeCanvasDropHintStyle`
+- `createLowcodeCanvasSnapGuides`
+- `createLowcodeCanvasAppendDropHint`
+- `createLowcodeCanvasTargetDropHint`
+- `isLowcodeInvalidNodeDropTarget`
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
 - `LOWCODE_EDITOR_PROP_GROUP_META`
 - `getLowcodePropGroupKey`
@@ -482,6 +488,18 @@ The node selection helpers keep outline multi-select and same-parent group-drag 
 `isLowcodeNodeSelected(selectedNodeIds, nodeId)`, `canLowcodeDragSelectedGroup(rows, selectedNodeIds, nodeId)`, and `getLowcodeSelectedGroupNodeIdsForDrag(rows, selectedNodeIds, seedNodeId)` provide stable predicates and drag candidate ids for host shells.
 
 These helpers do not bind DOM events, handle Pointer Events, calculate drop positions, move nodes, render checkboxes, inspect permissions, write audit records, persist state, or modify Page Schema. Host shells remain responsible for Vue/React UI, actual drag/drop execution, node command execution, permission checks, collaboration locks, audit, and server saving.
+
+## Canvas Drop Hint API
+
+The canvas drop hint helpers keep drag placement, visual drop line, snap guide, append hint, and invalid node target rules reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`resolveLowcodeCanvasDropPlacement(point, targetNode, targetRect, options)` derives `before`, `after`, or `inside` from the pointer Y position and target node rectangle. By default only `SectionContainer` can resolve to `inside`, using the middle 28%-72% vertical range.
+
+`createLowcodeCanvasDropHintStyle(frame, targetRect, placement)` and `createLowcodeCanvasSnapGuides(frame, targetRect, placement)` derive DOM-free style maps from host-provided frame metrics and target rects. The host owns how those style maps are rendered.
+
+`createLowcodeCanvasAppendDropHint(source)` and `createLowcodeCanvasTargetDropHint(options)` create stable hint models for append and target-node drops. `isLowcodeInvalidNodeDropTarget(nodes, draggedNodeId, targetNodeId)` prevents dragging a node onto itself or any of its descendants.
+
+These helpers do not query DOM nodes, bind DragEvent or Pointer Events, scroll canvases, insert materials, move nodes, render guide elements, inspect permissions, write audit records, persist state, or modify Page Schema. Host shells remain responsible for event handling, element measurement, actual insert/move commands, group move execution, permission checks, collaboration locks, audit, and server saving.
 
 ## Property Group API
 

@@ -456,6 +456,69 @@ export interface PruneLowcodeNodeSelectionOptions {
   activeNodeId?: string;
 }
 
+export type LowcodeEditorCanvasDropPlacement = "before" | "after" | "inside" | "append";
+export type LowcodeEditorCanvasDragSource = "material" | "node";
+export type LowcodeEditorCanvasSnapGuideAxis = "x" | "y";
+
+export interface LowcodeEditorCanvasPoint {
+  clientX: number;
+  clientY: number;
+}
+
+export interface LowcodeEditorCanvasRect {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
+export interface LowcodeEditorCanvasFrameMetrics {
+  top: number;
+  left: number;
+  scrollTop: number;
+  scrollLeft: number;
+  clientWidth: number;
+  clientHeight: number;
+  scrollHeight: number;
+}
+
+export interface LowcodeEditorCanvasDropHintStyle {
+  top?: string;
+  left?: string;
+  width?: string;
+  height?: string;
+}
+
+export interface LowcodeEditorCanvasSnapGuide {
+  axis: LowcodeEditorCanvasSnapGuideAxis;
+  label: string;
+  style: LowcodeEditorCanvasDropHintStyle;
+}
+
+export interface LowcodeEditorCanvasDropHint {
+  source: LowcodeEditorCanvasDragSource;
+  placement: LowcodeEditorCanvasDropPlacement;
+  targetNodeId?: string;
+  targetTitle: string;
+  style: LowcodeEditorCanvasDropHintStyle;
+  guides: LowcodeEditorCanvasSnapGuide[];
+}
+
+export interface ResolveLowcodeCanvasDropPlacementOptions {
+  insideComponentNames?: Iterable<string>;
+  insideMinRatio?: number;
+  insideMaxRatio?: number;
+}
+
+export interface CreateLowcodeCanvasTargetDropHintOptions {
+  source: LowcodeEditorCanvasDragSource;
+  placement: Exclude<LowcodeEditorCanvasDropPlacement, "append">;
+  targetNodeId: string;
+  targetTitle: string;
+  frame: LowcodeEditorCanvasFrameMetrics;
+  targetRect: LowcodeEditorCanvasRect;
+}
+
 export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 
 export interface LowcodeEditorPropGroupMeta {
@@ -868,6 +931,7 @@ export const LOWCODE_EDITOR_DEFAULT_LIST_FIELDS: Record<string, readonly string[
 };
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
+const DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES = ["SectionContainer"];
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "navigate", paramName: "url", label: "跳转 URL" },
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
@@ -2496,6 +2560,145 @@ export function getLowcodeSelectedGroupNodeIdsForDrag<
     .map((row) => row.node.id);
 }
 
+export function resolveLowcodeCanvasDropPlacement(
+  point: Pick<LowcodeEditorCanvasPoint, "clientY">,
+  targetNode: Pick<LowcodeNode, "componentName">,
+  targetRect: Pick<LowcodeEditorCanvasRect, "top" | "height">,
+  options: ResolveLowcodeCanvasDropPlacementOptions = {},
+): Exclude<LowcodeEditorCanvasDropPlacement, "append"> {
+  const ratio = targetRect.height > 0 ? (point.clientY - targetRect.top) / targetRect.height : 0.5;
+  const insideComponentNames = new Set(options.insideComponentNames ?? DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES);
+  const insideMinRatio = options.insideMinRatio ?? 0.28;
+  const insideMaxRatio = options.insideMaxRatio ?? 0.72;
+
+  if (
+    insideComponentNames.has(targetNode.componentName) &&
+    ratio > insideMinRatio &&
+    ratio < insideMaxRatio
+  ) {
+    return "inside";
+  }
+
+  return ratio < 0.5 ? "before" : "after";
+}
+
+export function createLowcodeCanvasDropHintStyle(
+  frame: LowcodeEditorCanvasFrameMetrics,
+  targetRect: LowcodeEditorCanvasRect,
+  placement: Exclude<LowcodeEditorCanvasDropPlacement, "append">,
+): LowcodeEditorCanvasDropHintStyle {
+  const top = targetRect.top - frame.top + frame.scrollTop;
+  const left = targetRect.left - frame.left + frame.scrollLeft;
+  if (placement === "inside") {
+    return {
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${targetRect.width}px`,
+      height: `${targetRect.height}px`,
+    };
+  }
+
+  return {
+    top: `${top + (placement === "after" ? targetRect.height : 0)}px`,
+    left: `${left}px`,
+    width: `${targetRect.width}px`,
+  };
+}
+
+export function createLowcodeCanvasSnapGuides(
+  frame: LowcodeEditorCanvasFrameMetrics,
+  targetRect: LowcodeEditorCanvasRect,
+  placement: Exclude<LowcodeEditorCanvasDropPlacement, "append">,
+): LowcodeEditorCanvasSnapGuide[] {
+  const top = targetRect.top - frame.top + frame.scrollTop;
+  const left = targetRect.left - frame.left + frame.scrollLeft;
+  const frameHeight = Math.max(frame.scrollHeight, frame.clientHeight);
+  const targetCenterX = left + targetRect.width / 2;
+  const targetCenterY = top + targetRect.height / 2;
+
+  if (placement === "inside") {
+    return [
+      {
+        axis: "y",
+        label: "容器中心",
+        style: {
+          top: `${targetCenterY}px`,
+          left: "0px",
+          width: `${frame.clientWidth}px`,
+        },
+      },
+      {
+        axis: "x",
+        label: "容器中心",
+        style: {
+          top: "0px",
+          left: `${targetCenterX}px`,
+          height: `${frameHeight}px`,
+        },
+      },
+    ];
+  }
+
+  const edgeTop = top + (placement === "after" ? targetRect.height : 0);
+  return [
+    {
+      axis: "y",
+      label: placement === "before" ? "吸附到上边缘" : "吸附到下边缘",
+      style: {
+        top: `${edgeTop}px`,
+        left: "0px",
+        width: `${frame.clientWidth}px`,
+      },
+    },
+    {
+      axis: "x",
+      label: "目标中心",
+      style: {
+        top: "0px",
+        left: `${targetCenterX}px`,
+        height: `${frameHeight}px`,
+      },
+    },
+  ];
+}
+
+export function createLowcodeCanvasAppendDropHint(
+  source: LowcodeEditorCanvasDragSource,
+  targetTitle = "页面末尾",
+): LowcodeEditorCanvasDropHint {
+  return {
+    source,
+    placement: "append",
+    targetTitle,
+    style: {},
+    guides: [],
+  };
+}
+
+export function createLowcodeCanvasTargetDropHint(
+  options: CreateLowcodeCanvasTargetDropHintOptions,
+): LowcodeEditorCanvasDropHint {
+  return {
+    source: options.source,
+    placement: options.placement,
+    targetNodeId: options.targetNodeId,
+    targetTitle: options.targetTitle,
+    style: createLowcodeCanvasDropHintStyle(options.frame, options.targetRect, options.placement),
+    guides: createLowcodeCanvasSnapGuides(options.frame, options.targetRect, options.placement),
+  };
+}
+
+export function isLowcodeInvalidNodeDropTarget(
+  nodes: readonly LowcodeNode[],
+  draggedNodeId: string | undefined,
+  targetNodeId: string | undefined,
+): boolean {
+  if (!draggedNodeId || !targetNodeId) return false;
+  if (draggedNodeId === targetNodeId) return true;
+  const draggedNode = findLowcodeNodeById(nodes, draggedNodeId);
+  return lowcodeNodeContains(draggedNode, targetNodeId);
+}
+
 export function getLowcodePropGroupKey(
   propName: string,
   propSchema: LowcodePropSchema,
@@ -3527,6 +3730,20 @@ function flattenLowcodeOutlineRows(
       ...flattenLowcodeOutlineRows(node.children ?? [], manifests, depth + 1, node.id, [...ancestorIds, node.id]),
     ];
   });
+}
+
+function findLowcodeNodeById(nodes: readonly LowcodeNode[], nodeId: string): LowcodeNode | undefined {
+  for (const node of nodes) {
+    if (node.id === nodeId) return node;
+    const child = findLowcodeNodeById(node.children ?? [], nodeId);
+    if (child) return child;
+  }
+  return undefined;
+}
+
+function lowcodeNodeContains(node: LowcodeNode | undefined, nodeId: string): boolean {
+  if (!node) return false;
+  return Boolean(findLowcodeNodeById(node.children ?? [], nodeId));
 }
 
 function getJsonParamString(params: JsonObject | undefined, key: string, fallback: string): string {

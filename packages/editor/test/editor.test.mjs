@@ -13,6 +13,10 @@ import {
   canLowcodeDragSelectedGroup,
   createLowcodeActionConfig,
   createLowcodeActionFormItems,
+  createLowcodeCanvasAppendDropHint,
+  createLowcodeCanvasDropHintStyle,
+  createLowcodeCanvasSnapGuides,
+  createLowcodeCanvasTargetDropHint,
   createLowcodeDataSourceConfig,
   createLowcodeDataSourceFormItems,
   createLowcodeDefaultListItem,
@@ -83,6 +87,7 @@ import {
   groupLowcodeEditorCommands,
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
+  isLowcodeInvalidNodeDropTarget,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
   isLowcodeFavoriteMaterial,
@@ -141,6 +146,7 @@ import {
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
   recordLowcodeRecentMaterial,
+  resolveLowcodeCanvasDropPlacement,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -933,6 +939,98 @@ describe("@meumall/lowcode-editor readiness", () => {
       "products_1",
     ]);
     assert.deepEqual(getLowcodeSelectedGroupNodeIdsForDrag(rows, ["banner_1", "button_1"], "button_1"), ["button_1"]);
+  });
+
+  it("creates reusable canvas drop hint models", () => {
+    const frame = {
+      top: 100,
+      left: 20,
+      scrollTop: 40,
+      scrollLeft: 5,
+      clientWidth: 390,
+      clientHeight: 600,
+      scrollHeight: 820,
+    };
+    const targetRect = { top: 150, left: 30, width: 320, height: 100 };
+    const containerNode = createLowcodeNode({
+      id: "container_1",
+      componentName: "SectionContainer",
+      materialVersion: "1.0.0",
+      props: {},
+      children: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: {},
+        }),
+      ],
+    });
+    const buttonNode = createLowcodeNode({
+      id: "button_1",
+      componentName: "ActionButton",
+      materialVersion: "1.0.0",
+      props: {},
+    });
+
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 160 }, buttonNode, targetRect), "before");
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 230 }, buttonNode, targetRect), "after");
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect), "inside");
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect, {
+      insideComponentNames: ["CustomContainer"],
+    }), "after");
+
+    assert.deepEqual(createLowcodeCanvasDropHintStyle(frame, targetRect, "inside"), {
+      top: "90px",
+      left: "15px",
+      width: "320px",
+      height: "100px",
+    });
+    assert.deepEqual(createLowcodeCanvasDropHintStyle(frame, targetRect, "after"), {
+      top: "190px",
+      left: "15px",
+      width: "320px",
+    });
+
+    assert.deepEqual(createLowcodeCanvasSnapGuides(frame, targetRect, "before"), [
+      { axis: "y", label: "吸附到上边缘", style: { top: "90px", left: "0px", width: "390px" } },
+      { axis: "x", label: "目标中心", style: { top: "0px", left: "175px", height: "820px" } },
+    ]);
+    assert.deepEqual(createLowcodeCanvasSnapGuides(frame, targetRect, "inside"), [
+      { axis: "y", label: "容器中心", style: { top: "140px", left: "0px", width: "390px" } },
+      { axis: "x", label: "容器中心", style: { top: "0px", left: "175px", height: "820px" } },
+    ]);
+
+    assert.deepEqual(createLowcodeCanvasAppendDropHint("material"), {
+      source: "material",
+      placement: "append",
+      targetTitle: "页面末尾",
+      style: {},
+      guides: [],
+    });
+    assert.deepEqual(createLowcodeCanvasTargetDropHint({
+      source: "node",
+      placement: "inside",
+      targetNodeId: "container_1",
+      targetTitle: "容器",
+      frame,
+      targetRect,
+    }), {
+      source: "node",
+      placement: "inside",
+      targetNodeId: "container_1",
+      targetTitle: "容器",
+      style: { top: "90px", left: "15px", width: "320px", height: "100px" },
+      guides: [
+        { axis: "y", label: "容器中心", style: { top: "140px", left: "0px", width: "390px" } },
+        { axis: "x", label: "容器中心", style: { top: "0px", left: "175px", height: "820px" } },
+      ],
+    });
+
+    assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "container_1", "container_1"), true);
+    assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "container_1", "banner_1"), true);
+    assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "banner_1", "button_1"), false);
+    assert.equal(isLowcodeInvalidNodeDropTarget([containerNode, buttonNode], "banner_1", undefined), false);
   });
 
   it("creates reusable property groups and collapsed state", () => {
