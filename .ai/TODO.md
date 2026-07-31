@@ -7,7 +7,7 @@
 ## P1
 
 - 按 `docs/material-layering-architecture.md` 继续推进 Phase 1：现有主要 React/Vue H5 物料已基本复用内部 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcTextarea`、`MlcSwitch`、`MlcStepper` 和 `h5Tokens`；后续新增或改造物料继续优先复用 primitives，观察 API 稳定性后再评估抽独立 npm 包，并按真实场景补齐 `CountdownText`、`Overlay`、`Modal`、`Tabs` 等后续 runtime primitives。
-- 继续完善 Vue3 编辑器 UI：在首轮新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索、物料详情预览、物料收藏与最近使用、列表项图片素材选择、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、工作区状态摘要、属性面板分组、快捷命令面板、节点右键菜单和键盘快捷键基础上，拆分正式管理台组件、真实素材/商品/优惠券/门店/达人中心、发布审批、服务端发布校验、服务端 JSON 级版本 diff 和真实回滚流程。
+- 继续完善 Vue3 编辑器 UI：在首轮新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索、物料详情预览、物料收藏与最近使用、列表项图片素材选择、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、工作区状态摘要、属性面板分组、快捷命令面板、节点右键菜单、节点键盘快捷键、editor readiness API 基础上，继续拆分正式管理台组件、真实素材/商品/优惠券/门店/达人中心、发布审批、服务端发布校验、服务端 JSON 级版本 diff 和真实回滚流程。
 - 基于 Template Library Client 将本地页面模板库和本地自定义模板升级为 Java 配置平台模板市场，补充模板版本、上下架、权限、审核和缩略图。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、审批、分页、previewToken 和错误码。
 - 在 `hybird-meumall` 真实业务仓库创建低代码 H5 路由，并按 `.ai-workspace/contracts/h5-runtime-integration-v1.md` 接入 npm 包。

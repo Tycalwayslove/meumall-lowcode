@@ -11,7 +11,7 @@
     "dev:h5": "pnpm --filter @meumall/lowcode-h5-runtime-playground dev",
     "build": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground build && pnpm --filter @meumall/lowcode-h5-runtime-playground build",
     "typecheck": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground typecheck && pnpm --filter @meumall/lowcode-h5-runtime-playground typecheck",
-    "test": "pnpm build && pnpm check:architecture && node --test packages/schema/test/*.test.mjs packages/core/test/*.test.mjs packages/adapters/test/*.test.mjs packages/materials-h5/test/*.test.mjs",
+    "test": "pnpm build && pnpm check:architecture && node --test packages/schema/test/*.test.mjs packages/core/test/*.test.mjs packages/adapters/test/*.test.mjs packages/editor/test/*.test.mjs packages/materials-h5/test/*.test.mjs",
     "check:architecture": "node scripts/check-architecture.mjs",
     "smoke:browser": "node scripts/browser-smoke.mjs",
     "smoke:visual": "node scripts/visual-smoke.mjs",

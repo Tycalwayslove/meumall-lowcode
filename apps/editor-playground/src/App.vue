@@ -51,9 +51,14 @@ import {
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
   appendNode,
+  countLowcodeNodes,
   copyNode,
+  createLowcodeDeliverySummary,
+  createLowcodePublishChecks,
   createEditorState,
   duplicateNode,
+  flattenLowcodeNodes,
+  getLowcodeNodeDisplayName,
   insertNode,
   markSaved,
   moveNodeById,
@@ -64,8 +69,11 @@ import {
   selectNode,
   setEditorMode,
   setEditorViewport,
+  summarizeLowcodePublishChecks,
   undo,
   type LowcodeEditorState,
+  type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
+  type LowcodeEditorPublishCheck as PublishCheck,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -406,7 +414,6 @@ let suppressNextAutoSave = false;
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
-type PublishCheckStatus = "pass" | "warning" | "error";
 interface TemplateListItem {
   id: string;
   title: string;
@@ -462,15 +469,6 @@ interface PointerCanvasDragState {
   nodeId?: string;
 }
 
-interface PublishCheck {
-  id: string;
-  title: string;
-  status: PublishCheckStatus;
-  description: string;
-  nodeId?: string;
-  nodeTitle?: string;
-}
-
 interface ReleaseDiffItem {
   label: string;
   current: string;
@@ -490,11 +488,6 @@ interface PreviewLinkItem {
   title: string;
   description: string;
   url: string;
-}
-
-interface DeliveryMetricItem {
-  label: string;
-  value: string;
 }
 
 interface WorkspaceStat {
@@ -824,15 +817,7 @@ const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => [
   },
 ]);
 const publishChecks = computed(() => createPublishChecks());
-const publishCheckSummary = computed(() => {
-  return publishChecks.value.reduce(
-    (summary, check) => ({
-      ...summary,
-      [check.status]: summary[check.status] + 1,
-    }),
-    { pass: 0, warning: 0, error: 0 } as Record<PublishCheckStatus, number>,
-  );
-});
+const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
 const materialCategories = computed(() => ["全部", ...Array.from(new Set(materials.map((item) => item.manifest.category)))]);
 const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
@@ -994,22 +979,10 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() => {
   }
   return items;
 });
-const deliverySchemaJson = computed(() => JSON.stringify(editorState.value.schema, null, 2));
-const deliverySchemaSizeText = computed(() => formatByteSize(new Blob([deliverySchemaJson.value]).size));
-const deliveryStatusText = computed(() => {
-  if (hasPublishBlockingErrors.value) return `${publishCheckSummary.value.error} 个阻塞项`;
-  if (publishCheckSummary.value.warning) return `${publishCheckSummary.value.warning} 个提醒`;
-  return "检查通过";
-});
-const deliveryMetrics = computed<DeliveryMetricItem[]>(() => [
-  { label: "页面标题", value: editorState.value.schema.title || "未命名 H5 页面" },
-  { label: "Page ID", value: editorState.value.schema.pageId },
-  { label: "节点", value: `${schemaNodeCount(editorState.value.schema)} 个` },
-  { label: "数据源", value: `${editorState.value.schema.dataSources?.length ?? 0} 个` },
-  { label: "动作", value: `${editorState.value.schema.actions?.length ?? 0} 个` },
-  { label: "Schema", value: deliverySchemaSizeText.value },
-  { label: "检查", value: deliveryStatusText.value },
-]);
+const deliverySummary = computed(() => createLowcodeDeliverySummary(editorState.value.schema, { checks: publishChecks.value }));
+const deliverySchemaJson = computed(() => deliverySummary.value.schemaJson);
+const deliveryStatusText = computed(() => deliverySummary.value.statusText);
+const deliveryMetrics = computed<DeliveryMetricItem[]>(() => deliverySummary.value.metrics);
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(getAllPageTemplates().map((template) => template.category)))]);
 const pageStartTemplates = computed<TemplateListItem[]>(() => getAllPageTemplates().map(createTemplateListItem));
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
@@ -1319,8 +1292,7 @@ function getNodeManifestTitle(node: LowcodeNode): string {
 }
 
 function getNodeDisplayName(node: LowcodeNode): string {
-  const name = node.meta?.name?.trim();
-  return name || getNodeManifestTitle(node);
+  return getLowcodeNodeDisplayName(node, registry.get(node.componentName)?.manifest);
 }
 
 function getNodeSubtitle(row: OutlineRow): string {
@@ -1343,7 +1315,7 @@ function outlineRowMatchesKeyword(row: OutlineRow, keyword: string): boolean {
 }
 
 function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
-  return nodes.flatMap((node) => [node, ...flattenNodeList(node.children ?? [])]);
+  return flattenLowcodeNodes(nodes);
 }
 
 function getSiblingNodes(nodes: LowcodeNode[], parentId?: string): LowcodeNode[] | undefined {
@@ -1495,7 +1467,7 @@ function markSchemaPersisted(schema: LowcodePageSchema): void {
 }
 
 function schemaNodeCount(schema: LowcodePageSchema): number {
-  return flattenNodeList(schema.nodes).length;
+  return countLowcodeNodes(schema);
 }
 
 function pickTemplatePreviewText(value: JsonValue | undefined): string {
@@ -1816,151 +1788,10 @@ function runtimeDataStatusText(): string {
 }
 
 function createPublishChecks(): PublishCheck[] {
-  const schema = editorState.value.schema;
-  const nodes = flattenNodeList(schema.nodes);
-  const missingImageChecks: PublishCheck[] = nodes.flatMap((node) => {
-    const manifest = registry.get(node.componentName)?.manifest;
-    if (!manifest) return [];
-    return Object.entries(manifest.propsSchema)
-      .filter(([, propSchema]) => propSchema.setter === "image")
-      .filter(([propName]) => {
-        const value = node.props[propName];
-        return typeof value !== "string" || value.trim().length === 0;
-      })
-      .map(([propName, propSchema]) => ({
-        id: `image-${node.id}-${propName}`,
-        title: "图片素材",
-        status: "warning" as const,
-        description: `${getNodeDisplayName(node)} 的「${propSchema.label ?? propName}」为空`,
-        nodeId: node.id,
-        nodeTitle: getNodeDisplayName(node),
-      }));
+  return createLowcodePublishChecks(editorState.value.schema, {
+    materialManifests: materials.map((material) => material.manifest),
+    dataSourceRecords: previewDataSourceRecords.value,
   });
-  const emptyProductChecks: PublishCheck[] = nodes.flatMap((node) => {
-    if (!["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(node.componentName)) return [];
-    if (node.dataBinding?.items) return [];
-    if (Array.isArray(node.props.items) && node.props.items.length > 0) return [];
-    return [{
-      id: `products-${node.id}`,
-      title: "商品内容",
-      status: "warning" as const,
-      description: `${getNodeDisplayName(node)} 没有静态商品，也没有绑定商品数据源`,
-      nodeId: node.id,
-      nodeTitle: getNodeDisplayName(node),
-    }];
-  });
-  const dataSourceErrorChecks: PublishCheck[] = previewDataSourceRecords.value
-    .filter((record) => record.status === "error")
-    .map((record) => {
-      const boundNode = nodes.find((node) => Object.values(node.dataBinding ?? {}).includes(record.id));
-      return {
-        id: `data-source-${record.id}`,
-        title: "数据源解析",
-        status: "error" as const,
-        description: `${record.id} 解析失败${record.error ? `：${record.error}` : ""}`,
-        nodeId: boundNode?.id,
-        nodeTitle: boundNode ? getNodeDisplayName(boundNode) : undefined,
-      };
-    });
-  const actions = new Set((schema.actions ?? []).map((action) => action.id));
-  const actionNodeUsage = new Map<string, { nodeId: string; nodeTitle: string; eventName: string }>();
-  nodes.forEach((node) => {
-    Object.entries(node.events ?? {}).forEach(([eventName, ref]) => {
-      if (!actionNodeUsage.has(ref.actionId)) {
-        actionNodeUsage.set(ref.actionId, {
-          nodeId: node.id,
-          nodeTitle: getNodeDisplayName(node),
-          eventName,
-        });
-      }
-    });
-  });
-  const missingActionChecks: PublishCheck[] = nodes.flatMap((node) =>
-    Object.entries(node.events ?? [])
-      .filter(([, ref]) => !actions.has(ref.actionId))
-      .map(([eventName, ref]) => ({
-        id: `action-ref-${node.id}-${eventName}`,
-        title: "动作配置",
-        status: "error" as const,
-        description: `${getNodeDisplayName(node)} 的 ${eventName} 引用了不存在的动作 ${ref.actionId}`,
-        nodeId: node.id,
-        nodeTitle: getNodeDisplayName(node),
-      })),
-  );
-  const actionWarningChecks: PublishCheck[] = (schema.actions ?? []).flatMap((action) => {
-    const usage = actionNodeUsage.get(action.id);
-    const target = {
-      nodeId: usage?.nodeId,
-      nodeTitle: usage?.nodeTitle,
-    };
-    if (action.type === "navigate" && !getParamString(action.params, "url", "")) {
-      return [{
-        id: `action-param-${action.id}-url`,
-        title: "动作配置",
-        status: "warning" as const,
-        description: `${action.id} 缺少跳转 URL${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
-        ...target,
-      }];
-    }
-    if (action.type === "coupon.receive" && !getParamString(action.params, "couponId", "")) {
-      return [{
-        id: `action-param-${action.id}-couponId`,
-        title: "动作配置",
-        status: "warning" as const,
-        description: `${action.id} 缺少 couponId${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
-        ...target,
-      }];
-    }
-    if (action.type === "tracking.click" && !getParamString(action.params, "eventName", "")) {
-      return [{
-        id: `action-param-${action.id}-eventName`,
-        title: "动作配置",
-        status: "warning" as const,
-        description: `${action.id} 缺少 eventName${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
-        ...target,
-      }];
-    }
-    return [];
-  });
-
-  return [
-    {
-      id: "schema",
-      title: "Schema 校验",
-      status: validation.value.valid ? "pass" : "error",
-      description: validation.value.valid ? "Page Schema 结构有效" : validation.value.errors.join("；"),
-    },
-    {
-      id: "nodes",
-      title: "页面节点",
-      status: nodes.length > 0 ? "pass" : "error",
-      description: nodes.length > 0 ? `已配置 ${nodes.length} 个节点` : "页面没有任何节点",
-    },
-    ...(missingImageChecks.length ? missingImageChecks : [{
-      id: "images",
-      title: "图片素材",
-      status: "pass" as const,
-      description: "图片类字段已配置",
-    }]),
-    ...(emptyProductChecks.length ? emptyProductChecks : [{
-      id: "products",
-      title: "商品内容",
-      status: "pass" as const,
-      description: "商品组件已有静态商品或数据源绑定",
-    }]),
-    ...(dataSourceErrorChecks.length ? dataSourceErrorChecks : [{
-      id: "dataSources",
-      title: "数据源解析",
-      status: "pass" as const,
-      description: `数据源状态正常，共 ${previewDataSourceRecords.value.length} 个`,
-    }]),
-    ...(missingActionChecks.length || actionWarningChecks.length ? [...missingActionChecks, ...actionWarningChecks] : [{
-      id: "actions",
-      title: "动作配置",
-      status: "pass" as const,
-      description: `动作配置正常，共 ${(schema.actions ?? []).length} 个`,
-    }]),
-  ];
 }
 
 function getParamString(params: JsonObject | undefined, key: string, fallback: string): string {
@@ -3994,14 +3825,6 @@ function createSchemaExportFileName(schema: LowcodePageSchema): string {
   const pageId = schema.pageId.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "page";
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   return `meumall-lowcode-${pageId}-${timestamp}.json`;
-}
-
-function formatByteSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(kb >= 100 ? 0 : 1)} KB`;
-  const mb = kb / 1024;
-  return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
 }
 
 function exportCurrentSchema(): void {
