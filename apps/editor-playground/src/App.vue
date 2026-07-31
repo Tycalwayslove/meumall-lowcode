@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from "vue";
 import {
+  ArrowDown,
+  ArrowUp,
   Code2,
   Copy,
   Database,
@@ -34,7 +36,6 @@ import {
   setEditorMode,
   setEditorViewport,
   undo,
-  moveNode,
   type LowcodeEditorState,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -216,6 +217,7 @@ const jsonError = ref("");
 const draggedNodeId = ref<string>();
 const releaseMessage = ref("");
 const releases = ref<LocalPageRelease[]>(listReleases(editorState.value.schema.pageId));
+const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 
 const validation = computed(() => validateLowcodePageSchema(editorState.value.schema));
 const selectedNode = computed(() => findNode(editorState.value.schema.nodes, editorState.value.selectedNodeId));
@@ -224,6 +226,16 @@ const selectedManifest = computed(() =>
 );
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
+const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
+const selectedInsertManifest = computed(() => {
+  return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
+});
+const canMoveSelectedUp = computed(() => Boolean(selectedOutlineRow.value && selectedOutlineRow.value.index > 0));
+const canMoveSelectedDown = computed(() => {
+  const row = selectedOutlineRow.value;
+  if (!row) return false;
+  return row.index < getSiblingCount(row.parentId) - 1;
+});
 const previewData = computed<JsonObject>(() => resolvePreviewData(editorState.value.schema.dataSources ?? []));
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimePreviewData = computed<JsonObject>(() => resolvePreviewData(runtimeSchema.value.dataSources ?? []));
@@ -258,6 +270,11 @@ function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): Outli
     { node, index, depth, parentId },
     ...flattenNodes(node.children ?? [], depth + 1, node.id),
   ]);
+}
+
+function getSiblingCount(parentId?: string): number {
+  if (!parentId) return editorState.value.schema.nodes.length;
+  return findNode(editorState.value.schema.nodes, parentId)?.children?.length ?? 0;
 }
 
 function resolvePreviewData(dataSources: LowcodeDataSourceConfig[]): JsonObject {
@@ -337,10 +354,15 @@ function onNodeDrop(event: DragEvent, target: OutlineRow): void {
 }
 
 function moveSelected(offset: number): void {
-  if (!selectedNode.value) return;
-  const fromIndex = editorState.value.schema.nodes.findIndex((node) => node.id === selectedNode.value?.id);
-  if (fromIndex < 0) return;
-  editorState.value = moveNode(editorState.value, fromIndex, fromIndex + offset);
+  const row = selectedOutlineRow.value;
+  if (!row) return;
+  const nextIndex = row.index + offset;
+  if (nextIndex < 0 || nextIndex >= getSiblingCount(row.parentId)) return;
+  editorState.value = moveNodeById(editorState.value, {
+    nodeId: row.node.id,
+    targetParentId: row.parentId,
+    index: nextIndex,
+  });
 }
 
 function bindSelectedProductListToDataSource(): void {
@@ -421,6 +443,27 @@ function copySelected(): void {
 
 function pasteCopied(): void {
   editorState.value = pasteNode(editorState.value);
+}
+
+function insertMaterialAroundSelected(placement: "before" | "after"): void {
+  const row = selectedOutlineRow.value;
+  const manifest = selectedInsertManifest.value;
+  if (!manifest) return;
+  if (!row) {
+    addMaterial(manifest);
+    return;
+  }
+  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
+    parentId: row.parentId,
+    index: placement === "before" ? row.index : row.index + 1,
+    select: true,
+  });
+}
+
+function insertMaterialInsideSelectedContainer(): void {
+  const manifest = selectedInsertManifest.value;
+  if (!manifest) return;
+  addMaterialToSelectedContainer(manifest);
 }
 
 function resetSchema(): void {
@@ -829,6 +872,59 @@ function formatReleaseTime(value: string): string {
       </div>
 
       <div v-if="editorState.mode !== 'outline'" class="phone-stage">
+        <div v-if="selectedNode && selectedManifest && editorState.mode === 'design'" class="canvas-context-toolbar">
+          <div class="context-title">
+            <strong>{{ selectedManifest.title }}</strong>
+            <span>{{ selectedNode.id }}</span>
+          </div>
+          <label>
+            <span>插入物料</span>
+            <select v-model="selectedInsertComponentName">
+              <option
+                v-for="material in materials"
+                :key="`insert-${material.manifest.componentName}`"
+                :value="material.manifest.componentName"
+              >
+                {{ material.manifest.title }}
+              </option>
+            </select>
+          </label>
+          <div class="context-actions">
+            <button type="button" title="在当前节点前插入" @click="insertMaterialAroundSelected('before')">
+              <ArrowUp :size="15" />
+              <span>前方插入</span>
+            </button>
+            <button type="button" title="在当前节点后插入" @click="insertMaterialAroundSelected('after')">
+              <ArrowDown :size="15" />
+              <span>后方插入</span>
+            </button>
+            <button
+              type="button"
+              title="加入选中容器"
+              :disabled="!selectedNodeIsContainer"
+              @click="insertMaterialInsideSelectedContainer"
+            >
+              <Plus :size="15" />
+              <span>加入容器</span>
+            </button>
+            <button type="button" title="上移当前节点" :disabled="!canMoveSelectedUp" @click="moveSelected(-1)">
+              <ArrowUp :size="15" />
+              <span>上移</span>
+            </button>
+            <button type="button" title="下移当前节点" :disabled="!canMoveSelectedDown" @click="moveSelected(1)">
+              <ArrowDown :size="15" />
+              <span>下移</span>
+            </button>
+            <button type="button" title="创建副本" @click="duplicateSelected">
+              <Copy :size="15" />
+              <span>副本</span>
+            </button>
+            <button type="button" title="删除节点" class="danger" @click="removeSelected">
+              <Trash2 :size="15" />
+              <span>删除</span>
+            </button>
+          </div>
+        </div>
         <div class="phone-frame" :style="{ width: `${editorState.viewport.width}px` }">
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
@@ -964,12 +1060,12 @@ function formatReleaseTime(value: string): string {
           </label>
 
           <div class="toolbar inspector-actions">
-            <button title="上移节点" @click="moveSelected(-1)">
-              <GripVertical :size="16" />
+            <button title="上移节点" :disabled="!canMoveSelectedUp" @click="moveSelected(-1)">
+              <ArrowUp :size="16" />
               <span>上移</span>
             </button>
-            <button title="下移节点" @click="moveSelected(1)">
-              <GripVertical :size="16" />
+            <button title="下移节点" :disabled="!canMoveSelectedDown" @click="moveSelected(1)">
+              <ArrowDown :size="16" />
               <span>下移</span>
             </button>
             <button title="复制节点" @click="copySelected">

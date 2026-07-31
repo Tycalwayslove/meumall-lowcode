@@ -12,13 +12,28 @@ function text(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
 
+function number(value: unknown, fallback: number): number {
+  return typeof value === "number" ? value : fallback;
+}
+
 export function ActivityHero({ props, children }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
   return (
-    <section style={{ padding: 16, background: text(props.backgroundColor, "#fff") }}>
-      {imageUrl ? <img src={imageUrl} alt="" style={{ width: "100%", display: "block" }} /> : null}
-      <h1 style={{ margin: "12px 0 4px", fontSize: 24 }}>{text(props.title, "活动标题")}</h1>
-      <p style={{ margin: 0, color: "#666" }}>{text(props.subtitle)}</p>
+    <section style={{ padding: "18px 16px", background: text(props.backgroundColor, "#fff") }}>
+      {imageUrl ? (
+        <img src={imageUrl} alt="" style={{ width: "100%", display: "block", borderRadius: 8 }} />
+      ) : null}
+      <h1
+        style={{
+          margin: "14px 0 6px",
+          fontSize: number(props.titleSize, 24),
+          lineHeight: 1.2,
+          color: text(props.titleColor, "#111827"),
+        }}
+      >
+        {text(props.title, "活动标题")}
+      </h1>
+      <p style={{ margin: 0, color: "#6b7280", fontSize: 14, lineHeight: 1.6 }}>{text(props.subtitle)}</p>
       {children}
     </section>
   );
@@ -27,7 +42,13 @@ export function ActivityHero({ props, children }: MaterialProps) {
 export function ImageBanner({ props }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
   if (!imageUrl) return null;
-  return <img src={imageUrl} alt={text(props.alt)} style={{ width: "100%", display: "block" }} />;
+  return (
+    <img
+      src={imageUrl}
+      alt={text(props.alt)}
+      style={{ width: "100%", display: "block", borderRadius: number(props.radius, 0) }}
+    />
+  );
 }
 
 export function RichTextBlock({ props }: MaterialProps) {
@@ -72,16 +93,87 @@ export function ProductList({ props }: MaterialProps) {
 export function CouponSection({ props }: MaterialProps) {
   const title = text(props.title, "优惠券");
   return (
-    <section style={{ padding: 16, background: "#fff7ed" }}>
+    <section style={{ padding: 16, background: text(props.backgroundColor, "#fff7ed") }}>
       <h2 style={{ margin: "0 0 12px", fontSize: 18 }}>{title}</h2>
-      <button type="button" style={{ width: "100%", height: 44 }}>
+      <button
+        type="button"
+        style={{
+          width: "100%",
+          height: 44,
+          border: 0,
+          borderRadius: 8,
+          color: "#ffffff",
+          background: text(props.buttonColor, "#111827"),
+          fontWeight: 700,
+        }}
+      >
         {text(props.buttonText, "领取优惠券")}
       </button>
     </section>
   );
 }
 
+export function SectionContainer({ props, children }: MaterialProps) {
+  const title = text(props.title);
+  const subtitle = text(props.subtitle);
+  return (
+    <section
+      style={{
+        margin: "10px 0",
+        padding: number(props.padding, 12),
+        background: text(props.backgroundColor, "#ffffff"),
+        borderRadius: number(props.radius, 10),
+      }}
+    >
+      {title ? <h2 style={{ margin: "0 0 6px", color: "#111827", fontSize: 18 }}>{title}</h2> : null}
+      {subtitle ? (
+        <p style={{ margin: "0 0 12px", color: "#64748b", fontSize: 13, lineHeight: 1.6 }}>{subtitle}</p>
+      ) : null}
+      {children ? (
+        <div>{children}</div>
+      ) : (
+        <div
+          style={{
+            padding: 14,
+            border: "1px dashed #cbd5e1",
+            borderRadius: 8,
+            color: "#64748b",
+            background: "#f8fafc",
+            textAlign: "center",
+          }}
+        >
+          向容器中添加物料
+        </div>
+      )}
+    </section>
+  );
+}
+
 export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] = [
+  {
+    component: SectionContainer,
+    manifest: createMaterialManifest({
+      componentName: "SectionContainer",
+      materialVersion: "0.1.0",
+      title: "容器区块",
+      category: "layout",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "精选专区",
+        subtitle: "可在容器中继续添加 Banner、商品或优惠券。",
+        backgroundColor: "#ffffff",
+        padding: 12,
+        radius: 10,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "精选专区" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "可在容器中继续添加 Banner、商品或优惠券。" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12 },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+      },
+    }),
+  },
   {
     component: ActivityHero,
     manifest: createMaterialManifest({
@@ -91,16 +183,20 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       category: "marketing",
       platforms: ["h5"],
       defaultProps: {
-        title: "活动标题",
-        subtitle: "",
-        imageUrl: "",
+        title: "夏日好物节",
+        subtitle: "精选爆品限时补贴，支持一键搭建推广页。",
+        imageUrl: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
         backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        titleSize: 24,
       },
       propsSchema: {
-        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "活动标题" },
-        subtitle: { label: "副标题", type: "string", setter: "input", defaultValue: "" },
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "夏日好物节" },
+        subtitle: { label: "副标题", type: "string", setter: "textarea", defaultValue: "精选爆品限时补贴，支持一键搭建推广页。" },
         imageUrl: { label: "图片", type: "string", setter: "image", defaultValue: "" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 24 },
       },
     }),
   },
@@ -112,10 +208,15 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       title: "图片 Banner",
       category: "marketing",
       platforms: ["h5"],
-      defaultProps: { imageUrl: "", alt: "" },
+      defaultProps: {
+        imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+        alt: "",
+        radius: 8,
+      },
       propsSchema: {
         imageUrl: { label: "图片", type: "string", setter: "image", required: true, defaultValue: "" },
         alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
       },
     }),
   },
@@ -143,10 +244,17 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       title: "优惠券区块",
       category: "marketing",
       platforms: ["h5"],
-      defaultProps: { title: "优惠券", buttonText: "领取优惠券" },
+      defaultProps: {
+        title: "新人专享券",
+        buttonText: "立即领取",
+        backgroundColor: "#fff7ed",
+        buttonColor: "#111827",
+      },
       propsSchema: {
-        title: { label: "标题", type: "string", setter: "input", defaultValue: "优惠券" },
-        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "领取优惠券" },
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "新人专享券" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "立即领取" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fff7ed" },
+        buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
     }),
@@ -166,4 +274,3 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
     }),
   },
 ];
-
