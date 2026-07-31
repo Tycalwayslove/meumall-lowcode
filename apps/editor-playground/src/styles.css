@@ -23,6 +23,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -193,6 +194,11 @@ button:disabled {
   min-height: 42px;
 }
 
+.drag-icon {
+  flex: 0 0 auto;
+  color: #94a3b8;
+}
+
 .outline-item > span {
   display: grid;
   place-items: center;
@@ -273,8 +279,42 @@ button:disabled {
   background: #f3f4f6;
 }
 
-.mlc-material + .mlc-material {
+.mlc-material + .mlc-material,
+.mlc-runtime-node + .mlc-runtime-node {
   margin-top: 10px;
+}
+
+.mlc-runtime-node {
+  position: relative;
+  cursor: pointer;
+  outline: 1px solid transparent;
+  transition:
+    outline-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.mlc-runtime-node:hover {
+  outline-color: rgba(15, 23, 42, 0.35);
+}
+
+.mlc-runtime-node.is-selected {
+  outline: 2px solid #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+  z-index: 2;
+}
+
+.mlc-runtime-node.is-selected::before {
+  content: attr(data-lowcode-node-id);
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 3;
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+  background: #2563eb;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .mlc-empty-image,
@@ -340,6 +380,7 @@ button:disabled {
 }
 
 .field input,
+.field select,
 .field textarea {
   width: 100%;
   border: 1px solid #cbd5e1;
@@ -347,6 +388,10 @@ button:disabled {
   padding: 9px 10px;
   color: #111827;
   background: #fff;
+}
+
+.field select {
+  height: 38px;
 }
 
 .field textarea {
@@ -382,7 +427,7 @@ button:disabled {
 }
 
 .inspector-actions button {
-  flex: 1 1 calc(50% - 4px);
+  flex: 1 1 calc(33.333% - 6px);
 }
 
 .inspector-actions .danger {
@@ -399,6 +444,28 @@ button:disabled {
   border-radius: 8px;
   color: #64748b;
   background: #fff;
+}
+
+.data-source-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.data-source-card {
+  padding: 12px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.text-danger {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  background: #fff5f5;
 }
 
 .state-list {

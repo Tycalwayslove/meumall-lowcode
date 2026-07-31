@@ -40,6 +40,18 @@ export const LowcodeVueRenderer = defineComponent({
       type: [String, Object, Function] as PropType<VNodeChild>,
       default: null,
     },
+    editable: {
+      type: Boolean,
+      default: false,
+    },
+    selectedNodeId: {
+      type: String,
+      default: undefined,
+    },
+    onNodeSelect: {
+      type: Function as PropType<(node: LowcodeNode) => void>,
+      default: undefined,
+    },
   },
   setup(props) {
     const renderNode = (node: LowcodeNode): VNodeChild => {
@@ -62,7 +74,7 @@ export const LowcodeVueRenderer = defineComponent({
       );
       const children = node.children?.map((child) => renderNode(child)) ?? [];
 
-      return h(
+      const renderedNode = h(
         material.component,
         {
           key: node.id,
@@ -73,6 +85,25 @@ export const LowcodeVueRenderer = defineComponent({
           node,
         },
         () => children,
+      );
+
+      if (!props.editable) return renderedNode;
+
+      return h(
+        "div",
+        {
+          key: node.id,
+          class: {
+            "mlc-runtime-node": true,
+            "is-selected": props.selectedNodeId === node.id,
+          },
+          "data-lowcode-node-id": node.id,
+          onClick: (event: MouseEvent) => {
+            event.stopPropagation();
+            props.onNodeSelect?.(node);
+          },
+        },
+        [renderedNode],
       );
     };
 
@@ -89,4 +120,3 @@ export const LowcodeVueRenderer = defineComponent({
     };
   },
 });
-

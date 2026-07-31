@@ -9,10 +9,10 @@
 
 ## P1
 
-- 继续完善 Vue3 编辑器 UI：拖拽排序、页面发布状态、数据源面板、素材选择器。
+- 继续完善 Vue3 编辑器 UI：多层容器排序、素材选择器、商品选择器、发布流程。
 - 设计 Java 配置平台 API 契约。
 - 设计 `hybird-meumall` 接入方式。
-- 补充 data source resolver 生命周期。
+- 补充 data source resolver 生命周期和真实请求预览。
 - 补充 action 安全白名单。
 
 ## P2

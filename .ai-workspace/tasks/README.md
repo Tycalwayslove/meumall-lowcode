@@ -9,3 +9,4 @@
 - `TASK-2026-0731-001-ai-workflow-migration.md`
 - `TASK-2026-0731-002-schema-editor-foundation.md`
 - `TASK-2026-0731-003-vue-editor-playground.md`
+- `TASK-2026-0731-004-editor-interaction-upgrade.md`

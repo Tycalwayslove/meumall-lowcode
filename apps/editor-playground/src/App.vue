@@ -3,7 +3,9 @@ import { computed, ref, shallowRef, watch } from "vue";
 import {
   Code2,
   Copy,
+  Database,
   Eye,
+  GripVertical,
   Layers,
   MonitorSmartphone,
   PanelRight,
@@ -30,6 +32,7 @@ import {
   setEditorMode,
   setEditorViewport,
   undo,
+  moveNode,
   type LowcodeEditorState,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -39,9 +42,11 @@ import {
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
+  type LowcodeDataSourceConfig,
   type LowcodeMaterialManifest,
   type LowcodeNode,
   type LowcodePageSchema,
+  type LowcodePageStatus,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
 
@@ -109,6 +114,21 @@ const initialSchema = createLowcodePageSchema({
       },
     },
   ],
+  dataSources: [
+    {
+      id: "ds_products",
+      type: "product.byActivity",
+      bindTo: "products",
+      params: {
+        activityId: "summer-campaign-demo",
+        limit: 20,
+      },
+      cache: {
+        ttlSeconds: 60,
+        scope: "public",
+      },
+    },
+  ],
   publishMeta: {
     environment: "test",
   },
@@ -128,6 +148,7 @@ function loadSchema(): LowcodePageSchema {
 const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadSchema(), { selectedNodeId: "node_hero" }));
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
+const draggedNodeId = ref<string>();
 
 const validation = computed(() => validateLowcodePageSchema(editorState.value.schema));
 const selectedNode = computed(() => findNode(editorState.value.schema.nodes, editorState.value.selectedNodeId));
@@ -172,6 +193,28 @@ function onCanvasDrop(event: DragEvent): void {
   const componentName = event.dataTransfer?.getData("application/x-meumall-material");
   const material = materials.find((item) => item.manifest.componentName === componentName);
   if (material) addMaterial(material.manifest);
+}
+
+function onNodeDragStart(event: DragEvent, nodeId: string): void {
+  draggedNodeId.value = nodeId;
+  event.dataTransfer?.setData("application/x-meumall-node", nodeId);
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+}
+
+function onNodeDrop(event: DragEvent, targetIndex: number): void {
+  const nodeId = event.dataTransfer?.getData("application/x-meumall-node") || draggedNodeId.value;
+  if (!nodeId) return;
+  const fromIndex = editorState.value.schema.nodes.findIndex((node) => node.id === nodeId);
+  if (fromIndex < 0 || fromIndex === targetIndex) return;
+  editorState.value = moveNode(editorState.value, fromIndex, targetIndex);
+  draggedNodeId.value = undefined;
+}
+
+function moveSelected(offset: number): void {
+  if (!selectedNode.value) return;
+  const fromIndex = editorState.value.schema.nodes.findIndex((node) => node.id === selectedNode.value?.id);
+  if (fromIndex < 0) return;
+  editorState.value = moveNode(editorState.value, fromIndex, fromIndex + offset);
 }
 
 function updateProp(propName: string, propSchema: LowcodePropSchema, value: unknown): void {
@@ -265,12 +308,107 @@ function updatePageTitle(value: string): void {
   };
 }
 
+function updatePageStatus(status: LowcodePageStatus): void {
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      status,
+    },
+    dirty: true,
+    lastAction: "updatePageStatus",
+  };
+}
+
+function updatePublishEnvironment(environment: "test" | "pre" | "prod"): void {
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      publishMeta: {
+        ...editorState.value.schema.publishMeta,
+        environment,
+      },
+    },
+    dirty: true,
+    lastAction: "updatePublishEnvironment",
+  };
+}
+
+function addDataSource(): void {
+  const nextDataSource: LowcodeDataSourceConfig = {
+    id: `ds_${Date.now().toString(36)}`,
+    type: "custom.http",
+    bindTo: "data",
+    params: {},
+    cache: {
+      ttlSeconds: 60,
+      scope: "public",
+    },
+  };
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      dataSources: [...(editorState.value.schema.dataSources ?? []), nextDataSource],
+    },
+    dirty: true,
+    lastAction: "addDataSource",
+  };
+}
+
+function updateDataSource(index: number, patch: Partial<LowcodeDataSourceConfig>): void {
+  const dataSources = [...(editorState.value.schema.dataSources ?? [])];
+  const current = dataSources[index];
+  if (!current) return;
+  dataSources[index] = {
+    ...current,
+    ...patch,
+  };
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      dataSources,
+    },
+    dirty: true,
+    lastAction: "updateDataSource",
+  };
+}
+
+function updateDataSourceParams(index: number, value: string): void {
+  try {
+    updateDataSource(index, { params: JSON.parse(value) as JsonObject });
+    jsonError.value = "";
+  } catch {
+    jsonError.value = "数据源参数不是合法 JSON";
+  }
+}
+
+function removeDataSource(index: number): void {
+  const dataSources = [...(editorState.value.schema.dataSources ?? [])];
+  dataSources.splice(index, 1);
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      dataSources,
+    },
+    dirty: true,
+    lastAction: "removeDataSource",
+  };
+}
+
 function asText(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
 }
 
 function isStructured(propSchema: LowcodePropSchema): boolean {
   return propSchema.type === "array" || propSchema.type === "object" || propSchema.setter === "dataSourceSelector";
+}
+
+function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
+  return JSON.stringify(dataSource.params ?? {}, null, 2);
 }
 </script>
 
@@ -346,8 +484,13 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
           :key="node.id"
           class="outline-item"
           :class="{ selected: editorState.selectedNodeId === node.id }"
+          draggable="true"
+          @dragstart="onNodeDragStart($event, node.id)"
+          @dragover.prevent
+          @drop.prevent="onNodeDrop($event, index)"
           @click="select(node.id)"
         >
+          <GripVertical :size="15" class="drag-icon" />
           <span>{{ index + 1 }}</span>
           <strong>{{ registry.get(node.componentName)?.manifest.title ?? node.componentName }}</strong>
         </button>
@@ -389,7 +532,10 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
           <LowcodeVueRenderer
             :schema="editorState.schema"
             :registry="registry"
+            :editable="editorState.mode === 'design'"
+            :selected-node-id="editorState.selectedNodeId"
             :fallback="'暂无内容'"
+            :on-node-select="(node) => select(node.id)"
           />
         </div>
       </div>
@@ -416,6 +562,23 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
         <label class="field">
           <span>Page ID</span>
           <input :value="editorState.schema.pageId" readonly />
+        </label>
+        <label class="field">
+          <span>状态</span>
+          <select :value="editorState.schema.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
+            <option value="draft">draft</option>
+            <option value="preview">preview</option>
+            <option value="published">published</option>
+            <option value="disabled">disabled</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>环境</span>
+          <select :value="editorState.schema.publishMeta.environment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as 'test' | 'pre' | 'prod')">
+            <option value="test">test</option>
+            <option value="pre">pre</option>
+            <option value="prod">prod</option>
+          </select>
         </label>
       </section>
 
@@ -458,6 +621,14 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
           </label>
 
           <div class="toolbar inspector-actions">
+            <button title="上移节点" @click="moveSelected(-1)">
+              <GripVertical :size="16" />
+              <span>上移</span>
+            </button>
+            <button title="下移节点" @click="moveSelected(1)">
+              <GripVertical :size="16" />
+              <span>下移</span>
+            </button>
             <button title="复制节点" @click="copySelected">
               <Copy :size="16" />
               <span>复制</span>
@@ -478,6 +649,46 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
         </div>
 
         <div v-else class="empty-state">未选择节点</div>
+      </section>
+
+      <section class="panel-section">
+        <div class="panel-title">
+          <Database :size="16" />
+          <span>数据源</span>
+        </div>
+        <div class="data-source-list">
+          <div
+            v-for="(dataSource, index) in editorState.schema.dataSources ?? []"
+            :key="dataSource.id"
+            class="data-source-card"
+          >
+            <label class="field">
+              <span>ID</span>
+              <input :value="dataSource.id" @input="updateDataSource(index, { id: ($event.target as HTMLInputElement).value })" />
+            </label>
+            <label class="field">
+              <span>类型</span>
+              <input :value="dataSource.type" @input="updateDataSource(index, { type: ($event.target as HTMLInputElement).value })" />
+            </label>
+            <label class="field">
+              <span>绑定到</span>
+              <input :value="dataSource.bindTo" @input="updateDataSource(index, { bindTo: ($event.target as HTMLInputElement).value })" />
+            </label>
+            <label class="field">
+              <span>参数 JSON</span>
+              <textarea
+                :value="dataSourceParamsText(dataSource)"
+                rows="4"
+                @change="updateDataSourceParams(index, ($event.target as HTMLTextAreaElement).value)"
+              />
+            </label>
+            <button class="text-danger" @click="removeDataSource(index)">删除数据源</button>
+          </div>
+        </div>
+        <button class="reset-button" @click="addDataSource">
+          <Plus :size="16" />
+          <span>新增数据源</span>
+        </button>
       </section>
 
       <section class="panel-section">
