@@ -294,6 +294,8 @@ const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 const templateKeyword = ref("");
 const templateCategory = ref("全部");
+const materialKeyword = ref("");
+const materialCategory = ref("全部");
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
 const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
@@ -383,6 +385,12 @@ interface ReleaseDiffItem {
   current: string;
   selected: string;
   changed: boolean;
+}
+
+interface WorkspaceStat {
+  label: string;
+  value: string;
+  tone?: "neutral" | "success" | "warning" | "danger";
 }
 
 interface ListEditorField {
@@ -526,6 +534,56 @@ const publishCheckSummary = computed(() => {
   );
 });
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
+const materialCategories = computed(() => ["全部", ...Array.from(new Set(materials.map((item) => item.manifest.category)))]);
+const visibleMaterials = computed(() => {
+  const keyword = materialKeyword.value.trim().toLowerCase();
+  return materials.filter((item) => {
+    const manifest = item.manifest;
+    const matchesCategory = materialCategory.value === "全部" || manifest.category === materialCategory.value;
+    if (!matchesCategory) return false;
+    if (!keyword) return true;
+    return [manifest.title, manifest.componentName, manifest.category]
+      .join(" ")
+      .toLowerCase()
+      .includes(keyword);
+  });
+});
+const selectedParentTitle = computed(() => {
+  const parentId = selectedOutlineRow.value?.parentId;
+  if (!parentId) return "页面根级";
+  const parent = findNode(editorState.value.schema.nodes, parentId);
+  return parent ? (registry.get(parent.componentName)?.manifest.title ?? parent.componentName) : "未知父级";
+});
+const selectedPositionText = computed(() => {
+  const row = selectedOutlineRow.value;
+  if (!row) return "未选择";
+  return `第 ${row.index + 1} 个 / 第 ${row.depth + 1} 层`;
+});
+const workspaceStats = computed<WorkspaceStat[]>(() => [
+  {
+    label: "节点",
+    value: `${schemaNodeCount(editorState.value.schema)} 个`,
+  },
+  {
+    label: "选中",
+    value: selectedManifest.value?.title ?? "未选择",
+  },
+  {
+    label: "校验",
+    value: validation.value.valid ? "通过" : "异常",
+    tone: validation.value.valid ? "success" : "danger",
+  },
+  {
+    label: "发布",
+    value: hasPublishBlockingErrors.value ? `${publishCheckSummary.value.error} 个错误` : "可预览",
+    tone: hasPublishBlockingErrors.value ? "danger" : publishCheckSummary.value.warning ? "warning" : "success",
+  },
+  {
+    label: "保存",
+    value: editorState.value.dirty ? "未保存" : "已保存",
+    tone: editorState.value.dirty ? "warning" : "success",
+  },
+]);
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
@@ -2584,6 +2642,9 @@ function formatReleaseTime(value: string): string {
           <strong>MeuMall Lowcode</strong>
           <span>{{ editorState.schema.title }}</span>
         </div>
+        <span class="save-pill" :class="{ dirty: editorState.dirty }">
+          {{ editorState.dirty ? "未保存" : "已保存" }}
+        </span>
       </div>
 
       <div class="toolbar" aria-label="编辑器工具栏">
@@ -2669,9 +2730,21 @@ function formatReleaseTime(value: string): string {
         <div class="panel-title">
           <Plus :size="16" />
           <span>物料</span>
+          <small>{{ visibleMaterials.length }} / {{ materials.length }}</small>
+        </div>
+        <div class="material-filters">
+          <label class="search-field">
+            <Search :size="14" />
+            <input v-model="materialKeyword" placeholder="搜索物料" />
+          </label>
+          <select v-model="materialCategory" aria-label="物料分类">
+            <option v-for="category in materialCategories" :key="category" :value="category">
+              {{ category }}
+            </option>
+          </select>
         </div>
         <button
-          v-for="material in materials"
+          v-for="material in visibleMaterials"
           :key="material.manifest.componentName"
           class="material-item"
           draggable="true"
@@ -2682,10 +2755,14 @@ function formatReleaseTime(value: string): string {
         >
           <span>
             <strong>{{ material.manifest.title }}</strong>
-            <small>{{ material.manifest.category }} / {{ material.manifest.componentName }}</small>
+            <small>
+              <em>{{ material.manifest.category }}</em>
+              {{ material.manifest.componentName }}
+            </small>
           </span>
           <Plus :size="15" />
         </button>
+        <div v-if="!visibleMaterials.length" class="mini-empty">没有匹配物料</div>
         <div v-if="selectedNodeIsContainer" class="container-target">
           <strong>当前容器：{{ selectedManifest?.title }}</strong>
           <span>点击下方按钮可把物料加入选中容器</span>
@@ -2749,7 +2826,18 @@ function formatReleaseTime(value: string): string {
       <div class="canvas-top">
         <div>
           <strong>{{ editorState.mode === "outline" ? "Schema" : "H5 画布" }}</strong>
-          <span>{{ validation.valid ? "校验通过" : validation.errors[0] }}</span>
+          <span>{{ selectedNode ? `${selectedParentTitle} / ${selectedPositionText}` : validation.valid ? "校验通过" : validation.errors[0] }}</span>
+        </div>
+        <div class="workspace-stats" aria-label="编辑器状态摘要">
+          <span
+            v-for="stat in workspaceStats"
+            :key="stat.label"
+            class="workspace-stat"
+            :class="stat.tone ? `is-${stat.tone}` : ''"
+          >
+            <small>{{ stat.label }}</small>
+            <strong>{{ stat.value }}</strong>
+          </span>
         </div>
         <div class="viewport-switch">
           <button
@@ -3008,8 +3096,24 @@ function formatReleaseTime(value: string): string {
 
         <div v-if="selectedNode && selectedManifest" class="inspector">
           <div class="selected-card">
-            <strong>{{ selectedManifest.title }}</strong>
-            <span>{{ selectedNode.id }}</span>
+            <div class="selected-card-head">
+              <strong>{{ selectedManifest.title }}</strong>
+              <small>{{ selectedManifest.category }}</small>
+            </div>
+            <dl class="selected-meta">
+              <div>
+                <dt>节点</dt>
+                <dd>{{ selectedNode.id }}</dd>
+              </div>
+              <div>
+                <dt>位置</dt>
+                <dd>{{ selectedPositionText }}</dd>
+              </div>
+              <div>
+                <dt>父级</dt>
+                <dd>{{ selectedParentTitle }}</dd>
+              </div>
+            </dl>
           </div>
 
           <div v-if="canUseAssetLibrary" class="resource-panel">

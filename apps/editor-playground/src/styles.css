@@ -1,6 +1,6 @@
 :root {
   color: #111827;
-  background: #e7e9ee;
+  background: #e4e7ed;
   font-family:
     ui-sans-serif,
     system-ui,
@@ -34,11 +34,39 @@ textarea {
 
 button {
   cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.12s ease;
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+button:not(:disabled):hover {
+  border-color: #94a3b8;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+input,
+select,
+textarea {
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid rgba(20, 184, 166, 0.24);
+  outline-offset: 2px;
 }
 
 .runtime-shell {
@@ -73,8 +101,8 @@ button:disabled {
 .editor-shell {
   display: grid;
   grid-template:
-    "topbar topbar topbar" 64px
-    "left canvas right" minmax(0, calc(100dvh - 64px)) / 300px minmax(520px, 1fr) 340px;
+    "topbar topbar topbar" 68px
+    "left canvas right" minmax(0, calc(100dvh - 68px)) / 316px minmax(560px, 1fr) 360px;
   min-height: 100dvh;
 }
 
@@ -84,16 +112,17 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 16px;
+  padding: 0 18px;
   border-bottom: 1px solid #d8dbe2;
-  background: #f8fafc;
+  background: rgba(248, 250, 252, 0.96);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 260px;
+  min-width: 300px;
 }
 
 .brand-mark {
@@ -120,6 +149,26 @@ button:disabled {
   margin-top: 2px;
   color: #64748b;
   font-size: 12px;
+}
+
+.save-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 54px;
+  height: 24px;
+  margin-left: 2px;
+  border: 1px solid #bbf7d0;
+  border-radius: 7px;
+  color: #166534;
+  background: #f0fdf4;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.save-pill.dirty {
+  border-color: #fed7aa;
+  color: #9a3412;
+  background: #fff7ed;
 }
 
 .toolbar,
@@ -168,7 +217,7 @@ button:disabled {
 .left-panel,
 .right-panel {
   overflow: auto;
-  padding: 14px;
+  padding: 16px;
   background: #f8fafc;
 }
 
@@ -182,8 +231,14 @@ button:disabled {
   border-left: 1px solid #d8dbe2;
 }
 
+.panel-section {
+  padding-bottom: 16px;
+}
+
 .panel-section + .panel-section {
-  margin-top: 18px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .panel-title {
@@ -191,8 +246,15 @@ button:disabled {
   align-items: center;
   gap: 7px;
   margin-bottom: 10px;
-  color: #475569;
+  color: #334155;
   font-size: 13px;
+  font-weight: 700;
+}
+
+.panel-title small {
+  margin-left: auto;
+  color: #64748b;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -217,6 +279,13 @@ button:disabled {
   background: #fff;
 }
 
+.template-item:hover,
+.material-item:hover,
+.outline-item:hover {
+  border-color: #94a3b8;
+  background: #ffffff;
+}
+
 .material-item,
 .outline-item {
   touch-action: manipulation;
@@ -224,18 +293,20 @@ button:disabled {
 
 .template-item {
   min-height: 64px;
-  border-color: #c7d2fe;
-  background: #eef2ff;
+  border-color: #bfd7d2;
+  background: #f4fbfa;
 }
 
-.template-filters {
+.template-filters,
+.material-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.template-filters select {
+.template-filters select,
+.material-filters select {
   width: 100%;
   height: 32px;
   border: 1px solid #cbd5e1;
@@ -244,6 +315,10 @@ button:disabled {
   color: #111827;
   background: #fff;
   font-size: 12px;
+}
+
+.material-filters {
+  grid-template-columns: minmax(0, 1fr) 92px;
 }
 
 .template-item strong,
@@ -258,6 +333,23 @@ button:disabled {
   margin-top: 4px;
   color: #64748b;
   font-size: 12px;
+}
+
+.material-item small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.material-item small em {
+  flex: 0 0 auto;
+  border-radius: 5px;
+  padding: 2px 5px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-style: normal;
+  font-weight: 700;
 }
 
 .template-item small {
@@ -370,19 +462,20 @@ button:disabled {
 .canvas-panel {
   grid-area: canvas;
   display: grid;
-  grid-template-rows: 54px minmax(0, 1fr);
+  grid-template-rows: 72px minmax(0, 1fr);
   overflow: hidden;
   background:
-    linear-gradient(#eef1f6 1px, transparent 1px),
-    linear-gradient(90deg, #eef1f6 1px, transparent 1px),
-    #e7e9ee;
+    linear-gradient(#edf1f5 1px, transparent 1px),
+    linear-gradient(90deg, #edf1f5 1px, transparent 1px),
+    #e4e7ed;
   background-size: 24px 24px;
 }
 
 .canvas-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) auto auto;
   align-items: center;
-  justify-content: space-between;
+  gap: 14px;
   padding: 0 18px;
   border-bottom: 1px solid #d8dbe2;
   background: rgba(248, 250, 252, 0.9);
@@ -399,6 +492,53 @@ button:disabled {
   font-size: 12px;
 }
 
+.workspace-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.workspace-stat {
+  display: grid;
+  gap: 2px;
+  min-width: 68px;
+  padding: 7px 9px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.workspace-stat small {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.workspace-stat strong {
+  overflow: hidden;
+  max-width: 112px;
+  color: #111827;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.workspace-stat.is-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.workspace-stat.is-warning {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.workspace-stat.is-danger {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
 .phone-stage {
   display: grid;
   place-items: start center;
@@ -409,15 +549,15 @@ button:disabled {
 
 .canvas-context-toolbar {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) 160px minmax(320px, auto);
-  align-items: end;
+  grid-template-columns: minmax(128px, 1fr) 168px minmax(280px, auto);
+  align-items: center;
   gap: 10px;
-  width: min(760px, 100%);
+  width: min(820px, 100%);
   padding: 10px;
-  border: 1px solid #d8dbe2;
+  border: 1px solid rgba(203, 213, 225, 0.88);
   border-radius: 8px;
   background: rgba(248, 250, 252, 0.96);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
 }
 
 .context-title {
@@ -1046,21 +1186,63 @@ button:disabled {
 
 .selected-card {
   margin-bottom: 12px;
-  padding: 11px 12px;
+  padding: 12px;
   border: 1px solid #dce1ea;
   border-radius: 8px;
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.selected-card strong,
-.selected-card span {
-  display: block;
+.selected-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.selected-card span {
-  margin-top: 4px;
-  color: #64748b;
+.selected-card-head strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.selected-card-head small {
+  flex: 0 0 auto;
+  border-radius: 6px;
+  padding: 3px 6px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.selected-meta {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+}
+
+.selected-meta div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.selected-meta dt,
+.selected-meta dd {
+  margin: 0;
   font-size: 12px;
+}
+
+.selected-meta dt {
+  color: #64748b;
+}
+
+.selected-meta dd {
+  overflow: hidden;
+  color: #111827;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .resource-panel {
@@ -1748,6 +1930,28 @@ button:disabled {
   .topbar,
   .toolbar {
     flex-wrap: wrap;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .canvas-top {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 118px;
+    align-items: start;
+    padding: 12px 14px;
+  }
+
+  .workspace-stats {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .workspace-stat {
+    min-width: 76px;
   }
 
   .left-panel,

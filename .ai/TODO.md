@@ -6,7 +6,7 @@
 
 ## P1
 
-- 继续完善 Vue3 编辑器 UI：将 Resource Library Client 从静态 mock 切换到真实素材/商品/优惠券/门店/达人中心，补齐发布审批、服务端发布校验、JSON 级版本 diff 和真实回滚流程。
+- 继续完善 Vue3 编辑器 UI：在首轮物料搜索和工作区状态摘要基础上，拆分正式管理台组件、补齐属性面板分组/折叠、快捷命令、真实素材/商品/优惠券/门店/达人中心、发布审批、服务端发布校验、JSON 级版本 diff 和真实回滚流程。
 - 基于 Template Library Client 将本地页面模板库升级为 Java 配置平台模板市场，补充模板版本、上下架、权限和缩略图。
 - 继续补充电商活动页高阶物料：直播入口、品牌专题和榜单模块。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、审批、分页、previewToken 和错误码。
@@ -15,7 +15,7 @@
 - 将编辑器 config platform client 从 localStorage mock 切换为真实 Java HTTP client。
 - 将 mock data source resolver 升级为真实 HTTP 请求预览、鉴权和缓存策略。
 - 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。
-- 扩展组件级 DOM 测试、拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和 visual regression。
+- 扩展组件级 DOM 测试、物料搜索/拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和 visual regression。
 
 ## P2
 
