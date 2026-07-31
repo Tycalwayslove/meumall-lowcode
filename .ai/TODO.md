@@ -12,9 +12,8 @@
 - 将本地页面模板库升级为 Java 配置平台模板市场，补充模板版本、上下架和权限。
 - 继续补充电商活动页高阶物料：门店/达人推荐、楼层锚点、活动规则弹窗和组合券包。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、审批、分页、previewToken 和错误码。
-- 设计 `hybird-meumall` 接入方式。
-- 将 React H5 runtime playground 的接入方式沉淀为 `hybird-meumall` 路由集成清单。
-- 将本地 URL schema handoff 替换为 Java 配置平台 previewId/pageId 查询协议。
+- 在 `hybird-meumall` 真实业务仓库创建低代码 H5 路由，并按 `.ai-workspace/contracts/h5-runtime-integration-v1.md` 接入 npm 包。
+- 将本地 URL schema handoff 的生产入口替换为 Java 配置平台 releaseId/pageId 查询协议。
 - 将编辑器 config platform client 从 localStorage mock 切换为真实 Java HTTP client。
 - 将 mock data source resolver 升级为真实 HTTP 请求预览、鉴权和缓存策略。
 - 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料，并沉淀 Java 配置平台 API 草案和配置平台客户端抽象。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象，并沉淀 H5 runtime 集成契约和 runtime schema loader。
 
 ## 当前维护范围
 
@@ -50,6 +50,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FlashSaleList`，大促模板和 React H5 runtime 示例已使用新增物料。
 - Java 配置平台 API 草案：`.ai-workspace/contracts/java-config-platform-api-v1.md` 已定义草稿、预览、发布、release 查询、draft 查询和 active published schema 查询接口。
 - Config platform client：`@meumall/lowcode-adapters` 提供 `LowcodeConfigPlatformClient` 和 `createHttpConfigPlatformClient`，编辑器本地 mock 已实现同一 client 接口。
+- H5 runtime 集成契约：`.ai-workspace/contracts/h5-runtime-integration-v1.md` 已定义 `hybird-meumall` npm 依赖、推荐路由、schema 获取优先级、数据源、action、降级、监控和 smoke check。
+- Runtime schema loader：`@meumall/lowcode-adapters` 提供 `loadLowcodeRuntimeSchema`，统一支持 encoded schema、releaseId、pageId 和 fallback schema；React H5 runtime playground 已切换为同一 loader。
 
 ## 已知缺口
 
@@ -62,7 +64,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
 - 高阶活动物料仍使用静态倒计时和 mock 商品数据，尚未对接真实活动、库存、价格和楼层锚点。
-- 尚未接入 `hybird-meumall`。
+- 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token。
 - 组件级 DOM 测试、浏览器交互测试和 visual regression 尚未建立。
 
@@ -87,7 +89,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `4e5bf5b` | 打通 data source resolver 到编辑器预览和 React H5 runtime。 |
 | 2026-07-31 | `843a6af` | 打通 action 安全白名单到编辑器配置和 React H5 runtime。 |
 | 2026-07-31 | `31e7836` | 扩展倒计时、导航宫格和秒杀商品组高阶活动物料。 |
-| 2026-07-31 | 待提交 | 沉淀 Java 配置平台 API 草案和配置平台客户端抽象。 |
+| 2026-07-31 | `760b5dc` | 沉淀 Java 配置平台 API 草案和配置平台客户端抽象。 |
+| 2026-07-31 | 待提交 | 沉淀 H5 runtime 集成契约和 runtime schema loader。 |
 
 ## 默认验证命令
 

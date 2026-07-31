@@ -3,9 +3,10 @@ import {
   createDataSourceRegistry,
   createSafeActionExecutor,
   createSafeActionRegistry,
-  decodePageSchemaFromUrlParam,
+  loadLowcodeRuntimeSchema,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
+  type RuntimeSchemaSourceType,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import { h5Materials } from "@meumall/lowcode-materials-h5";
@@ -278,32 +279,28 @@ const dataSourceRegistry = createDataSourceRegistry({
 
 interface RuntimeSchemaSource {
   schema: LowcodePageSchema;
-  source: "sample" | "url";
+  source: RuntimeSchemaSourceType;
   error?: string;
 }
 
-function resolveRuntimeSchema(): RuntimeSchemaSource {
+function getRuntimeSchemaInput() {
   const params = new URLSearchParams(window.location.search);
-  const encodedSchema = params.get("schema");
-  if (!encodedSchema) {
-    return {
-      schema: sampleSchema,
-      source: "sample",
-    };
-  }
+  return {
+    encodedSchema: params.get("schema") ?? undefined,
+    releaseId: params.get("releaseId") ?? undefined,
+    pageId: params.get("pageId") ?? undefined,
+    fallbackSchema: sampleSchema,
+  };
+}
 
-  try {
-    return {
-      schema: decodePageSchemaFromUrlParam(encodedSchema),
-      source: "url",
-    };
-  } catch (error) {
-    return {
-      schema: sampleSchema,
-      source: "sample",
-      error: error instanceof Error ? error.message : "URL schema 解析失败",
-    };
-  }
+function formatRuntimeSource(source: RuntimeSchemaSourceType): string {
+  const sourceLabel: Record<RuntimeSchemaSourceType, string> = {
+    encoded: "editor url",
+    release: "release",
+    published: "published",
+    fallback: "sample",
+  };
+  return sourceLabel[source];
 }
 
 function countNodes(schema: LowcodePageSchema): number {
@@ -324,7 +321,10 @@ export function App() {
   const [dataSourceRecords, setDataSourceRecords] = useState<DataSourceResolutionRecord[]>([]);
   const [dataResolving, setDataResolving] = useState(true);
   const [actionLogs, setActionLogs] = useState<string[]>([]);
-  const runtimeSchema = useMemo(() => resolveRuntimeSchema(), []);
+  const [runtimeSchema, setRuntimeSchema] = useState<RuntimeSchemaSource>({
+    schema: sampleSchema,
+    source: "fallback",
+  });
   const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
   const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
   const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
@@ -353,6 +353,21 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
+    loadLowcodeRuntimeSchema(getRuntimeSchemaInput()).then((result) => {
+      if (cancelled) return;
+      setRuntimeSchema({
+        schema: result.schema ?? sampleSchema,
+        source: result.source,
+        error: result.error,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     setDataResolving(true);
     resolveLowcodeDataSources(runtimeSchema.schema.dataSources ?? [], dataSourceRegistry)
       .then((result) => {
@@ -375,7 +390,7 @@ export function App() {
         <dl>
           <div>
             <dt>Source</dt>
-            <dd>{runtimeSchema.source === "url" ? "editor url" : "sample"}</dd>
+            <dd>{formatRuntimeSource(runtimeSchema.source)}</dd>
           </div>
           <div>
             <dt>Schema</dt>

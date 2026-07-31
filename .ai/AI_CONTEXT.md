@@ -21,6 +21,8 @@
 - `@meumall/lowcode-adapters` 已提供 `createSafeActionRegistry` 和 `createSafeActionExecutor`，编辑器 playground 可维护 schema.actions 并把物料事件绑定到 action；Vue 预览和 React H5 runtime 通过白名单 handler 执行 mock navigate、coupon.receive、tracking.click 和 noop。
 - React/Vue H5 物料包已包含基础物料和高阶活动物料：`CountdownTimer`、`NavGrid`、`FlashSaleList`；大促模板和 React H5 runtime 示例已使用这些物料。
 - Java 配置平台 API 草案已写入 `.ai-workspace/contracts/java-config-platform-api-v1.md`，`@meumall/lowcode-adapters` 已提供 `LowcodeConfigPlatformClient` 与 `createHttpConfigPlatformClient`，编辑器本地 mock 发布链路已实现同一 client 接口。
+- H5 runtime 集成清单已写入 `.ai-workspace/contracts/h5-runtime-integration-v1.md`，`docs/meumall-integration.md` 是面向 `hybird-meumall` 接入的简版说明。
+- `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定

@@ -111,6 +111,22 @@ export interface CreateHttpConfigPlatformClientOptions {
   headers?: Record<string, string>;
 }
 
+export type RuntimeSchemaSourceType = "encoded" | "release" | "published" | "fallback";
+
+export interface LoadRuntimeSchemaInput {
+  encodedSchema?: string;
+  releaseId?: string;
+  pageId?: string;
+  configPlatformClient?: LowcodeConfigPlatformClient;
+  fallbackSchema?: LowcodePageSchema;
+}
+
+export interface RuntimeSchemaLoadResult {
+  schema?: LowcodePageSchema;
+  source: RuntimeSchemaSourceType;
+  error?: string;
+}
+
 export function createDataSourceRegistry(initialHandlers: Record<string, DataSourceHandler> = {}): DataSourceRegistry {
   const handlers = new Map<string, DataSourceHandler>(Object.entries(initialHandlers));
   return {
@@ -310,6 +326,69 @@ export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatform
     async getPublished(pageId) {
       return assertPageSchemaOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/published`));
     },
+  };
+}
+
+function fallbackRuntimeSchema(fallbackSchema: LowcodePageSchema | undefined, error: unknown): RuntimeSchemaLoadResult {
+  return {
+    schema: fallbackSchema,
+    source: "fallback",
+    error: toError(error).message,
+  };
+}
+
+export async function loadLowcodeRuntimeSchema(input: LoadRuntimeSchemaInput): Promise<RuntimeSchemaLoadResult> {
+  if (input.encodedSchema) {
+    try {
+      return {
+        schema: decodePageSchemaFromUrlParam(input.encodedSchema),
+        source: "encoded",
+      };
+    } catch (error) {
+      return fallbackRuntimeSchema(input.fallbackSchema, error);
+    }
+  }
+
+  if (input.releaseId) {
+    if (!input.configPlatformClient) {
+      return fallbackRuntimeSchema(input.fallbackSchema, new Error("Config platform client is required for releaseId"));
+    }
+    try {
+      const release = await input.configPlatformClient.getRelease(input.releaseId);
+      if (!release?.schema) {
+        throw new Error(`Lowcode release not found: ${input.releaseId}`);
+      }
+      return {
+        schema: release.schema,
+        source: "release",
+      };
+    } catch (error) {
+      return fallbackRuntimeSchema(input.fallbackSchema, error);
+    }
+  }
+
+  if (input.pageId) {
+    if (!input.configPlatformClient) {
+      return fallbackRuntimeSchema(input.fallbackSchema, new Error("Config platform client is required for pageId"));
+    }
+    try {
+      const schema = await input.configPlatformClient.getPublished(input.pageId);
+      if (!schema) {
+        throw new Error(`Lowcode published schema not found: ${input.pageId}`);
+      }
+      return {
+        schema,
+        source: "published",
+      };
+    } catch (error) {
+      return fallbackRuntimeSchema(input.fallbackSchema, error);
+    }
+  }
+
+  return {
+    schema: input.fallbackSchema,
+    source: "fallback",
+    error: input.fallbackSchema ? undefined : "Runtime schema source is empty",
   };
 }
 

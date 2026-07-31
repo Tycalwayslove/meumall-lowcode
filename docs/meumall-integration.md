@@ -34,22 +34,22 @@ Vue3 编辑器可以通过 URL handoff 打开 React H5 runtime：
 http://localhost:5174/?schema={base64url-page-schema}&source=editor
 ```
 
-本地 handoff 使用 `@meumall/lowcode-adapters` 提供的 `encodePageSchemaToUrlParam` 和 `decodePageSchemaFromUrlParam`。该方式只适合本地 demo 和中小型 schema；正式环境应由 Java 配置平台返回 `previewId` 或 `pageId`，H5 runtime 再通过 API 拉取 schema。
+本地 handoff 使用 `@meumall/lowcode-adapters` 提供的 `encodePageSchemaToUrlParam` 编码，并在 H5 runtime 侧统一通过 `loadLowcodeRuntimeSchema` 读取 `schema`、`releaseId`、`pageId` 或 fallback schema。该方式只适合本地 demo 和中小型 schema；正式环境应由 Java 配置平台返回 `releaseId` 或 `pageId`，H5 runtime 再通过 API 拉取 schema。
 
 ## Suggested Routes
 
 ```text
-/activity/[pageId]
-/landing/[pageId]
-/preview/lowcode/[draftId]
+/activity/lowcode/[pageId]
+/promotion/lowcode/[pageId]
+/preview/lowcode/[releaseId]
 ```
 
 ## Java API Contracts Needed
 
 ```text
-GET /platform/lowcode/pages/{pageId}/published
-GET /platform/lowcode/pages/{draftId}/preview
-POST /platform/lowcode/pages/{pageId}/track
+GET /api/lowcode/pages/{pageId}/published
+GET /api/lowcode/releases/{releaseId}
+POST /api/lowcode/pages/{pageId}/track
 ```
 
 ## Local Mock Flow
@@ -67,6 +67,8 @@ POST /platform/lowcode/pages/{pageId}/track
 /?runtime=1&pageId=summer-campaign-demo
 /?runtime=1&releaseId=preview_xxx
 http://localhost:5174/?schema=encoded_schema
+http://localhost:5174/?pageId=summer-campaign-demo
+http://localhost:5174/?releaseId=preview_xxx
 ```
 
 后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage 实现替换为 HTTP adapter。

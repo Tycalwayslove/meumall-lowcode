@@ -9,6 +9,7 @@ import {
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
   encodePageSchemaToUrlParam,
+  loadLowcodeRuntimeSchema,
   resolveLowcodeDataSources,
 } from "../dist/index.js";
 
@@ -249,5 +250,79 @@ describe("@meumall/lowcode-adapters", () => {
       () => client.publishPage(createLowcodePageSchema({ pageId: "bad", title: "错误页" })),
       /Config platform request failed: 500/,
     );
+  });
+
+  it("loads runtime schema from encoded URL schema", async () => {
+    const schema = createLowcodePageSchema({
+      pageId: "encoded_runtime_page",
+      title: "Encoded Runtime 页面",
+    });
+    const encodedSchema = encodePageSchemaToUrlParam(schema);
+
+    const result = await loadLowcodeRuntimeSchema({ encodedSchema });
+
+    assert.equal(result.source, "encoded");
+    assert.equal(result.schema.pageId, "encoded_runtime_page");
+    assert.equal(result.error, undefined);
+  });
+
+  it("loads runtime schema from releaseId or pageId through config platform client", async () => {
+    const releaseSchema = createLowcodePageSchema({
+      pageId: "release_page",
+      title: "预览页面",
+    });
+    const publishedSchema = createLowcodePageSchema({
+      pageId: "published_page",
+      title: "线上页面",
+    });
+    const client = {
+      saveDraft: async () => {
+        throw new Error("unused");
+      },
+      createPreview: async () => {
+        throw new Error("unused");
+      },
+      publishPage: async () => {
+        throw new Error("unused");
+      },
+      listReleases: async () => [],
+      getRelease: async (releaseId) => ({
+        id: releaseId,
+        kind: "preview",
+        pageId: releaseSchema.pageId,
+        pageVersion: releaseSchema.pageVersion,
+        title: releaseSchema.title,
+        createdAt: "2026-07-31T00:00:00.000Z",
+        schema: releaseSchema,
+      }),
+      getDraft: async () => undefined,
+      getPublished: async () => publishedSchema,
+    };
+
+    const releaseResult = await loadLowcodeRuntimeSchema({ releaseId: "rel_preview", configPlatformClient: client });
+    const publishedResult = await loadLowcodeRuntimeSchema({ pageId: "published_page", configPlatformClient: client });
+
+    assert.equal(releaseResult.source, "release");
+    assert.equal(releaseResult.schema.pageId, "release_page");
+    assert.equal(publishedResult.source, "published");
+    assert.equal(publishedResult.schema.pageId, "published_page");
+  });
+
+  it("falls back when runtime schema loading fails", async () => {
+    const fallbackSchema = createLowcodePageSchema({
+      pageId: "fallback_page",
+      title: "兜底页面",
+    });
+    const badEncodedSchema = encodePageSchemaToUrlParam({ schemaVersion: "1.0.0" });
+
+    const invalidResult = await loadLowcodeRuntimeSchema({ encodedSchema: badEncodedSchema, fallbackSchema });
+    const missingClientResult = await loadLowcodeRuntimeSchema({ pageId: "page_without_client", fallbackSchema });
+
+    assert.equal(invalidResult.source, "fallback");
+    assert.equal(invalidResult.schema.pageId, "fallback_page");
+    assert.match(invalidResult.error, /Invalid lowcode page schema/);
+    assert.equal(missingClientResult.source, "fallback");
+    assert.equal(missingClientResult.schema.pageId, "fallback_page");
+    assert.match(missingClientResult.error, /Config platform client is required/);
   });
 });
