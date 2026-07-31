@@ -222,7 +222,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `6e85bf5` | 沉淀编辑器模板摘要和预览 API。 |
 | 2026-08-01 | `c837e69` | 沉淀编辑器页面起步 API。 |
 | 2026-08-01 | `49010d1` | 新增标签内容切换通用物料。 |
-| 2026-08-01 | `本提交` | 补齐 Overlay 和 Modal 内部弹层 primitives。 |
+| 2026-08-01 | `828bd74` | 补齐 Overlay 和 Modal 内部弹层 primitives。 |
 
 ## 默认验证命令
 
