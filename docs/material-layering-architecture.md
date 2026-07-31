@@ -233,10 +233,11 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `Overlay`
 - `Modal`
 - `CountdownText`
+- `Tabs`
 
 ### 后续按场景补齐
 
-- `Tabs`
+- 更多业务无关 primitives 根据真实复用收益补齐。
 
 ### 暂不进入 primitives
 

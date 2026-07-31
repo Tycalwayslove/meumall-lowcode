@@ -1,4 +1,4 @@
-import { defineComponent, h, type CSSProperties, type PropType } from "vue";
+import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue";
 
 export const h5Tokens = {
   color: {
@@ -275,6 +275,100 @@ export const MlcCountdownText = defineComponent({
           ),
         ),
       );
+    };
+  },
+});
+
+export interface MlcTabsItem {
+  id?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+export const MlcTabs = defineComponent({
+  name: "MlcTabs",
+  props: {
+    items: { type: Array as PropType<MlcTabsItem[]>, default: () => [] },
+    defaultActiveIndex: { type: Number, default: 0 },
+    navBackgroundColor: { type: String, default: "#f8fafc" },
+    tabBackgroundColor: { type: String, default: h5Tokens.color.surface },
+    activeBackgroundColor: { type: String, default: h5Tokens.color.primary },
+    textColor: { type: String, default: "#334155" },
+    activeTextColor: { type: String, default: h5Tokens.color.inverseText },
+    borderColor: { type: String, default: h5Tokens.color.border },
+    panelPadding: { type: [String, Number] as PropType<string | number>, default: 14 },
+    panelGap: { type: Number, default: 9 },
+    class: { type: String, default: "" },
+    navClass: { type: String, default: "" },
+    panelClass: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    navStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    panelStyle: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onChange: { type: Function as PropType<(item: MlcTabsItem | undefined, index: number) => void>, default: undefined },
+  },
+  setup(props, { slots }) {
+    const activeIndex = ref(props.defaultActiveIndex);
+    const toSize = (value: string | number) => (typeof value === "number" ? `${value}px` : value);
+
+    return () => {
+      const normalizedActiveIndex = Math.min(Math.max(activeIndex.value, 0), Math.max(props.items.length - 1, 0));
+      const activeItem = props.items[normalizedActiveIndex];
+
+      return h("div", { class: props.class, style: props.style }, [
+        h(
+          "div",
+          {
+            role: "tablist",
+            class: props.navClass,
+            style: {
+              display: "flex",
+              gap: "8px",
+              overflowX: "auto",
+              padding: "8px 10px",
+              background: props.navBackgroundColor,
+              ...props.navStyle,
+            } satisfies CSSProperties,
+          },
+          props.items.map((item, index) => {
+            const active = index === normalizedActiveIndex;
+            return h(
+              MlcButton,
+              {
+                role: "tab",
+                "aria-selected": active,
+                size: "sm",
+                radius: h5Tokens.radius.pill,
+                onClick: () => {
+                  activeIndex.value = index;
+                  props.onChange?.(item, index);
+                },
+                style: {
+                  flex: "0 0 auto",
+                  minHeight: "34px",
+                  border: active ? 0 : `1px solid ${props.borderColor}`,
+                  color: active ? props.activeTextColor : props.textColor,
+                  background: active ? props.activeBackgroundColor : props.tabBackgroundColor,
+                  fontSize: "13px",
+                } satisfies CSSProperties,
+              },
+              () => String(item.title ?? `标签 ${index + 1}`),
+            );
+          }),
+        ),
+        h(
+          "div",
+          {
+            class: props.panelClass,
+            style: {
+              display: "grid",
+              gap: `${props.panelGap}px`,
+              padding: toSize(props.panelPadding),
+              ...props.panelStyle,
+            } satisfies CSSProperties,
+          },
+          slots.default?.({ item: activeItem, index: normalizedActiveIndex }),
+        ),
+      ]);
     };
   },
 });

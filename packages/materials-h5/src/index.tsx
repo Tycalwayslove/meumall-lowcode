@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -251,10 +251,6 @@ export function TabsBlock({ props }: MaterialProps) {
           content: "选择会场、领取权益、下单完成转化。后续可替换为更完整的配置内容。",
         },
       ];
-  const [activeIndex, setActiveIndex] = React.useState(0);
-  const normalizedActiveIndex = Math.min(Math.max(activeIndex, 0), Math.max(visibleItems.length - 1, 0));
-  const activeItem = visibleItems[normalizedActiveIndex] ?? visibleItems[0];
-
   return (
     <section
       style={{
@@ -285,58 +281,35 @@ export function TabsBlock({ props }: MaterialProps) {
             ) : null}
           </div>
         ) : null}
-        <div
-          role="tablist"
-          style={{
-            display: "flex",
-            gap: 8,
-            overflowX: "auto",
-            padding: "8px 10px",
-            background: text(props.navBackgroundColor, "#f8fafc"),
-          }}
-        >
-          {visibleItems.map((item, index) => {
-            const active = index === normalizedActiveIndex;
-            return (
-              <MlcButton
-                key={String(item.id ?? index)}
-                role="tab"
-                aria-selected={active}
-                size="sm"
-                radius={999}
-                onClick={() => setActiveIndex(index)}
-                style={{
-                  flex: "0 0 auto",
-                  minHeight: 34,
-                  border: active ? 0 : `1px solid ${text(props.borderColor, "#e5e7eb")}`,
-                  color: active ? text(props.activeTextColor, "#ffffff") : text(props.textColor, "#334155"),
-                  background: active ? text(props.accentColor, "#111827") : text(props.tabBackgroundColor, "#ffffff"),
-                  fontSize: 13,
-                }}
-              >
-                {String(item.title ?? `标签 ${index + 1}`)}
-              </MlcButton>
-            );
-          })}
-        </div>
-        <div style={{ display: "grid", gap: 9, padding: "14px" }}>
-          {activeItem?.badgeText ? (
-            <MlcTag style={{ width: "fit-content", color: text(props.accentColor, "#0f766e") }}>
-              {String(activeItem.badgeText)}
-            </MlcTag>
-          ) : null}
-          <MlcText as="strong" size={16} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
-            {String(activeItem?.title ?? "标签内容")}
-          </MlcText>
-          {activeItem?.subtitle ? (
-            <MlcText size={12} tone="muted" style={{ display: "block", marginTop: -5, color: text(props.textColor, "#64748b") }}>
-              {String(activeItem.subtitle)}
-            </MlcText>
-          ) : null}
-          <MlcText as="p" size={13} style={{ color: text(props.contentColor, "#374151"), lineHeight: 1.65 }}>
-            {String(activeItem?.content ?? "请配置标签内容。")}
-          </MlcText>
-        </div>
+        <MlcTabs
+          items={visibleItems}
+          navBackgroundColor={text(props.navBackgroundColor, "#f8fafc")}
+          tabBackgroundColor={text(props.tabBackgroundColor, "#ffffff")}
+          activeBackgroundColor={text(props.accentColor, "#111827")}
+          textColor={text(props.textColor, "#334155")}
+          activeTextColor={text(props.activeTextColor, "#ffffff")}
+          borderColor={text(props.borderColor, "#e5e7eb")}
+          renderPanel={(activeItem) => (
+            <>
+              {activeItem?.badgeText ? (
+                <MlcTag style={{ width: "fit-content", color: text(props.accentColor, "#0f766e") }}>
+                  {String(activeItem.badgeText)}
+                </MlcTag>
+              ) : null}
+              <MlcText as="strong" size={16} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
+                {String(activeItem?.title ?? "标签内容")}
+              </MlcText>
+              {activeItem?.subtitle ? (
+                <MlcText size={12} tone="muted" style={{ display: "block", marginTop: -5, color: text(props.textColor, "#64748b") }}>
+                  {String(activeItem.subtitle)}
+                </MlcText>
+              ) : null}
+              <MlcText as="p" size={13} style={{ color: text(props.contentColor, "#374151"), lineHeight: 1.65 }}>
+                {String(activeItem?.content ?? "请配置标签内容。")}
+              </MlcText>
+            </>
+          )}
+        />
       </div>
     </section>
   );

@@ -401,6 +401,13 @@ async function assertActivityRuleModal(page, label) {
   log(`通过：${label} 可打开并关闭活动规则弹窗`);
 }
 
+async function assertTabsBlockSwitch(page, label) {
+  log(`检查标签内容切换：${label}`);
+  await page.clickByText(".phone-frame [role='tab']", "参与方式");
+  await page.waitForExpression("document.body.innerText.includes('先领取优惠券，再进入专题会场，最后选择商品或门店内容完成转化')");
+  log(`通过：${label} 可切换到参与方式标签`);
+}
+
 async function assertEditorWorkflow(page) {
   log("检查 H5 预览入口");
   await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
@@ -792,6 +799,7 @@ async function main() {
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
     await assertActivityRuleModal(page, "Vue3 编辑器内置画布");
+    await assertTabsBlockSwitch(page, "Vue3 编辑器内置画布");
     await assertInspectorGroups(page);
     await assertOutlineNavigator(page);
     await assertEditorWorkflow(page);
@@ -830,6 +838,7 @@ async function main() {
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);
     await assertActivityRuleModal(page, "React H5 runtime");
+    await assertTabsBlockSwitch(page, "React H5 runtime");
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },

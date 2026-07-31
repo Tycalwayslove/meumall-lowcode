@@ -79,6 +79,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcOverlay",
       "MlcModal",
       "MlcCountdownText",
+      "MlcTabs",
     ];
 
     for (const name of primitiveNames) {
@@ -140,7 +141,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(navGridTypes.has("MlcText"), true);
     assert.equal(floorAnchorTypes.has("MlcButton"), true);
     assert.equal(floorAnchorTypes.has("MlcText"), true);
-    functionSourceIncludes(TabsBlock, ["MlcButton", "MlcTag", "MlcText"]);
+    functionSourceIncludes(TabsBlock, ["MlcTabs", "MlcTag", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);

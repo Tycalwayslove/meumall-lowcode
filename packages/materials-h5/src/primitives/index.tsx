@@ -297,6 +297,113 @@ export function MlcCountdownText({
   );
 }
 
+export interface MlcTabsItem {
+  id?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+export interface MlcTabsProps<TItem extends MlcTabsItem = MlcTabsItem> {
+  items?: TItem[];
+  defaultActiveIndex?: number;
+  navBackgroundColor?: string;
+  tabBackgroundColor?: string;
+  activeBackgroundColor?: string;
+  textColor?: string;
+  activeTextColor?: string;
+  borderColor?: string;
+  panelPadding?: string | number;
+  panelGap?: number;
+  className?: string;
+  navClassName?: string;
+  panelClassName?: string;
+  style?: React.CSSProperties;
+  navStyle?: React.CSSProperties;
+  panelStyle?: React.CSSProperties;
+  renderPanel?: (item: TItem | undefined, index: number) => React.ReactNode;
+  onChange?: (item: TItem | undefined, index: number) => void;
+}
+
+export function MlcTabs<TItem extends MlcTabsItem = MlcTabsItem>({
+  items = [],
+  defaultActiveIndex = 0,
+  navBackgroundColor = "#f8fafc",
+  tabBackgroundColor = h5Tokens.color.surface,
+  activeBackgroundColor = h5Tokens.color.primary,
+  textColor = "#334155",
+  activeTextColor = h5Tokens.color.inverseText,
+  borderColor = h5Tokens.color.border,
+  panelPadding = 14,
+  panelGap = 9,
+  className,
+  navClassName,
+  panelClassName,
+  style,
+  navStyle,
+  panelStyle,
+  renderPanel,
+  onChange,
+}: MlcTabsProps<TItem>): React.ReactElement {
+  const [activeIndex, setActiveIndex] = React.useState(defaultActiveIndex);
+  const normalizedActiveIndex = Math.min(Math.max(activeIndex, 0), Math.max(items.length - 1, 0));
+  const activeItem = items[normalizedActiveIndex];
+
+  return (
+    <div className={className} style={style}>
+      <div
+        role="tablist"
+        className={navClassName}
+        style={{
+          display: "flex",
+          gap: 8,
+          overflowX: "auto",
+          padding: "8px 10px",
+          background: navBackgroundColor,
+          ...navStyle,
+        }}
+      >
+        {items.map((item, index) => {
+          const active = index === normalizedActiveIndex;
+          return (
+            <MlcButton
+              key={String(item.id ?? index)}
+              role="tab"
+              aria-selected={active}
+              size="sm"
+              radius={h5Tokens.radius.pill}
+              onClick={() => {
+                setActiveIndex(index);
+                onChange?.(item, index);
+              }}
+              style={{
+                flex: "0 0 auto",
+                minHeight: 34,
+                border: active ? 0 : `1px solid ${borderColor}`,
+                color: active ? activeTextColor : textColor,
+                background: active ? activeBackgroundColor : tabBackgroundColor,
+                fontSize: 13,
+              }}
+            >
+              {String(item.title ?? `标签 ${index + 1}`)}
+            </MlcButton>
+          );
+        })}
+      </div>
+      <div
+        className={panelClassName}
+        style={{
+          display: "grid",
+          gap: panelGap,
+          padding: panelPadding,
+          ...panelStyle,
+        }}
+      >
+        {renderPanel?.(activeItem, normalizedActiveIndex)}
+      </div>
+    </div>
+  );
+}
+
 export interface MlcOverlayProps {
   open?: boolean;
   children?: React.ReactNode;
