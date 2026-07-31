@@ -12,6 +12,7 @@ Current materials:
 - `ImageBanner`
 - `ActionButton`
 - `ProductList`
+- `StoreExpertSection`
 - `CouponSection`
 - `CouponBundle`
 - `ActivityRuleModal`

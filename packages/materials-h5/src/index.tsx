@@ -116,6 +116,104 @@ export function ProductList({ props }: MaterialProps) {
   );
 }
 
+export function StoreExpertSection({ props }: MaterialProps) {
+  const items = list(props.items);
+  const visibleItems = items.length
+    ? items
+    : [
+        {
+          id: "store_1",
+          typeText: "门店",
+          title: "MeuMall 上海静安店",
+          subtitle: "本周热卖搭配到店试穿",
+          metricText: "4.9 分",
+          desc: "距你 2.1km",
+          imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+        },
+        {
+          id: "expert_1",
+          typeText: "达人",
+          title: "小夏的通勤穿搭",
+          subtitle: "每日更新包袋和鞋履组合",
+          metricText: "12.8w 粉丝",
+          desc: "直播中",
+          imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+        },
+      ];
+  const onItemClick = props.onItemClick;
+
+  return (
+    <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#f8fafc") }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ display: "block", color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+            {text(props.title, "门店/达人推荐")}
+          </strong>
+          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>
+            {text(props.subtitle, "精选门店和达人内容，帮助用户快速进入转化场景。")}
+          </span>
+        </div>
+        <span style={{ flex: "0 0 auto", color: text(props.accentColor, "#0f766e"), fontSize: 12, fontWeight: 800 }}>
+          {text(props.badgeText, "精选")}
+        </span>
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {visibleItems.map((item, index) => (
+          <button
+            key={String(item.id ?? index)}
+            type="button"
+            onClick={() => {
+              if (typeof onItemClick === "function") onItemClick(item);
+            }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "64px minmax(0, 1fr) auto",
+              alignItems: "center",
+              gap: 10,
+              width: "100%",
+              minHeight: 82,
+              border: "1px solid #e2e8f0",
+              borderRadius: 10,
+              padding: 10,
+              color: "#111827",
+              background: text(props.cardBackgroundColor, "#ffffff"),
+              textAlign: "left",
+            }}
+          >
+            {typeof item.imageUrl === "string" ? (
+              <img
+                src={item.imageUrl}
+                alt=""
+                style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, background: "#e5e7eb" }}
+              />
+            ) : (
+              <span style={{ width: 64, height: 64, borderRadius: 8, background: "#e5e7eb" }} />
+            )}
+            <span style={{ minWidth: 0 }}>
+              <small style={{ display: "inline-block", color: text(props.accentColor, "#0f766e"), fontSize: 11, fontWeight: 800 }}>
+                {String(item.typeText ?? "推荐")}
+              </small>
+              <strong style={{ display: "block", marginTop: 4, color: "#111827", fontSize: 14 }}>
+                {String(item.title ?? `推荐 ${index + 1}`)}
+              </strong>
+              <span style={{ display: "block", marginTop: 4, color: "#64748b", fontSize: 12 }}>
+                {String(item.subtitle ?? item.desc ?? "精选内容")}
+              </span>
+              {item.desc ? (
+                <small style={{ display: "block", marginTop: 4, color: "#94a3b8", fontSize: 11 }}>{String(item.desc)}</small>
+              ) : null}
+            </span>
+            <span style={{ display: "grid", gap: 8, justifyItems: "end", color: text(props.accentColor, "#0f766e"), fontSize: 12 }}>
+              <strong>{String(item.metricText ?? "")}</strong>
+              <span style={{ fontWeight: 800 }}>{String(item.buttonText ?? text(props.buttonText, "查看"))}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function CouponSection({ props }: MaterialProps) {
   const title = text(props.title, "优惠券");
   return (
@@ -783,6 +881,59 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
       },
       events: [{ name: "onProductClick", title: "点击商品" }],
+    }),
+  },
+  {
+    component: StoreExpertSection,
+    manifest: createMaterialManifest({
+      componentName: "StoreExpertSection",
+      materialVersion: "0.1.0",
+      title: "门店/达人推荐",
+      category: "commerce",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "门店/达人推荐",
+        subtitle: "精选门店和达人内容，帮助用户快速进入转化场景。",
+        badgeText: "精选",
+        buttonText: "查看",
+        backgroundColor: "#f8fafc",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        accentColor: "#0f766e",
+        items: [
+          {
+            id: "store_jingan",
+            typeText: "门店",
+            title: "MeuMall 上海静安店",
+            subtitle: "本周热卖搭配到店试穿",
+            metricText: "4.9 分",
+            desc: "距你 2.1km",
+            imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+          },
+          {
+            id: "expert_summer",
+            typeText: "达人",
+            title: "小夏的通勤穿搭",
+            subtitle: "每日更新包袋和鞋履组合",
+            metricText: "12.8w 粉丝",
+            desc: "直播中",
+            imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+          },
+        ],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["store.byIds", "expert.byActivity"] }],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "门店/达人推荐" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "精选门店和达人内容，帮助用户快速进入转化场景。" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        items: { label: "推荐列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onItemClick", title: "点击推荐项" }],
     }),
   },
   {

@@ -47,6 +47,27 @@ const sampleProducts = [
   },
 ];
 
+const sampleStoreExperts = [
+  {
+    id: "store_jingan",
+    typeText: "门店",
+    title: "MeuMall 上海静安店",
+    subtitle: "本周热卖搭配到店试穿",
+    metricText: "4.9 分",
+    desc: "距你 2.1km",
+    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "expert_summer",
+    typeText: "达人",
+    title: "小夏的通勤穿搭",
+    subtitle: "每日更新包袋和鞋履组合",
+    metricText: "12.8w 粉丝",
+    desc: "直播中",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+  },
+];
+
 function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
   const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
   return sampleProducts.slice(0, limit) as JsonValue;
@@ -142,6 +163,7 @@ const sampleSchema = createLowcodePageSchema({
         textColor: "#111827",
         items: [
           { id: "anchor_coupon", title: "领券", targetId: "node_coupon" },
+          { id: "anchor_recommend", title: "推荐", targetId: "node_store_expert" },
           { id: "anchor_flash", title: "限时秒杀", targetId: "node_flash_sale" },
           { id: "anchor_pick", title: "精选专区", targetId: "node_container" },
         ],
@@ -163,8 +185,8 @@ const sampleSchema = createLowcodePageSchema({
         items: [
           { id: "nav_coupon", title: "领券", subtitle: "新人礼" },
           { id: "nav_flash", title: "秒杀", subtitle: "限时抢" },
+          { id: "nav_store", title: "门店", subtitle: "附近热推" },
           { id: "nav_new", title: "上新", subtitle: "新品" },
-          { id: "nav_rank", title: "榜单", subtitle: "热卖" },
         ],
       },
     },
@@ -204,6 +226,25 @@ const sampleSchema = createLowcodePageSchema({
       events: {
         onReceive: { actionId: "receive_coupon" },
         onReceiveAll: { actionId: "receive_coupon_bundle" },
+      },
+    },
+    {
+      id: "node_store_expert",
+      componentName: "StoreExpertSection",
+      materialVersion: "0.1.0",
+      props: {
+        title: "门店/达人推荐",
+        subtitle: "附近门店和热门达人帮你快速选好物。",
+        badgeText: "本地热推",
+        buttonText: "查看",
+        backgroundColor: "#f8fafc",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        accentColor: "#0f766e",
+        items: sampleStoreExperts,
+      },
+      events: {
+        onItemClick: { actionId: "track_store_expert" },
       },
     },
     {
@@ -336,6 +377,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "flash_sale_product_click",
+      },
+    },
+    {
+      id: "track_store_expert",
+      type: "tracking.click",
+      params: {
+        eventName: "store_expert_click",
       },
     },
     {

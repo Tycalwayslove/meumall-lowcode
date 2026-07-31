@@ -220,6 +220,134 @@ export const ProductList = defineComponent({
   },
 });
 
+export const StoreExpertSection = defineComponent({
+  name: "StoreExpertSection",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items);
+      const visibleItems = items.length
+        ? items
+        : [
+            {
+              id: "store_1",
+              typeText: "门店",
+              title: "MeuMall 上海静安店",
+              subtitle: "本周热卖搭配到店试穿",
+              metricText: "4.9 分",
+              desc: "距你 2.1km",
+              imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+            },
+            {
+              id: "expert_1",
+              typeText: "达人",
+              title: "小夏的通勤穿搭",
+              subtitle: "每日更新包袋和鞋履组合",
+              metricText: "12.8w 粉丝",
+              desc: "直播中",
+              imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+            },
+          ];
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-store-expert-section",
+          style: {
+            padding: "14px 12px",
+            background: text(runtimeProps.backgroundColor, "#f8fafc"),
+          },
+        },
+        [
+          h(
+            "div",
+            { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "12px", marginBottom: "10px" } },
+            [
+              h("div", { style: { minWidth: 0 } }, [
+                h("strong", { style: { display: "block", color: text(runtimeProps.titleColor, "#111827"), fontSize: "17px" } }, text(runtimeProps.title, "门店/达人推荐")),
+                h(
+                  "span",
+                  { style: { display: "block", marginTop: "3px", color: "#64748b", fontSize: "12px" } },
+                  text(runtimeProps.subtitle, "精选门店和达人内容，帮助用户快速进入转化场景。"),
+                ),
+              ]),
+              h(
+                "span",
+                { style: { flex: "0 0 auto", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "12px", fontWeight: 800 } },
+                text(runtimeProps.badgeText, "精选"),
+              ),
+            ],
+          ),
+          h(
+            "div",
+            { style: { display: "grid", gap: "10px" } },
+            visibleItems.map((item, index) =>
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onItemClick;
+                    if (typeof handler === "function") handler(item);
+                  },
+                  style: {
+                    display: "grid",
+                    gridTemplateColumns: "64px minmax(0, 1fr) auto",
+                    alignItems: "center",
+                    gap: "10px",
+                    width: "100%",
+                    minHeight: "82px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "10px",
+                    padding: "10px",
+                    color: "#111827",
+                    background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+                    textAlign: "left",
+                  } satisfies CSSProperties,
+                },
+                [
+                  typeof item.imageUrl === "string"
+                    ? h("img", {
+                        src: item.imageUrl,
+                        alt: "",
+                        style: {
+                          width: "64px",
+                          height: "64px",
+                          objectFit: "cover",
+                          borderRadius: "8px",
+                          background: "#e5e7eb",
+                        },
+                      })
+                    : h("span", { style: { width: "64px", height: "64px", borderRadius: "8px", background: "#e5e7eb" } }),
+                  h("span", { style: { minWidth: 0 } }, [
+                    h(
+                      "small",
+                      { style: { display: "inline-block", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "11px", fontWeight: 800 } },
+                      String(item.typeText ?? "推荐"),
+                    ),
+                    h("strong", { style: { display: "block", marginTop: "4px", color: "#111827", fontSize: "14px" } }, String(item.title ?? `推荐 ${index + 1}`)),
+                    h("span", { style: { display: "block", marginTop: "4px", color: "#64748b", fontSize: "12px" } }, String(item.subtitle ?? item.desc ?? "精选内容")),
+                    item.desc ? h("small", { style: { display: "block", marginTop: "4px", color: "#94a3b8", fontSize: "11px" } }, String(item.desc)) : null,
+                  ]),
+                  h(
+                    "span",
+                    { style: { display: "grid", gap: "8px", justifyItems: "end", color: text(runtimeProps.accentColor, "#0f766e"), fontSize: "12px" } },
+                    [
+                      h("strong", String(item.metricText ?? "")),
+                      h("span", { style: { fontWeight: 800 } }, String(item.buttonText ?? text(runtimeProps.buttonText, "查看"))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const CouponSection = defineComponent({
   name: "CouponSection",
   props: materialPropOptions,
@@ -1085,6 +1213,59 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
       },
       events: [{ name: "onProductClick", title: "点击商品" }],
+    }),
+  },
+  {
+    component: StoreExpertSection,
+    manifest: createMaterialManifest({
+      componentName: "StoreExpertSection",
+      materialVersion: "0.1.0",
+      title: "门店/达人推荐",
+      category: "commerce",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "门店/达人推荐",
+        subtitle: "精选门店和达人内容，帮助用户快速进入转化场景。",
+        badgeText: "精选",
+        buttonText: "查看",
+        backgroundColor: "#f8fafc",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        accentColor: "#0f766e",
+        items: [
+          {
+            id: "store_jingan",
+            typeText: "门店",
+            title: "MeuMall 上海静安店",
+            subtitle: "本周热卖搭配到店试穿",
+            metricText: "4.9 分",
+            desc: "距你 2.1km",
+            imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+          },
+          {
+            id: "expert_summer",
+            typeText: "达人",
+            title: "小夏的通勤穿搭",
+            subtitle: "每日更新包袋和鞋履组合",
+            metricText: "12.8w 粉丝",
+            desc: "直播中",
+            imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+          },
+        ],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["store.byIds", "expert.byActivity"] }],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "门店/达人推荐" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "精选门店和达人内容，帮助用户快速进入转化场景。" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        items: { label: "推荐列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onItemClick", title: "点击推荐项" }],
     }),
   },
   {
