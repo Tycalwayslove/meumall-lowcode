@@ -51,9 +51,12 @@ import {
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
   appendNode,
+  cloneLowcodePageSchema,
   countLowcodeNodes,
+  createLowcodeBlankPageSchema,
   copyNode,
   createLowcodeDeliverySummary,
+  createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
   createLowcodeTemplateListItem,
@@ -100,7 +103,7 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
-import { cloneTemplateSchema, pageTemplates, type PageTemplate } from "./pageTemplates";
+import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   localConfigPlatformClient,
   type LocalPageRelease,
@@ -321,7 +324,7 @@ const previewDataSourceRegistry = createDataSourceRegistry({
   "custom.http": (dataSource) => dataSource.params ?? {},
 });
 
-const initialSchema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
+const initialSchema = cloneLowcodePageSchema((pageTemplates[0] as PageTemplate).schema);
 
 type AutoSaveStatus = "idle" | "restored" | "pending" | "saved" | "error";
 
@@ -2984,42 +2987,13 @@ function insertMaterialInsideSelectedContainer(): void {
 
 function resetSchema(): void {
   window.localStorage.removeItem(STORAGE_KEY);
-  const schema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
-  editorState.value = createEditorState(schema, { selectedNodeId: schema.nodes[0]?.id });
-  schemaDraft.value = JSON.stringify(schema, null, 2);
+  editorState.value = createLowcodePageStartState((pageTemplates[0] as PageTemplate).schema, {
+    dirty: false,
+    lastAction: "resetSchema",
+  });
+  schemaDraft.value = JSON.stringify(editorState.value.schema, null, 2);
   releaseMessage.value = "已重置为示例页面";
   refreshReleases();
-}
-
-function createBlankPageSchema(): LowcodePageSchema {
-  const now = new Date();
-  const pageId = `blank-h5-${now.getTime().toString(36)}`;
-  return createLowcodePageSchema({
-    pageId,
-    title: "未命名 H5 页面",
-    pageType: "custom",
-    targetPlatforms: ["h5"],
-    layout: {
-      safeArea: true,
-      backgroundColor: "#f8fafc",
-      maxWidth: 430,
-    },
-    nodes: [],
-    tracking: {
-      pageName: "lowcode_blank_h5",
-      channelParamKeys: ["utm_source", "channel"],
-      exposure: true,
-      click: true,
-    },
-    publishMeta: {
-      environment: "test",
-      operator: "playground",
-    },
-    editor: {
-      canvasWidth: 375,
-      notes: "从新建页面向导创建的空白 H5 页面。",
-    },
-  });
 }
 
 function openPageStartWizard(): void {
@@ -3036,18 +3010,14 @@ function createBlankPageFromWizard(): void {
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认新建空白页面并替换当前页面吗？")) {
     return;
   }
-  const schema = createBlankPageSchema();
   window.localStorage.removeItem(STORAGE_KEY);
-  const nextState = createEditorState(schema, {
+  editorState.value = createLowcodePageStartState(createLowcodeBlankPageSchema(), {
     mode: "design",
     viewport: editorState.value.viewport,
-  });
-  editorState.value = {
-    ...nextState,
     dirty: true,
     lastAction: "createBlankPage",
-  };
-  schemaDraft.value = JSON.stringify(schema, null, 2);
+  });
+  schemaDraft.value = JSON.stringify(editorState.value.schema, null, 2);
   jsonError.value = "";
   multiSelectedNodeIds.value = [];
   collapsedOutlineNodeIds.value = [];
@@ -3192,13 +3162,14 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onAp
     releaseMessage.value = "模板不存在或已下架";
     return;
   }
-  const schema = cloneTemplateSchema(templateDetail);
-  window.localStorage.removeItem(STORAGE_KEY);
-  editorState.value = createEditorState(schema, {
-    selectedNodeId: schema.nodes[0]?.id,
+  editorState.value = createLowcodePageStartState(templateDetail.schema, {
     mode: editorState.value.mode,
     viewport: editorState.value.viewport,
+    dirty: false,
+    lastAction: "applyTemplate",
   });
+  const schema = editorState.value.schema;
+  window.localStorage.removeItem(STORAGE_KEY);
   schemaDraft.value = JSON.stringify(schema, null, 2);
   jsonError.value = "";
   releaseMessage.value = `已应用模板：${templateDetail.title}`;

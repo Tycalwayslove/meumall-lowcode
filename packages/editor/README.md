@@ -40,6 +40,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `sliceLowcodeTemplateTags`
 - `formatLowcodeTemplateVersion`
 - `formatLowcodeTemplateSummary`
+- `createLowcodeBlankPageSchema`
+- `cloneLowcodePageSchema`
+- `createLowcodePageStartState`
 
 ## Readiness API
 
@@ -93,6 +96,24 @@ The template helpers keep template cards, page-start wizards, and future Java te
 `formatLowcodeTemplateVersion(template)` returns `v{version}` or `未标版本`.
 
 `formatLowcodeTemplateSummary(template)` formats the current card summary text as `节点 / 数据源 / 动作`.
+
+## Page Start API
+
+The page start helpers keep blank-page creation, template application, and future management-console page starters on one editor command contract.
+
+`createLowcodeBlankPageSchema(options)` creates a valid empty H5 Page Schema with stable defaults:
+
+- `targetPlatforms: ["h5"]`.
+- Safe-area layout with `maxWidth: 430`.
+- Empty `nodes`.
+- Default H5 tracking keys.
+- Draft publish metadata for the selected environment and operator.
+
+`cloneLowcodePageSchema(schema)` performs a JSON-safe deep copy before templates or releases are used as editable drafts.
+
+`createLowcodePageStartState(schema, options)` creates a fresh editor state for a new blank page or selected template. It selects the first node by default, keeps host-provided viewport/mode options, and lets the shell decide whether the new state should be dirty.
+
+Host shells remain responsible for confirmation dialogs, local or server draft persistence, permissions, and user-facing messages.
 
 ## Contract
 

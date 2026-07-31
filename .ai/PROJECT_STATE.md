@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板和空态演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、架构边界 check、editor readiness API、editor version summary API、editor template summary API、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序和列表项图片素材选择，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单和业务物料复用。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板和空态演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、架构边界 check、editor readiness API、editor version summary API、editor template summary API、editor page start API、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序和列表项图片素材选择，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单和业务物料复用。
 
 ## 当前维护范围
 
@@ -38,6 +38,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Editor readiness API：`@meumall/lowcode-editor` 已提供 `flattenLowcodeNodes`、`countLowcodeNodes`、`getLowcodeNodeDisplayName`、`createLowcodePublishChecks`、`summarizeLowcodePublishChecks`、`createLowcodeDeliverySummary` 和 `formatLowcodeSchemaSize`，Vue3 editor playground 的发布检查和交付清单已复用同一套框架无关 API。
 - Editor version summary API：`@meumall/lowcode-editor` 已提供 `createLowcodeVersionDiffItems`、`createLowcodeSchemaPreviewSnippet` 和 `createLowcodeSchemaPreviewItems`，Vue3 editor playground 的本地版本差异详情和 Schema 片段预览已复用同一套框架无关 API。
 - Editor template summary API：`@meumall/lowcode-editor` 已提供 `createLowcodeTemplatePreviewMeta`、`createLowcodeTemplateListItem`、`sliceLowcodeTemplateTags`、`formatLowcodeTemplateVersion` 和 `formatLowcodeTemplateSummary`，Vue3 editor playground 的模板卡片、模板起点和本地自定义模板展示已复用同一套框架无关 API。
+- Editor page start API：`@meumall/lowcode-editor` 已提供 `createLowcodeBlankPageSchema`、`cloneLowcodePageSchema` 和 `createLowcodePageStartState`，Vue3 editor playground 的新建空白 H5 页面、重置示例页和应用模板已复用同一套框架无关 API。
 - Vue H5 renderer 初始实现。
 - Vue H5 基础物料：容器、公告条、区块标题、图片卡片宫格、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组、富文本。
 - Vue3 编辑器 playground：物料添加、拖到画布、节点选择、属性编辑、JSON 查看/应用、本地保存、撤销/重做和 H5 预览。
@@ -112,14 +113,14 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 ## 已知缺口
 
-- 尚未实现完整生产级编辑器 UI；当前已具备新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索过滤、物料详情预览、物料收藏与最近使用、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、工作区状态摘要、属性分组折叠、节点右键菜单、节点键盘快捷键、editor readiness API、editor version summary API、editor template summary API、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
+- 尚未实现完整生产级编辑器 UI；当前已具备新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索过滤、物料详情预览、物料收藏与最近使用、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、工作区状态摘要、属性分组折叠、节点右键菜单、节点键盘快捷键、editor readiness API、editor version summary API、editor template summary API、editor page start API、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
 - 内部 runtime primitives 原型已覆盖现有主要 React/Vue H5 物料，并补齐 `Input`、`Textarea`、`Switch`、`Stepper` 表单 primitives；`ProductList`、`ActivityHero`、`SectionContainer`、`NoticeBar`、`RichTextBlock`、`SpacerBlock` 等历史或简单物料仍可按真实复用收益继续整理，`CountdownText`、`Overlay`、`Modal`、`Tabs` 等后续 primitives 尚未建立；primitives 仍不是公开 npm API。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放、已有节点移动、触屏 Pointer Events 拖拽、吸附线、同父级多选成组拖拽和数组列表项排序；跨父级多选拖拽仍需后续单独设计。
 - Page Schema v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端发布校验、审批和审计字段。
 - Material Manifest v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端校验字段。
 - Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批、服务端发布校验、版本 diff、回滚审计和分页。
-- 当前发布检查、交付摘要、版本差异、Schema 片段预览、模板摘要和模板预览派生已沉淀到 editor API，发布链路和自动保存已抽象出部分本地持久化状态，但仍使用 localStorage mock，尚未切换真实 Java HTTP client、服务端草稿自动保存、服务端发布校验、审批和审计。
+- 当前发布检查、交付摘要、版本差异、Schema 片段预览、模板摘要、模板预览派生和页面起步命令已沉淀到 editor API，发布链路和自动保存已抽象出部分本地持久化状态，但仍使用 localStorage mock，尚未切换真实 Java HTTP client、服务端草稿自动保存、服务端发布校验、审批和审计。
 - 当前 React H5 handoff 使用 URL schema 参数，React H5 runtime playground 已通过本地 client 跑通 pageId/releaseId 加载并展示 fallback 诊断和 empty demo 空态；正式预览仍需 Java 配置平台 previewId/pageId 与真实 HTTP client。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
 - 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐、静态直播入口、静态商品榜单、静态品牌专题、静态底部转化条和 mock 商品数据，尚未对接真实活动、库存、价格、排行口径、品牌中心、规则中心、楼层配置中心、优惠券中心、门店中心、达人中心和直播中心。
@@ -218,6 +219,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `309a3d6` | 沉淀编辑器发布检查和交付摘要 API。 |
 | 2026-08-01 | `e519bb0` | 沉淀编辑器版本差异和 Schema 摘要 API。 |
 | 2026-08-01 | `6e85bf5` | 沉淀编辑器模板摘要和预览 API。 |
+| 2026-08-01 | `本提交` | 沉淀编辑器页面起步 API。 |
 
 ## 默认验证命令
 

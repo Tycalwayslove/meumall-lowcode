@@ -7,7 +7,7 @@ import type {
   LowcodePlatform,
   LowcodeVisibilityRule,
 } from "@meumall/lowcode-schema";
-import { createLowcodeNode, validateLowcodePageSchema } from "@meumall/lowcode-schema";
+import { createLowcodeNode, createLowcodePageSchema, validateLowcodePageSchema } from "@meumall/lowcode-schema";
 
 export type LowcodeEditorMode = "design" | "preview" | "outline";
 
@@ -199,6 +199,28 @@ export interface CreateLowcodeTemplatePreviewMetaOptions {
 
 export interface CreateLowcodeTemplateListItemOptions extends CreateLowcodeTemplatePreviewMetaOptions {}
 
+export interface CreateLowcodeBlankPageSchemaOptions {
+  pageId?: string;
+  pageIdPrefix?: string;
+  now?: Date;
+  title?: string;
+  pageType?: LowcodePageSchema["pageType"];
+  operator?: string;
+  environment?: LowcodePageSchema["publishMeta"]["environment"];
+  backgroundColor?: string;
+  maxWidth?: number;
+  canvasWidth?: number;
+  notes?: string;
+  trackingPageName?: string;
+  channelParamKeys?: string[];
+}
+
+export interface CreateLowcodePageStartStateOptions extends CreateEditorStateOptions {
+  dirty?: boolean;
+  lastAction?: string;
+  cloneSchema?: boolean;
+}
+
 type NodeInput = Omit<LowcodeNode, "id"> & { id?: string };
 
 const DEFAULT_VIEWPORT: LowcodeEditorViewport = {
@@ -216,6 +238,7 @@ const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
 const TEMPLATE_IMAGE_PROP_NAMES = ["imageUrl", "coverImageUrl", "logoImageUrl"];
 const TEMPLATE_TITLE_PROP_NAMES = ["title", "brandName", "text"];
 const TEMPLATE_SUBTITLE_PROP_NAMES = ["subtitle", "description", "summary"];
+const DEFAULT_BLANK_PAGE_ID_PREFIX = "blank-h5";
 
 export function createEditorState(schema: LowcodePageSchema, options: CreateEditorStateOptions = {}): LowcodeEditorState {
   return {
@@ -814,6 +837,61 @@ export function formatLowcodeTemplateSummary(
   template: Pick<LowcodeEditorTemplateListItem, "nodeCount" | "dataSourceCount" | "actionCount">,
 ): string {
   return `${template.nodeCount} 个节点 / ${template.dataSourceCount} 个数据源 / ${template.actionCount} 个动作`;
+}
+
+export function createLowcodeBlankPageSchema(
+  options: CreateLowcodeBlankPageSchemaOptions = {},
+): LowcodePageSchema {
+  const now = options.now ?? new Date();
+  const pageIdPrefix = options.pageIdPrefix ?? DEFAULT_BLANK_PAGE_ID_PREFIX;
+  return createLowcodePageSchema({
+    pageId: options.pageId ?? `${pageIdPrefix}-${now.getTime().toString(36)}`,
+    title: options.title ?? "未命名 H5 页面",
+    pageType: options.pageType ?? "custom",
+    targetPlatforms: ["h5"],
+    layout: {
+      safeArea: true,
+      backgroundColor: options.backgroundColor ?? "#f8fafc",
+      maxWidth: options.maxWidth ?? 430,
+    },
+    nodes: [],
+    tracking: {
+      pageName: options.trackingPageName ?? "lowcode_blank_h5",
+      channelParamKeys: options.channelParamKeys ?? ["utm_source", "channel"],
+      exposure: true,
+      click: true,
+    },
+    publishMeta: {
+      environment: options.environment ?? "test",
+      operator: options.operator ?? "playground",
+    },
+    editor: {
+      canvasWidth: options.canvasWidth ?? 375,
+      notes: options.notes ?? "从新建页面向导创建的空白 H5 页面。",
+    },
+  });
+}
+
+export function cloneLowcodePageSchema(schema: LowcodePageSchema): LowcodePageSchema {
+  return cloneJsonObject(schema) as unknown as LowcodePageSchema;
+}
+
+export function createLowcodePageStartState(
+  schema: LowcodePageSchema,
+  options: CreateLowcodePageStartStateOptions = {},
+): LowcodeEditorState {
+  const nextSchema = options.cloneSchema === false ? schema : cloneLowcodePageSchema(schema);
+  const nextState = createEditorState(nextSchema, {
+    selectedNodeId: options.selectedNodeId ?? nextSchema.nodes[0]?.id,
+    mode: options.mode ?? "design",
+    viewport: options.viewport,
+    historyLimit: options.historyLimit,
+  });
+  return {
+    ...nextState,
+    dirty: options.dirty ?? true,
+    lastAction: options.lastAction ?? "startPage",
+  };
 }
 
 function commitSchemaChange(

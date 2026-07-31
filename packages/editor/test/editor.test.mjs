@@ -3,7 +3,10 @@ import { describe, it } from "node:test";
 
 import {
   countLowcodeNodes,
+  cloneLowcodePageSchema,
+  createLowcodeBlankPageSchema,
   createLowcodeDeliverySummary,
+  createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
   createLowcodeSchemaPreviewSnippet,
@@ -320,5 +323,68 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(formatLowcodeTemplateVersion(item), "v1.2.0");
     assert.equal(formatLowcodeTemplateSummary(item), "2 个节点 / 1 个数据源 / 1 个动作");
     assert.equal(formatLowcodeTemplateVersion({ version: undefined }), "未标版本");
+  });
+
+  it("creates blank H5 page schemas and page start states", () => {
+    const blank = createLowcodeBlankPageSchema({
+      now: new Date("2026-08-01T00:00:00.000Z"),
+      pageIdPrefix: "blank-test",
+      operator: "tester",
+    });
+    const state = createLowcodePageStartState(blank, {
+      viewport: { width: 390 },
+      dirty: true,
+      lastAction: "createBlankPage",
+    });
+
+    assert.equal(blank.pageId, "blank-test-ms9ludc0");
+    assert.equal(blank.title, "未命名 H5 页面");
+    assert.equal(blank.pageType, "custom");
+    assert.deepEqual(blank.targetPlatforms, ["h5"]);
+    assert.equal(blank.layout.safeArea, true);
+    assert.equal(blank.layout.backgroundColor, "#f8fafc");
+    assert.equal(blank.layout.maxWidth, 430);
+    assert.equal(blank.nodes.length, 0);
+    assert.equal(blank.tracking?.pageName, "lowcode_blank_h5");
+    assert.deepEqual(blank.tracking?.channelParamKeys, ["utm_source", "channel"]);
+    assert.equal(blank.publishMeta.environment, "test");
+    assert.equal(blank.publishMeta.operator, "tester");
+    assert.equal(blank.editor?.canvasWidth, 375);
+    assert.equal(state.schema.pageId, blank.pageId);
+    assert.equal(state.mode, "design");
+    assert.equal(state.viewport.width, 390);
+    assert.equal(state.dirty, true);
+    assert.equal(state.lastAction, "createBlankPage");
+  });
+
+  it("clones template schemas before creating page start states", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "template_clone_page",
+      title: "模板克隆",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/banner.jpg" },
+        }),
+      ],
+    });
+
+    const cloned = cloneLowcodePageSchema(schema);
+    cloned.nodes[0].props.imageUrl = "https://example.com/changed.jpg";
+    const state = createLowcodePageStartState(schema, {
+      mode: "preview",
+      dirty: false,
+      lastAction: "applyTemplate",
+    });
+    state.schema.nodes[0].props.imageUrl = "https://example.com/state.jpg";
+
+    assert.equal(schema.nodes[0].props.imageUrl, "https://example.com/banner.jpg");
+    assert.equal(cloned.nodes[0].props.imageUrl, "https://example.com/changed.jpg");
+    assert.equal(state.selectedNodeId, "banner_1");
+    assert.equal(state.mode, "preview");
+    assert.equal(state.dirty, false);
+    assert.equal(state.lastAction, "applyTemplate");
   });
 });

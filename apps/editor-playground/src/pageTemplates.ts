@@ -1,5 +1,5 @@
 import type { LowcodeTemplateResource } from "@meumall/lowcode-adapters";
-import { createLowcodePageSchema, type LowcodePageSchema } from "@meumall/lowcode-schema";
+import { createLowcodePageSchema } from "@meumall/lowcode-schema";
 
 export type PageTemplate = LowcodeTemplateResource;
 
@@ -646,7 +646,3 @@ export const pageTemplates: PageTemplate[] = [
     }),
   },
 ];
-
-export function cloneTemplateSchema(template: PageTemplate): LowcodePageSchema {
-  return JSON.parse(JSON.stringify(template.schema)) as LowcodePageSchema;
-}
