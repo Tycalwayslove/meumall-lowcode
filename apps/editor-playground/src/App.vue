@@ -25,7 +25,6 @@ import {
   RotateCcw,
   Save,
   Search,
-  Smartphone,
   Trash2,
   Undo2,
   Upload,
@@ -214,10 +213,10 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
-import EditorWorkspaceStats from "./components/EditorWorkspaceStats.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   localConfigPlatformClient,
@@ -732,6 +731,13 @@ const activeH5ViewportPreset = computed<LowcodeEditorViewportPreset | undefined>
   findLowcodeEditorViewportPreset(editorState.value.viewport, h5ViewportPresets),
 );
 const activeH5ViewportTitle = computed(() => formatLowcodeEditorViewportTitle(editorState.value.viewport, h5ViewportPresets));
+const canvasToolbarStatusText = computed(() =>
+  selectedNode.value
+    ? `${selectedParentTitle.value} / ${selectedPositionText.value}`
+    : validation.value.valid
+      ? "校验通过"
+      : validation.value.errors[0],
+);
 const phoneFrameStyle = computed<CSSProperties>(() => ({
   width: `${editorState.value.viewport.width}px`,
 }));
@@ -3575,30 +3581,14 @@ function rollbackPublishSelectedRelease(): void {
       @dragleave="onCanvasDragLeave"
       @drop.prevent="onCanvasDrop"
     >
-      <div class="canvas-top">
-        <div>
-          <strong>{{ editorState.mode === "outline" ? "Schema" : "H5 画布" }}</strong>
-          <span>{{ selectedNode ? `${selectedParentTitle} / ${selectedPositionText}` : validation.valid ? "校验通过" : validation.errors[0] }}</span>
-        </div>
-        <EditorWorkspaceStats :stats="workspaceStats" />
-        <div class="viewport-switch" role="group" aria-label="H5 画布视口">
-          <span class="viewport-switch-label">视口</span>
-          <button
-            v-for="preset in h5ViewportPresets"
-            :key="preset.id"
-            type="button"
-            :title="`${preset.title} ${preset.width}px`"
-            :class="{ active: activeH5ViewportPreset?.id === preset.id }"
-            @click="applyH5ViewportPreset(preset)"
-          >
-            <Smartphone :size="16" />
-            <span>
-              <b>{{ preset.width }}</b>
-              <small>{{ preset.title }}</small>
-            </span>
-          </button>
-        </div>
-      </div>
+      <EditorCanvasToolbar
+        :mode="editorState.mode"
+        :status-text="canvasToolbarStatusText"
+        :stats="workspaceStats"
+        :viewport-presets="h5ViewportPresets"
+        :active-viewport-preset="activeH5ViewportPreset"
+        @select-viewport="applyH5ViewportPreset"
+      />
 
       <div v-if="editorState.mode !== 'outline'" class="phone-stage">
         <div v-if="selectedNode && selectedManifest && editorState.mode === 'design'" class="canvas-context-toolbar">
