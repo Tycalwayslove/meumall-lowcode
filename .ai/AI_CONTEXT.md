@@ -47,7 +47,7 @@
 - Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
 - Vue3 编辑器 playground 已支持 H5 画布视口预设：画布顶部可切换 360 紧凑屏、390 标准屏和 430 大屏，手机框宽度和状态栏同步当前预设；该状态只属于编辑器 shell 的 `editorState.viewport`，不进入 Page Schema，避免与 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议混淆。
 - Vue3 编辑器 playground 属性面板已支持分组折叠：当前物料 props 会按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，组内显示字段数量并可折叠/展开；新 profile 首次打开会默认选中当前 schema 的首个节点，避免属性区为空。
-- Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板。
+- Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板；命令搜索和默认 28 条展示限制已复用 editor command palette API，命令执行函数仍在 playground shell 内。
 - Vue3 编辑器 playground 已支持节点快捷操作：H5 画布节点和左侧结构树节点可右键打开操作菜单，画布上下文工具条有“更多”入口；全局快捷键支持 Delete/Backspace 删除、Ctrl/Meta+C 复制、Ctrl/Meta+V 粘贴、Ctrl/Meta+D 创建副本、Ctrl/Meta+Z 撤销、Ctrl/Meta+Shift+Z 或 Ctrl+Y 重做，并会避开输入框、textarea、select、contenteditable 和命令面板输入。
 - Vue3 编辑器 playground 已支持结构树导航增强：左侧结构树可按物料标题、组件名、节点 id 和 meta name 搜索，容器节点可折叠/展开；搜索会展示命中节点及其祖先路径，点击结构树节点会选中并滚动 H5 画布到对应节点。
 - Vue3 编辑器 playground 已支持节点命名：结构树主标题展示 `node.meta.name` 或物料标题，右侧当前节点信息卡可编辑节点名称，节点右键菜单可进入结构树内联重命名；重命名复用已有 `meta.name`，可被结构树搜索命中。
@@ -61,6 +61,7 @@
 - `@meumall/lowcode-editor` 已沉淀框架无关 page start API：`createLowcodeBlankPageSchema`、`cloneLowcodePageSchema` 和 `createLowcodePageStartState`；Vue3 editor playground 的新建空白 H5 页面、重置示例页和应用模板已改为复用这些 API，后续管理台新建页面、模板起步和 release 回滚草稿可优先对齐 editor 包口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 viewport preset API：`LOWCODE_H5_VIEWPORT_PRESETS`、`getLowcodeEditorViewportPreset`、`findLowcodeEditorViewportPreset`、`createLowcodeEditorViewportFromPreset`、`formatLowcodeEditorViewportTitle` 和 `setEditorViewportPreset`；Vue3 editor playground 的 H5 画布视口预设已改为复用这些 API，后续管理台接入时不要复制 360/390/430 魔法数字。
 - `@meumall/lowcode-editor` 已沉淀框架无关 material catalog API：`createLowcodeMaterialCatalogItem`、`createLowcodeMaterialCategories`、`filterLowcodeMaterialCatalog`、`pickLowcodeMaterialEntriesByComponentNames` 和 `formatLowcodeMaterialCatalogSummary`；Vue3 editor playground 的物料分类、关键词过滤、收藏/最近使用恢复和物料卡片摘要已改为复用这些 API，后续管理台接入时不要复制 manifest 过滤和摘要口径。
+- `@meumall/lowcode-editor` 已沉淀框架无关 command palette API：`LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`、`createLowcodeEditorCommandSearchText`、`filterLowcodeEditorCommands` 和 `groupLowcodeEditorCommands`；Vue3 editor playground 的快捷命令搜索和默认展示限制已改为复用这些 API，后续管理台接入时不要复制 title/group/description/keywords 搜索口径。
 - Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时先复用 `validateLowcodePageSchema` 校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。

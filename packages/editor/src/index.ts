@@ -123,6 +123,26 @@ export interface FilterLowcodeMaterialCatalogOptions {
   allCategoryLabel?: string;
 }
 
+export interface LowcodeEditorCommandEntry {
+  id: string;
+  title: string;
+  group: string;
+  description?: string;
+  keywords?: readonly string[];
+  disabled?: boolean;
+}
+
+export interface LowcodeEditorCommandGroup<T extends LowcodeEditorCommandEntry = LowcodeEditorCommandEntry> {
+  group: string;
+  items: T[];
+}
+
+export interface FilterLowcodeEditorCommandsOptions {
+  keyword?: string;
+  limit?: number;
+  includeDisabled?: boolean;
+}
+
 export interface LowcodeEditorActionParamRule {
   actionType: string;
   paramName: string;
@@ -269,6 +289,7 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 ] as const satisfies readonly LowcodeEditorViewportPreset[];
 
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
+export const LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT = 28;
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
@@ -436,6 +457,45 @@ export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEdit
     const material = materialMap.get(componentName);
     return material ? [material] : [];
   });
+}
+
+export function createLowcodeEditorCommandSearchText(command: LowcodeEditorCommandEntry): string {
+  return [
+    command.title,
+    command.group,
+    command.description ?? "",
+    ...(command.keywords ?? []),
+  ].join(" ").toLowerCase();
+}
+
+export function filterLowcodeEditorCommands<T extends LowcodeEditorCommandEntry>(
+  commands: readonly T[],
+  options: FilterLowcodeEditorCommandsOptions = {},
+): T[] {
+  const keyword = options.keyword?.trim().toLowerCase() ?? "";
+  const limit = Math.max(0, options.limit ?? LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT);
+  const includeDisabled = options.includeDisabled ?? true;
+  return commands
+    .filter((command) => includeDisabled || !command.disabled)
+    .filter((command) => !keyword || createLowcodeEditorCommandSearchText(command).includes(keyword))
+    .slice(0, limit);
+}
+
+export function groupLowcodeEditorCommands<T extends LowcodeEditorCommandEntry>(
+  commands: readonly T[],
+): LowcodeEditorCommandGroup<T>[] {
+  const groups: LowcodeEditorCommandGroup<T>[] = [];
+  const groupMap = new Map<string, LowcodeEditorCommandGroup<T>>();
+  commands.forEach((command) => {
+    let group = groupMap.get(command.group);
+    if (!group) {
+      group = { group: command.group, items: [] };
+      groupMap.set(command.group, group);
+      groups.push(group);
+    }
+    group.items.push(command);
+  });
+  return groups;
 }
 
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {

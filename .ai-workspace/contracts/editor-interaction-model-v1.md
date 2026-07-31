@@ -87,6 +87,15 @@ interface LowcodeEditorState {
 
 物料目录 API 从 `LowcodeMaterialManifest` 派生列表展示、分类、搜索和摘要信息。关键词匹配覆盖标题、组件名、分类、版本和平台；这些 API 不修改 Material Manifest、Page Schema 或 renderer 行为。
 
+快捷命令 API：
+
+- `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`
+- `createLowcodeEditorCommandSearchText`
+- `filterLowcodeEditorCommands`
+- `groupLowcodeEditorCommands`
+
+快捷命令 API 从命令条目的 title、group、description 和 keywords 派生搜索文本，默认最多展示 28 条，并默认保留 disabled 命令，方便 UI 壳展示不可用状态。API 只处理命令目录展示模型，不执行命令、不绑定快捷键、不做权限判断、不修改 Page Schema、Material Manifest 或 renderer 行为。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -99,6 +108,7 @@ interface LowcodeEditorState {
 - 历史记录只保存 schema 快照，不保存 UI 临时状态。
 - 视口预设只改变 `LowcodeEditorState.viewport`，不改变 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议。
 - 物料目录 API 只派生编辑器展示模型，不新增或改写物料 manifest 字段。
+- 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式

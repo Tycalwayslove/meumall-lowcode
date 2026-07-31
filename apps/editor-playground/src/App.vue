@@ -68,6 +68,7 @@ import {
   duplicateNode,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
+  filterLowcodeEditorCommands,
   filterLowcodeMaterialCatalog,
   formatLowcodeEditorViewportTitle,
   formatLowcodeMaterialCatalogSummary,
@@ -89,6 +90,7 @@ import {
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
   undo,
+  type LowcodeEditorCommandEntry,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
@@ -506,9 +508,7 @@ interface NodeContextMenuItem {
   danger?: boolean;
 }
 
-interface CommandPaletteItem {
-  id: string;
-  title: string;
+interface CommandPaletteItem extends LowcodeEditorCommandEntry {
   group: CommandPaletteGroup;
   description: string;
   keywords: string[];
@@ -1116,14 +1116,9 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     run: () => applyTemplate({ id: template.id }),
   })),
 ]);
-const visibleCommandPaletteItems = computed(() => {
-  const keyword = commandKeyword.value.trim().toLowerCase();
-  const source = commandPaletteItems.value;
-  if (!keyword) return source.slice(0, 28);
-  return source
-    .filter((item) => [item.title, item.group, item.description, ...item.keywords].join(" ").toLowerCase().includes(keyword))
-    .slice(0, 28);
-});
+const visibleCommandPaletteItems = computed(() =>
+  filterLowcodeEditorCommands(commandPaletteItems.value, { keyword: commandKeyword.value }),
+);
 
 watch(
   () => editorState.value.schema,

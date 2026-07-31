@@ -8,6 +8,7 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   createLowcodeDeliverySummary,
+  createLowcodeEditorCommandSearchText,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
   createLowcodePageStartState,
@@ -18,6 +19,7 @@ import {
   createLowcodeTemplatePreviewMeta,
   createLowcodeVersionDiffItems,
   findLowcodeEditorViewportPreset,
+  filterLowcodeEditorCommands,
   filterLowcodeMaterialCatalog,
   flattenLowcodeNodes,
   formatLowcodeEditorViewportTitle,
@@ -26,7 +28,9 @@ import {
   formatLowcodeTemplateVersion,
   getLowcodeEditorViewportPreset,
   getLowcodeNodeDisplayName,
+  groupLowcodeEditorCommands,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   pickLowcodeMaterialEntriesByComponentNames,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
@@ -237,6 +241,70 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(pickLowcodeMaterialEntriesByComponentNames(entries, ["ActionButton", "Missing", "ImageBanner"]).map((item) => item.manifest.componentName), [
       "ActionButton",
       "ImageBanner",
+    ]);
+  });
+
+  it("filters and groups reusable editor commands", () => {
+    const commands = [
+      {
+        id: "save-draft",
+        title: "保存草稿",
+        group: "常用操作",
+        description: "保存当前页面到本地 mock 配置平台。",
+        keywords: ["save", "draft", "草稿"],
+      },
+      {
+        id: "publish-page",
+        title: "发布当前页面",
+        group: "常用操作",
+        description: "通过发布检查后生成 published release。",
+        keywords: ["publish", "发布", "上线"],
+        disabled: true,
+      },
+      {
+        id: "mode-design",
+        title: "切换到设计模式",
+        group: "视图",
+        description: "回到可拖拽和可选中节点的画布。",
+        keywords: ["design", "设计", "画布"],
+      },
+      {
+        id: "material-brand",
+        title: "添加物料：品牌专题",
+        group: "物料",
+        description: "commerce / BrandFeatureSection",
+        keywords: ["品牌专题", "BrandFeatureSection", "commerce"],
+      },
+    ];
+
+    const manyCommands = Array.from({ length: LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT + 4 }, (_, index) => ({
+      id: `command-${index}`,
+      title: `命令 ${index}`,
+      group: "批量",
+      description: "用于测试默认展示数量。",
+      keywords: [`cmd-${index}`],
+    }));
+
+    assert.ok(createLowcodeEditorCommandSearchText(commands[3]).includes("brandfeaturesection"));
+    assert.deepEqual(filterLowcodeEditorCommands(commands, { keyword: "published release" }).map((item) => item.id), [
+      "publish-page",
+    ]);
+    assert.deepEqual(filterLowcodeEditorCommands(commands, { keyword: "BrandFeatureSection" }).map((item) => item.id), [
+      "material-brand",
+    ]);
+    assert.deepEqual(filterLowcodeEditorCommands(commands, { keyword: "发布" }).map((item) => item.id), [
+      "publish-page",
+    ]);
+    assert.deepEqual(filterLowcodeEditorCommands(commands, { keyword: "发布", includeDisabled: false }).map((item) => item.id), []);
+    assert.equal(filterLowcodeEditorCommands(manyCommands).length, LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT);
+    assert.deepEqual(filterLowcodeEditorCommands(manyCommands, { limit: 2 }).map((item) => item.id), [
+      "command-0",
+      "command-1",
+    ]);
+    assert.deepEqual(groupLowcodeEditorCommands(commands), [
+      { group: "常用操作", items: [commands[0], commands[1]] },
+      { group: "视图", items: [commands[2]] },
+      { group: "物料", items: [commands[3]] },
     ]);
   });
 

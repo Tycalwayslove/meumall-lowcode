@@ -21,6 +21,10 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `filterLowcodeMaterialCatalog`
 - `pickLowcodeMaterialEntriesByComponentNames`
 - `formatLowcodeMaterialCatalogSummary`
+- `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`
+- `createLowcodeEditorCommandSearchText`
+- `filterLowcodeEditorCommands`
+- `groupLowcodeEditorCommands`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -161,6 +165,20 @@ The material catalog helpers keep material-library search, category filters, qui
 `formatLowcodeMaterialCatalogSummary(manifest)` returns card text such as `3 个配置 / 1 个事件 / 0 个数据槽`.
 
 These helpers do not change Material Manifest, Page Schema, or renderer behavior.
+
+## Command Palette API
+
+The command helpers keep editor-shell command palettes reusable across the Vue3 playground and future management-console shells.
+
+`LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT` is `28`, matching the current command palette display size.
+
+`createLowcodeEditorCommandSearchText(command)` derives searchable text from title, group, description, and keywords.
+
+`filterLowcodeEditorCommands(commands, options)` filters command entries by keyword and display limit. Disabled commands are included by default so UI shells can show unavailable actions with disabled styling; hosts can pass `includeDisabled: false` when they need executable-only lists.
+
+`groupLowcodeEditorCommands(commands)` groups filtered commands by their `group` value while preserving first-seen group order and item order.
+
+These helpers do not execute commands, bind keyboard shortcuts, check permissions, or mutate editor state. Host shells remain responsible for `run` handlers, shortcuts such as `Meta/Ctrl + K`, confirmation dialogs, and user-facing feedback.
 
 ## Contract
 
