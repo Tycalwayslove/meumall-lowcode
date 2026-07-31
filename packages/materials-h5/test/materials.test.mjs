@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { h5Materials } from "../dist/index.js";
 import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
+import { validateLowcodeMaterialManifest } from "../../schema/dist/index.js";
 
 function manifestNames(materials) {
   return materials.map((material) => material.manifest.componentName);
@@ -11,6 +12,14 @@ function manifestNames(materials) {
 describe("MeuMall H5 material manifests", () => {
   it("keeps React and Vue material component names aligned", () => {
     assert.deepEqual(manifestNames(h5Materials), manifestNames(h5VueMaterials));
+  });
+
+  it("keeps all React and Vue material manifests valid", () => {
+    for (const material of [...h5Materials, ...h5VueMaterials]) {
+      const result = validateLowcodeMaterialManifest(material.manifest);
+
+      assert.equal(result.valid, true, `${material.manifest.componentName}: ${result.errors.join("; ")}`);
+    }
   });
 
   it("registers the activity rule modal material", () => {

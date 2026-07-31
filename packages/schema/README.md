@@ -19,4 +19,7 @@ This package must stay framework-agnostic.
 
 ## Contract
 
-See `.ai-workspace/contracts/page-schema-v1.md`.
+See:
+
+- `.ai-workspace/contracts/page-schema-v1.md`
+- `.ai-workspace/contracts/material-manifest-v1.md`

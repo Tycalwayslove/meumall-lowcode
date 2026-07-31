@@ -1,6 +1,7 @@
 # Contracts
 
 - `page-schema-v1.md`
+- `material-manifest-v1.md`
 - `editor-interaction-model-v1.md`
 - `java-config-platform-api-v1.md`
 - `h5-runtime-integration-v1.md`
@@ -11,7 +12,7 @@
 
 - `page-schema-v1.md`
 - `editor-interaction-model-v1.md`
-- Material Manifest v1
+- `material-manifest-v1.md`
 - Java 配置平台页面草稿/预览/发布 API
 - H5 页面渲染接入 API
 - npm 包公开 API
