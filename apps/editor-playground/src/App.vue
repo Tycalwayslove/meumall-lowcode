@@ -225,6 +225,7 @@ let runtimeResolutionSeq = 0;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
+type PublishCheckStatus = "pass" | "warning" | "error";
 
 interface CanvasDropHint {
   source: CanvasDragSource;
@@ -232,6 +233,13 @@ interface CanvasDropHint {
   targetNodeId?: string;
   targetTitle: string;
   style: CSSProperties;
+}
+
+interface PublishCheck {
+  id: string;
+  title: string;
+  status: PublishCheckStatus;
+  description: string;
 }
 
 const canvasDropHint = ref<CanvasDropHint>();
@@ -313,6 +321,17 @@ const canMoveSelectedDown = computed(() => {
   if (!row) return false;
   return row.index < getSiblingCount(row.parentId) - 1;
 });
+const publishChecks = computed(() => createPublishChecks());
+const publishCheckSummary = computed(() => {
+  return publishChecks.value.reduce(
+    (summary, check) => ({
+      ...summary,
+      [check.status]: summary[check.status] + 1,
+    }),
+    { pass: 0, warning: 0, error: 0 } as Record<PublishCheckStatus, number>,
+  );
+});
+const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 
@@ -390,6 +409,10 @@ function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): Outli
   ]);
 }
 
+function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
+  return nodes.flatMap((node) => [node, ...flattenNodeList(node.children ?? [])]);
+}
+
 function getSiblingCount(parentId?: string): number {
   if (!parentId) return editorState.value.schema.nodes.length;
   return findNode(editorState.value.schema.nodes, parentId)?.children?.length ?? 0;
@@ -449,6 +472,87 @@ function runtimeDataStatusText(): string {
   const errors = runtimeDataSourceRecords.value.filter((record) => record.status === "error").length;
   if (errors > 0) return `数据源异常 ${errors} 个`;
   return `数据源已解析 ${runtimeDataSourceRecords.value.length} 个`;
+}
+
+function createPublishChecks(): PublishCheck[] {
+  const schema = editorState.value.schema;
+  const nodes = flattenNodeList(schema.nodes);
+  const missingImages = nodes.flatMap((node) => {
+    const manifest = registry.get(node.componentName)?.manifest;
+    if (!manifest) return [];
+    return Object.entries(manifest.propsSchema)
+      .filter(([, propSchema]) => propSchema.setter === "image")
+      .filter(([propName]) => {
+        const value = node.props[propName];
+        return typeof value !== "string" || value.trim().length === 0;
+      })
+      .map(([propName]) => `${manifest.title}.${propName}`);
+  });
+  const emptyProductNodes = nodes.filter((node) => {
+    if (!["ProductList", "FlashSaleList"].includes(node.componentName)) return false;
+    if (node.dataBinding?.items) return false;
+    return !Array.isArray(node.props.items) || node.props.items.length === 0;
+  });
+  const dataSourceErrors = previewDataSourceRecords.value.filter((record) => record.status === "error");
+  const actions = new Set((schema.actions ?? []).map((action) => action.id));
+  const missingActionRefs = nodes.flatMap((node) =>
+    Object.entries(node.events ?? [])
+      .filter(([, ref]) => !actions.has(ref.actionId))
+      .map(([eventName, ref]) => `${node.id}.${eventName} -> ${ref.actionId}`),
+  );
+  const actionWarnings = (schema.actions ?? []).flatMap((action) => {
+    if (action.type === "navigate" && !getParamString(action.params, "url", "")) return [`${action.id} 缺少跳转 URL`];
+    if (action.type === "coupon.receive" && !getParamString(action.params, "couponId", "")) return [`${action.id} 缺少 couponId`];
+    if (action.type === "tracking.click" && !getParamString(action.params, "eventName", "")) return [`${action.id} 缺少 eventName`];
+    return [];
+  });
+
+  return [
+    {
+      id: "schema",
+      title: "Schema 校验",
+      status: validation.value.valid ? "pass" : "error",
+      description: validation.value.valid ? "Page Schema 结构有效" : validation.value.errors.join("；"),
+    },
+    {
+      id: "nodes",
+      title: "页面节点",
+      status: nodes.length > 0 ? "pass" : "error",
+      description: nodes.length > 0 ? `已配置 ${nodes.length} 个节点` : "页面没有任何节点",
+    },
+    {
+      id: "images",
+      title: "图片素材",
+      status: missingImages.length ? "warning" : "pass",
+      description: missingImages.length ? `${missingImages.length} 个图片字段为空：${missingImages.slice(0, 3).join("、")}` : "图片类字段已配置",
+    },
+    {
+      id: "products",
+      title: "商品内容",
+      status: emptyProductNodes.length ? "warning" : "pass",
+      description: emptyProductNodes.length
+        ? `${emptyProductNodes.length} 个商品组件没有静态商品或数据源绑定`
+        : "商品组件已有静态商品或数据源绑定",
+    },
+    {
+      id: "dataSources",
+      title: "数据源解析",
+      status: dataSourceErrors.length ? "error" : "pass",
+      description: dataSourceErrors.length
+        ? `${dataSourceErrors.length} 个数据源解析失败：${dataSourceErrors.map((record) => record.id).join("、")}`
+        : `数据源状态正常，共 ${previewDataSourceRecords.value.length} 个`,
+    },
+    {
+      id: "actions",
+      title: "动作配置",
+      status: missingActionRefs.length ? "error" : actionWarnings.length ? "warning" : "pass",
+      description: missingActionRefs.length
+        ? `${missingActionRefs.length} 个事件引用了不存在的动作`
+        : actionWarnings.length
+          ? actionWarnings.slice(0, 3).join("；")
+          : `动作配置正常，共 ${(schema.actions ?? []).length} 个`,
+    },
+  ];
 }
 
 function getParamString(params: JsonObject | undefined, key: string, fallback: string): string {
@@ -1240,6 +1344,13 @@ function setReleaseMessage(release: LocalPageRelease, action: string): void {
   releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}`;
 }
 
+function ensurePublishReady(action: string): boolean {
+  const blockingErrors = publishChecks.value.filter((check) => check.status === "error");
+  if (!blockingErrors.length) return true;
+  releaseMessage.value = `${action}失败：${blockingErrors.map((check) => check.title).join("、")} 未通过`;
+  return false;
+}
+
 function saveSchema(): void {
   const release = configPlatformClient.saveDraft(editorState.value.schema);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
@@ -1254,6 +1365,7 @@ function saveSchema(): void {
 }
 
 function createPreviewRelease(): void {
+  if (!ensurePublishReady("生成预览")) return;
   const release = configPlatformClient.createPreview(editorState.value.schema);
   refreshReleases();
   setReleaseMessage(release, "已生成预览");
@@ -1261,6 +1373,7 @@ function createPreviewRelease(): void {
 }
 
 function publishCurrentPage(): void {
+  if (!ensurePublishReady("发布")) return;
   const release = configPlatformClient.publishPage(editorState.value.schema);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
   editorState.value = markSaved(createEditorState(release.schema, {
@@ -1628,6 +1741,31 @@ function formatReleaseTime(value: string): string {
           </select>
         </label>
         <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
+      </section>
+
+      <section class="panel-section">
+        <div class="panel-title">
+          <PanelRight :size="16" />
+          <span>发布检查</span>
+        </div>
+        <div class="publish-summary" :class="{ blocked: hasPublishBlockingErrors }">
+          <strong>{{ hasPublishBlockingErrors ? "存在阻塞项" : "可以生成预览" }}</strong>
+          <span>
+            通过 {{ publishCheckSummary.pass }} / 警告 {{ publishCheckSummary.warning }} / 错误 {{ publishCheckSummary.error }}
+          </span>
+        </div>
+        <div class="publish-check-list">
+          <article
+            v-for="check in publishChecks"
+            :key="check.id"
+            class="publish-check"
+            :class="`is-${check.status}`"
+          >
+            <strong>{{ check.title }}</strong>
+            <span>{{ check.status }}</span>
+            <p>{{ check.description }}</p>
+          </article>
+        </div>
       </section>
 
       <section class="panel-section">

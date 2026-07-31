@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线和已有节点画布拖拽移动。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动和发布前检查清单。
 
 ## 当前维护范围
 
@@ -56,6 +56,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器画布拖拽：从物料区拖到画布节点时可显示前/后插入线，拖到 `SectionContainer` 中间区域可显示容器投放高亮，拖到空白区域可追加到页面末尾。
 - Vue3 编辑器已有节点拖拽：设计模式下画布节点可直接拖动，支持移动到目标节点前/后、移动进 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - Vue H5 renderer 编辑态拖拽回调：`LowcodeVueRenderer` 新增可选 `nodeDraggable`、`onNodeDragStart` 和 `onNodeDragEnd`，生产渲染默认不受影响。
+- Vue3 编辑器发布检查：右侧面板已展示 schema、节点、图片、商品、数据源和动作 readiness；生成预览和发布会拦截 error，保存草稿不拦截。
 
 ## 已知缺口
 
@@ -63,7 +64,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放和已有节点移动；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
-- Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批和分页。
+- Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批、服务端发布校验和分页。
 - 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
@@ -98,7 +99,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `b6208c1` | 沉淀 H5 runtime 集成契约和 runtime schema loader。 |
 | 2026-07-31 | `f88d21c` | 增强 Vue3 编辑器 mock 素材库和商品选择器。 |
 | 2026-07-31 | `90509a4` | 增强 Vue3 编辑器画布拖拽插入线。 |
-| 2026-07-31 | 本提交 | 增强 Vue3 编辑器已有节点画布拖拽移动。 |
+| 2026-07-31 | `6665e94` | 增强 Vue3 编辑器已有节点画布拖拽移动。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器发布前检查清单。 |
 
 ## 默认验证命令
 
