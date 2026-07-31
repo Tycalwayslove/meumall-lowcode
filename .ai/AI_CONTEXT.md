@@ -26,6 +26,7 @@
 - React/Vue H5 renderer 已为 schema 节点输出 `data-lowcode-node-id`，楼层锚点物料可按目标节点 id 滚动定位。
 - Java 配置平台 API 草案已写入 `.ai-workspace/contracts/java-config-platform-api-v1.md`，`@meumall/lowcode-adapters` 已提供 `LowcodeConfigPlatformClient` 与 `createHttpConfigPlatformClient`，编辑器本地 mock 发布链路已实现同一 client 接口。
 - H5 runtime 集成清单已写入 `.ai-workspace/contracts/h5-runtime-integration-v1.md`，`docs/meumall-integration.md` 是面向 `hybird-meumall` 接入的简版说明。
+- 根级已提供 `pnpm pack:dry-run`，会自动发现 `packages/*` 下 8 个可发布包并逐包执行 `npm pack --dry-run --json`，校验实际包内容包含 `package.json`、`README.md`、`dist/index.js` 和 `dist/index.d.ts`；该命令不发布 npm 包，不需要 npm token，真实发布前仍需确认 registry、access、token 和 changeset 版本。
 - `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，Vue3 编辑器 playground 右侧素材库、商品选择器、优惠券选择器和门店/达人选择器已通过 resource client 查询数据；后续接真实素材中心、商品中心、优惠券中心、门店/达人中心时优先替换 client，不改 UI 内部查询逻辑。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeTemplateLibraryClient` 和 `createStaticTemplateLibraryClient`，Vue3 编辑器 playground 左侧模板列表已通过 template client 查询，支持搜索、分类过滤、加载态和空状态；后续接 Java 模板市场时优先替换 client，不改 UI 内部查询逻辑。

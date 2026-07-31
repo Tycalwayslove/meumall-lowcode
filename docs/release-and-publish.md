@@ -35,6 +35,24 @@ pnpm version-packages
 pnpm publish-packages
 ```
 
+## Local Dry Run
+
+Before publishing, build packages and verify the actual npm package contents:
+
+```bash
+pnpm build
+pnpm pack:dry-run
+```
+
+`pnpm pack:dry-run` scans publishable packages under `packages/*`, runs `npm pack --dry-run --json` in each package, and checks that every package contains at least:
+
+- `package.json`
+- `README.md`
+- `dist/index.js`
+- `dist/index.d.ts`
+
+This dry-run does not publish packages and does not require an npm token. Real publishing still requires confirming registry, access, npm token, and changeset versions.
+
 ## Compatibility Rules
 
 - `schema` major bumps require migration notes.

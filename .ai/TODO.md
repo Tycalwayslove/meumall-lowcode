@@ -2,7 +2,7 @@
 
 ## P0
 
-- 确认 npm registry、scope 和 access。
+- 确认 npm registry、scope、access 和 token；当前已具备 `pnpm pack:dry-run` 包内容预检，但尚未执行真实 npm 发布。
 
 ## P1
 
