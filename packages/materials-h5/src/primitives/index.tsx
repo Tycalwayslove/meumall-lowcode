@@ -45,6 +45,9 @@ function toneColor(tone: Tone): string {
 export interface MlcButtonProps {
   children?: React.ReactNode;
   type?: "button" | "submit" | "reset";
+  role?: React.AriaRole;
+  "aria-label"?: string;
+  "aria-selected"?: boolean;
   variant?: ButtonVariant;
   tone?: Tone;
   size?: ButtonSize;
@@ -60,6 +63,9 @@ export interface MlcButtonProps {
 export function MlcButton({
   children,
   type = "button",
+  role,
+  "aria-label": ariaLabel,
+  "aria-selected": ariaSelected,
   variant = "solid",
   tone = "neutral",
   size = "md",
@@ -77,6 +83,9 @@ export function MlcButton({
   return (
     <button
       type={type}
+      role={role}
+      aria-label={ariaLabel}
+      aria-selected={ariaSelected}
       className={className}
       disabled={disabled || loading}
       onClick={onClick}

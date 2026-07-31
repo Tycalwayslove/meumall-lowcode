@@ -15,6 +15,10 @@ Current internal primitives:
 - `MlcTag`
 - `MlcText`
 - `MlcPrice`
+- `MlcInput`
+- `MlcTextarea`
+- `MlcSwitch`
+- `MlcStepper`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5Materials`.
 
@@ -35,6 +39,8 @@ Currently migrated materials:
 - `NavGrid`
 - `FloorAnchorNav`
 - `CountdownTimer`
+- `TabsBlock`
+- `LeadFormBlock`
 
 See `docs/material-layering-architecture.md` for the layering plan.
 
@@ -44,6 +50,10 @@ Current materials:
 - `NoticeBar`
 - `ActivityHero`
 - `ImageBanner`
+- `SectionTitle`
+- `ImageCardGrid`
+- `TabsBlock`
+- `LeadFormBlock`
 - `ActionButton`
 - `StickyActionBar`
 - `ProductList`

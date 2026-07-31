@@ -16,6 +16,7 @@ import {
   ProductRankList,
   StickyActionBar,
   StoreExpertSection,
+  TabsBlock,
 } from "../dist/index.js";
 import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
 import { validateLowcodeMaterialManifest } from "../../schema/dist/index.js";
@@ -127,6 +128,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(navGridTypes.has("MlcText"), true);
     assert.equal(floorAnchorTypes.has("MlcButton"), true);
     assert.equal(floorAnchorTypes.has("MlcText"), true);
+    functionSourceIncludes(TabsBlock, ["MlcButton", "MlcTag", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -186,6 +188,17 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.showAgreement.setter, "switch");
     assert.equal(material.manifest.propsSchema.quantityMax.setter, "number");
     assert.equal(material.manifest.events?.[0]?.name, "onSubmit");
+  });
+
+  it("registers the tabs block material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "TabsBlock");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "标签内容切换");
+    assert.equal(material.manifest.category, "content");
+    assert.equal(material.manifest.defaultProps.title, "活动信息");
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.accentColor.setter, "color");
   });
 
   it("registers the coupon bundle material", () => {

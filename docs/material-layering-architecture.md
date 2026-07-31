@@ -116,7 +116,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `SpacerBlock`
 - `NavGrid`
 - `ImageCardGrid`
-- 后续可增加 `FormInput`、`FormSubmitButton`、`VideoBlock`、`TabsBlock`。
+- `TabsBlock`
+- 后续可增加 `FormInput`、`FormSubmitButton`、`VideoBlock`。
 
 通用物料允许处理：
 
@@ -251,6 +252,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `ImageBanner`
 - `ActionButton`
 - `ImageCardGrid`
+- `TabsBlock`
 - `SpacerBlock`
 - `RichTextBlock`
 - `NavGrid`

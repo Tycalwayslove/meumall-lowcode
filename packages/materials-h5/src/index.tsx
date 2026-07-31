@@ -231,6 +231,117 @@ export function ImageCardGrid({ props }: MaterialProps) {
   );
 }
 
+export function TabsBlock({ props }: MaterialProps) {
+  const items = list(props.items);
+  const visibleItems = items.length
+    ? items
+    : [
+        {
+          id: "tab_1",
+          title: "活动亮点",
+          subtitle: "本期主推",
+          badgeText: "Hot",
+          content: "用 Tab 把活动亮点、参与方式和常见问题放在同一区块，减少页面长度。",
+        },
+        {
+          id: "tab_2",
+          title: "参与方式",
+          subtitle: "三步完成",
+          badgeText: "",
+          content: "选择会场、领取权益、下单完成转化。后续可替换为更完整的配置内容。",
+        },
+      ];
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const normalizedActiveIndex = Math.min(Math.max(activeIndex, 0), Math.max(visibleItems.length - 1, 0));
+  const activeItem = visibleItems[normalizedActiveIndex] ?? visibleItems[0];
+
+  return (
+    <section
+      style={{
+        padding: `${number(props.paddingY, 14)}px 12px`,
+        background: text(props.backgroundColor, "#f3f4f6"),
+      }}
+    >
+      <div
+        style={{
+          overflow: "hidden",
+          border: `1px solid ${text(props.borderColor, "#e5e7eb")}`,
+          borderRadius: number(props.radius, 12),
+          background: text(props.cardBackgroundColor, "#ffffff"),
+          boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)",
+        }}
+      >
+        {text(props.title) || text(props.subtitle) ? (
+          <div style={{ padding: "13px 14px 8px" }}>
+            {text(props.title) ? (
+              <MlcText as="strong" size={17} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
+                {text(props.title)}
+              </MlcText>
+            ) : null}
+            {text(props.subtitle) ? (
+              <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 4, color: text(props.textColor, "#64748b") }}>
+                {text(props.subtitle)}
+              </MlcText>
+            ) : null}
+          </div>
+        ) : null}
+        <div
+          role="tablist"
+          style={{
+            display: "flex",
+            gap: 8,
+            overflowX: "auto",
+            padding: "8px 10px",
+            background: text(props.navBackgroundColor, "#f8fafc"),
+          }}
+        >
+          {visibleItems.map((item, index) => {
+            const active = index === normalizedActiveIndex;
+            return (
+              <MlcButton
+                key={String(item.id ?? index)}
+                role="tab"
+                aria-selected={active}
+                size="sm"
+                radius={999}
+                onClick={() => setActiveIndex(index)}
+                style={{
+                  flex: "0 0 auto",
+                  minHeight: 34,
+                  border: active ? 0 : `1px solid ${text(props.borderColor, "#e5e7eb")}`,
+                  color: active ? text(props.activeTextColor, "#ffffff") : text(props.textColor, "#334155"),
+                  background: active ? text(props.accentColor, "#111827") : text(props.tabBackgroundColor, "#ffffff"),
+                  fontSize: 13,
+                }}
+              >
+                {String(item.title ?? `标签 ${index + 1}`)}
+              </MlcButton>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gap: 9, padding: "14px" }}>
+          {activeItem?.badgeText ? (
+            <MlcTag style={{ width: "fit-content", color: text(props.accentColor, "#0f766e") }}>
+              {String(activeItem.badgeText)}
+            </MlcTag>
+          ) : null}
+          <MlcText as="strong" size={16} weight={800} style={{ display: "block", color: text(props.titleColor, "#111827") }}>
+            {String(activeItem?.title ?? "标签内容")}
+          </MlcText>
+          {activeItem?.subtitle ? (
+            <MlcText size={12} tone="muted" style={{ display: "block", marginTop: -5, color: text(props.textColor, "#64748b") }}>
+              {String(activeItem.subtitle)}
+            </MlcText>
+          ) : null}
+          <MlcText as="p" size={13} style={{ color: text(props.contentColor, "#374151"), lineHeight: 1.65 }}>
+            {String(activeItem?.content ?? "请配置标签内容。")}
+          </MlcText>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function LeadFormBlock({ props }: MaterialProps) {
   const [nameValue, setNameValue] = React.useState("");
   const [phoneValue, setPhoneValue] = React.useState("");
@@ -1592,6 +1703,72 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         items: { label: "卡片列表", type: "array", setter: "textarea", defaultValue: [] },
       },
       events: [{ name: "onItemClick", title: "点击卡片" }],
+    }),
+  },
+  {
+    component: TabsBlock,
+    manifest: createMaterialManifest({
+      componentName: "TabsBlock",
+      materialVersion: "0.1.0",
+      title: "标签内容切换",
+      category: "content",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "活动信息",
+        subtitle: "用标签页承载多组说明内容，减少页面长度。",
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        navBackgroundColor: "#f8fafc",
+        tabBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        contentColor: "#374151",
+        activeTextColor: "#ffffff",
+        accentColor: "#111827",
+        borderColor: "#e5e7eb",
+        radius: 12,
+        paddingY: 14,
+        items: [
+          {
+            id: "highlight",
+            title: "活动亮点",
+            subtitle: "本期主推",
+            badgeText: "Hot",
+            content: "多会场、多权益和多内容说明可以收纳在同一个标签区块中。",
+          },
+          {
+            id: "guide",
+            title: "参与方式",
+            subtitle: "三步完成",
+            badgeText: "",
+            content: "先选择会场，再领取权益，最后进入商品或表单完成转化。",
+          },
+          {
+            id: "faq",
+            title: "常见问题",
+            subtitle: "运营说明",
+            badgeText: "FAQ",
+            content: "这里可以配置活动时间、使用门槛、售后规则或其他说明。",
+          },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "活动信息" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "用标签页承载多组说明内容，减少页面长度。" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        navBackgroundColor: { label: "导航背景", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        tabBackgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        contentColor: { label: "内容色", type: "string", setter: "color", defaultValue: "#374151" },
+        activeTextColor: { label: "选中文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#111827" },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14 },
+        items: { label: "标签列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
     }),
   },
   {

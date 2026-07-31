@@ -13,6 +13,10 @@ Current internal primitives:
 - `MlcTag`
 - `MlcText`
 - `MlcPrice`
+- `MlcInput`
+- `MlcTextarea`
+- `MlcSwitch`
+- `MlcStepper`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
 
@@ -33,6 +37,8 @@ Currently migrated materials:
 - `NavGrid`
 - `FloorAnchorNav`
 - `CountdownTimer`
+- `TabsBlock`
+- `LeadFormBlock`
 
 See `docs/material-layering-architecture.md` for the layering plan.
 
@@ -42,6 +48,10 @@ Current materials:
 - `NoticeBar`
 - `ActivityHero`
 - `ImageBanner`
+- `SectionTitle`
+- `ImageCardGrid`
+- `TabsBlock`
+- `LeadFormBlock`
 - `ActionButton`
 - `StickyActionBar`
 - `ProductList`
@@ -58,3 +68,5 @@ Current materials:
 - `FloorAnchorNav`
 - `FlashSaleList`
 - `RichTextBlock`
+
+These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-h5` so Vue editor preview schemas can be rendered by the React H5 runtime package.
