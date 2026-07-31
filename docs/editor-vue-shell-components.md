@@ -176,10 +176,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行发布、预览、保存、权限、协作锁定、审批、审计或服务端保存。
 
+### `EditorPublishPanel`
+
+路径：`apps/editor-playground/src/components/EditorPublishPanel.vue`
+
+职责：
+
+- 展示右侧发布相关区域，包括 H5 预览入口、交付清单、发布检查、本地版本列表、版本对比和 Schema 片段预览。
+- 接收 preview links、delivery summary、readiness、release history 和 version summary API 派生后的展示模型。
+- 通过 emits 抛出预览入口打开/复制、Schema 复制/导出、发布检查定位、版本关键词更新、版本选择/载入/打开、载入所选版本和回滚发布。
+- 复用现有 `.preview-link-*`、`.delivery-*`、`.publish-*`、`.release-*` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生 H5 预览入口、交付指标、发布检查、版本列表、版本差异或 Schema 片段预览。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+- 不构造 URL、不访问剪贴板、不导出文件、不定位画布节点。
+- 不执行保存、预览、发布、载入版本、回滚、权限、协作锁定、审批、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
-2. 数据源、动作和事件配置：优先消费 data source config、action config 和 event binding API。
+1. 数据源、动作和事件配置：优先消费 data source config、action config 和 event binding API。
+2. 快捷命令、右键菜单和顶部工具栏：优先消费 command palette、node operation 和 workspace summary API。
 
 ## 抽 npm 包判断
 
