@@ -62,6 +62,12 @@ import {
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEventBindingItems,
+  createLowcodeMaterialDetailDataSourceSlotItems,
+  createLowcodeMaterialDetailEventItems,
+  createLowcodeMaterialDetailPropEntries,
+  createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialNodeInput,
+  createLowcodeMaterialPreviewSchema,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
   createLowcodePublishBlockedMessage,
@@ -165,11 +171,11 @@ import {
   type LowcodeEditorViewportPreset,
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
   type LowcodeEditorWorkspaceStat as WorkspaceStat,
+  type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
 import {
-  createLowcodePageSchema,
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
@@ -582,6 +588,11 @@ const POINTER_DRAG_START_DISTANCE = 8;
 let suppressNextClick = false;
 
 const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
+const materialPreviewDataBindings = {
+  ProductList: { items: "products" },
+  ProductRankList: { items: "products" },
+  BrandFeatureSection: { items: "products" },
+};
 
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
@@ -766,36 +777,35 @@ const activeH5ViewportTitle = computed(() => formatLowcodeEditorViewportTitle(ed
 const phoneFrameStyle = computed<CSSProperties>(() => ({
   width: `${editorState.value.viewport.width}px`,
 }));
-const materialDetailPropEntries = computed(() => {
-  const manifest = selectedMaterialDetailManifest.value;
-  if (!manifest) return [];
-  return Object.entries(manifest.propsSchema).map(([name, schema]) => ({ name, schema }));
-});
+const materialDetailSummary = computed<MaterialDetailSummary | undefined>(() =>
+  selectedMaterialDetailManifest.value
+    ? createLowcodeMaterialDetailSummary(selectedMaterialDetailManifest.value)
+    : undefined,
+);
+const materialDetailPropEntries = computed(() =>
+  selectedMaterialDetailManifest.value
+    ? createLowcodeMaterialDetailPropEntries(selectedMaterialDetailManifest.value)
+    : [],
+);
+const materialDetailEventItems = computed(() =>
+  selectedMaterialDetailManifest.value
+    ? createLowcodeMaterialDetailEventItems(selectedMaterialDetailManifest.value)
+    : [],
+);
+const materialDetailDataSourceSlotItems = computed(() =>
+  selectedMaterialDetailManifest.value
+    ? createLowcodeMaterialDetailDataSourceSlotItems(selectedMaterialDetailManifest.value)
+    : [],
+);
 const materialDetailPreviewSchema = computed<LowcodePageSchema | undefined>(() => {
   const manifest = selectedMaterialDetailManifest.value;
   if (!manifest) return undefined;
-  return createLowcodePageSchema({
-    pageId: `material-preview-${manifest.componentName}`,
-    title: `${manifest.title} 默认预览`,
-    pageType: "custom",
-    targetPlatforms: ["h5"],
-    layout: {
-      safeArea: true,
-      backgroundColor: "#f8fafc",
-      maxWidth: 430,
-    },
-    nodes: [
-      {
-        id: `preview_${manifest.componentName}`,
-        ...createNodeInput(manifest),
-      },
-    ],
+  return createLowcodeMaterialPreviewSchema(manifest, {
     dataSources: editorState.value.schema.dataSources,
     actions: editorState.value.schema.actions,
-    publishMeta: {
-      environment: editorState.value.schema.publishMeta.environment,
-      operator: "playground",
-    },
+    environment: editorState.value.schema.publishMeta.environment,
+    operator: "playground",
+    dataBindingByComponentName: materialPreviewDataBindings,
   });
 });
 const pageSettingsForm = computed(() =>
@@ -1546,21 +1556,9 @@ function getParamBoolean(params: JsonObject | undefined, key: string, fallback: 
 }
 
 function createNodeInput(manifest: LowcodeMaterialManifest) {
-  const node = {
-    componentName: manifest.componentName,
-    materialVersion: manifest.materialVersion,
-    props: { ...manifest.defaultProps },
-    meta: { name: manifest.title },
-  };
-  if (["ProductList", "ProductRankList", "BrandFeatureSection"].includes(manifest.componentName)) {
-    return {
-      ...node,
-      dataBinding: {
-        items: "products",
-      },
-    };
-  }
-  return node;
+  return createLowcodeMaterialNodeInput(manifest, {
+    dataBindingByComponentName: materialPreviewDataBindings,
+  });
 }
 
 function isFavoriteMaterial(componentName: string): boolean {
@@ -3692,15 +3690,15 @@ function rollbackPublishSelectedRelease(): void {
             <dl class="material-detail-meta">
               <div>
                 <dt>版本</dt>
-                <dd>{{ selectedMaterialDetailManifest.materialVersion }}</dd>
+                <dd>{{ materialDetailSummary?.materialVersion }}</dd>
               </div>
               <div>
                 <dt>平台</dt>
-                <dd>{{ selectedMaterialDetailManifest.platforms.join(" / ") }}</dd>
+                <dd>{{ materialDetailSummary?.platformText }}</dd>
               </div>
               <div>
                 <dt>配置项</dt>
-                <dd>{{ materialDetailPropEntries.length }} 个</dd>
+                <dd>{{ materialDetailSummary?.propCount ?? 0 }} 个</dd>
               </div>
             </dl>
 
@@ -3713,10 +3711,10 @@ function rollbackPublishSelectedRelease(): void {
                   class="material-prop-item"
                 >
                   <span>
-                    <b>{{ entry.schema.label }}</b>
-                    <small>{{ entry.name }} / {{ entry.schema.setter }}</small>
+                    <b>{{ entry.label }}</b>
+                    <small>{{ entry.name }} / {{ entry.setter }}</small>
                   </span>
-                  <em>{{ entry.schema.type }}{{ entry.schema.required ? " / 必填" : "" }}</em>
+                  <em>{{ entry.type }}{{ entry.required ? " / 必填" : "" }}</em>
                 </div>
                 <div v-if="!materialDetailPropEntries.length" class="mini-empty">无配置字段</div>
               </div>
@@ -3726,12 +3724,12 @@ function rollbackPublishSelectedRelease(): void {
               <strong>事件</strong>
               <div class="material-chip-list">
                 <span
-                  v-for="event in selectedMaterialDetailManifest.events ?? []"
+                  v-for="event in materialDetailEventItems"
                   :key="event.name"
                 >
                   {{ event.title }} / {{ event.name }}
                 </span>
-                <span v-if="!selectedMaterialDetailManifest.events?.length">无事件</span>
+                <span v-if="!materialDetailEventItems.length">无事件</span>
               </div>
             </div>
 
@@ -3739,12 +3737,12 @@ function rollbackPublishSelectedRelease(): void {
               <strong>数据槽</strong>
               <div class="material-chip-list">
                 <span
-                  v-for="slot in selectedMaterialDetailManifest.dataSourceSlots ?? []"
+                  v-for="slot in materialDetailDataSourceSlotItems"
                   :key="slot.name"
                 >
-                  {{ slot.name }} / {{ slot.acceptedTypes.join(", ") }}
+                  {{ slot.name }} / {{ slot.acceptedTypesText }}
                 </span>
-                <span v-if="!selectedMaterialDetailManifest.dataSourceSlots?.length">无数据槽</span>
+                <span v-if="!materialDetailDataSourceSlotItems.length">无数据槽</span>
               </div>
             </div>
 

@@ -2,7 +2,9 @@ import type {
   JsonObject,
   JsonValue,
   LowcodeActionConfig,
+  LowcodeDataBinding,
   LowcodeDataSourceConfig,
+  LowcodeDataSourceSlotManifest,
   LowcodeEnvironment,
   LowcodeNode,
   LowcodeMaterialManifest,
@@ -255,6 +257,63 @@ export interface LowcodeEditorMaterialCatalogItem {
   dataSourceSlotCount: number;
   summary: string;
   searchText: string;
+}
+
+export interface LowcodeEditorMaterialDetailPropEntry {
+  name: string;
+  label: string;
+  type: LowcodePropSchema["type"];
+  setter: LowcodePropSchema["setter"];
+  required: boolean;
+  description: string;
+  schema: LowcodePropSchema;
+}
+
+export interface LowcodeEditorMaterialDetailEventItem {
+  name: string;
+  title: string;
+  description: string;
+  event: LowcodeMaterialEventManifest;
+}
+
+export interface LowcodeEditorMaterialDetailDataSourceSlotItem {
+  name: string;
+  acceptedTypes: string[];
+  acceptedTypesText: string;
+  required: boolean;
+  slot: LowcodeDataSourceSlotManifest;
+}
+
+export interface LowcodeEditorMaterialDetailSummary {
+  componentName: string;
+  title: string;
+  category: string;
+  materialVersion: string;
+  platforms: LowcodePlatform[];
+  platformText: string;
+  propCount: number;
+  eventCount: number;
+  dataSourceSlotCount: number;
+  summary: string;
+}
+
+export interface CreateLowcodeMaterialNodeInputOptions {
+  id?: string;
+  metaName?: string;
+  dataBinding?: LowcodeDataBinding;
+  dataBindingByComponentName?: Record<string, LowcodeDataBinding | undefined>;
+  dataBindingBySlotName?: Record<string, string | undefined>;
+}
+
+export interface CreateLowcodeMaterialPreviewSchemaOptions extends CreateLowcodeMaterialNodeInputOptions {
+  pageId?: string;
+  title?: string;
+  backgroundColor?: string;
+  maxWidth?: number;
+  dataSources?: readonly LowcodeDataSourceConfig[];
+  actions?: readonly LowcodeActionConfig[];
+  environment?: LowcodeEnvironment;
+  operator?: string;
 }
 
 export interface FilterLowcodeMaterialCatalogOptions {
@@ -678,7 +737,8 @@ export interface CreateLowcodePageStartStateOptions extends CreateEditorStateOpt
   cloneSchema?: boolean;
 }
 
-type NodeInput = Omit<LowcodeNode, "id"> & { id?: string };
+export type LowcodeEditorNodeInput = Omit<LowcodeNode, "id"> & { id?: string };
+type NodeInput = LowcodeEditorNodeInput;
 
 const DEFAULT_VIEWPORT: LowcodeEditorViewport = {
   platform: "h5",
@@ -1069,6 +1129,105 @@ export function formatLowcodeMaterialCatalogSummary(manifest: LowcodeMaterialMan
   const eventCount = manifest.events?.length ?? 0;
   const dataSourceSlotCount = manifest.dataSourceSlots?.length ?? 0;
   return `${propCount} 个配置 / ${eventCount} 个事件 / ${dataSourceSlotCount} 个数据槽`;
+}
+
+export function createLowcodeMaterialDetailSummary(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialDetailSummary {
+  const platforms = manifest.platforms.slice();
+  return {
+    componentName: manifest.componentName,
+    title: manifest.title,
+    category: manifest.category,
+    materialVersion: manifest.materialVersion,
+    platforms,
+    platformText: platforms.join(" / "),
+    propCount: Object.keys(manifest.propsSchema).length,
+    eventCount: manifest.events?.length ?? 0,
+    dataSourceSlotCount: manifest.dataSourceSlots?.length ?? 0,
+    summary: formatLowcodeMaterialCatalogSummary(manifest),
+  };
+}
+
+export function createLowcodeMaterialDetailPropEntries(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialDetailPropEntry[] {
+  return Object.entries(manifest.propsSchema).map(([name, schema]) => ({
+    name,
+    label: schema.label,
+    type: schema.type,
+    setter: schema.setter,
+    required: Boolean(schema.required),
+    description: schema.description ?? "",
+    schema,
+  }));
+}
+
+export function createLowcodeMaterialDetailEventItems(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialDetailEventItem[] {
+  return (manifest.events ?? []).map((event) => ({
+    name: event.name,
+    title: event.title,
+    description: event.description ?? "",
+    event,
+  }));
+}
+
+export function createLowcodeMaterialDetailDataSourceSlotItems(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialDetailDataSourceSlotItem[] {
+  return (manifest.dataSourceSlots ?? []).map((slot) => ({
+    name: slot.name,
+    acceptedTypes: slot.acceptedTypes.slice(),
+    acceptedTypesText: slot.acceptedTypes.join(", "),
+    required: Boolean(slot.required),
+    slot,
+  }));
+}
+
+export function createLowcodeMaterialNodeInput(
+  manifest: LowcodeMaterialManifest,
+  options: CreateLowcodeMaterialNodeInputOptions = {},
+): LowcodeEditorNodeInput {
+  const dataBinding = createLowcodeMaterialNodeDataBinding(manifest, options);
+  return {
+    ...(options.id ? { id: options.id } : {}),
+    componentName: manifest.componentName,
+    materialVersion: manifest.materialVersion,
+    props: cloneJson(manifest.defaultProps),
+    ...(dataBinding ? { dataBinding } : {}),
+    meta: { name: options.metaName ?? manifest.title },
+  };
+}
+
+export function createLowcodeMaterialPreviewSchema(
+  manifest: LowcodeMaterialManifest,
+  options: CreateLowcodeMaterialPreviewSchemaOptions = {},
+): LowcodePageSchema {
+  return createLowcodePageSchema({
+    pageId: options.pageId ?? `material-preview-${manifest.componentName}`,
+    title: options.title ?? `${manifest.title} 默认预览`,
+    pageType: "custom",
+    targetPlatforms: ["h5"],
+    layout: {
+      safeArea: true,
+      backgroundColor: options.backgroundColor ?? "#f8fafc",
+      maxWidth: options.maxWidth ?? 430,
+    },
+    nodes: [
+      createLowcodeNode(createLowcodeMaterialNodeInput(manifest, {
+        ...options,
+        id: options.id ?? `preview_${manifest.componentName}`,
+      })),
+    ],
+    dataSources: cloneJson<LowcodeDataSourceConfig[]>([...(options.dataSources ?? [])]),
+    actions: cloneJson<LowcodeActionConfig[]>([...(options.actions ?? [])]),
+    publishMeta: {
+      environment: options.environment ?? "pre",
+      operator: options.operator ?? "editor",
+    },
+  });
 }
 
 export function createLowcodeMaterialCategories(
@@ -3086,6 +3245,26 @@ function pickTemplatePreviewText(value: JsonValue | undefined): string {
 
 function cloneJsonObject(value: unknown): JsonObject {
   return JSON.parse(JSON.stringify(value)) as JsonObject;
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function createLowcodeMaterialNodeDataBinding(
+  manifest: LowcodeMaterialManifest,
+  options: CreateLowcodeMaterialNodeInputOptions,
+): LowcodeDataBinding | undefined {
+  const dataBinding = options.dataBinding ?? options.dataBindingByComponentName?.[manifest.componentName];
+  if (dataBinding && Object.keys(dataBinding).length > 0) return cloneJson(dataBinding);
+
+  const slotBinding = manifest.dataSourceSlots?.reduce<LowcodeDataBinding>((binding, slot) => {
+    const sourceId = options.dataBindingBySlotName?.[slot.name];
+    if (sourceId) binding[slot.name] = sourceId;
+    return binding;
+  }, {});
+
+  return slotBinding && Object.keys(slotBinding).length > 0 ? slotBinding : undefined;
 }
 
 function encodedByteSize(value: string): number {

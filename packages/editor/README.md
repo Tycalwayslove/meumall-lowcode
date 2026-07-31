@@ -21,6 +21,12 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `filterLowcodeMaterialCatalog`
 - `pickLowcodeMaterialEntriesByComponentNames`
 - `formatLowcodeMaterialCatalogSummary`
+- `createLowcodeMaterialDetailSummary`
+- `createLowcodeMaterialDetailPropEntries`
+- `createLowcodeMaterialDetailEventItems`
+- `createLowcodeMaterialDetailDataSourceSlotItems`
+- `createLowcodeMaterialNodeInput`
+- `createLowcodeMaterialPreviewSchema`
 - `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`
 - `createLowcodeEditorCommandSearchText`
 - `filterLowcodeEditorCommands`
@@ -377,6 +383,22 @@ The material catalog helpers keep material-library search, category filters, qui
 `formatLowcodeMaterialCatalogSummary(manifest)` returns card text such as `3 个配置 / 1 个事件 / 0 个数据槽`.
 
 These helpers do not change Material Manifest, Page Schema, or renderer behavior.
+
+## Material Detail API
+
+The material detail helpers keep material detail dialogs, manifest inspection panels, and default H5 previews reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeMaterialDetailSummary(manifest)` returns the manifest metadata currently shown in detail surfaces: component name, title, category, version, platforms, platform text, prop count, event count, data-source slot count, and summary text.
+
+`createLowcodeMaterialDetailPropEntries(manifest)` returns stable prop rows with name, label, type, setter, required state, description, and the original prop schema.
+
+`createLowcodeMaterialDetailEventItems(manifest)` and `createLowcodeMaterialDetailDataSourceSlotItems(manifest)` normalize events and data-source slots for UI chips, including empty description defaults and joined accepted-type text.
+
+`createLowcodeMaterialNodeInput(manifest, options)` creates a Page Schema node input from manifest defaults. It clones `defaultProps`, sets `meta.name` to the material title by default, and can attach host-provided data binding by component name or data-source slot name.
+
+`createLowcodeMaterialPreviewSchema(manifest, options)` creates a valid single-node H5 Page Schema for material detail previews. The host can provide preview data sources, actions, environment, operator, layout sizing, and data-binding defaults.
+
+These helpers do not render dialogs, mount React/Vue renderers, open resource pickers, add materials to the active canvas, persist preferences, validate permissions, call Java APIs, or handle material market publish states. Host shells remain responsible for UI, preview renderer selection, click handlers, permissions, audit records, and real preview data.
 
 ## Command Palette API
 

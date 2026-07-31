@@ -25,6 +25,12 @@ import {
   createLowcodeListEditorFields,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
+  createLowcodeMaterialDetailDataSourceSlotItems,
+  createLowcodeMaterialDetailEventItems,
+  createLowcodeMaterialDetailPropEntries,
+  createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialNodeInput,
+  createLowcodeMaterialPreviewSchema,
   createLowcodeOutlineRowSearchText,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
@@ -551,6 +557,85 @@ describe("@meumall/lowcode-editor readiness", () => {
       "ActionButton",
       "ImageBanner",
     ]);
+  });
+
+  it("creates reusable material detail models and preview schemas", () => {
+    const material = createMaterialManifest({
+      componentName: "ProductShowcase",
+      materialVersion: "1.2.0",
+      title: "商品橱窗",
+      category: "commerce",
+      platforms: ["h5"],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "精选商品" },
+        items: { label: "商品", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      defaultProps: { title: "精选商品", items: [] },
+      events: [{ name: "productClick", title: "点击商品", description: "点击商品卡片时触发。" }],
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["mock.products", "http"], required: true }],
+    });
+
+    const summary = createLowcodeMaterialDetailSummary(material);
+    const propEntries = createLowcodeMaterialDetailPropEntries(material);
+    const eventItems = createLowcodeMaterialDetailEventItems(material);
+    const slotItems = createLowcodeMaterialDetailDataSourceSlotItems(material);
+    const nodeInput = createLowcodeMaterialNodeInput(material, {
+      dataBindingBySlotName: { items: "products" },
+    });
+    const previewSchema = createLowcodeMaterialPreviewSchema(material, {
+      dataSources: [{ id: "products", type: "mock.products", bindTo: "products" }],
+      actions: [{ id: "track_product", type: "tracking.click", params: { eventName: "product_click" } }],
+      environment: "test",
+      operator: "tester",
+      dataBindingByComponentName: { ProductShowcase: { items: "products" } },
+    });
+
+    assert.deepEqual(summary, {
+      componentName: "ProductShowcase",
+      title: "商品橱窗",
+      category: "commerce",
+      materialVersion: "1.2.0",
+      platforms: ["h5"],
+      platformText: "h5",
+      propCount: 2,
+      eventCount: 1,
+      dataSourceSlotCount: 1,
+      summary: "2 个配置 / 1 个事件 / 1 个数据槽",
+    });
+    assert.deepEqual(propEntries.map((entry) => ({
+      name: entry.name,
+      label: entry.label,
+      type: entry.type,
+      setter: entry.setter,
+      required: entry.required,
+    })), [
+      { name: "title", label: "标题", type: "string", setter: "input", required: true },
+      { name: "items", label: "商品", type: "array", setter: "textarea", required: false },
+    ]);
+    assert.deepEqual(eventItems[0], {
+      name: "productClick",
+      title: "点击商品",
+      description: "点击商品卡片时触发。",
+      event: material.events[0],
+    });
+    assert.deepEqual(slotItems[0], {
+      name: "items",
+      acceptedTypes: ["mock.products", "http"],
+      acceptedTypesText: "mock.products, http",
+      required: true,
+      slot: material.dataSourceSlots[0],
+    });
+    assert.equal(nodeInput.componentName, "ProductShowcase");
+    assert.deepEqual(nodeInput.props, { title: "精选商品", items: [] });
+    assert.deepEqual(nodeInput.dataBinding, { items: "products" });
+    assert.equal(previewSchema.pageId, "material-preview-ProductShowcase");
+    assert.equal(previewSchema.title, "商品橱窗 默认预览");
+    assert.equal(previewSchema.publishMeta.environment, "test");
+    assert.equal(previewSchema.publishMeta.operator, "tester");
+    assert.deepEqual(previewSchema.nodes[0].dataBinding, { items: "products" });
+    assert.equal(previewSchema.nodes[0].id, "preview_ProductShowcase");
+    assert.equal(previewSchema.dataSources?.[0].id, "products");
+    assert.equal(previewSchema.actions?.[0].id, "track_product");
   });
 
   it("filters and groups reusable editor commands", () => {

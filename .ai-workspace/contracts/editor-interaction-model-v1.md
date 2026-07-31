@@ -87,6 +87,17 @@ interface LowcodeEditorState {
 
 物料目录 API 从 `LowcodeMaterialManifest` 派生列表展示、分类、搜索和摘要信息。关键词匹配覆盖标题、组件名、分类、版本和平台；这些 API 不修改 Material Manifest、Page Schema 或 renderer 行为。
 
+物料详情模型 API：
+
+- `createLowcodeMaterialDetailSummary`
+- `createLowcodeMaterialDetailPropEntries`
+- `createLowcodeMaterialDetailEventItems`
+- `createLowcodeMaterialDetailDataSourceSlotItems`
+- `createLowcodeMaterialNodeInput`
+- `createLowcodeMaterialPreviewSchema`
+
+物料详情模型 API 从 `LowcodeMaterialManifest` 派生详情摘要、配置字段、事件、数据槽、可插入节点输入和单节点 H5 默认预览 Page Schema。预览 schema 可接收宿主提供的 dataSources、actions、environment、operator、布局尺寸和 dataBinding 默认值。API 不渲染弹窗、不挂载 React/Vue renderer、不打开资源选择器、不添加物料到当前画布、不持久化偏好、不调用 Java API，不处理权限、审计、物料上下架或真实预览数据。
+
 快捷命令 API：
 
 - `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`
@@ -248,6 +259,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 历史记录只保存 schema 快照，不保存 UI 临时状态。
 - 视口预设只改变 `LowcodeEditorState.viewport`，不改变 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议。
 - 物料目录 API 只派生编辑器展示模型，不新增或改写物料 manifest 字段。
+- 物料详情模型 API 只派生物料详情展示、可插入节点输入和默认预览 schema，不依赖 DOM、renderer、资源中心、Java API、权限、审计或物料市场上下架状态。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
