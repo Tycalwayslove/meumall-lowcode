@@ -10,7 +10,6 @@ import {
   Download,
   Eye,
   ExternalLink,
-  Image,
   Layers,
   Link2,
   LocateFixed,
@@ -209,6 +208,7 @@ import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
 import EditorPropGroupsPanel from "./components/EditorPropGroupsPanel.vue";
+import EditorResourcePanels from "./components/EditorResourcePanels.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -4032,192 +4032,52 @@ function rollbackPublishSelectedRelease(): void {
             @rename="renameSelectedNode"
           />
 
-          <div v-if="canUseAssetLibrary" class="resource-panel">
-            <div class="resource-panel-head">
-              <div>
-                <strong>
-                  <Image :size="15" />
-                  <span>素材库</span>
-                </strong>
-                <small>选择图片后写入当前节点</small>
-              </div>
-              <select v-model="assetTargetPropName" aria-label="素材写入字段">
-                <option v-for="option in imagePropOptions" :key="option.name" :value="option.name">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-            <div class="resource-filters">
-              <label class="search-field">
-                <Search :size="14" />
-                <input v-model="assetKeyword" placeholder="搜索素材" />
-              </label>
-              <select v-model="assetCategory" aria-label="素材分类">
-                <option v-for="category in assetCategories" :key="category" :value="category">
-                  {{ category }}
-                </option>
-              </select>
-            </div>
-            <div class="asset-library">
-              <button
-                v-for="asset in filteredAssets"
-                :key="asset.id"
-                type="button"
-                class="asset-card"
-                @click="applyAssetToSelected(asset)"
-              >
-                <img :src="asset.url" alt="" />
-                <span>
-                  <strong>{{ asset.title }}</strong>
-                  <small>{{ asset.category }}</small>
-                </span>
-              </button>
-            </div>
-            <div v-if="isAssetSearching" class="mini-empty">素材搜索中</div>
-            <div v-else-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
-          </div>
-
-          <div v-if="isProductMaterialSelected" class="resource-panel">
-            <div class="resource-panel-head">
-              <div>
-                <strong>
-                  <Database :size="15" />
-                  <span>商品选择器</span>
-                </strong>
-                <small>已选 {{ selectedProducts.length }} 个商品</small>
-              </div>
-              <button type="button" class="mini-button" @click="applySampleProducts">示例商品</button>
-            </div>
-            <label class="search-field product-search">
-              <Search :size="14" />
-              <input v-model="productKeyword" placeholder="搜索商品名称、SKU 或标签" />
-            </label>
-            <div v-if="selectedNode.dataBinding?.items" class="resource-hint">
-              当前节点正在绑定数据源 products，写入静态商品会取消本节点 items 绑定。
-            </div>
-            <div class="product-picker">
-              <label
-                v-for="product in filteredProducts"
-                :key="product.id"
-                class="product-option"
-                :class="{ selected: selectedProductIds.includes(product.id) }"
-              >
-                <input
-                  type="checkbox"
-                  :checked="selectedProductIds.includes(product.id)"
-                  @change="toggleProductSelection(product.id)"
-                />
-                <img :src="product.imageUrl" alt="" />
-                <span>
-                  <strong>{{ product.title }}</strong>
-                  <small>{{ product.id }} / {{ product.desc }}</small>
-                  <em>{{ product.priceText }}</em>
-                </span>
-              </label>
-            </div>
-            <div v-if="isProductSearching" class="mini-empty">商品搜索中</div>
-            <div v-else-if="!filteredProducts.length" class="mini-empty">没有匹配商品</div>
-            <div class="resource-actions">
-              <button type="button" @click="applySelectedProductsToNode">应用选中商品</button>
-              <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
-              <button type="button" class="ghost-danger" @click="clearSelectedProducts">清空静态商品</button>
-            </div>
-          </div>
-
-          <div v-if="canUseCouponLibrary" class="resource-panel">
-            <div class="resource-panel-head">
-              <div>
-                <strong>
-                  <Database :size="15" />
-                  <span>优惠券库</span>
-                </strong>
-                <small>{{ isCouponSectionSelected ? "选择 1 张主券" : `已选 ${selectedCoupons.length} 张优惠券` }}</small>
-              </div>
-            </div>
-            <label class="search-field product-search">
-              <Search :size="14" />
-              <input v-model="couponKeyword" placeholder="搜索优惠券名称、门槛或标签" />
-            </label>
-            <div class="product-picker">
-              <label
-                v-for="coupon in filteredCoupons"
-                :key="coupon.id"
-                class="product-option coupon-option"
-                :class="{ selected: selectedCouponIds.includes(coupon.id) }"
-              >
-                <input
-                  :type="isCouponSectionSelected ? 'radio' : 'checkbox'"
-                  name="coupon-resource"
-                  :checked="selectedCouponIds.includes(coupon.id)"
-                  @change="toggleCouponSelection(coupon.id)"
-                />
-                <span>
-                  <strong>{{ coupon.title }}</strong>
-                  <small>{{ coupon.id }} / {{ coupon.thresholdText }}</small>
-                  <em>{{ coupon.valueText }} · {{ coupon.expireText }}</em>
-                </span>
-              </label>
-            </div>
-            <div v-if="isCouponSearching" class="mini-empty">优惠券搜索中</div>
-            <div v-else-if="!filteredCoupons.length" class="mini-empty">没有匹配优惠券</div>
-            <div class="resource-actions">
-              <button type="button" @click="applySelectedCouponsToNode">{{ isCouponSectionSelected ? "应用主券" : "应用选中券" }}</button>
-              <button type="button" class="ghost-danger" @click="clearSelectedCoupons">清空选择</button>
-            </div>
-          </div>
-
-          <div v-if="isStoreExpertMaterialSelected" class="resource-panel">
-            <div class="resource-panel-head">
-              <div>
-                <strong>
-                  <Database :size="15" />
-                  <span>门店/达人库</span>
-                </strong>
-                <small>已选 {{ selectedStoreExperts.length }} 个推荐项</small>
-              </div>
-            </div>
-            <div class="resource-filters">
-              <label class="search-field">
-                <Search :size="14" />
-                <input v-model="storeExpertKeyword" placeholder="搜索门店、达人或标签" />
-              </label>
-              <select v-model="storeExpertCategory" aria-label="门店达人分类">
-                <option v-for="category in storeExpertCategories" :key="category" :value="category">
-                  {{ category }}
-                </option>
-              </select>
-            </div>
-            <div v-if="selectedNode.dataBinding?.items" class="resource-hint">
-              当前节点正在绑定数据源 stores，写入静态推荐会取消本节点 items 绑定。
-            </div>
-            <div class="product-picker">
-              <label
-                v-for="item in filteredStoreExperts"
-                :key="item.id"
-                class="product-option"
-                :class="{ selected: selectedStoreExpertIds.includes(item.id) }"
-              >
-                <input
-                  type="checkbox"
-                  :checked="selectedStoreExpertIds.includes(item.id)"
-                  @change="toggleStoreExpertSelection(item.id)"
-                />
-                <img :src="item.imageUrl" alt="" />
-                <span>
-                  <strong>{{ item.title }}</strong>
-                  <small>{{ item.typeText }} / {{ item.subtitle }}</small>
-                  <em>{{ item.metricText }} {{ item.desc }}</em>
-                </span>
-              </label>
-            </div>
-            <div v-if="isStoreExpertSearching" class="mini-empty">门店/达人搜索中</div>
-            <div v-else-if="!filteredStoreExperts.length" class="mini-empty">没有匹配推荐项</div>
-            <div class="resource-actions">
-              <button type="button" @click="applySelectedStoreExpertsToNode">应用选中推荐</button>
-              <button type="button" @click="bindSelectedStoreExpertMaterialToDataSource">绑定数据源 stores</button>
-              <button type="button" class="ghost-danger" @click="clearSelectedStoreExperts">清空静态推荐</button>
-            </div>
-          </div>
+          <EditorResourcePanels
+            v-model:asset-target-prop-name="assetTargetPropName"
+            v-model:asset-keyword="assetKeyword"
+            v-model:asset-category="assetCategory"
+            v-model:product-keyword="productKeyword"
+            v-model:coupon-keyword="couponKeyword"
+            v-model:store-expert-keyword="storeExpertKeyword"
+            v-model:store-expert-category="storeExpertCategory"
+            :can-use-asset-library="canUseAssetLibrary"
+            :image-prop-options="imagePropOptions"
+            :asset-categories="assetCategories"
+            :filtered-assets="filteredAssets"
+            :is-asset-searching="isAssetSearching"
+            :is-product-material-selected="isProductMaterialSelected"
+            :filtered-products="filteredProducts"
+            :selected-product-ids="selectedProductIds"
+            :selected-product-count="selectedProducts.length"
+            :is-product-searching="isProductSearching"
+            :has-product-data-binding="Boolean(selectedNode.dataBinding?.items)"
+            :can-use-coupon-library="canUseCouponLibrary"
+            :is-coupon-section-selected="isCouponSectionSelected"
+            :filtered-coupons="filteredCoupons"
+            :selected-coupon-ids="selectedCouponIds"
+            :selected-coupon-count="selectedCoupons.length"
+            :is-coupon-searching="isCouponSearching"
+            :is-store-expert-material-selected="isStoreExpertMaterialSelected"
+            :store-expert-categories="storeExpertCategories"
+            :filtered-store-experts="filteredStoreExperts"
+            :selected-store-expert-ids="selectedStoreExpertIds"
+            :selected-store-expert-count="selectedStoreExperts.length"
+            :is-store-expert-searching="isStoreExpertSearching"
+            :has-store-expert-data-binding="Boolean(selectedNode.dataBinding?.items)"
+            @apply-asset="applyAssetToSelected"
+            @toggle-product="toggleProductSelection"
+            @apply-sample-products="applySampleProducts"
+            @apply-products="applySelectedProductsToNode"
+            @bind-products-data-source="bindSelectedProductMaterialToDataSource"
+            @clear-products="clearSelectedProducts"
+            @toggle-coupon="toggleCouponSelection"
+            @apply-coupons="applySelectedCouponsToNode"
+            @clear-coupons="clearSelectedCoupons"
+            @toggle-store-expert="toggleStoreExpertSelection"
+            @apply-store-experts="applySelectedStoreExpertsToNode"
+            @bind-store-experts-data-source="bindSelectedStoreExpertMaterialToDataSource"
+            @clear-store-experts="clearSelectedStoreExperts"
+          />
 
           <EditorPropGroupsPanel
             v-model:asset-keyword="assetKeyword"

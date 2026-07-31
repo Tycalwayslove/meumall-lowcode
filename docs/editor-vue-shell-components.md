@@ -140,11 +140,28 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不处理权限、协作锁定、审计或服务端保存。
 
+### `EditorResourcePanels`
+
+路径：`apps/editor-playground/src/components/EditorResourcePanels.vue`
+
+职责：
+
+- 展示右侧属性区的图片素材库、商品选择器、优惠券库和门店/达人库。
+- 接收图片属性选项、素材筛选状态、商品/优惠券/门店达人筛选状态、资源列表、选中资源 id、选中数量和当前节点 dataBinding 状态。
+- 通过 emits 抛出筛选更新、图片素材应用、商品/优惠券/门店达人勾选、应用选中资源、绑定数据源、清空静态资源和示例商品操作。
+- 复用现有 `.resource-*`、`.asset-*`、`.product-*` 和 `.coupon-*` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不持有 Resource Library Client、选中节点或 Page Schema。
+- 不执行真实资源查询、静态 props 写回或 dataBinding 写回。
+- 不读取或写入 localStorage。
+- 不处理权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 右侧资源选择器主面板：优先复用 Resource Library Client，并继续让真实资源查询和写回由宿主 shell 持有。
-2. 右侧页面设置：优先消费 page settings API。
-3. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
+1. 右侧页面设置：优先消费 page settings API。
+2. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
 
 ## 抽 npm 包判断
 
