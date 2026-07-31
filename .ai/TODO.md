@@ -6,7 +6,7 @@
 
 ## P1
 
-- 按 `docs/material-layering-architecture.md` 推进 Phase 1：先在 React/Vue materials 包内部建立 Button、Image、Tag、Text、Price primitives 原型，并改造 `ActionButton`、`ImageBanner`、`SectionTitle` 验证边界；API 稳定前不要急于抽独立 npm 包。
+- 按 `docs/material-layering-architecture.md` 继续推进 Phase 1：在已建立内部 primitives 原型和已改造 `ActionButton`、`ImageBanner`、`SectionTitle` 的基础上，继续迁移 `StickyActionBar`、`CouponBundle`、商品类、直播/品牌/门店类物料中的 Button/Image/Tag/Price 重复实现；至少 5 个物料复用且 API 稳定后，再评估抽独立 npm 包。
 - 继续完善 Vue3 编辑器 UI：在首轮新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、物料搜索、物料详情预览、物料收藏与最近使用、列表项图片素材选择、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、工作区状态摘要、属性面板分组、快捷命令面板、节点右键菜单和键盘快捷键基础上，拆分正式管理台组件、真实素材/商品/优惠券/门店/达人中心、发布审批、服务端发布校验、JSON 级版本 diff 和真实回滚流程。
 - 基于 Template Library Client 将本地页面模板库升级为 Java 配置平台模板市场，补充模板版本、上下架、权限和缩略图。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、审批、分页、previewToken 和错误码。

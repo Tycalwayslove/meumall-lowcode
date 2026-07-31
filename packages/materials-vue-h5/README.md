@@ -2,6 +2,22 @@
 
 Vue 3 H5 business materials for MeuMall low-code pages.
 
+## Internal Primitives
+
+This package contains an internal runtime primitives prototype under `src/primitives`.
+
+Current internal primitives:
+
+- `MlcButton`
+- `MlcImage`
+- `MlcTag`
+- `MlcText`
+- `MlcPrice`
+
+They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
+
+See `docs/material-layering-architecture.md` for the layering plan.
+
 Current materials:
 
 - `SectionContainer`

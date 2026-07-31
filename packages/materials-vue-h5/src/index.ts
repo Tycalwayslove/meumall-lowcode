@@ -2,6 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
+import { MlcButton, MlcImage, MlcTag, MlcText } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -107,18 +108,12 @@ export const ImageBanner = defineComponent({
     return () => {
       const runtimeProps = props.props ?? {};
       const imageUrl = text(runtimeProps.imageUrl);
-      if (!imageUrl) {
-        return h("section", { class: "mlc-material mlc-empty-image" }, "请配置图片");
-      }
-      return h("img", {
+      return h(MlcImage, {
         class: "mlc-material mlc-image-banner",
         src: imageUrl,
         alt: text(runtimeProps.alt),
-        style: {
-          width: "100%",
-          display: "block",
-          borderRadius: `${number(runtimeProps.radius, 0)}px`,
-        },
+        radius: number(runtimeProps.radius, 0),
+        fallback: "请配置图片",
       });
     };
   },
@@ -147,50 +142,43 @@ export const SectionTitle = defineComponent({
         [
           markerText
             ? h(
-                "span",
+                MlcTag,
                 {
                   style: {
-                    display: "inline-flex",
-                    alignItems: "center",
-                    minHeight: "22px",
                     marginBottom: "8px",
-                    borderRadius: "999px",
-                    padding: "0 9px",
                     color: text(runtimeProps.accentColor, "#0f766e"),
-                    background: "rgba(15, 118, 110, 0.1)",
-                    fontSize: "12px",
-                    fontWeight: 800,
-                    lineHeight: 1,
                   } satisfies CSSProperties,
                 },
-                markerText,
+                () => markerText,
               )
             : null,
           h(
-            "h2",
+            MlcText,
             {
+              as: "h2",
+              size: number(runtimeProps.titleSize, 20),
+              weight: 900,
+              lineHeight: 1.25,
               style: {
                 margin: 0,
-                fontSize: `${number(runtimeProps.titleSize, 20)}px`,
-                lineHeight: 1.25,
-                fontWeight: 900,
                 color: text(runtimeProps.titleColor, "#111827"),
               } satisfies CSSProperties,
             },
-            text(runtimeProps.title, "区块标题"),
+            () => text(runtimeProps.title, "区块标题"),
           ),
           text(runtimeProps.subtitle)
             ? h(
-                "p",
+                MlcText,
                 {
+                  as: "p",
+                  tone: "muted",
                   style: {
                     margin: "7px 0 0",
                     color: text(runtimeProps.textColor, "#64748b"),
-                    fontSize: "13px",
                     lineHeight: 1.6,
                   },
                 },
-                text(runtimeProps.subtitle),
+                () => text(runtimeProps.subtitle),
               )
             : null,
         ],
@@ -1471,19 +1459,15 @@ export const ActionButton = defineComponent({
       const runtimeProps = props.props ?? {};
       const linkUrl = text(runtimeProps.linkUrl);
       const button = h(
-        "button",
+        MlcButton,
         {
-          type: "button",
           class: "mlc-material mlc-action-button__button",
+          block: true,
+          radius: number(runtimeProps.radius, 8),
           style: {
-            width: "100%",
-            minHeight: "44px",
             border: 0,
-            borderRadius: `${number(runtimeProps.radius, 8)}px`,
             color: text(runtimeProps.textColor, "#ffffff"),
             background: text(runtimeProps.backgroundColor, "#111827"),
-            fontWeight: 700,
-            fontSize: "15px",
           },
           onClick: () => {
             const handler = runtimeProps.onClick;
@@ -1491,7 +1475,7 @@ export const ActionButton = defineComponent({
             if (linkUrl) window.location.href = linkUrl;
           },
         },
-        text(runtimeProps.text, "立即参与"),
+        () => text(runtimeProps.text, "立即参与"),
       );
 
       return h(

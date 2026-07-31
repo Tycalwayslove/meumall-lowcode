@@ -4,6 +4,22 @@ MeuMall React H5 business materials.
 
 The first version is intentionally small and business-oriented. Avoid exposing too many atomic layout controls to operators.
 
+## Internal Primitives
+
+This package contains an internal runtime primitives prototype under `src/primitives`.
+
+Current internal primitives:
+
+- `MlcButton`
+- `MlcImage`
+- `MlcTag`
+- `MlcText`
+- `MlcPrice`
+
+They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5Materials`.
+
+See `docs/material-layering-architecture.md` for the layering plan.
+
 Current materials:
 
 - `SectionContainer`

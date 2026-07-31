@@ -22,6 +22,15 @@ describe("MeuMall H5 material manifests", () => {
     }
   });
 
+  it("keeps runtime primitives out of material registries", () => {
+    const primitiveNames = ["MlcButton", "MlcImage", "MlcTag", "MlcText", "MlcPrice"];
+
+    for (const name of primitiveNames) {
+      assert.equal(manifestNames(h5Materials).includes(name), false, `${name} should not be a React material`);
+      assert.equal(manifestNames(h5VueMaterials).includes(name), false, `${name} should not be a Vue material`);
+    }
+  });
+
   it("registers the activity rule modal material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "ActivityRuleModal");
 

@@ -1,6 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
+import { MlcButton, MlcImage, MlcTag, MlcText } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -60,10 +61,10 @@ export function ImageBanner({ props }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
   if (!imageUrl) return null;
   return (
-    <img
+    <MlcImage
       src={imageUrl}
       alt={text(props.alt)}
-      style={{ width: "100%", display: "block", borderRadius: number(props.radius, 0) }}
+      radius={number(props.radius, 0)}
     />
   );
 }
@@ -82,46 +83,25 @@ export function SectionTitle({ props }: MaterialProps) {
       }}
     >
       {markerText ? (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            minHeight: 22,
-            marginBottom: 8,
-            borderRadius: 999,
-            padding: "0 9px",
-            color: text(props.accentColor, "#0f766e"),
-            background: "rgba(15, 118, 110, 0.1)",
-            fontSize: 12,
-            fontWeight: 800,
-            lineHeight: 1,
-          }}
-        >
+        <MlcTag style={{ marginBottom: 8, color: text(props.accentColor, "#0f766e") }}>
           {markerText}
-        </span>
+        </MlcTag>
       ) : null}
-      <h2
-        style={{
-          margin: 0,
-          fontSize: number(props.titleSize, 20),
-          lineHeight: 1.25,
-          fontWeight: 900,
-          color: text(props.titleColor, "#111827"),
-        }}
-      >
+      <MlcText as="h2" size={number(props.titleSize, 20)} weight={900} lineHeight={1.25} style={{ margin: 0, color: text(props.titleColor, "#111827") }}>
         {text(props.title, "区块标题")}
-      </h2>
+      </MlcText>
       {text(props.subtitle) ? (
-        <p
+        <MlcText
+          as="p"
+          tone="muted"
           style={{
             margin: "7px 0 0",
             color: text(props.textColor, "#64748b"),
-            fontSize: 13,
             lineHeight: 1.6,
           }}
         >
           {text(props.subtitle)}
-        </p>
+        </MlcText>
       ) : null}
     </section>
   );
@@ -1068,26 +1048,22 @@ export function ActionButton({ props }: MaterialProps) {
         background: text(props.wrapperBackgroundColor, "#f3f4f6"),
       }}
     >
-      <button
-        type="button"
+      <MlcButton
+        block
+        radius={number(props.radius, 8)}
         onClick={() => {
           const handler = props.onClick;
           if (typeof handler === "function") handler();
           if (linkUrl) window.location.href = linkUrl;
         }}
         style={{
-          width: "100%",
-          minHeight: 44,
           border: 0,
-          borderRadius: number(props.radius, 8),
           color: text(props.textColor, "#ffffff"),
           background: text(props.backgroundColor, "#111827"),
-          fontWeight: 700,
-          fontSize: 15,
         }}
       >
         {text(props.text, "立即参与")}
-      </button>
+      </MlcButton>
     </section>
   );
 }
