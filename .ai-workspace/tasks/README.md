@@ -7,4 +7,4 @@
 当前任务：
 
 - `TASK-2026-0731-001-ai-workflow-migration.md`
-
+- `TASK-2026-0731-002-schema-editor-foundation.md`

@@ -5,7 +5,7 @@
 Keep one GitHub repository during early development:
 
 ```text
-github.com/<org>/meumall-lowcode
+git@github.com:Tycalwayslove/meumall-lowcode.git
 ```
 
 Publish multiple npm packages from the monorepo:
@@ -72,4 +72,3 @@ pnpm build
 ```
 
 Publish workflow can be added after npm token and registry are confirmed.
-

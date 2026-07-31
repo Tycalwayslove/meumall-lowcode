@@ -4,3 +4,19 @@ Shared Page Schema contract for editor, renderer, Java config platform, and futu
 
 This package must stay framework-agnostic.
 
+## Main Exports
+
+- `LOWCODE_SCHEMA_VERSION`
+- `createLowcodePageSchema`
+- `normalizeLowcodePageSchema`
+- `validateLowcodePageSchema`
+- `assertLowcodePageSchema`
+- `isSchemaVersionCompatible`
+- `createLowcodeNode`
+- `createMaterialManifest`
+- `validateLowcodeMaterialManifest`
+- `assertLowcodeMaterialManifest`
+
+## Contract
+
+See `.ai-workspace/contracts/page-schema-v1.md`.
