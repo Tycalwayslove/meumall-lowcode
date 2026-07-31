@@ -414,6 +414,33 @@ const sampleSchema = createLowcodePageSchema({
         html: "<p><strong>运营说明：</strong>这是一份发布后的 H5 schema 渲染示例，后续可替换为 Java 配置平台返回的数据。</p>",
       },
     },
+    {
+      id: "node_sticky_action",
+      componentName: "StickyActionBar",
+      materialVersion: "0.1.0",
+      props: {
+        title: "限时福利",
+        subtitle: "领取优惠后立即逛活动精选",
+        primaryText: "立即抢购",
+        secondaryText: "领券",
+        showSecondary: true,
+        sticky: true,
+        safeArea: true,
+        primaryLinkUrl: "",
+        secondaryLinkUrl: "",
+        backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#111827",
+        primaryTextColor: "#ffffff",
+        secondaryBackgroundColor: "#ffffff",
+        radius: 999,
+      },
+      events: {
+        onPrimaryClick: { actionId: "track_sticky_primary" },
+        onSecondaryClick: { actionId: "receive_coupon" },
+      },
+    },
   ],
   dataSources: [
     {
@@ -478,6 +505,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "brand_feature_product_click",
+      },
+    },
+    {
+      id: "track_sticky_primary",
+      type: "tracking.click",
+      params: {
+        eventName: "sticky_action_primary_click",
       },
     },
     {

@@ -90,6 +90,19 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.events?.[1]?.name, "onProductClick");
   });
 
+  it("registers the sticky action bar material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "StickyActionBar");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "底部转化条");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.primaryText, "立即抢购");
+    assert.equal(material.manifest.propsSchema.safeArea.setter, "switch");
+    assert.equal(material.manifest.propsSchema.primaryLinkUrl.setter, "input");
+    assert.equal(material.manifest.events?.[0]?.name, "onPrimaryClick");
+    assert.equal(material.manifest.events?.[1]?.name, "onSecondaryClick");
+  });
+
   it("registers the live entry material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "LiveEntry");
 

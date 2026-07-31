@@ -9,6 +9,7 @@ Current materials:
 - `ActivityHero`
 - `ImageBanner`
 - `ActionButton`
+- `StickyActionBar`
 - `ProductList`
 - `ProductRankList`
 - `BrandFeatureSection`

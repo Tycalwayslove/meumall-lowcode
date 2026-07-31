@@ -472,6 +472,8 @@ const contentPropNames = new Set([
   "content",
   "label",
   "text",
+  "primaryText",
+  "secondaryText",
   "html",
   "buttonText",
   "receiveText",
@@ -488,7 +490,7 @@ const contentPropNames = new Set([
   "logoImageUrl",
 ]);
 const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
-const behaviorPropNames = new Set(["linkUrl", "sticky", "smooth", "offsetTop"]);
+const behaviorPropNames = new Set(["linkUrl", "primaryLinkUrl", "secondaryLinkUrl", "sticky", "smooth", "offsetTop", "safeArea", "showSecondary"]);
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },

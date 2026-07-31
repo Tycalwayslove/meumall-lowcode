@@ -1274,6 +1274,103 @@ export const ActionButton = defineComponent({
   },
 });
 
+export const StickyActionBar = defineComponent({
+  name: "StickyActionBar",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const primaryLinkUrl = text(runtimeProps.primaryLinkUrl);
+      const secondaryLinkUrl = text(runtimeProps.secondaryLinkUrl);
+      const showSecondary = runtimeProps.showSecondary !== false && Boolean(text(runtimeProps.secondaryText, "领券"));
+      const handlePrimaryClick = () => {
+        const handler = runtimeProps.onPrimaryClick;
+        if (typeof handler === "function") handler();
+        if (primaryLinkUrl && typeof window !== "undefined") window.location.href = primaryLinkUrl;
+      };
+      const handleSecondaryClick = () => {
+        const handler = runtimeProps.onSecondaryClick;
+        if (typeof handler === "function") handler();
+        if (secondaryLinkUrl && typeof window !== "undefined") window.location.href = secondaryLinkUrl;
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-sticky-action-bar",
+          style: {
+            position: runtimeProps.sticky === false ? "relative" : "sticky",
+            bottom: 0,
+            zIndex: 30,
+            display: "grid",
+            gridTemplateColumns: showSecondary ? "minmax(0, 1fr) auto auto" : "minmax(0, 1fr) auto",
+            alignItems: "center",
+            gap: "10px",
+            padding: runtimeProps.safeArea === false ? "10px 12px" : "10px 12px calc(10px + env(safe-area-inset-bottom))",
+            borderTop: "1px solid rgba(226, 232, 240, 0.92)",
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+            boxShadow: "0 -10px 26px rgba(15, 23, 42, 0.12)",
+          } satisfies CSSProperties,
+        },
+        [
+          h("span", { style: { minWidth: 0 } }, [
+            h(
+              "strong",
+              { style: { display: "block", color: text(runtimeProps.titleColor, "#111827"), fontSize: "14px" } },
+              text(runtimeProps.title, "限时福利"),
+            ),
+            h(
+              "small",
+              { style: { display: "block", marginTop: "3px", color: text(runtimeProps.textColor, "#64748b"), fontSize: "11px" } },
+              text(runtimeProps.subtitle, "领取优惠后立即逛活动精选"),
+            ),
+          ]),
+          showSecondary
+            ? h(
+                "button",
+                {
+                  type: "button",
+                  onClick: handleSecondaryClick,
+                  style: {
+                    minHeight: "38px",
+                    border: `1px solid ${text(runtimeProps.accentColor, "#111827")}`,
+                    borderRadius: `${number(runtimeProps.radius, 999)}px`,
+                    padding: "0 12px",
+                    color: text(runtimeProps.accentColor, "#111827"),
+                    background: text(runtimeProps.secondaryBackgroundColor, "#ffffff"),
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    whiteSpace: "nowrap",
+                  } satisfies CSSProperties,
+                },
+                text(runtimeProps.secondaryText, "领券"),
+              )
+            : null,
+          h(
+            "button",
+            {
+              type: "button",
+              onClick: handlePrimaryClick,
+              style: {
+                minHeight: "38px",
+                border: 0,
+                borderRadius: `${number(runtimeProps.radius, 999)}px`,
+                padding: "0 15px",
+                color: text(runtimeProps.primaryTextColor, "#ffffff"),
+                background: text(runtimeProps.accentColor, "#111827"),
+                fontSize: "13px",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
+              } satisfies CSSProperties,
+            },
+            text(runtimeProps.primaryText, "立即抢购"),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const NoticeBar = defineComponent({
   name: "NoticeBar",
   props: materialPropOptions,
@@ -1718,6 +1815,56 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
       },
       events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: StickyActionBar,
+    manifest: createMaterialManifest({
+      componentName: "StickyActionBar",
+      materialVersion: "0.1.0",
+      title: "底部转化条",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "限时福利",
+        subtitle: "领取优惠后立即逛活动精选",
+        primaryText: "立即抢购",
+        secondaryText: "领券",
+        showSecondary: true,
+        sticky: true,
+        safeArea: true,
+        primaryLinkUrl: "",
+        secondaryLinkUrl: "",
+        backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#111827",
+        primaryTextColor: "#ffffff",
+        secondaryBackgroundColor: "#ffffff",
+        radius: 999,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "限时福利" },
+        subtitle: { label: "说明", type: "string", setter: "input", defaultValue: "领取优惠后立即逛活动精选" },
+        primaryText: { label: "主按钮", type: "string", setter: "input", defaultValue: "立即抢购" },
+        secondaryText: { label: "副按钮", type: "string", setter: "input", defaultValue: "领券" },
+        showSecondary: { label: "显示副按钮", type: "boolean", setter: "switch", defaultValue: true },
+        sticky: { label: "固定底部", type: "boolean", setter: "switch", defaultValue: true },
+        safeArea: { label: "安全区留白", type: "boolean", setter: "switch", defaultValue: true },
+        primaryLinkUrl: { label: "主按钮链接", type: "string", setter: "input", defaultValue: "" },
+        secondaryLinkUrl: { label: "副按钮链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#111827" },
+        primaryTextColor: { label: "主按钮文字", type: "string", setter: "color", defaultValue: "#ffffff" },
+        secondaryBackgroundColor: { label: "副按钮背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        radius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 999 },
+      },
+      events: [
+        { name: "onPrimaryClick", title: "点击主按钮" },
+        { name: "onSecondaryClick", title: "点击副按钮" },
+      ],
     }),
   },
   {
