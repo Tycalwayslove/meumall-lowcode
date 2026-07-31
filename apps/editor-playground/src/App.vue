@@ -82,6 +82,7 @@ import {
 } from "./mockPlatform";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
+const AUTO_SAVE_DELAY_MS = 700;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
@@ -283,18 +284,28 @@ const previewDataSourceRegistry = createDataSourceRegistry({
 
 const initialSchema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
 
-function loadSchema(): LowcodePageSchema {
+type AutoSaveStatus = "idle" | "restored" | "pending" | "saved" | "error";
+
+interface LoadedSchemaResult {
+  schema: LowcodePageSchema;
+  restored: boolean;
+}
+
+function loadSchema(): LoadedSchemaResult {
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return initialSchema;
+  if (!raw) return { schema: initialSchema, restored: false };
   try {
     const parsed = JSON.parse(raw) as LowcodePageSchema;
-    return validateLowcodePageSchema(parsed).valid ? parsed : initialSchema;
+    return validateLowcodePageSchema(parsed).valid
+      ? { schema: parsed, restored: true }
+      : { schema: initialSchema, restored: false };
   } catch {
-    return initialSchema;
+    return { schema: initialSchema, restored: false };
   }
 }
 
-const loadedSchema = loadSchema();
+const loadedSchemaResult = loadSchema();
+const loadedSchema = loadedSchemaResult.schema;
 const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadedSchema, { selectedNodeId: loadedSchema.nodes[0]?.id }));
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
@@ -302,6 +313,8 @@ const draggedNodeId = ref<string>();
 const phoneFrameRef = ref<HTMLElement>();
 const commandSearchInputRef = ref<HTMLInputElement>();
 const releaseMessage = ref("");
+const autoSaveStatus = ref<AutoSaveStatus>(loadedSchemaResult.restored ? "restored" : "idle");
+const lastAutoSavedAt = ref<string>();
 const configPlatformClient = localConfigPlatformClient;
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
@@ -354,6 +367,8 @@ let assetSearchSeq = 0;
 let productSearchSeq = 0;
 let couponSearchSeq = 0;
 let storeExpertSearchSeq = 0;
+let autoSaveTimer: number | undefined;
+let suppressNextAutoSave = false;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
@@ -788,6 +803,21 @@ const workspaceStats = computed<WorkspaceStat[]>(() => [
     tone: editorState.value.dirty ? "warning" : "success",
   },
 ]);
+const autoSaveStatusText = computed(() => {
+  if (autoSaveStatus.value === "restored") return "已恢复本地草稿";
+  if (autoSaveStatus.value === "pending") return "自动保存中";
+  if (autoSaveStatus.value === "saved") {
+    return lastAutoSavedAt.value ? `已自动保存 ${formatAutoSaveTime(lastAutoSavedAt.value)}` : "已自动保存";
+  }
+  if (autoSaveStatus.value === "error") return "自动保存失败";
+  return "自动保存待命";
+});
+const autoSaveStatusTone = computed(() => {
+  if (autoSaveStatus.value === "error") return "danger";
+  if (autoSaveStatus.value === "pending") return "warning";
+  if (autoSaveStatus.value === "saved" || autoSaveStatus.value === "restored") return "success";
+  return "neutral";
+});
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
@@ -914,6 +944,11 @@ watch(
   () => editorState.value.schema,
   (schema) => {
     schemaDraft.value = JSON.stringify(schema, null, 2);
+    if (suppressNextAutoSave) {
+      suppressNextAutoSave = false;
+      return;
+    }
+    scheduleAutoSave(schema);
   },
 );
 
@@ -1026,6 +1061,7 @@ onUnmounted(() => {
   window.removeEventListener("pointerup", onPointerCanvasDragEnd);
   window.removeEventListener("pointercancel", onPointerCanvasDragCancel);
   window.removeEventListener("keydown", onGlobalKeydown);
+  if (autoSaveTimer) window.clearTimeout(autoSaveTimer);
 });
 
 function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefined {
@@ -1145,6 +1181,34 @@ function commitPlaygroundSchemaChange(schema: LowcodePageSchema, action: string,
     dirty: true,
     lastAction: action,
   };
+}
+
+function scheduleAutoSave(schema: LowcodePageSchema): void {
+  if (isRuntimeMode) return;
+  if (autoSaveTimer) window.clearTimeout(autoSaveTimer);
+  autoSaveStatus.value = "pending";
+  autoSaveTimer = window.setTimeout(() => {
+    persistLocalDraft(schema);
+  }, AUTO_SAVE_DELAY_MS);
+}
+
+function persistLocalDraft(schema: LowcodePageSchema): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(schema));
+    lastAutoSavedAt.value = new Date().toISOString();
+    autoSaveStatus.value = "saved";
+  } catch {
+    autoSaveStatus.value = "error";
+  }
+}
+
+function markSchemaPersisted(schema: LowcodePageSchema): void {
+  if (autoSaveTimer) {
+    window.clearTimeout(autoSaveTimer);
+    autoSaveTimer = undefined;
+  }
+  persistLocalDraft(schema);
+  suppressNextAutoSave = true;
 }
 
 function schemaNodeCount(schema: LowcodePageSchema): number {
@@ -3184,7 +3248,7 @@ function ensurePublishReady(action: string): boolean {
 
 function saveSchema(): void {
   const release = configPlatformClient.saveDraft(editorState.value.schema);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
+  markSchemaPersisted(release.schema);
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
     mode: editorState.value.mode,
@@ -3206,7 +3270,7 @@ function createPreviewRelease(): void {
 function publishCurrentPage(): void {
   if (!ensurePublishReady("发布")) return;
   const release = configPlatformClient.publishPage(editorState.value.schema);
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
+  markSchemaPersisted(release.schema);
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
     mode: editorState.value.mode,
@@ -3258,7 +3322,7 @@ function rollbackPublishSelectedRelease(): void {
       environment: editorState.value.schema.publishMeta.environment,
     },
   });
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rollbackRelease.schema));
+  markSchemaPersisted(rollbackRelease.schema);
   editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
     selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
     mode: editorState.value.mode,
@@ -3282,6 +3346,14 @@ function formatReleaseTime(value: string): string {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatAutoSaveTime(value: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   }).format(new Date(value));
 }
 </script>
@@ -3314,6 +3386,9 @@ function formatReleaseTime(value: string): string {
         </div>
         <span class="save-pill" :class="{ dirty: editorState.dirty }">
           {{ editorState.dirty ? "未保存" : "已保存" }}
+        </span>
+        <span class="auto-save-pill" :class="`is-${autoSaveStatusTone}`">
+          {{ autoSaveStatusText }}
         </span>
       </div>
 

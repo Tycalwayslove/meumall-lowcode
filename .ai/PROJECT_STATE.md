@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、模板搜索筛选、物料搜索过滤、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器和列表项拖拽排序。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、模板搜索筛选、物料搜索过滤、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器和列表项拖拽排序。
 
 ## 当前维护范围
 
@@ -83,16 +83,17 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器节点快捷操作：H5 画布节点和结构树节点支持右键打开操作菜单，画布上下文工具条提供更多操作入口，并支持 Delete/Backspace 删除、Ctrl/Meta+C 复制、Ctrl/Meta+V 粘贴、Ctrl/Meta+D 创建副本、Ctrl/Meta+Z 撤销和 Ctrl/Meta+Shift+Z 或 Ctrl+Y 重做。
 - Vue3 编辑器结构树导航：左侧结构树支持搜索节点、折叠/展开容器、搜索命中路径展示和点击节点滚动定位到 H5 画布对应节点；当前选中节点会保持在结构树可见路径内。
 - Vue3 编辑器节点命名：结构树、右键菜单和右侧当前节点信息卡支持给节点设置运营可读名称，写入已有 `node.meta.name`，搜索可命中新名称，清空名称时回退物料标题。
+- Vue3 编辑器本地自动保存：schema 变更后会延迟写入 localStorage 草稿，顶栏展示自动保存和恢复状态；从 localStorage 成功读取草稿时显示“已恢复本地草稿”，browser smoke 已验证重命名后自动保存到 localStorage。
 
 ## 已知缺口
 
-- 尚未实现完整生产级编辑器 UI；当前已具备模板搜索筛选、物料搜索过滤、节点命名、结构树搜索折叠与画布定位、工作区状态摘要、属性分组折叠、节点右键菜单、节点键盘快捷键、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
+- 尚未实现完整生产级编辑器 UI；当前已具备模板搜索筛选、物料搜索过滤、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、工作区状态摘要、属性分组折叠、节点右键菜单、节点键盘快捷键、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放、已有节点移动、触屏 Pointer Events 拖拽、吸附线、同父级多选成组拖拽和数组列表项排序；跨父级多选拖拽仍需后续单独设计。
 - Page Schema v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端发布校验、审批和审计字段。
 - Material Manifest v1 已沉淀为 ready 契约，但 Java 配置平台确认后可能需要补充更严格的服务端校验字段。
 - Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批、服务端发布校验、版本 diff、回滚审计和分页。
-- 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
+- 当前发布链路和自动保存已抽象出部分本地持久化状态，但仍使用 localStorage mock，尚未切换真实 Java HTTP client 或服务端草稿自动保存。
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
 - 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐、静态直播入口、静态商品榜单、静态品牌专题、静态底部转化条和 mock 商品数据，尚未对接真实活动、库存、价格、排行口径、品牌中心、规则中心、楼层配置中心、优惠券中心、门店中心、达人中心和直播中心。
@@ -155,7 +156,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `0b92aed` | 新增底部转化条物料并接入 H5 示例。 |
 | 2026-07-31 | `3b2b2da` | 增强 Vue3 编辑器节点右键菜单和键盘快捷键。 |
 | 2026-07-31 | `a40c8fb` | 增强 Vue3 编辑器结构树搜索折叠和画布定位。 |
-| 2026-07-31 | 本提交 | 增强 Vue3 编辑器节点命名能力。 |
+| 2026-07-31 | `e7ebb55` | 增强 Vue3 编辑器节点命名能力。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器本地自动保存和恢复提示。 |
 
 ## 默认验证命令
 
