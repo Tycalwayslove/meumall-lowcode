@@ -428,7 +428,12 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("!Array.from(document.querySelectorAll('.template-item strong')).some((item) => item.innerText.includes('大促活动页'))");
   log("通过：模板搜索可筛选商品专题页");
 
-  await page.clickByText(".template-item", "商品专题页");
+  await page.clickChildByText(".template-item", "商品专题页", ".template-preview-button");
+  await page.waitForExpression("document.body.innerText.includes('已打开模板 H5 预览：商品专题页')");
+  await page.waitForExpression("document.body.innerText.includes('夏日好物节')");
+  log("通过：商品专题页模板可先打开 H5 预览且不替换当前画布");
+
+  await page.clickByText(".template-main-button", "商品专题页");
   await page.waitForExpression("document.body.innerText.includes('通勤好物专题')");
   await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
   log("通过：商品专题页模板可应用到画布");

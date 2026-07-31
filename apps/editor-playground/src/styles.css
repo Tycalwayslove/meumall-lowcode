@@ -526,12 +526,56 @@ button:focus-visible {
 
 .template-item {
   min-height: 64px;
+  gap: 0;
+  padding: 0;
   border-color: #bfd7d2;
   background: #f4fbfa;
+  overflow: hidden;
 }
 
-.template-item > span {
+.template-main-button {
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  align-self: stretch;
+  padding: 10px 12px;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+}
+
+.template-main-button:hover,
+.template-main-button:focus-visible {
+  background: #ecfdf5;
+}
+
+.template-main-button > span {
+  min-width: 0;
+}
+
+.template-preview-button {
+  display: inline-flex;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  align-self: stretch;
+  border: 0;
+  border-left: 1px solid #bfd7d2;
+  color: #0f766e;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.template-preview-button:hover,
+.template-preview-button:focus-visible {
+  color: #fff;
+  background: #0f766e;
 }
 
 .template-item-head {

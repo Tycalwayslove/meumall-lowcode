@@ -3094,6 +3094,16 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">): Pro
   refreshReleases();
 }
 
+async function previewTemplate(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
+  const templateDetail = await Promise.resolve(templateLibraryClient.getTemplate(template.id));
+  if (!templateDetail) {
+    releaseMessage.value = "模板不存在或已下架";
+    return;
+  }
+  openReactH5Runtime(templateDetail.schema);
+  releaseMessage.value = `已打开模板 H5 预览：${templateDetail.title}`;
+}
+
 function applyJson(): void {
   try {
     const parsed = JSON.parse(schemaDraft.value) as LowcodePageSchema;
@@ -3782,31 +3792,43 @@ function formatAutoSaveTime(value: string): string {
             </option>
           </select>
         </div>
-        <button
+        <article
           v-for="template in visiblePageTemplates"
           :key="template.id"
           class="template-item"
-          type="button"
-          @click="applyTemplate(template)"
         >
-          <span>
-            <span class="template-item-head">
-              <strong>{{ template.title }}</strong>
-              <em>{{ templateVersionText(template) }}</em>
+          <button
+            class="template-main-button"
+            type="button"
+            @click="applyTemplate(template)"
+          >
+            <span>
+              <span class="template-item-head">
+                <strong>{{ template.title }}</strong>
+                <em>{{ templateVersionText(template) }}</em>
+              </span>
+              <small>{{ template.category }} / {{ template.description }}</small>
+              <span v-if="templateTags(template).length" class="template-tags">
+                <i
+                  v-for="tag in templateTags(template)"
+                  :key="`${template.id}-${tag}`"
+                >
+                  {{ tag }}
+                </i>
+              </span>
+              <span class="template-summary">{{ templateSummaryText(template) }}</span>
             </span>
-            <small>{{ template.category }} / {{ template.description }}</small>
-            <span v-if="templateTags(template).length" class="template-tags">
-              <i
-                v-for="tag in templateTags(template)"
-                :key="`${template.id}-${tag}`"
-              >
-                {{ tag }}
-              </i>
-            </span>
-            <span class="template-summary">{{ templateSummaryText(template) }}</span>
-          </span>
-          <Plus :size="15" />
-        </button>
+            <Plus :size="15" />
+          </button>
+          <button
+            class="template-preview-button"
+            type="button"
+            @click.stop="previewTemplate(template)"
+          >
+            <ExternalLink :size="14" />
+            <span>预览</span>
+          </button>
+        </article>
         <div v-if="isTemplateSearching" class="mini-empty">模板搜索中</div>
         <div v-else-if="!visiblePageTemplates.length" class="mini-empty">没有匹配模板</div>
       </section>
