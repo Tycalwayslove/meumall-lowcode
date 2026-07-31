@@ -2781,6 +2781,7 @@ function getDefaultFieldNames(propName: string): string[] {
   const componentName = selectedNode.value?.componentName;
   if (propName === "items" && componentName === "FloorAnchorNav") return ["id", "title", "targetId"];
   if (propName === "items" && componentName === "NavGrid") return ["id", "title", "subtitle"];
+  if (propName === "items" && componentName === "ImageCardGrid") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
   if (propName === "items" && componentName === "StoreExpertSection") {
     return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
   }
@@ -2810,6 +2811,9 @@ function createDefaultListItem(propName: string): JsonObject {
   }
   if (propName === "items" && componentName === "NavGrid") {
     return { id, title: "新导航", subtitle: "请输入说明" };
+  }
+  if (propName === "items" && componentName === "ImageCardGrid") {
+    return { id, title: "新会场", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" };
   }
   if (propName === "items" && componentName === "StoreExpertSection") {
     return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };

@@ -199,6 +199,166 @@ export const SectionTitle = defineComponent({
   },
 });
 
+export const ImageCardGrid = defineComponent({
+  name: "ImageCardGrid",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const cards = list(runtimeProps.items);
+      const columns = Math.max(1, Math.min(3, Math.round(number(runtimeProps.columns, 2))));
+      const onItemClick = runtimeProps.onItemClick;
+      const visibleCards = cards.length
+        ? cards
+        : [
+            {
+              id: "women",
+              title: "女装会场",
+              subtitle: "夏日通勤穿搭",
+              badgeText: "热推",
+              imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=500&q=80",
+            },
+            {
+              id: "shoes",
+              title: "鞋包会场",
+              subtitle: "轻盈出行装备",
+              badgeText: "新品",
+              imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80",
+            },
+          ];
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-image-card-grid",
+          style: {
+            padding: "14px 12px 16px",
+            color: text(runtimeProps.titleColor, "#111827"),
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        [
+          text(runtimeProps.title)
+            ? h("div", { style: { marginBottom: "10px" } }, [
+                h("strong", { style: { display: "block", fontSize: "18px", lineHeight: 1.25 } }, text(runtimeProps.title)),
+                text(runtimeProps.subtitle)
+                  ? h(
+                      "span",
+                      {
+                        style: {
+                          display: "block",
+                          marginTop: "4px",
+                          color: text(runtimeProps.textColor, "#64748b"),
+                          fontSize: "12px",
+                          lineHeight: 1.5,
+                        },
+                      },
+                      text(runtimeProps.subtitle),
+                    )
+                  : null,
+              ])
+            : null,
+          h(
+            "div",
+            {
+              style: {
+                display: "grid",
+                gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                gap: `${number(runtimeProps.gap, 10)}px`,
+              },
+            },
+            visibleCards.map((card, index) => {
+              const imageUrl = text(card.imageUrl);
+              const badgeText = text(card.badgeText);
+              return h(
+                "button",
+                {
+                  type: "button",
+                  key: String(card.id ?? index),
+                  onClick: () => {
+                    if (typeof onItemClick === "function") onItemClick(card);
+                  },
+                  style: {
+                    position: "relative",
+                    overflow: "hidden",
+                    minHeight: "132px",
+                    border: 0,
+                    borderRadius: `${number(runtimeProps.radius, 10)}px`,
+                    padding: 0,
+                    color: "#ffffff",
+                    background: text(runtimeProps.cardBackgroundColor, "#111827"),
+                    textAlign: "left",
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.1)",
+                  } satisfies CSSProperties,
+                },
+                [
+                  imageUrl
+                    ? h("img", {
+                        src: imageUrl,
+                        alt: "",
+                        style: {
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        } satisfies CSSProperties,
+                      })
+                    : null,
+                  h("span", {
+                    style: {
+                      position: "absolute",
+                      inset: 0,
+                      background: "linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.72))",
+                    } satisfies CSSProperties,
+                  }),
+                  badgeText
+                    ? h(
+                        "span",
+                        {
+                          style: {
+                            position: "absolute",
+                            top: "8px",
+                            left: "8px",
+                            borderRadius: "999px",
+                            padding: "3px 7px",
+                            color: "#ffffff",
+                            background: text(runtimeProps.accentColor, "#ef4444"),
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            lineHeight: 1,
+                          } satisfies CSSProperties,
+                        },
+                        badgeText,
+                      )
+                    : null,
+                  h("span", { style: { position: "absolute", right: "10px", bottom: "10px", left: "10px" } }, [
+                    h("strong", { style: { display: "block", fontSize: "15px", lineHeight: 1.25 } }, text(card.title, "卡片标题")),
+                    text(card.subtitle)
+                      ? h(
+                          "small",
+                          {
+                            style: {
+                              display: "block",
+                              marginTop: "4px",
+                              color: "rgba(255, 255, 255, 0.82)",
+                              fontSize: "12px",
+                              lineHeight: 1.35,
+                            },
+                          },
+                          text(card.subtitle),
+                        )
+                      : null,
+                  ]),
+                ],
+              );
+            }),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const RichTextBlock = defineComponent({
   name: "RichTextBlock",
   props: materialPropOptions,
@@ -1849,6 +2009,60 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 20 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 18 },
       },
+    }),
+  },
+  {
+    component: ImageCardGrid,
+    manifest: createMaterialManifest({
+      componentName: "ImageCardGrid",
+      materialVersion: "0.1.0",
+      title: "图片卡片宫格",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "专题会场",
+        subtitle: "用图片卡片承载品类入口和分会场导流。",
+        columns: 2,
+        gap: 10,
+        radius: 10,
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#111827",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#ef4444",
+        items: [
+          {
+            id: "women",
+            title: "女装会场",
+            subtitle: "夏日通勤穿搭",
+            badgeText: "热推",
+            imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=500&q=80",
+            linkUrl: "",
+          },
+          {
+            id: "shoes",
+            title: "鞋包会场",
+            subtitle: "轻盈出行装备",
+            badgeText: "新品",
+            imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=500&q=80",
+            linkUrl: "",
+          },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "专题会场" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "用图片卡片承载品类入口和分会场导流。" },
+        columns: { label: "列数", type: "number", setter: "number", defaultValue: 2 },
+        gap: { label: "间距", type: "number", setter: "number", defaultValue: 10 },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#111827" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#ef4444" },
+        items: { label: "卡片列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onItemClick", title: "点击卡片" }],
     }),
   },
   {

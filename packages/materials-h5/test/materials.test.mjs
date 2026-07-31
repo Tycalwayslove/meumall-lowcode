@@ -52,6 +52,17 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.subtitle.setter, "textarea");
   });
 
+  it("registers the image card grid material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "ImageCardGrid");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "图片卡片宫格");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.title, "专题会场");
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
+  });
+
   it("registers the coupon bundle material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "CouponBundle");
 

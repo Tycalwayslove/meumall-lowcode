@@ -627,11 +627,13 @@ async function main() {
       { label: "商品榜单物料存在", expression: "document.body.innerText.includes('商品榜单')" },
       { label: "底部转化条物料存在", expression: "document.body.innerText.includes('底部转化条')" },
       { label: "区块标题物料存在", expression: "document.body.innerText.includes('区块标题')" },
+      { label: "图片卡片宫格物料存在", expression: "document.body.innerText.includes('图片卡片宫格')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
       { label: "默认大促模板包含品牌专题", expression: "document.body.innerText.includes('夏日品牌馆')" },
       { label: "默认大促模板包含商品榜单", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "默认大促模板包含区块标题", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
+      { label: "默认大促模板包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "默认大促模板包含底部转化条", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
@@ -648,6 +650,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含品牌专题", expression: "document.body.innerText.includes('夏日品牌馆')" },
       { label: "编辑器内置 runtime 包含商品榜单", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "编辑器内置 runtime 包含区块标题", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
+      { label: "编辑器内置 runtime 包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "编辑器内置 runtime 包含底部转化条", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
     ]);
 
@@ -660,6 +663,7 @@ async function main() {
       { label: "React H5 品牌专题已渲染", expression: "document.body.innerText.includes('夏日品牌馆')" },
       { label: "React H5 商品榜单已渲染", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "React H5 区块标题已渲染", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
+      { label: "React H5 图片卡片宫格已渲染", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "React H5 底部转化条已渲染", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);
