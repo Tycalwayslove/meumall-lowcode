@@ -24,6 +24,10 @@ function number(value: unknown, fallback: number): number {
   return typeof value === "number" ? value : fallback;
 }
 
+function list(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+}
+
 export const ActivityHero = defineComponent({
   name: "ActivityHero",
   props: materialPropOptions,
@@ -376,6 +380,196 @@ export const SpacerBlock = defineComponent({
   },
 });
 
+export const CountdownTimer = defineComponent({
+  name: "CountdownTimer",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const boxes = [
+        { label: "天", value: text(runtimeProps.days, "00") },
+        { label: "时", value: text(runtimeProps.hours, "12") },
+        { label: "分", value: text(runtimeProps.minutes, "30") },
+        { label: "秒", value: text(runtimeProps.seconds, "00") },
+      ];
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-countdown-timer",
+          style: {
+            padding: "12px 16px",
+            color: text(runtimeProps.textColor, "#ffffff"),
+            background: text(runtimeProps.backgroundColor, "#dc2626"),
+          },
+        },
+        [
+          h(
+            "div",
+            { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" } },
+            [
+              h("div", { style: { minWidth: 0 } }, [
+                h("strong", { style: { display: "block", fontSize: "15px" } }, text(runtimeProps.title, "限时秒杀")),
+                h("span", { style: { display: "block", marginTop: "3px", opacity: 0.86, fontSize: "12px" } }, text(runtimeProps.subtitle, "距离活动结束")),
+              ]),
+              h(
+                "div",
+                { style: { display: "flex", gap: "5px", flex: "0 0 auto" } },
+                boxes.map((box) =>
+                  h("span", { style: { display: "grid", gap: "2px", minWidth: "34px", textAlign: "center" } }, [
+                    h(
+                      "strong",
+                      {
+                        style: {
+                          padding: "5px 6px",
+                          borderRadius: "6px",
+                          color: text(runtimeProps.numberColor, "#dc2626"),
+                          background: "#ffffff",
+                          fontSize: "14px",
+                        },
+                      },
+                      box.value,
+                    ),
+                    h("small", { style: { color: "inherit", opacity: 0.78 } }, box.label),
+                  ]),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    };
+  },
+});
+
+export const NavGrid = defineComponent({
+  name: "NavGrid",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items);
+      const columns = Math.max(2, Math.min(5, number(runtimeProps.columns, 4)));
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-nav-grid",
+          style: {
+            padding: "12px 14px",
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+          },
+        },
+        [
+          h(
+            "div",
+            { style: { display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: "10px" } },
+            items.map((item, index) => {
+              const linkUrl = text(item.linkUrl);
+              return h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onNavigate;
+                    if (typeof handler === "function") handler(item);
+                    if (linkUrl) window.location.href = linkUrl;
+                  },
+                  style: {
+                    display: "grid",
+                    gap: "5px",
+                    placeItems: "center",
+                    minHeight: "68px",
+                    border: 0,
+                    borderRadius: `${number(runtimeProps.radius, 8)}px`,
+                    color: text(runtimeProps.textColor, "#111827"),
+                    background: text(item.backgroundColor, text(runtimeProps.itemBackgroundColor, "#f8fafc")),
+                    textAlign: "center",
+                  } satisfies CSSProperties,
+                },
+                [
+                  h("strong", { style: { fontSize: "14px" } }, String(item.title ?? `导航 ${index + 1}`)),
+                  item.subtitle ? h("span", { style: { color: "#64748b", fontSize: "11px" } }, String(item.subtitle)) : null,
+                ],
+              );
+            }),
+          ),
+        ],
+      );
+    };
+  },
+});
+
+export const FlashSaleList = defineComponent({
+  name: "FlashSaleList",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items);
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-flash-sale-list",
+          style: {
+            padding: "14px 12px",
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+          },
+        },
+        [
+          h("div", { style: { display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "10px" } }, [
+            h("div", [
+              h("strong", { style: { display: "block", color: "#111827", fontSize: "17px" } }, text(runtimeProps.title, "限时秒杀")),
+              h("span", { style: { display: "block", marginTop: "3px", color: "#64748b", fontSize: "12px" } }, text(runtimeProps.subtitle, "爆品限量抢购")),
+            ]),
+            h("span", { style: { alignSelf: "start", color: "#dc2626", fontSize: "12px", fontWeight: 700 } }, text(runtimeProps.badgeText, "秒杀中")),
+          ]),
+          h(
+            "div",
+            { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" } },
+            items.map((item, index) =>
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onProductClick;
+                    if (typeof handler === "function") handler(item);
+                  },
+                  style: {
+                    overflow: "hidden",
+                    border: "1px solid #eef0f3",
+                    borderRadius: "10px",
+                    padding: 0,
+                    background: "#ffffff",
+                    textAlign: "left",
+                  } satisfies CSSProperties,
+                },
+                [
+                  typeof item.imageUrl === "string"
+                    ? h("img", {
+                        src: item.imageUrl,
+                        alt: "",
+                        style: {
+                          width: "100%",
+                          aspectRatio: "1 / 1",
+                          objectFit: "cover",
+                        },
+                      })
+                    : null,
+                  h("span", { style: { display: "grid", gap: "5px", padding: "9px" } }, [
+                    h("strong", { style: { color: "#111827", fontSize: "13px", lineHeight: 1.35 } }, String(item.title ?? `秒杀商品 ${index + 1}`)),
+                    h("span", { style: { color: "#dc2626", fontWeight: 800 } }, String(item.priceText ?? "")),
+                    h("span", { style: { color: "#94a3b8", fontSize: "11px", textDecoration: "line-through" } }, String(item.originPriceText ?? "")),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
   {
     component: SectionContainer,
@@ -570,6 +764,96 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         height: { label: "高度", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
       },
+    }),
+  },
+  {
+    component: CountdownTimer,
+    manifest: createMaterialManifest({
+      componentName: "CountdownTimer",
+      materialVersion: "0.1.0",
+      title: "倒计时",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "限时秒杀",
+        subtitle: "距离活动结束",
+        days: "00",
+        hours: "12",
+        minutes: "30",
+        seconds: "00",
+        backgroundColor: "#dc2626",
+        textColor: "#ffffff",
+        numberColor: "#dc2626",
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "限时秒杀" },
+        subtitle: { label: "说明", type: "string", setter: "input", defaultValue: "距离活动结束" },
+        days: { label: "天", type: "string", setter: "input", defaultValue: "00" },
+        hours: { label: "时", type: "string", setter: "input", defaultValue: "12" },
+        minutes: { label: "分", type: "string", setter: "input", defaultValue: "30" },
+        seconds: { label: "秒", type: "string", setter: "input", defaultValue: "00" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#dc2626" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        numberColor: { label: "数字色", type: "string", setter: "color", defaultValue: "#dc2626" },
+      },
+    }),
+  },
+  {
+    component: NavGrid,
+    manifest: createMaterialManifest({
+      componentName: "NavGrid",
+      materialVersion: "0.1.0",
+      title: "导航宫格",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        columns: 4,
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#f8fafc",
+        textColor: "#111827",
+        radius: 8,
+        items: [
+          { id: "nav_coupon", title: "领券", subtitle: "新人礼" },
+          { id: "nav_flash", title: "秒杀", subtitle: "限时抢" },
+          { id: "nav_new", title: "上新", subtitle: "新品" },
+          { id: "nav_rank", title: "榜单", subtitle: "热卖" },
+        ],
+      },
+      propsSchema: {
+        columns: { label: "列数", type: "number", setter: "number", defaultValue: 4 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        itemBackgroundColor: { label: "项背景色", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        items: { label: "导航项", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onNavigate", title: "点击导航" }],
+    }),
+  },
+  {
+    component: FlashSaleList,
+    manifest: createMaterialManifest({
+      componentName: "FlashSaleList",
+      materialVersion: "0.1.0",
+      title: "秒杀商品组",
+      category: "commerce",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "限时秒杀",
+        subtitle: "爆品限量抢购",
+        badgeText: "秒杀中",
+        backgroundColor: "#ffffff",
+        items: [],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "限时秒杀" },
+        subtitle: { label: "说明", type: "string", setter: "input", defaultValue: "爆品限量抢购" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "秒杀中" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+      },
+      events: [{ name: "onProductClick", title: "点击秒杀商品" }],
     }),
   },
   {

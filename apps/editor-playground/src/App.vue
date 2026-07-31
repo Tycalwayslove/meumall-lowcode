@@ -386,7 +386,7 @@ function moveSelected(offset: number): void {
   });
 }
 
-function bindSelectedProductListToDataSource(): void {
+function bindSelectedProductMaterialToDataSource(): void {
   if (!selectedNode.value) return;
   editorState.value = {
     ...editorState.value,
@@ -401,7 +401,7 @@ function bindSelectedProductListToDataSource(): void {
       })),
     },
     dirty: true,
-    lastAction: "bindSelectedProductListToDataSource",
+    lastAction: "bindSelectedProductMaterialToDataSource",
   };
 }
 
@@ -1283,9 +1283,9 @@ function formatReleaseTime(value: string): string {
                 <span>{{ asset.title }}</span>
               </button>
             </div>
-            <div v-if="selectedNode.componentName === 'ProductList' && String(propName) === 'items'" class="quick-actions">
+            <div v-if="['ProductList', 'FlashSaleList'].includes(selectedNode.componentName) && String(propName) === 'items'" class="quick-actions">
               <button type="button" @click="applySampleProducts">使用示例商品</button>
-              <button type="button" @click="bindSelectedProductListToDataSource">绑定数据源 products</button>
+              <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
             </div>
           </label>
 

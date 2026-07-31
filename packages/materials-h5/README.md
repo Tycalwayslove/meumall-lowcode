@@ -14,6 +14,9 @@ Current materials:
 - `ProductList`
 - `CouponSection`
 - `SpacerBlock`
+- `CountdownTimer`
+- `NavGrid`
+- `FlashSaleList`
 - `RichTextBlock`
 
 These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-vue-h5` so the editor preview schema can be rendered by the H5 runtime package.

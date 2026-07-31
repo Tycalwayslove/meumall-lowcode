@@ -24,6 +24,7 @@ const sampleProducts = [
     id: "sku_001",
     title: "轻盈通勤手提包",
     priceText: "¥199",
+    originPriceText: "¥299",
     desc: "活动价",
     imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
   },
@@ -31,6 +32,7 @@ const sampleProducts = [
     id: "sku_002",
     title: "夏季舒适凉鞋",
     priceText: "¥129",
+    originPriceText: "¥199",
     desc: "限时补贴",
     imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
   },
@@ -38,6 +40,7 @@ const sampleProducts = [
     id: "sku_003",
     title: "防晒轻薄衬衫",
     priceText: "¥159",
+    originPriceText: "¥239",
     desc: "热卖单品",
     imageUrl: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=300&q=80",
   },
@@ -86,6 +89,40 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_countdown",
+      componentName: "CountdownTimer",
+      materialVersion: "0.1.0",
+      props: {
+        title: "大促限时抢",
+        subtitle: "距离本轮活动结束",
+        days: "00",
+        hours: "08",
+        minutes: "30",
+        seconds: "00",
+        backgroundColor: "#dc2626",
+        textColor: "#ffffff",
+        numberColor: "#dc2626",
+      },
+    },
+    {
+      id: "node_nav",
+      componentName: "NavGrid",
+      materialVersion: "0.1.0",
+      props: {
+        columns: 4,
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#f8fafc",
+        textColor: "#111827",
+        radius: 8,
+        items: [
+          { id: "nav_coupon", title: "领券", subtitle: "新人礼" },
+          { id: "nav_flash", title: "秒杀", subtitle: "限时抢" },
+          { id: "nav_new", title: "上新", subtitle: "新品" },
+          { id: "nav_rank", title: "榜单", subtitle: "热卖" },
+        ],
+      },
+    },
+    {
       id: "node_coupon",
       componentName: "CouponSection",
       materialVersion: "0.1.0",
@@ -97,6 +134,24 @@ const sampleSchema = createLowcodePageSchema({
       },
       events: {
         onReceive: { actionId: "receive_coupon" },
+      },
+    },
+    {
+      id: "node_flash_sale",
+      componentName: "FlashSaleList",
+      materialVersion: "0.1.0",
+      props: {
+        title: "限时秒杀",
+        subtitle: "爆品限量抢购",
+        badgeText: "秒杀中",
+        backgroundColor: "#ffffff",
+        items: [],
+      },
+      dataBinding: {
+        items: "products",
+      },
+      events: {
+        onProductClick: { actionId: "track_flash_product" },
       },
     },
     {
@@ -197,6 +252,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "coupon.receive",
       params: {
         couponId: "new-user-coupon",
+      },
+    },
+    {
+      id: "track_flash_product",
+      type: "tracking.click",
+      params: {
+        eventName: "flash_sale_product_click",
       },
     },
   ],

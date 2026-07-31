@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver，并打通 action 安全白名单到编辑器配置和 React H5 runtime。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环，并扩展倒计时、导航宫格和秒杀商品组高阶活动物料。
 
 ## 当前维护范围
 
@@ -28,13 +28,13 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Changesets 基础配置。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
-- H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块和富文本。
+- H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块、倒计时、导航宫格、秒杀商品组和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
 - Page Schema v1 基础类型、标准化、递归校验和 manifest 校验。
 - Editor headless command：模式、视口、选择、插入、更新、复制、移动、删除、undo/redo。
 - Vue H5 renderer 初始实现。
-- Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块、富文本。
+- Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块、倒计时、导航宫格、秒杀商品组、富文本。
 - Vue3 编辑器 playground：物料添加、拖到画布、节点选择、属性编辑、JSON 查看/应用、本地保存、撤销/重做和 H5 预览。
 - Vue3 编辑器交互增强：画布节点点击选中、高亮、根节点拖拽排序、页面状态/环境配置和数据源面板。
 - Vue3 编辑器实操增强：容器物料、嵌套结构展示、向容器添加子物料、素材/商品快捷选择和 mock 数据源预览绑定。
@@ -47,6 +47,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 基础单元测试：根目录提供 `pnpm test`，覆盖 schema、core 和 adapters 公开 API 基础回归。
 - Data source resolver：`@meumall/lowcode-adapters` 提供通用数据源解析，编辑器预览和 React H5 runtime 可按 schema.dataSources 生成 renderer data，并展示逐数据源诊断状态。
 - Safe action executor：`@meumall/lowcode-adapters` 提供安全 action registry/executor，编辑器可维护 actions 并绑定物料事件，Vue 预览和 React H5 runtime 可执行白名单动作。
+- 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FlashSaleList`，大促模板和 React H5 runtime 示例已使用新增物料。
 
 ## 已知缺口
 
@@ -58,6 +59,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前发布链路仍是 localStorage mock，尚未对接真实 Java 配置平台。
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
+- 高阶活动物料仍使用静态倒计时和 mock 商品数据，尚未对接真实活动、库存、价格和楼层锚点。
 - 尚未接入 `hybird-meumall`。
 - 尚未配置 npm registry/token。
 - 组件级 DOM 测试、浏览器交互测试和 visual regression 尚未建立。
@@ -81,7 +83,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `32cc2aa` | 新增编辑器页面模板库。 |
 | 2026-07-31 | `bc68738` | 建立 schema/core/adapters 基础单元测试体系。 |
 | 2026-07-31 | `4e5bf5b` | 打通 data source resolver 到编辑器预览和 React H5 runtime。 |
-| 2026-07-31 | 待提交 | 打通 action 安全白名单到编辑器配置和 React H5 runtime。 |
+| 2026-07-31 | `843a6af` | 打通 action 安全白名单到编辑器配置和 React H5 runtime。 |
+| 2026-07-31 | 待提交 | 扩展倒计时、导航宫格和秒杀商品组高阶活动物料。 |
 
 ## 默认验证命令
 

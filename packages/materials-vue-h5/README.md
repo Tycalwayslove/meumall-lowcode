@@ -12,4 +12,7 @@ Current materials:
 - `ProductList`
 - `CouponSection`
 - `SpacerBlock`
+- `CountdownTimer`
+- `NavGrid`
+- `FlashSaleList`
 - `RichTextBlock`

@@ -16,6 +16,10 @@ function number(value: unknown, fallback: number): number {
   return typeof value === "number" ? value : fallback;
 }
 
+function list(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
+}
+
 export function ActivityHero({ props, children }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
   return (
@@ -226,6 +230,132 @@ export function SpacerBlock({ props }: MaterialProps) {
   );
 }
 
+export function CountdownTimer({ props }: MaterialProps) {
+  const boxes = [
+    { label: "天", value: text(props.days, "00") },
+    { label: "时", value: text(props.hours, "12") },
+    { label: "分", value: text(props.minutes, "30") },
+    { label: "秒", value: text(props.seconds, "00") },
+  ];
+  return (
+    <section
+      style={{
+        padding: "12px 16px",
+        color: text(props.textColor, "#ffffff"),
+        background: text(props.backgroundColor, "#dc2626"),
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ display: "block", fontSize: 15 }}>{text(props.title, "限时秒杀")}</strong>
+          <span style={{ display: "block", marginTop: 3, opacity: 0.86, fontSize: 12 }}>{text(props.subtitle, "距离活动结束")}</span>
+        </div>
+        <div style={{ display: "flex", gap: 5, flex: "0 0 auto" }}>
+          {boxes.map((box) => (
+            <span key={box.label} style={{ display: "grid", gap: 2, minWidth: 34, textAlign: "center" }}>
+              <strong
+                style={{
+                  padding: "5px 6px",
+                  borderRadius: 6,
+                  color: text(props.numberColor, "#dc2626"),
+                  background: "#ffffff",
+                  fontSize: 14,
+                }}
+              >
+                {box.value}
+              </strong>
+              <small style={{ color: "inherit", opacity: 0.78 }}>{box.label}</small>
+            </span>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function NavGrid({ props }: MaterialProps) {
+  const items = list(props.items);
+  const columns = Math.max(2, Math.min(5, number(props.columns, 4)));
+  const onNavigate = props.onNavigate;
+  return (
+    <section style={{ padding: "12px 14px", background: text(props.backgroundColor, "#ffffff") }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: 10 }}>
+        {items.map((item, index) => {
+          const linkUrl = text(item.linkUrl);
+          return (
+            <button
+              key={String(item.id ?? index)}
+              type="button"
+              onClick={() => {
+                if (typeof onNavigate === "function") onNavigate(item);
+                if (linkUrl) window.location.href = linkUrl;
+              }}
+              style={{
+                display: "grid",
+                gap: 5,
+                placeItems: "center",
+                minHeight: 68,
+                border: 0,
+                borderRadius: number(props.radius, 8),
+                color: text(props.textColor, "#111827"),
+                background: text(item.backgroundColor, text(props.itemBackgroundColor, "#f8fafc")),
+                textAlign: "center",
+              }}
+            >
+              <strong style={{ fontSize: 14 }}>{String(item.title ?? `导航 ${index + 1}`)}</strong>
+              {item.subtitle ? <span style={{ color: "#64748b", fontSize: 11 }}>{String(item.subtitle)}</span> : null}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function FlashSaleList({ props }: MaterialProps) {
+  const items = list(props.items);
+  const onProductClick = props.onProductClick;
+  return (
+    <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#ffffff") }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+        <div>
+          <strong style={{ display: "block", color: "#111827", fontSize: 17 }}>{text(props.title, "限时秒杀")}</strong>
+          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>{text(props.subtitle, "爆品限量抢购")}</span>
+        </div>
+        <span style={{ alignSelf: "start", color: "#dc2626", fontSize: 12, fontWeight: 700 }}>{text(props.badgeText, "秒杀中")}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+        {items.map((item, index) => (
+          <button
+            key={String(item.id ?? index)}
+            type="button"
+            onClick={() => {
+              if (typeof onProductClick === "function") onProductClick(item);
+            }}
+            style={{
+              overflow: "hidden",
+              border: "1px solid #eef0f3",
+              borderRadius: 10,
+              padding: 0,
+              background: "#ffffff",
+              textAlign: "left",
+            }}
+          >
+            {typeof item.imageUrl === "string" ? (
+              <img src={item.imageUrl} alt="" style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
+            ) : null}
+            <span style={{ display: "grid", gap: 5, padding: 9 }}>
+              <strong style={{ color: "#111827", fontSize: 13, lineHeight: 1.35 }}>{String(item.title ?? "秒杀商品")}</strong>
+              <span style={{ color: "#dc2626", fontWeight: 800 }}>{String(item.priceText ?? "")}</span>
+              <span style={{ color: "#94a3b8", fontSize: 11, textDecoration: "line-through" }}>{String(item.originPriceText ?? "")}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] = [
   {
     component: SectionContainer,
@@ -403,6 +533,96 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         height: { label: "高度", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
       },
+    }),
+  },
+  {
+    component: CountdownTimer,
+    manifest: createMaterialManifest({
+      componentName: "CountdownTimer",
+      materialVersion: "0.1.0",
+      title: "倒计时",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "限时秒杀",
+        subtitle: "距离活动结束",
+        days: "00",
+        hours: "12",
+        minutes: "30",
+        seconds: "00",
+        backgroundColor: "#dc2626",
+        textColor: "#ffffff",
+        numberColor: "#dc2626",
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "限时秒杀" },
+        subtitle: { label: "说明", type: "string", setter: "input", defaultValue: "距离活动结束" },
+        days: { label: "天", type: "string", setter: "input", defaultValue: "00" },
+        hours: { label: "时", type: "string", setter: "input", defaultValue: "12" },
+        minutes: { label: "分", type: "string", setter: "input", defaultValue: "30" },
+        seconds: { label: "秒", type: "string", setter: "input", defaultValue: "00" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#dc2626" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        numberColor: { label: "数字色", type: "string", setter: "color", defaultValue: "#dc2626" },
+      },
+    }),
+  },
+  {
+    component: NavGrid,
+    manifest: createMaterialManifest({
+      componentName: "NavGrid",
+      materialVersion: "0.1.0",
+      title: "导航宫格",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        columns: 4,
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#f8fafc",
+        textColor: "#111827",
+        radius: 8,
+        items: [
+          { id: "nav_coupon", title: "领券", subtitle: "新人礼" },
+          { id: "nav_flash", title: "秒杀", subtitle: "限时抢" },
+          { id: "nav_new", title: "上新", subtitle: "新品" },
+          { id: "nav_rank", title: "榜单", subtitle: "热卖" },
+        ],
+      },
+      propsSchema: {
+        columns: { label: "列数", type: "number", setter: "number", defaultValue: 4 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        itemBackgroundColor: { label: "项背景色", type: "string", setter: "color", defaultValue: "#f8fafc" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        items: { label: "导航项", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onNavigate", title: "点击导航" }],
+    }),
+  },
+  {
+    component: FlashSaleList,
+    manifest: createMaterialManifest({
+      componentName: "FlashSaleList",
+      materialVersion: "0.1.0",
+      title: "秒杀商品组",
+      category: "commerce",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "限时秒杀",
+        subtitle: "爆品限量抢购",
+        badgeText: "秒杀中",
+        backgroundColor: "#ffffff",
+        items: [],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "限时秒杀" },
+        subtitle: { label: "说明", type: "string", setter: "input", defaultValue: "爆品限量抢购" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "秒杀中" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+      },
+      events: [{ name: "onProductClick", title: "点击秒杀商品" }],
     }),
   },
   {
