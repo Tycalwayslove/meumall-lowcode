@@ -1,3 +1,4 @@
+import type { LowcodeConfigPlatformClient } from "@meumall/lowcode-adapters";
 import {
   validateLowcodePageSchema,
   type LowcodePageSchema,
@@ -141,3 +142,27 @@ export function getPublished(pageId: string): LowcodePageSchema | undefined {
   const releaseId = readIndex(PUBLISHED_INDEX_KEY)[pageId];
   return releaseId ? getRelease(releaseId)?.schema : undefined;
 }
+
+export const localConfigPlatformClient = {
+  saveDraft(schema) {
+    return saveDraft(schema);
+  },
+  createPreview(schema) {
+    return createPreview(schema);
+  },
+  publishPage(schema) {
+    return publishPage(schema);
+  },
+  listReleases(pageId) {
+    return listReleases(pageId);
+  },
+  getRelease(releaseId) {
+    return getRelease(releaseId);
+  },
+  getDraft(pageId) {
+    return getDraft(pageId);
+  },
+  getPublished(pageId) {
+    return getPublished(pageId);
+  },
+} satisfies LowcodeConfigPlatformClient;

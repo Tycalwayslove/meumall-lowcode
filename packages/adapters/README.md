@@ -10,6 +10,7 @@ Utilities:
 - `resolveLowcodeDataSources`
 - `createSafeActionRegistry`
 - `createSafeActionExecutor`
+- `createHttpConfigPlatformClient`
 - `encodePageSchemaToUrlParam`
 - `decodePageSchemaFromUrlParam`
 
@@ -36,3 +37,19 @@ Recommended action types for the first integration stage:
 - `noop`: explicit no-op for drafts and demos.
 
 Handlers receive the action config plus safe context containing the action ref, runtime data, and page schema. Unknown action ids or unknown action types throw controlled errors, which the host can capture through `onError`.
+
+## Config Platform Client
+
+`LowcodeConfigPlatformClient` describes the editor-facing draft, preview, publish, release-list, draft-query, and published-query API.
+
+`createHttpConfigPlatformClient` is a reference HTTP implementation for the Java config platform contract:
+
+- `POST /api/lowcode/pages/drafts`
+- `POST /api/lowcode/pages/previews`
+- `POST /api/lowcode/pages/releases`
+- `GET /api/lowcode/pages/releases`
+- `GET /api/lowcode/pages/releases/{releaseId}`
+- `GET /api/lowcode/pages/{pageId}/draft`
+- `GET /api/lowcode/pages/{pageId}/published`
+
+The Vue editor playground currently uses a localStorage implementation of the same client interface, so real Java integration should replace only the client instance rather than the editor workflow.

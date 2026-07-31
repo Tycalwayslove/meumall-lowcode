@@ -1,5 +1,9 @@
 # Contracts
 
+- `page-schema-v1.md`
+- `editor-interaction-model-v1.md`
+- `java-config-platform-api-v1.md`
+
 这里记录低代码平台的跨包和跨系统契约。
 
 初始阶段已知契约候选：

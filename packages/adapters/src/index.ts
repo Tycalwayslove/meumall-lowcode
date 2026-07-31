@@ -6,10 +6,12 @@ import {
   type LowcodeActionRef,
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
+  type LowcodePageStatus,
 } from "@meumall/lowcode-schema";
 
 export type DataSourceHandler = (config: LowcodeDataSourceConfig) => Promise<JsonValue> | JsonValue;
 export type ActionHandler = (config: LowcodeActionConfig, context?: SafeActionExecutionContext) => Promise<void> | void;
+export type MaybePromise<T> = T | Promise<T>;
 
 export interface DataSourceRegistry {
   register(type: string, handler: DataSourceHandler): void;
@@ -59,6 +61,54 @@ export interface SafeActionExecutor {
 
 export interface CreateSafeActionExecutorOptions {
   onError?: (error: Error, ref: LowcodeActionRef, context: RuntimeActionContextLike) => void;
+}
+
+export type ConfigPlatformReleaseKind = "draft" | "preview" | "published";
+
+export interface ConfigPlatformPageRelease {
+  id: string;
+  kind: ConfigPlatformReleaseKind;
+  pageId: string;
+  pageVersion: string;
+  title: string;
+  createdAt: string;
+  schema: LowcodePageSchema;
+}
+
+export interface LowcodeConfigPlatformClient {
+  saveDraft(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
+  createPreview(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
+  publishPage(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
+  listReleases(pageId?: string): MaybePromise<ConfigPlatformPageRelease[]>;
+  getRelease(releaseId: string): MaybePromise<ConfigPlatformPageRelease | undefined>;
+  getDraft(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
+  getPublished(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
+}
+
+export interface ConfigPlatformRequestBody {
+  schema?: LowcodePageSchema;
+  pageStatus?: LowcodePageStatus;
+}
+
+export interface PlatformFetchResponse {
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+}
+
+export type PlatformFetch = (
+  input: string,
+  init?: {
+    method?: string;
+    headers?: Record<string, string>;
+    body?: string;
+  },
+) => Promise<PlatformFetchResponse>;
+
+export interface CreateHttpConfigPlatformClientOptions {
+  baseUrl: string;
+  fetcher?: PlatformFetch;
+  headers?: Record<string, string>;
 }
 
 export function createDataSourceRegistry(initialHandlers: Record<string, DataSourceHandler> = {}): DataSourceRegistry {
@@ -171,6 +221,94 @@ export function createSafeActionExecutor(
         options.onError?.(normalizedError, ref, context);
         throw normalizedError;
       }
+    },
+  };
+}
+
+function trimTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function encodePath(value: string): string {
+  return encodeURIComponent(value);
+}
+
+function assertPageRelease(value: unknown): ConfigPlatformPageRelease {
+  if (!value || typeof value !== "object") {
+    throw new Error("Config platform release response must be an object");
+  }
+  const release = value as ConfigPlatformPageRelease;
+  if (!release.id || !release.pageId || !release.schema) {
+    throw new Error("Config platform release response is missing required fields");
+  }
+  return release;
+}
+
+function assertPageSchemaOrUndefined(value: unknown): LowcodePageSchema | undefined {
+  if (value == null) return undefined;
+  const validation = validateLowcodePageSchema(value);
+  if (!validation.valid) {
+    throw new Error(`Config platform schema response is invalid: ${validation.errors.join("; ")}`);
+  }
+  return value as LowcodePageSchema;
+}
+
+function getDefaultFetch(): PlatformFetch {
+  const candidate = globalThis as typeof globalThis & { fetch?: PlatformFetch };
+  if (!candidate.fetch) {
+    throw new Error("Config platform HTTP client requires a fetch implementation");
+  }
+  return candidate.fetch;
+}
+
+export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatformClientOptions): LowcodeConfigPlatformClient {
+  const baseUrl = trimTrailingSlash(options.baseUrl);
+  const fetcher = options.fetcher ?? getDefaultFetch();
+  const headers = {
+    "content-type": "application/json",
+    ...(options.headers ?? {}),
+  };
+
+  async function request(path: string, init: { method?: string; body?: ConfigPlatformRequestBody } = {}): Promise<unknown> {
+    const response = await fetcher(`${baseUrl}${path}`, {
+      method: init.method ?? "GET",
+      headers,
+      body: init.body ? JSON.stringify(init.body) : undefined,
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(`Config platform request failed: ${response.status}`);
+    }
+    return payload;
+  }
+
+  return {
+    async saveDraft(schema) {
+      return assertPageRelease(await request("/api/lowcode/pages/drafts", { method: "POST", body: { schema, pageStatus: "draft" } }));
+    },
+    async createPreview(schema) {
+      return assertPageRelease(await request("/api/lowcode/pages/previews", { method: "POST", body: { schema, pageStatus: "preview" } }));
+    },
+    async publishPage(schema) {
+      return assertPageRelease(await request("/api/lowcode/pages/releases", { method: "POST", body: { schema, pageStatus: "published" } }));
+    },
+    async listReleases(pageId) {
+      const suffix = pageId ? `?pageId=${encodePath(pageId)}` : "";
+      const payload = await request(`/api/lowcode/pages/releases${suffix}`);
+      if (!Array.isArray(payload)) {
+        throw new Error("Config platform release list response must be an array");
+      }
+      return payload.map(assertPageRelease);
+    },
+    async getRelease(releaseId) {
+      const payload = await request(`/api/lowcode/pages/releases/${encodePath(releaseId)}`);
+      return payload == null ? undefined : assertPageRelease(payload);
+    },
+    async getDraft(pageId) {
+      return assertPageSchemaOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/draft`));
+    },
+    async getPublished(pageId) {
+      return assertPageSchemaOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/published`));
     },
   };
 }

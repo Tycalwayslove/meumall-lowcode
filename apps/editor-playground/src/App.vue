@@ -62,13 +62,7 @@ import {
 } from "@meumall/lowcode-schema";
 import { cloneTemplateSchema, pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
-  createPreview,
-  getDraft,
-  getPublished,
-  getRelease,
-  listReleases,
-  publishPage,
-  saveDraft,
+  localConfigPlatformClient,
   type LocalPageRelease,
 } from "./mockPlatform";
 
@@ -149,7 +143,8 @@ const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
 const releaseMessage = ref("");
-const releases = ref<LocalPageRelease[]>(listReleases(editorState.value.schema.pageId));
+const configPlatformClient = localConfigPlatformClient;
+const releases = ref<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 const previewData = ref<JsonObject>({});
 const runtimePreviewData = ref<JsonObject>({});
@@ -815,14 +810,14 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
 }
 
 function refreshReleases(): void {
-  releases.value = listReleases(editorState.value.schema.pageId);
+  releases.value = configPlatformClient.listReleases(editorState.value.schema.pageId);
 }
 
 function resolveRuntimeSchema(): LowcodePageSchema | undefined {
   const releaseId = runtimeQuery.get("releaseId");
-  if (releaseId) return getRelease(releaseId)?.schema;
+  if (releaseId) return configPlatformClient.getRelease(releaseId)?.schema;
   const pageId = runtimeQuery.get("pageId") || editorState.value.schema.pageId;
-  return getPublished(pageId) ?? getDraft(pageId);
+  return configPlatformClient.getPublished(pageId) ?? configPlatformClient.getDraft(pageId);
 }
 
 function createRuntimeUrl(params: { pageId?: string; releaseId?: string }): string {
@@ -855,7 +850,7 @@ function setReleaseMessage(release: LocalPageRelease, action: string): void {
 }
 
 function saveSchema(): void {
-  const release = saveDraft(editorState.value.schema);
+  const release = configPlatformClient.saveDraft(editorState.value.schema);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
@@ -868,14 +863,14 @@ function saveSchema(): void {
 }
 
 function createPreviewRelease(): void {
-  const release = createPreview(editorState.value.schema);
+  const release = configPlatformClient.createPreview(editorState.value.schema);
   refreshReleases();
   setReleaseMessage(release, "已生成预览");
   openRuntime({ releaseId: release.id });
 }
 
 function publishCurrentPage(): void {
-  const release = publishPage(editorState.value.schema);
+  const release = configPlatformClient.publishPage(editorState.value.schema);
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
   editorState.value = markSaved(createEditorState(release.schema, {
     selectedNodeId: editorState.value.selectedNodeId,
@@ -899,7 +894,7 @@ function loadRelease(release: LocalPageRelease): void {
 }
 
 function loadReleaseById(releaseId: string): void {
-  const release = getRelease(releaseId);
+  const release = configPlatformClient.getRelease(releaseId);
   if (release) loadRelease(release);
 }
 

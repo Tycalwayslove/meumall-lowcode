@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { createLowcodePageSchema } from "../../schema/dist/index.js";
 import {
   createDataSourceRegistry,
+  createHttpConfigPlatformClient,
   createSafeActionExecutor,
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
@@ -193,5 +194,60 @@ describe("@meumall/lowcode-adapters", () => {
     const invalid = encodePageSchemaToUrlParam({ schemaVersion: "1.0.0" });
 
     assert.throws(() => decodePageSchemaFromUrlParam(invalid), /Invalid lowcode page schema/);
+  });
+
+  it("calls config platform HTTP endpoints through a typed client", async () => {
+    const calls = [];
+    const schema = createLowcodePageSchema({
+      pageId: "platform_page",
+      title: "配置平台页面",
+    });
+    const release = {
+      id: "rel_001",
+      kind: "draft",
+      pageId: schema.pageId,
+      pageVersion: schema.pageVersion,
+      title: schema.title,
+      createdAt: "2026-07-31T00:00:00.000Z",
+      schema,
+    };
+    const fetcher = async (input, init = {}) => {
+      calls.push({ input, init });
+      if (input.endsWith("/draft")) {
+        return { ok: true, status: 200, json: async () => schema };
+      }
+      if (input.includes("/releases?")) {
+        return { ok: true, status: 200, json: async () => [release] };
+      }
+      return { ok: true, status: 200, json: async () => release };
+    };
+    const client = createHttpConfigPlatformClient({
+      baseUrl: "https://platform.example.com/",
+      fetcher,
+      headers: { authorization: "Bearer token" },
+    });
+
+    assert.deepEqual(await client.saveDraft(schema), release);
+    assert.deepEqual(await client.listReleases("platform_page"), [release]);
+    assert.deepEqual(await client.getDraft("platform_page"), schema);
+
+    assert.equal(calls[0].input, "https://platform.example.com/api/lowcode/pages/drafts");
+    assert.equal(calls[0].init.method, "POST");
+    assert.equal(calls[0].init.headers.authorization, "Bearer token");
+    assert.equal(JSON.parse(calls[0].init.body).pageStatus, "draft");
+    assert.equal(calls[1].input, "https://platform.example.com/api/lowcode/pages/releases?pageId=platform_page");
+    assert.equal(calls[2].input, "https://platform.example.com/api/lowcode/pages/platform_page/draft");
+  });
+
+  it("surfaces config platform HTTP errors", async () => {
+    const client = createHttpConfigPlatformClient({
+      baseUrl: "https://platform.example.com",
+      fetcher: async () => ({ ok: false, status: 500, json: async () => ({ message: "failed" }) }),
+    });
+
+    await assert.rejects(
+      () => client.publishPage(createLowcodePageSchema({ pageId: "bad", title: "错误页" })),
+      /Config platform request failed: 500/,
+    );
   });
 });
