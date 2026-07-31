@@ -36,6 +36,15 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeOutlineVisibility`
 - `pruneLowcodeOutlineCollapsedNodeIds`
 - `revealLowcodeOutlineNode`
+- `toggleLowcodeNodeSelection`
+- `pruneLowcodeNodeSelection`
+- `pickLowcodeSelectedOutlineRows`
+- `hasLowcodeSameParentSelection`
+- `createLowcodeNodeSelectionSummary`
+- `createLowcodeNodeSelectionModel`
+- `isLowcodeNodeSelected`
+- `canLowcodeDragSelectedGroup`
+- `getLowcodeSelectedGroupNodeIdsForDrag`
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
 - `LOWCODE_EDITOR_PROP_GROUP_META`
 - `getLowcodePropGroupKey`
@@ -461,6 +470,18 @@ The outline helpers keep editor structure trees reusable across the Vue3 playgro
 `revealLowcodeOutlineNode(nodeId, collapsedNodeIds, rows)` returns collapsed ids with the selected node ancestors expanded.
 
 These helpers do not select nodes, scroll canvases, rename nodes, handle drag-and-drop, or check permissions. Host shells remain responsible for UI state, DOM behavior, and user-facing interactions.
+
+## Node Selection API
+
+The node selection helpers keep outline multi-select and same-parent group-drag state reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`toggleLowcodeNodeSelection(selectedNodeIds, nodeId)` toggles one node while keeping at least the toggled node selected. `pruneLowcodeNodeSelection(selectedNodeIds, availableNodeIds, options)` removes stale selected ids and can fall back to the current active node.
+
+`pickLowcodeSelectedOutlineRows(rows, selectedNodeIds)`, `hasLowcodeSameParentSelection(rows)`, `createLowcodeNodeSelectionSummary(rows)`, and `createLowcodeNodeSelectionModel(rows, selectedNodeIds)` derive the selected outline rows, same-parent state, count, normalized selected ids, and display summary from outline rows.
+
+`isLowcodeNodeSelected(selectedNodeIds, nodeId)`, `canLowcodeDragSelectedGroup(rows, selectedNodeIds, nodeId)`, and `getLowcodeSelectedGroupNodeIdsForDrag(rows, selectedNodeIds, seedNodeId)` provide stable predicates and drag candidate ids for host shells.
+
+These helpers do not bind DOM events, handle Pointer Events, calculate drop positions, move nodes, render checkboxes, inspect permissions, write audit records, persist state, or modify Page Schema. Host shells remain responsible for Vue/React UI, actual drag/drop execution, node command execution, permission checks, collaboration locks, audit, and server saving.
 
 ## Property Group API
 

@@ -57,6 +57,7 @@ import {
   createLowcodeBlankPageSchema,
   copyNode,
   bindLowcodeNodeEvent,
+  canLowcodeDragSelectedGroup,
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
@@ -73,6 +74,7 @@ import {
   createLowcodeMaterialCatalogItem,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
+  createLowcodeNodeSelectionModel,
   createLowcodePublishBlockedMessage,
   createLowcodePageSettingsForm,
   createLowcodePageStartState,
@@ -107,8 +109,10 @@ import {
   formatLowcodeTemplateVersion,
   getLowcodePropEditorControl,
   getLowcodeNodeDisplayName,
+  getLowcodeSelectedGroupNodeIdsForDrag,
   insertNode,
   isLowcodeFavoriteMaterial,
+  isLowcodeNodeSelected,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
   isLowcodePropGroupCollapsed,
@@ -130,6 +134,7 @@ import {
   parseLowcodeMaterialPreferenceContent,
   parseLowcodeSchemaFileContent,
   pickLowcodeMaterialEntriesByComponentNames,
+  pruneLowcodeNodeSelection,
   pruneLowcodeOutlineCollapsedNodeIds,
   redo,
   revealLowcodeOutlineNode,
@@ -148,6 +153,7 @@ import {
   summarizeLowcodeReleaseList,
   summarizeLowcodePreviewLinks,
   toggleLowcodeFavoriteMaterial,
+  toggleLowcodeNodeSelection,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
@@ -650,18 +656,8 @@ const outlineVisibility = computed(() =>
 const outlineMatchedNodeIdSet = computed(() => new Set(outlineVisibility.value.matchedNodeIds));
 const visibleOutlineRows = computed(() => outlineVisibility.value.rows);
 const outlineVisibleSummary = computed(() => outlineVisibility.value.summary);
-const multiSelectedNodeIdSet = computed(() => new Set(multiSelectedNodeIds.value));
-const multiSelectedRows = computed(() => outlineRows.value.filter((row) => multiSelectedNodeIdSet.value.has(row.node.id)));
-const multiSelectSameParent = computed(() => {
-  if (multiSelectedRows.value.length < 2) return true;
-  const parentId = multiSelectedRows.value[0]?.parentId;
-  return multiSelectedRows.value.every((row) => row.parentId === parentId);
-});
-const multiSelectSummary = computed(() => {
-  const count = multiSelectedRows.value.length;
-  if (count <= 1) return "";
-  return multiSelectSameParent.value ? `已多选 ${count} 个同层节点，可成组拖拽` : `已多选 ${count} 个节点，跨层级时拖动单节点`;
-});
+const multiSelection = computed(() => createLowcodeNodeSelectionModel(outlineRows.value, multiSelectedNodeIds.value));
+const multiSelectSummary = computed(() => multiSelection.value.summary);
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
@@ -1736,22 +1732,15 @@ function consumeSuppressedClick(event: MouseEvent): boolean {
 }
 
 function isNodeMultiSelected(nodeId: string): boolean {
-  return multiSelectedNodeIdSet.value.has(nodeId);
+  return isLowcodeNodeSelected(multiSelection.value.selectedNodeIds, nodeId);
 }
 
 function canDragSelectedGroup(nodeId: string): boolean {
-  return isNodeMultiSelected(nodeId) && multiSelectedRows.value.length > 1 && multiSelectSameParent.value;
+  return canLowcodeDragSelectedGroup(outlineRows.value, multiSelectedNodeIds.value, nodeId);
 }
 
 function toggleMultiSelected(nodeId: string): void {
-  const selected = new Set(multiSelectedNodeIds.value);
-  if (selected.has(nodeId)) {
-    selected.delete(nodeId);
-  } else {
-    selected.add(nodeId);
-  }
-  if (!selected.size) selected.add(nodeId);
-  multiSelectedNodeIds.value = [...selected];
+  multiSelectedNodeIds.value = toggleLowcodeNodeSelection(multiSelectedNodeIds.value, nodeId);
   editorState.value = selectNode(editorState.value, nodeId);
 }
 
@@ -1764,11 +1753,11 @@ function selectNodeForDrag(nodeId: string): void {
 }
 
 function pruneMultiSelection(): void {
-  const available = new Set(outlineRows.value.map((row) => row.node.id));
-  const nextSelected = multiSelectedNodeIds.value.filter((nodeId) => available.has(nodeId));
-  if (!nextSelected.length && editorState.value.selectedNodeId && available.has(editorState.value.selectedNodeId)) {
-    nextSelected.push(editorState.value.selectedNodeId);
-  }
+  const nextSelected = pruneLowcodeNodeSelection(
+    multiSelectedNodeIds.value,
+    outlineRows.value.map((row) => row.node.id),
+    { activeNodeId: editorState.value.selectedNodeId },
+  );
   if (nextSelected.join("|") !== multiSelectedNodeIds.value.join("|")) {
     multiSelectedNodeIds.value = nextSelected;
   }
@@ -2045,12 +2034,7 @@ function getAdjustedMoveIndex(sourceRow: OutlineRow, targetRow: OutlineRow, plac
 }
 
 function selectedGroupNodeIdsForDrag(seedNodeId: string): string[] {
-  if (!isNodeMultiSelected(seedNodeId) || multiSelectedRows.value.length < 2 || !multiSelectSameParent.value) {
-    return [seedNodeId];
-  }
-  return [...multiSelectedRows.value]
-    .sort((a, b) => a.index - b.index)
-    .map((row) => row.node.id);
+  return getLowcodeSelectedGroupNodeIdsForDrag(outlineRows.value, multiSelectedNodeIds.value, seedNodeId);
 }
 
 function getGroupDropTarget(hint: CanvasDropHint): { parentId?: string; index: number; targetRow?: OutlineRow } | undefined {

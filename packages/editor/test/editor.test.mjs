@@ -10,6 +10,7 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   bindLowcodeNodeEvent,
+  canLowcodeDragSelectedGroup,
   createLowcodeActionConfig,
   createLowcodeActionFormItems,
   createLowcodeDataSourceConfig,
@@ -34,6 +35,8 @@ import {
   createLowcodeMaterialPreviewSchema,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
+  createLowcodeNodeSelectionModel,
+  createLowcodeNodeSelectionSummary,
   createLowcodeOutlineRowSearchText,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
@@ -76,11 +79,14 @@ import {
   getLowcodeEditorDraftStatusTone,
   getLowcodeNodeDisplayName,
   getLowcodePropEditorControl,
+  getLowcodeSelectedGroupNodeIdsForDrag,
   groupLowcodeEditorCommands,
   getLowcodePropGroupKey,
+  hasLowcodeSameParentSelection,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
   isLowcodeFavoriteMaterial,
+  isLowcodeNodeSelected,
   isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
@@ -102,6 +108,8 @@ import {
   parseLowcodeEditorDraftContent,
   parseLowcodeMaterialPreferenceContent,
   pickLowcodeMaterialEntriesByComponentNames,
+  pickLowcodeSelectedOutlineRows,
+  pruneLowcodeNodeSelection,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
   removeLowcodeAction,
@@ -117,6 +125,7 @@ import {
   summarizeLowcodeReleaseList,
   summarizeLowcodePublishChecks,
   toggleLowcodeFavoriteMaterial,
+  toggleLowcodeNodeSelection,
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
@@ -886,6 +895,44 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(pruneLowcodeOutlineCollapsedNodeIds(["container_1", "banner_1", "missing"], rows), ["container_1"]);
     assert.deepEqual(revealLowcodeOutlineNode("products_1", ["container_1"], rows), []);
     assert.deepEqual(revealLowcodeOutlineNode("button_1", ["container_1"], rows), ["container_1"]);
+  });
+
+  it("creates reusable node selection models", () => {
+    const rows = [
+      { node: { id: "container_1" }, parentId: undefined, index: 0 },
+      { node: { id: "banner_1" }, parentId: "container_1", index: 0 },
+      { node: { id: "products_1" }, parentId: "container_1", index: 1 },
+      { node: { id: "button_1" }, parentId: undefined, index: 1 },
+    ];
+
+    assert.deepEqual(toggleLowcodeNodeSelection(["banner_1"], "products_1"), ["banner_1", "products_1"]);
+    assert.deepEqual(toggleLowcodeNodeSelection(["banner_1"], "banner_1"), ["banner_1"]);
+    assert.deepEqual(pruneLowcodeNodeSelection(["missing", "products_1"], rows.map((row) => row.node.id)), ["products_1"]);
+    assert.deepEqual(pruneLowcodeNodeSelection(["missing"], rows.map((row) => row.node.id), {
+      activeNodeId: "button_1",
+    }), ["button_1"]);
+    assert.deepEqual(pickLowcodeSelectedOutlineRows(rows, ["products_1", "banner_1"]).map((row) => row.node.id), [
+      "banner_1",
+      "products_1",
+    ]);
+    assert.equal(hasLowcodeSameParentSelection(rows.slice(1, 3)), true);
+    assert.equal(hasLowcodeSameParentSelection([rows[1], rows[3]]), false);
+    assert.equal(createLowcodeNodeSelectionSummary(rows.slice(1, 3)), "已多选 2 个同层节点，可成组拖拽");
+    assert.equal(createLowcodeNodeSelectionSummary([rows[1], rows[3]]), "已多选 2 个节点，跨层级时拖动单节点");
+
+    const model = createLowcodeNodeSelectionModel(rows, ["products_1", "banner_1"]);
+    assert.deepEqual(model.selectedNodeIds, ["banner_1", "products_1"]);
+    assert.equal(model.count, 2);
+    assert.equal(model.sameParent, true);
+    assert.equal(model.summary, "已多选 2 个同层节点，可成组拖拽");
+    assert.equal(isLowcodeNodeSelected(model.selectedNodeIds, "banner_1"), true);
+    assert.equal(canLowcodeDragSelectedGroup(rows, model.selectedNodeIds, "banner_1"), true);
+    assert.equal(canLowcodeDragSelectedGroup(rows, ["banner_1", "button_1"], "banner_1"), false);
+    assert.deepEqual(getLowcodeSelectedGroupNodeIdsForDrag(rows, ["products_1", "banner_1"], "products_1"), [
+      "banner_1",
+      "products_1",
+    ]);
+    assert.deepEqual(getLowcodeSelectedGroupNodeIdsForDrag(rows, ["banner_1", "button_1"], "button_1"), ["button_1"]);
   });
 
   it("creates reusable property groups and collapsed state", () => {

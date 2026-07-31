@@ -137,6 +137,20 @@ interface LowcodeEditorState {
 
 结构树 API 从 Page Schema nodes 和可选物料 manifest 派生结构树行模型、搜索文本、搜索命中、折叠可见性、选中路径和可见数量摘要。关键词匹配覆盖节点 id、componentName、`meta.name`、物料标题和物料分类；折叠祖先会隐藏子节点，但当前选中路径保持可见。API 不执行节点选择、不处理 DOM 滚动、不处理拖拽、多选、重命名或权限。
 
+节点选择模型 API：
+
+- `toggleLowcodeNodeSelection`
+- `pruneLowcodeNodeSelection`
+- `pickLowcodeSelectedOutlineRows`
+- `hasLowcodeSameParentSelection`
+- `createLowcodeNodeSelectionSummary`
+- `createLowcodeNodeSelectionModel`
+- `isLowcodeNodeSelected`
+- `canLowcodeDragSelectedGroup`
+- `getLowcodeSelectedGroupNodeIdsForDrag`
+
+节点选择模型 API 从结构树 rows 和宿主保存的 selected node ids 派生多选切换结果、无效选中裁剪结果、选中行、同父级状态、多选摘要、节点选中状态、同父级成组拖拽可用状态和按结构树顺序排列的拖拽节点组。API 不绑定 DOM 事件、不处理 Pointer Events、不计算投放位置、不执行节点移动、不渲染勾选控件、不修改 Page Schema、不处理权限、协作锁定、审计或服务端保存。宿主 shell 负责 Vue/React UI、拖拽执行、节点移动命令、权限判断和用户反馈。
+
 属性分组 API：
 
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
@@ -284,6 +298,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 节点操作模型 API 只派生菜单项、快捷键动作和反馈文案，不执行 `insertNode`、`removeNode`、`copyNode`、`pasteNode`、`duplicateNode`、`moveNodeById`、`undo` 或 `redo`。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
+- 节点选择模型 API 只派生多选状态、同父级判断、多选摘要和成组拖拽候选，不执行 DOM 拖拽或节点移动，不修改 Page Schema、Material Manifest 或 renderer 行为。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。
 - 页面设置模型 API 只派生 Page Schema 页面设置表单模型和页面字段写回 helper，不依赖 DOM、管理台组件库、Java API、权限、审批、协作锁定或服务端保存。

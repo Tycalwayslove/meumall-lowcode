@@ -442,6 +442,20 @@ export interface LowcodeEditorOutlineVisibility<T extends LowcodeEditorOutlineRo
   summary: string;
 }
 
+export interface LowcodeEditorNodeSelectionModel<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId"> = LowcodeEditorOutlineRow,
+> {
+  selectedNodeIds: string[];
+  rows: T[];
+  count: number;
+  sameParent: boolean;
+  summary: string;
+}
+
+export interface PruneLowcodeNodeSelectionOptions {
+  activeNodeId?: string;
+}
+
 export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 
 export interface LowcodeEditorPropGroupMeta {
@@ -2380,6 +2394,106 @@ export function revealLowcodeOutlineNode(
   const collapsed = new Set(collapsedNodeIds);
   row.ancestorIds.forEach((ancestorId) => collapsed.delete(ancestorId));
   return [...collapsed];
+}
+
+export function toggleLowcodeNodeSelection(
+  selectedNodeIds: readonly string[],
+  nodeId: string,
+): string[] {
+  const selected = new Set(selectedNodeIds);
+  if (selected.has(nodeId)) {
+    selected.delete(nodeId);
+  } else {
+    selected.add(nodeId);
+  }
+  if (!selected.size) selected.add(nodeId);
+  return [...selected];
+}
+
+export function pruneLowcodeNodeSelection(
+  selectedNodeIds: readonly string[],
+  availableNodeIds: Iterable<string>,
+  options: PruneLowcodeNodeSelectionOptions = {},
+): string[] {
+  const available = new Set(availableNodeIds);
+  const nextSelected = selectedNodeIds.filter((nodeId) => available.has(nodeId));
+  if (!nextSelected.length && options.activeNodeId && available.has(options.activeNodeId)) {
+    nextSelected.push(options.activeNodeId);
+  }
+  return nextSelected;
+}
+
+export function pickLowcodeSelectedOutlineRows<T extends Pick<LowcodeEditorOutlineRow, "node">>(
+  rows: readonly T[],
+  selectedNodeIds: readonly string[],
+): T[] {
+  const selected = new Set(selectedNodeIds);
+  return rows.filter((row) => selected.has(row.node.id));
+}
+
+export function hasLowcodeSameParentSelection<T extends Pick<LowcodeEditorOutlineRow, "parentId">>(
+  rows: readonly T[],
+): boolean {
+  if (rows.length < 2) return true;
+  const parentId = rows[0]?.parentId;
+  return rows.every((row) => row.parentId === parentId);
+}
+
+export function createLowcodeNodeSelectionSummary<T extends Pick<LowcodeEditorOutlineRow, "parentId">>(
+  rows: readonly T[],
+): string {
+  const count = rows.length;
+  if (count <= 1) return "";
+  return hasLowcodeSameParentSelection(rows)
+    ? `已多选 ${count} 个同层节点，可成组拖拽`
+    : `已多选 ${count} 个节点，跨层级时拖动单节点`;
+}
+
+export function createLowcodeNodeSelectionModel<T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId">>(
+  rows: readonly T[],
+  selectedNodeIds: readonly string[],
+): LowcodeEditorNodeSelectionModel<T> {
+  const selectedRows = pickLowcodeSelectedOutlineRows(rows, selectedNodeIds);
+  const sameParent = hasLowcodeSameParentSelection(selectedRows);
+  return {
+    selectedNodeIds: selectedRows.map((row) => row.node.id),
+    rows: selectedRows,
+    count: selectedRows.length,
+    sameParent,
+    summary: createLowcodeNodeSelectionSummary(selectedRows),
+  };
+}
+
+export function isLowcodeNodeSelected(
+  selectedNodeIds: readonly string[],
+  nodeId: string,
+): boolean {
+  return selectedNodeIds.includes(nodeId);
+}
+
+export function canLowcodeDragSelectedGroup<T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId">>(
+  rows: readonly T[],
+  selectedNodeIds: readonly string[],
+  nodeId: string,
+): boolean {
+  const selection = createLowcodeNodeSelectionModel(rows, selectedNodeIds);
+  return isLowcodeNodeSelected(selection.selectedNodeIds, nodeId) && selection.count > 1 && selection.sameParent;
+}
+
+export function getLowcodeSelectedGroupNodeIdsForDrag<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  rows: readonly T[],
+  selectedNodeIds: readonly string[],
+  seedNodeId: string,
+): string[] {
+  const selection = createLowcodeNodeSelectionModel(rows, selectedNodeIds);
+  if (!isLowcodeNodeSelected(selection.selectedNodeIds, seedNodeId) || selection.count < 2 || !selection.sameParent) {
+    return [seedNodeId];
+  }
+  return [...selection.rows]
+    .sort((a, b) => a.index - b.index)
+    .map((row) => row.node.id);
 }
 
 export function getLowcodePropGroupKey(
