@@ -19,6 +19,8 @@
       "@meumall/lowcode-core": ["packages/core/src/index.ts"],
       "@meumall/lowcode-renderer-h5": ["packages/renderer-h5/src/index.tsx"],
       "@meumall/lowcode-materials-h5": ["packages/materials-h5/src/index.tsx"],
+      "@meumall/lowcode-renderer-vue-h5": ["packages/renderer-vue-h5/src/index.ts"],
+      "@meumall/lowcode-materials-vue-h5": ["packages/materials-vue-h5/src/index.ts"],
       "@meumall/lowcode-editor": ["packages/editor/src/index.ts"],
       "@meumall/lowcode-adapters": ["packages/adapters/src/index.ts"]
     }

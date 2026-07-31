@@ -12,6 +12,7 @@
 - materials 实现可配置节点。
 - Java 配置平台负责存储和发布 schema。
 - H5 通过 npm 引入 renderer/materials/schema。
+- 管理端编辑器优先使用 Vue3，便于后续迁移到 Java 管理系统或管理后台中。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定
@@ -25,4 +26,3 @@
 
 - 已阅读掘金小册并生成原创读书笔记：`/Users/mac/Documents/掘金小册/从零开发H5可视化搭建项目-原创读书笔记与MeuMall落地方案.md`
 - 已分析 `buqiyuan/vite-vue3-lowcode`，结论是可借鉴编辑器交互和 schema 思路，但本项目采用可发布 npm 包的 monorepo 架构。
-

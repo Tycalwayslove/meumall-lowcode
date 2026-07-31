@@ -25,8 +25,11 @@ packages/schema        @meumall/lowcode-schema
 packages/core          @meumall/lowcode-core
 packages/renderer-h5   @meumall/lowcode-renderer-h5
 packages/materials-h5  @meumall/lowcode-materials-h5
+packages/renderer-vue-h5   @meumall/lowcode-renderer-vue-h5
+packages/materials-vue-h5  @meumall/lowcode-materials-vue-h5
 packages/editor        @meumall/lowcode-editor
 packages/adapters      @meumall/lowcode-adapters
+apps/editor-playground Vue3 editor playground
 ```
 
 ## Architecture
@@ -48,16 +51,26 @@ Java config platform
   -> React H5 renderer used by hybird-meumall
 
 @meumall/lowcode-materials-h5
-  -> MeuMall H5 business materials
+  -> React H5 business materials
+
+@meumall/lowcode-renderer-vue-h5
+  -> Vue 3 H5 renderer used by editor preview and Vue management integration
+
+@meumall/lowcode-materials-vue-h5
+  -> Vue 3 H5 business materials
 
 @meumall/lowcode-editor
   -> editor state, canvas protocol, and future UI shell
+
+apps/editor-playground
+  -> runnable Vue3 editor playground
 ```
 
 ## Local Development
 
 ```bash
 pnpm install
+pnpm dev
 pnpm typecheck
 pnpm build
 ```

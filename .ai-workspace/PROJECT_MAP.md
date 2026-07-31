@@ -6,7 +6,10 @@
 editor -> schema
 renderer-h5 -> core -> schema
 materials-h5 -> core -> schema
+renderer-vue-h5 -> core -> schema
+materials-vue-h5 -> renderer-vue-h5 -> core -> schema
 adapters -> schema
+editor-playground -> editor + renderer-vue-h5 + materials-vue-h5
 
 Java config platform -> stores and publishes PageSchema
 hybird-meumall -> consumes renderer-h5/materials-h5/schema
@@ -39,11 +42,36 @@ npm 包：`@meumall/lowcode-materials-h5`
 
 负责 MeuMall H5 运营页面物料。物料必须声明 manifest，不得依赖 `hybird-meumall` 内部模块。
 
+### `packages/renderer-vue-h5`
+
+npm 包：`@meumall/lowcode-renderer-vue-h5`
+
+负责 Vue 3 H5 渲染。当前主要服务 Vue3 编辑器预览和未来 Vue 管理台迁移，也可作为 Vue 技术栈 H5 runtime 的基础。
+
+### `packages/materials-vue-h5`
+
+npm 包：`@meumall/lowcode-materials-vue-h5`
+
+负责 Vue 3 版本 H5 运营物料。物料 manifest 与 `schema/core` 共用，组件实现面向 Vue runtime。
+
 ### `packages/editor`
 
 npm 包：`@meumall/lowcode-editor`
 
 负责编辑器基础状态、画布协议、节点选择、增删移动、schema import/export。后续 UI shell 可以在此包或单独 app 中扩展。
+
+### `apps/editor-playground`
+
+Vue3 编辑器 playground。负责演示和验证：
+
+- 物料添加。
+- 画布 H5 预览。
+- 节点选择。
+- 属性编辑。
+- JSON 查看和应用。
+- 本地保存。
+
+该 app 可以作为后续迁入 Java 管理系统的参考实现，但不作为业务管理后台本体。
 
 ### `packages/adapters`
 
@@ -75,6 +103,6 @@ H5 消费方。通过 npm 引入 schema、renderer、materials 和 adapters，�
 - `materials-*` 可以依赖 `core` 和 `schema`，不得依赖业务项目。
 - `editor` 可以依赖 `core` 和 `schema`，不得依赖 renderer 的私有实现。
 - `adapters` 可以依赖 `schema`，宿主实现通过注册注入。
+- `apps/*` 可以组合各包做集成验证，但不得让包反向依赖 app。
 
 违反依赖方向必须先写决策记录。
-

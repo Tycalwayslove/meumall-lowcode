@@ -6,6 +6,8 @@
     { "path": "./packages/adapters" },
     { "path": "./packages/editor" },
     { "path": "./packages/renderer-h5" },
-    { "path": "./packages/materials-h5" }
+    { "path": "./packages/materials-h5" },
+    { "path": "./packages/renderer-vue-h5" },
+    { "path": "./packages/materials-vue-h5" }
   ]
 }

@@ -1,0 +1,26 @@
+{
+  "name": "@meumall/lowcode-editor-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "@lucide/vue": "1.28.0",
+    "@meumall/lowcode-core": "workspace:*",
+    "@meumall/lowcode-editor": "workspace:*",
+    "@meumall/lowcode-materials-vue-h5": "workspace:*",
+    "@meumall/lowcode-renderer-vue-h5": "workspace:*",
+    "@meumall/lowcode-schema": "workspace:*",
+    "vue": "3.5.40"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.8",
+    "vite": "8.2.0",
+    "vue-tsc": "3.3.9"
+  }
+}

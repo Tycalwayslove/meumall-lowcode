@@ -27,7 +27,7 @@
 
 ## 目标边界
 
-- 当前仓库统一维护低代码 schema、core、H5 renderer、H5 物料、编辑器基础能力和发布文档。
+- 当前仓库统一维护低代码 schema、core、H5 renderer、H5 物料、编辑器基础能力、Vue3 编辑器 playground 和发布文档。
 - 当前仓库不实现 Java 配置平台、Java 后端接口、iOS/App 容器或小程序发布后台。
 - Java 配置平台只作为外部系统，通过 schema/API 契约对接。
 - `hybird-meumall` 只作为 H5 消费方，不把低代码平台源码散落回 H5 项目。
@@ -40,6 +40,7 @@
 - renderer 不允许依赖 editor。
 - materials 可以依赖 schema/core，但不得反向依赖业务项目。
 - editor 可以依赖 schema/core，但不得依赖 MeuMall H5 项目内部代码。
+- Vue3 编辑器 playground 只作为集成演示和管理台迁移参考，不作为独立业务后台。
 - 发布前必须运行类型检查和构建。
 
 ## 版本规则

@@ -15,6 +15,8 @@ Publish multiple npm packages from the monorepo:
 @meumall/lowcode-core
 @meumall/lowcode-renderer-h5
 @meumall/lowcode-materials-h5
+@meumall/lowcode-renderer-vue-h5
+@meumall/lowcode-materials-vue-h5
 @meumall/lowcode-editor
 @meumall/lowcode-adapters
 ```
@@ -38,6 +40,7 @@ pnpm publish-packages
 - `schema` major bumps require migration notes.
 - `renderer-h5` must support at least the latest published schema major.
 - `materials-h5` can release faster than renderer, but each material must declare its own version.
+- `renderer-vue-h5` and `materials-vue-h5` are the preferred stack for the Vue3 management editor preview.
 - Published pages must store material versions used at publish time.
 
 ## GitHub Retention

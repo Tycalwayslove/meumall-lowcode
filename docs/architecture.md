@@ -72,7 +72,7 @@ React H5 renderer:
 
 ### `@meumall/lowcode-materials-h5`
 
-MeuMall H5 business materials:
+React H5 business materials:
 
 - Activity hero
 - Image banner
@@ -84,6 +84,26 @@ MeuMall H5 business materials:
 - Rich text
 - Sticky action bar
 
+### `@meumall/lowcode-renderer-vue-h5`
+
+Vue 3 H5 renderer:
+
+- Recursive node rendering
+- Vue material lookup
+- Event binding
+- Missing material fallback
+- Editor preview runtime
+
+### `@meumall/lowcode-materials-vue-h5`
+
+Vue 3 H5 business materials:
+
+- Activity hero
+- Image banner
+- Product list
+- Coupon section
+- Rich text
+
 ### `@meumall/lowcode-editor`
 
 Editor foundation:
@@ -93,6 +113,17 @@ Editor foundation:
 - Selection state
 - Schema import/export
 - Future UI shell integration
+
+### `apps/editor-playground`
+
+Vue3 editor playground:
+
+- Material panel
+- H5 phone preview
+- Node outline
+- Property inspector
+- Schema JSON editor
+- Local draft persistence
 
 ### `@meumall/lowcode-adapters`
 
@@ -129,4 +160,3 @@ Mini-program support should reuse `schema` and `core`, then add:
 ```
 
 Not every H5 material should be cross-platform. Materials must declare supported platforms.
-

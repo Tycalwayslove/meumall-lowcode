@@ -6,8 +6,9 @@
   "license": "UNLICENSED",
   "packageManager": "pnpm@9.12.3",
   "scripts": {
-    "build": "tsc -b",
-    "typecheck": "tsc -b",
+    "dev": "pnpm --filter @meumall/lowcode-editor-playground dev",
+    "build": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground build",
+    "typecheck": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground typecheck",
     "lint": "pnpm -r --if-present lint",
     "clean": "pnpm -r --if-present clean",
     "changeset": "changeset",
@@ -16,8 +17,13 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9",
+    "@lucide/vue": "1.28.0",
     "@types/react": "^18.3.11",
+    "@vitejs/plugin-vue": "6.0.8",
     "react": "^18.3.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vite": "8.2.0",
+    "vue": "3.5.40",
+    "vue-tsc": "3.3.9"
   }
 }
