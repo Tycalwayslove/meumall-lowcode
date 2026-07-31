@@ -12,6 +12,7 @@
     "build": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground build && pnpm --filter @meumall/lowcode-h5-runtime-playground build",
     "typecheck": "tsc -b && pnpm --filter @meumall/lowcode-editor-playground typecheck && pnpm --filter @meumall/lowcode-h5-runtime-playground typecheck",
     "test": "pnpm build && node --test packages/schema/test/*.test.mjs packages/core/test/*.test.mjs packages/adapters/test/*.test.mjs packages/materials-h5/test/*.test.mjs",
+    "smoke:browser": "node scripts/browser-smoke.mjs",
     "lint": "pnpm -r --if-present lint",
     "clean": "pnpm -r --if-present clean",
     "changeset": "changeset",

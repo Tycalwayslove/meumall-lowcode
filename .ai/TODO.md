@@ -15,7 +15,7 @@
 - 将编辑器 config platform client 从 localStorage mock 切换为真实 Java HTTP client。
 - 将 mock data source resolver 升级为真实 HTTP 请求预览、鉴权和缓存策略。
 - 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。
-- 扩展组件级 DOM 测试、浏览器交互 smoke check 和 visual regression。
+- 扩展组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E 场景和 visual regression。
 
 ## P2
 
