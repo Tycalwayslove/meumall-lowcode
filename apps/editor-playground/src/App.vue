@@ -8,6 +8,7 @@ import {
   Code2,
   Copy,
   Database,
+  Download,
   Eye,
   ExternalLink,
   GripVertical,
@@ -28,6 +29,7 @@ import {
   Star,
   Trash2,
   Undo2,
+  Upload,
   X,
 } from "@lucide/vue";
 import {
@@ -335,7 +337,9 @@ const jsonError = ref("");
 const draggedNodeId = ref<string>();
 const phoneFrameRef = ref<HTMLElement>();
 const commandSearchInputRef = ref<HTMLInputElement>();
+const schemaFileInputRef = ref<HTMLInputElement>();
 const releaseMessage = ref("");
+const schemaTransferMessage = ref("");
 const autoSaveStatus = ref<AutoSaveStatus>(loadedSchemaResult.restored ? "restored" : "idle");
 const lastAutoSavedAt = ref<string>();
 const configPlatformClient = localConfigPlatformClient;
@@ -1007,6 +1011,22 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     description: editorState.value.dirty ? "保存当前页面到本地 mock 配置平台。" : "当前页面已保存。",
     keywords: ["save", "草稿", "保存"],
     run: saveSchema,
+  },
+  {
+    id: "export-schema",
+    title: "导出页面 Schema",
+    group: "常用操作",
+    description: "将当前页面配置下载为 JSON 文件。",
+    keywords: ["export", "download", "schema", "json", "导出", "下载"],
+    run: exportCurrentSchema,
+  },
+  {
+    id: "import-schema",
+    title: "导入页面 Schema",
+    group: "常用操作",
+    description: "从本地 JSON 文件导入并校验页面配置。",
+    keywords: ["import", "upload", "schema", "json", "导入", "上传"],
+    run: triggerSchemaImport,
   },
   {
     id: "create-preview",
@@ -3381,21 +3401,42 @@ async function previewTemplate(template: Pick<LowcodeTemplateResource, "id">): P
 
 function applyJson(): void {
   try {
-    const parsed = JSON.parse(schemaDraft.value) as LowcodePageSchema;
+    const parsed = JSON.parse(schemaDraft.value) as unknown;
     const result = validateLowcodePageSchema(parsed);
     if (!result.valid) {
       jsonError.value = result.errors.join("；");
       return;
     }
-    editorState.value = createEditorState(parsed, {
-      selectedNodeId: parsed.nodes[0]?.id,
+    replaceCurrentSchema(parsed as LowcodePageSchema, "applyJson", {
       mode: editorState.value.mode,
-      viewport: editorState.value.viewport,
+      message: "已应用源码 JSON",
     });
     jsonError.value = "";
   } catch (error) {
     jsonError.value = error instanceof Error ? error.message : "JSON 解析失败";
   }
+}
+
+function replaceCurrentSchema(
+  schema: LowcodePageSchema,
+  action: string,
+  options: { mode?: LowcodeEditorState["mode"]; message?: string } = {},
+): void {
+  editorState.value = {
+    ...createEditorState(schema, {
+      selectedNodeId: schema.nodes[0]?.id,
+      mode: options.mode ?? "design",
+      viewport: editorState.value.viewport,
+    }),
+    dirty: true,
+    lastAction: action,
+  };
+  schemaDraft.value = JSON.stringify(schema, null, 2);
+  jsonError.value = "";
+  multiSelectedNodeIds.value = [];
+  collapsedOutlineNodeIds.value = [];
+  if (options.message) releaseMessage.value = options.message;
+  refreshReleases();
 }
 
 function commitPageSchema(schema: LowcodePageSchema, action: string): void {
@@ -3781,6 +3822,69 @@ function openReactH5Runtime(schema: LowcodePageSchema = editorState.value.schema
   window.open(createReactH5RuntimeUrl(schema), "_blank", "noopener,noreferrer");
 }
 
+function createSchemaExportFileName(schema: LowcodePageSchema): string {
+  const pageId = schema.pageId.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "page";
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return `meumall-lowcode-${pageId}-${timestamp}.json`;
+}
+
+function exportCurrentSchema(): void {
+  closeCommandPalette();
+  const schema = editorState.value.schema;
+  const content = JSON.stringify(schema, null, 2);
+  const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = createSchemaExportFileName(schema);
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+  schemaTransferMessage.value = `已导出页面 Schema：${schema.title || schema.pageId}`;
+  releaseMessage.value = schemaTransferMessage.value;
+}
+
+function triggerSchemaImport(): void {
+  closeCommandPalette();
+  schemaFileInputRef.value?.click();
+}
+
+async function onSchemaFileChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+
+  try {
+    const raw = await file.text();
+    const parsed = JSON.parse(raw) as unknown;
+    const result = validateLowcodePageSchema(parsed);
+    if (!result.valid) {
+      const message = `导入失败：${result.errors.join("；")}`;
+      schemaTransferMessage.value = "";
+      jsonError.value = message;
+      releaseMessage.value = message;
+      return;
+    }
+    if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认导入文件并替换当前页面吗？")) {
+      schemaTransferMessage.value = "已取消导入 Schema";
+      return;
+    }
+    const schema = parsed as LowcodePageSchema;
+    replaceCurrentSchema(schema, "importSchema", {
+      mode: "design",
+      message: `已导入页面 Schema：${schema.title || schema.pageId}`,
+    });
+    schemaTransferMessage.value = releaseMessage.value;
+  } catch (error) {
+    const message = `导入失败：${error instanceof Error ? error.message : "JSON 解析失败"}`;
+    schemaTransferMessage.value = "";
+    jsonError.value = message;
+    releaseMessage.value = message;
+  }
+}
+
 function openPreviewLink(item: PreviewLinkItem): void {
   window.open(item.url, "_blank", "noopener,noreferrer");
 }
@@ -4009,6 +4113,14 @@ function formatAutoSaveTime(value: string): string {
           <Save :size="17" />
           <span>{{ editorState.dirty ? "保存草稿" : "已保存" }}</span>
         </button>
+        <button title="导出当前页面 Schema" @click="exportCurrentSchema">
+          <Download :size="17" />
+          <span>导出</span>
+        </button>
+        <button title="导入页面 Schema" @click="triggerSchemaImport">
+          <Upload :size="17" />
+          <span>导入</span>
+        </button>
         <button title="生成预览版本" @click="createPreviewRelease">
           <Eye :size="17" />
           <span>预览链接</span>
@@ -4026,6 +4138,14 @@ function formatAutoSaveTime(value: string): string {
           <span>React H5</span>
         </button>
       </div>
+      <input
+        ref="schemaFileInputRef"
+        data-testid="schema-import-input"
+        class="visually-hidden"
+        type="file"
+        accept="application/json,.json"
+        @change="onSchemaFileChange"
+      />
     </header>
 
     <div
@@ -4739,6 +4859,9 @@ function formatAutoSaveTime(value: string): string {
         <textarea v-model="schemaDraft" spellcheck="false" />
         <div class="schema-actions">
           <button @click="applyJson">应用 JSON</button>
+          <button @click="exportCurrentSchema">导出 JSON</button>
+          <button @click="triggerSchemaImport">导入 JSON</button>
+          <span v-if="schemaTransferMessage" class="schema-transfer-message">{{ schemaTransferMessage }}</span>
           <span v-if="jsonError">{{ jsonError }}</span>
         </div>
       </div>

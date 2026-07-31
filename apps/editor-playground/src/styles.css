@@ -47,6 +47,16 @@ button:disabled {
   opacity: 0.45;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 button:not(:disabled):hover {
   border-color: #94a3b8;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
@@ -2055,6 +2065,7 @@ button:focus-visible {
 .schema-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   padding-top: 10px;
 }
@@ -2071,6 +2082,10 @@ button:focus-visible {
 .schema-actions span {
   color: #b91c1c;
   font-size: 12px;
+}
+
+.schema-actions .schema-transfer-message {
+  color: #047857;
 }
 
 .field {

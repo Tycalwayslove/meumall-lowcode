@@ -342,6 +342,20 @@ class CdpPage {
     if (!opened) fail(`未找到可右键元素：${selector}`);
   }
 
+  async setFileInput(selector, fileName, content, mimeType = "application/json") {
+    const expression = `(() => {
+      const input = document.querySelector(${jsString(selector)});
+      if (!input) return false;
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(new File([${jsString(content)}], ${jsString(fileName)}, { type: ${jsString(mimeType)} }));
+      input.files = dataTransfer.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`;
+    const uploaded = await this.evaluate(expression);
+    if (!uploaded) fail(`未找到文件输入：${selector}`);
+  }
+
   async pressShortcut(key, options = {}) {
     const pressed = await this.evaluate(`(() => {
       const eventOptions = {
@@ -527,6 +541,37 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('Schema')");
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('product-topic-demo'))");
   log("通过：源码模式展示已应用模板 schema");
+
+  log("检查 Schema 导入导出");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "导出");
+  await page.waitForExpression("document.body.innerText.includes('导出页面 Schema')");
+  await page.clickByText(".command-palette-item", "导出页面 Schema");
+  await page.waitForExpression("document.body.innerText.includes('已导出页面 Schema：通勤好物专题')");
+  const exportedSchemaText = await page.evaluate(`(() => {
+    const textarea = Array.from(document.querySelectorAll('textarea')).find((item) => item.value.includes('product-topic-demo'));
+    return textarea?.value ?? '';
+  })()`);
+  await page.setFileInput("[data-testid='schema-import-input']", "invalid-schema.json", "{ invalid json");
+  await page.waitForExpression("document.body.innerText.includes('导入失败')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('product-topic-demo'))");
+  const importedSchemaText = JSON.stringify({
+    ...JSON.parse(exportedSchemaText),
+    pageId: "smoke-imported-page",
+    title: "导入 Smoke 页面",
+  }, null, 2);
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "导入");
+  await page.waitForExpression("document.body.innerText.includes('导入页面 Schema')");
+  await page.clickByText(".command-palette-item", "导入页面 Schema");
+  await page.evaluate("window.confirm = () => true");
+  await page.setFileInput("[data-testid='schema-import-input']", "valid-schema.json", importedSchemaText);
+  await page.waitForExpression("document.body.innerText.includes('已导入页面 Schema：导入 Smoke 页面')");
+  await page.waitForExpression("document.body.innerText.includes('导入 Smoke 页面')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('smoke-imported-page') && item.value.includes('导入 Smoke 页面'))");
+  log("通过：Schema 可导出、非法导入不覆盖、合法导入可替换画布并继续编辑");
 
   await page.clickByText(".toolbar button", "预览");
   await page.waitForExpression("document.body.innerText.includes('H5 画布')");
