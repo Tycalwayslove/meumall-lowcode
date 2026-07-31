@@ -17,6 +17,8 @@ const timeoutMs = 30_000;
 const editorUrl = `http://${host}:${editorPort}/`;
 const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
+const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
+const h5RuntimeEmptyUrl = `${h5RuntimeUrl}?demo=empty`;
 
 const children = [];
 let chromeUserDataDir;
@@ -786,6 +788,9 @@ async function main() {
       { label: "React H5 phone frame 已挂载", expression: "document.querySelector('.phone-frame')" },
       { label: "React H5 页面容器已渲染", expression: "document.querySelector('[data-lowcode-page]')" },
       { label: "React H5 标识存在", expression: "document.body.innerText.includes('React H5')" },
+      { label: "React H5 诊断面板展示请求入口", expression: "document.body.innerText.includes('请求入口') && document.body.innerText.includes('sample fallback')" },
+      { label: "React H5 诊断面板展示实际来源", expression: "document.body.innerText.includes('实际来源') && document.body.innerText.includes('fallback schema')" },
+      { label: "React H5 诊断面板展示本地入口", expression: "document.body.innerText.includes('本地入口') && document.body.innerText.includes('Empty')" },
       { label: "React H5 直播入口已渲染", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
       { label: "React H5 品牌专题已渲染", expression: "document.body.innerText.includes('夏日品牌馆')" },
       { label: "React H5 商品榜单已渲染", expression: "document.body.innerText.includes('夏日热卖榜')" },
@@ -794,6 +799,18 @@ async function main() {
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
       { label: "React H5 底部转化条已渲染", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
+    ]);
+
+    await assertPage(page, h5RuntimePageIdUrl, [
+      { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },
+      { label: "React H5 pageId 缺少配置平台时展示 fallback 原因", expression: "document.body.innerText.includes('Config platform client is required for pageId') && document.body.innerText.includes('已启用 fallback')" },
+      { label: "React H5 pageId fallback 后页面仍非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
+    ]);
+
+    await assertPage(page, h5RuntimeEmptyUrl, [
+      { label: "React H5 empty demo shell 已挂载", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('empty demo')" },
+      { label: "React H5 empty demo 展示安全空态", expression: "document.body.innerText.includes('空页面演示') && document.body.innerText.includes('页面暂无内容，H5 runtime 已进入安全空态')" },
+      { label: "React H5 empty demo 节点数为 0", expression: "document.body.innerText.includes('节点数') && document.body.innerText.includes('0')" },
     ]);
   } finally {
     await page.close();

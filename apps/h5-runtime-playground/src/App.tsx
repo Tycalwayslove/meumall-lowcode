@@ -16,6 +16,7 @@ import {
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
+  type LowcodeEnvironment,
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
@@ -626,6 +627,26 @@ const sampleSchema = createLowcodePageSchema({
   },
 });
 
+const emptyDemoSchema = createLowcodePageSchema({
+  pageId: "empty-runtime-demo",
+  pageVersion: "demo-empty-20260801",
+  status: "published",
+  title: "空页面演示",
+  pageType: "activity",
+  targetPlatforms: ["h5"],
+  layout: {
+    safeArea: true,
+    backgroundColor: "#f3f4f6",
+    maxWidth: 430,
+  },
+  nodes: [],
+  publishMeta: {
+    environment: "test",
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    operator: "runtime-demo",
+  },
+});
+
 const registry = createMaterialRegistry(h5Materials);
 const dataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
@@ -639,24 +660,93 @@ interface RuntimeSchemaSource {
   error?: string;
 }
 
-function getRuntimeSchemaInput() {
+type RuntimeRequestedSource = "schema" | "releaseId" | "pageId" | "emptyDemo" | "none";
+
+interface RuntimeSchemaInputInfo {
+  encodedSchema?: string;
+  releaseId?: string;
+  pageId?: string;
+  requestedSource: RuntimeRequestedSource;
+  requestedLabel: string;
+  requestedValue: string;
+  fallbackSchema: LowcodePageSchema;
+}
+
+function getRuntimeSchemaInputInfo(): RuntimeSchemaInputInfo {
   const params = new URLSearchParams(window.location.search);
+  const encodedSchema = params.get("schema") ?? undefined;
+  const releaseId = params.get("releaseId") ?? undefined;
+  const pageId = params.get("pageId") ?? undefined;
+  const demo = params.get("demo");
+  if (demo === "empty") {
+    return {
+      requestedSource: "emptyDemo",
+      requestedLabel: "empty demo",
+      requestedValue: "?demo=empty",
+      fallbackSchema: emptyDemoSchema,
+    };
+  }
+  if (encodedSchema) {
+    return {
+      encodedSchema,
+      requestedSource: "schema",
+      requestedLabel: "schema url",
+      requestedValue: "schema 参数",
+      fallbackSchema: sampleSchema,
+    };
+  }
+  if (releaseId) {
+    return {
+      releaseId,
+      requestedSource: "releaseId",
+      requestedLabel: "releaseId",
+      requestedValue: releaseId,
+      fallbackSchema: sampleSchema,
+    };
+  }
+  if (pageId) {
+    return {
+      pageId,
+      requestedSource: "pageId",
+      requestedLabel: "pageId",
+      requestedValue: pageId,
+      fallbackSchema: sampleSchema,
+    };
+  }
   return {
-    encodedSchema: params.get("schema") ?? undefined,
-    releaseId: params.get("releaseId") ?? undefined,
-    pageId: params.get("pageId") ?? undefined,
+    requestedSource: "none",
+    requestedLabel: "sample fallback",
+    requestedValue: "无 URL 参数",
     fallbackSchema: sampleSchema,
   };
 }
 
 function formatRuntimeSource(source: RuntimeSchemaSourceType): string {
   const sourceLabel: Record<RuntimeSchemaSourceType, string> = {
-    encoded: "editor url",
-    release: "release",
-    published: "published",
-    fallback: "sample",
+    encoded: "schema URL",
+    release: "release schema",
+    published: "published schema",
+    fallback: "fallback schema",
   };
   return sourceLabel[source];
+}
+
+function formatEnvironment(environment: LowcodeEnvironment): string {
+  const label: Record<LowcodeEnvironment, string> = {
+    test: "test",
+    pre: "pre",
+    prod: "prod",
+  };
+  return label[environment];
+}
+
+function createRuntimeSourceNote(input: RuntimeSchemaInputInfo, runtimeSchema: RuntimeSchemaSource, loading: boolean): string {
+  if (loading) return "正在解析 schema 来源。";
+  if (runtimeSchema.error) return `已启用 fallback：${runtimeSchema.error}`;
+  if (input.requestedSource === "none") return "当前无 URL 参数，使用本地 sample schema 作为 H5 runtime 默认演示。";
+  if (input.requestedSource === "emptyDemo") return "当前使用空页面演示 schema，用于验证 H5 runtime 空态不白屏。";
+  if (runtimeSchema.source === "encoded") return "当前 schema 来自编辑器 URL handoff，仅适合本地演示和排障。";
+  return "当前 schema 已按请求入口加载。";
 }
 
 function countNodes(schema: LowcodePageSchema): number {
@@ -672,19 +762,28 @@ function getParamString(params: JsonObject | undefined, key: string, fallback: s
 }
 
 export function App() {
+  const runtimeInput = useMemo(() => getRuntimeSchemaInputInfo(), []);
   const [renderErrors, setRenderErrors] = useState<string[]>([]);
   const [runtimeData, setRuntimeData] = useState<JsonObject>({});
   const [dataSourceRecords, setDataSourceRecords] = useState<DataSourceResolutionRecord[]>([]);
   const [dataResolving, setDataResolving] = useState(true);
+  const [schemaLoading, setSchemaLoading] = useState(true);
   const [actionLogs, setActionLogs] = useState<string[]>([]);
   const [runtimeSchema, setRuntimeSchema] = useState<RuntimeSchemaSource>({
-    schema: sampleSchema,
+    schema: runtimeInput.fallbackSchema,
     source: "fallback",
   });
   const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
   const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
   const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
   const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
+  const runtimeSourceNote = createRuntimeSourceNote(runtimeInput, runtimeSchema, schemaLoading);
+  const runtimeEntryLinks = [
+    { label: "Sample", href: "/", desc: "无参数 fallback 演示" },
+    { label: "PageId", href: "/?pageId=summer-campaign-demo", desc: "模拟生产 pageId 入口" },
+    { label: "ReleaseId", href: "/?releaseId=preview_demo", desc: "模拟预览 release 入口" },
+    { label: "Empty", href: "/?demo=empty", desc: "空页面降级演示" },
+  ];
   const actionExecutor = useMemo(() => {
     const actionRegistry = createSafeActionRegistry({
       navigate(action) {
@@ -709,18 +808,23 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false;
-    loadLowcodeRuntimeSchema(getRuntimeSchemaInput()).then((result) => {
-      if (cancelled) return;
-      setRuntimeSchema({
-        schema: result.schema ?? sampleSchema,
-        source: result.source,
-        error: result.error,
+    setSchemaLoading(true);
+    loadLowcodeRuntimeSchema(runtimeInput)
+      .then((result) => {
+        if (cancelled) return;
+        setRuntimeSchema({
+          schema: result.schema ?? runtimeInput.fallbackSchema,
+          source: result.source,
+          error: result.error,
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setSchemaLoading(false);
       });
-    });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [runtimeInput]);
 
   useEffect(() => {
     let cancelled = false;
@@ -742,30 +846,46 @@ export function App() {
   return (
     <main className="runtime-shell">
       <section className="runtime-status" aria-label="运行时状态">
-        <strong>{runtimeSchema.schema.title}</strong>
+        <div className="runtime-status-head">
+          <strong>React H5 Runtime</strong>
+          <span>{schemaLoading ? "loading" : runtimeSchema.source}</span>
+        </div>
+        <p className="runtime-source-note">{runtimeSourceNote}</p>
         <dl>
           <div>
-            <dt>Source</dt>
-            <dd>{formatRuntimeSource(runtimeSchema.source)}</dd>
+            <dt>请求入口</dt>
+            <dd>{runtimeInput.requestedLabel}</dd>
+          </div>
+          <div>
+            <dt>请求值</dt>
+            <dd>{runtimeInput.requestedValue}</dd>
+          </div>
+          <div>
+            <dt>实际来源</dt>
+            <dd>{schemaLoading ? "loading" : formatRuntimeSource(runtimeSchema.source)}</dd>
+          </div>
+          <div>
+            <dt>页面 ID</dt>
+            <dd>{runtimeSchema.schema.pageId}</dd>
+          </div>
+          <div>
+            <dt>页面版本</dt>
+            <dd>{runtimeSchema.schema.pageVersion}</dd>
+          </div>
+          <div>
+            <dt>环境</dt>
+            <dd>{formatEnvironment(runtimeSchema.schema.publishMeta.environment)}</dd>
           </div>
           <div>
             <dt>Schema</dt>
             <dd>{validation.valid ? "valid" : "invalid"}</dd>
           </div>
           <div>
-            <dt>Version</dt>
-            <dd>{runtimeSchema.schema.pageVersion}</dd>
-          </div>
-          <div>
-            <dt>Env</dt>
-            <dd>{runtimeSchema.schema.publishMeta.environment}</dd>
-          </div>
-          <div>
-            <dt>Nodes</dt>
+            <dt>节点数</dt>
             <dd>{nodeCount}</dd>
           </div>
           <div>
-            <dt>Data</dt>
+            <dt>数据源</dt>
             <dd>
               {dataResolving
                 ? "resolving"
@@ -776,6 +896,15 @@ export function App() {
           </div>
         </dl>
         {runtimeSchema.error ? <p className="runtime-warning">{runtimeSchema.error}</p> : null}
+        <div className="runtime-entry-list" aria-label="运行入口示例">
+          <strong>本地入口</strong>
+          {runtimeEntryLinks.map((item) => (
+            <a key={item.href} href={item.href}>
+              <span>{item.label}</span>
+              <small>{item.desc}</small>
+            </a>
+          ))}
+        </div>
         {actionLogs.length ? (
           <div className="runtime-action-logs" aria-label="动作日志">
             {actionLogs.map((log, index) => (
@@ -805,7 +934,7 @@ export function App() {
           registry={registry}
           data={runtimeData}
           actionExecutor={actionExecutor}
-          fallback={<div className="runtime-empty">页面暂无内容</div>}
+          fallback={<div className="runtime-empty">页面暂无内容，H5 runtime 已进入安全空态</div>}
           onRenderError={(error, node) => {
             setRenderErrors((current) => [...current, `${node?.id ?? "unknown"}: ${error.message}`]);
           }}

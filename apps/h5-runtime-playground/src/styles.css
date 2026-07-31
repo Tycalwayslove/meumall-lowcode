@@ -46,8 +46,36 @@ button {
 
 .runtime-status strong {
   display: block;
-  margin-bottom: 10px;
   font-size: 15px;
+}
+
+.runtime-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.runtime-status-head span {
+  padding: 3px 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #334155;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.runtime-source-note {
+  margin: 0 0 10px;
+  padding: 9px 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .runtime-status dl {
@@ -89,6 +117,44 @@ button {
   background: #fff7ed;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.runtime-entry-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.runtime-entry-list > strong {
+  color: #334155;
+  font-size: 12px;
+}
+
+.runtime-entry-list a {
+  display: grid;
+  gap: 2px;
+  padding: 8px 9px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #111827;
+  background: #fff;
+  text-decoration: none;
+}
+
+.runtime-entry-list a:hover,
+.runtime-entry-list a:focus-visible {
+  border-color: #2563eb;
+  outline: none;
+}
+
+.runtime-entry-list span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.runtime-entry-list small {
+  color: #64748b;
+  font-size: 11px;
 }
 
 .runtime-data-records {
