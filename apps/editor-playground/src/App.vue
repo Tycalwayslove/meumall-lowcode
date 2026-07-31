@@ -3,7 +3,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch, typ
 import {
   ArrowDown,
   ArrowUp,
-  ChevronDown,
   Check,
   Code2,
   Copy,
@@ -11,7 +10,6 @@ import {
   Download,
   Eye,
   ExternalLink,
-  GripVertical,
   Image,
   Layers,
   Link2,
@@ -94,7 +92,6 @@ import {
   createLowcodePropGroups,
   duplicateNode,
   createLowcodeDefaultListItem,
-  createLowcodeListEditorFields,
   createLowcodeSchemaFileExport,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
@@ -105,7 +102,6 @@ import {
   formatLowcodeVersionDiffSummary,
   getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
-  getLowcodePropEditorControl,
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
   insertNode,
@@ -113,9 +109,6 @@ import {
   isLowcodeInvalidNodeDropTarget,
   isLowcodeFavoriteMaterial,
   isLowcodeNodeSelected,
-  isLowcodeListImageField,
-  isLowcodeListPropEditor,
-  isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
@@ -158,8 +151,6 @@ import {
   toggleLowcodeFavoriteMaterial,
   toggleLowcodeNodeSelection,
   toggleLowcodePropGroupCollapsed,
-  toLowcodePropInputBoolean,
-  toLowcodePropInputText,
   undo,
   updateLowcodeAction,
   updateLowcodeDataSource,
@@ -217,6 +208,7 @@ import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
+import EditorPropGroupsPanel from "./components/EditorPropGroupsPanel.vue";
 import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -2204,41 +2196,8 @@ function toEditableListItem(value: JsonValue): Record<string, JsonValue> {
   return isRecord(value) ? { ...value } : { value };
 }
 
-function getListItems(propName: string): Record<string, JsonValue>[] {
-  return getPropArray(propName).map((item) => toEditableListItem(item));
-}
-
-function isPropGroupCollapsed(key: PropGroupKey): boolean {
-  return isLowcodePropGroupCollapsed(collapsedPropGroups.value, key);
-}
-
 function togglePropGroup(key: PropGroupKey): void {
   collapsedPropGroups.value = toggleLowcodePropGroupCollapsed(collapsedPropGroups.value, key);
-}
-
-function isListPropEditor(propSchema: LowcodePropSchema): boolean {
-  return isLowcodeListPropEditor(propSchema);
-}
-
-function listEditorFields(propName: string): ListEditorField[] {
-  return createLowcodeListEditorFields(propName, {
-    componentName: selectedNode.value?.componentName,
-    items: getPropArray(propName),
-  });
-}
-
-function isListImageField(field: ListEditorField): boolean {
-  return isLowcodeListImageField(field);
-}
-
-function isActiveListAssetTarget(propName: string, itemIndex: number, fieldName: string): boolean {
-  const target = listAssetTarget.value;
-  return Boolean(target && target.propName === propName && target.itemIndex === itemIndex && target.fieldName === fieldName);
-}
-
-function isListAssetPanelOpen(propName: string, itemIndex: number): boolean {
-  const target = listAssetTarget.value;
-  return Boolean(target && target.propName === propName && target.itemIndex === itemIndex);
 }
 
 function openListAssetPicker(propName: string, propSchema: LowcodePropSchema, itemIndex: number, field: ListEditorField): void {
@@ -2332,14 +2291,6 @@ function onListItemDragEnd(): void {
   listItemDragState.value = undefined;
 }
 
-function listItemDragClass(propName: string, index: number): Record<string, boolean> {
-  const state = listItemDragState.value;
-  return {
-    dragging: Boolean(state && state.propName === propName && state.fromIndex === index),
-    "drag-over": Boolean(state && state.propName === propName && state.overIndex === index && state.fromIndex !== index),
-  };
-}
-
 function updateListItemField(propName: string, propSchema: LowcodePropSchema, index: number, fieldName: string, value: string): void {
   const items = getPropArray(propName);
   const current = toEditableListItem(items[index] ?? {});
@@ -2395,10 +2346,6 @@ function updateProp(propName: string, propSchema: LowcodePropSchema, value: unkn
 
 function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): JsonValue {
   return normalizeLowcodePropInputValue(propSchema, value);
-}
-
-function asBoolean(value: unknown): boolean {
-  return toLowcodePropInputBoolean(value);
 }
 
 function select(nodeId: string): void {
@@ -2905,10 +2852,6 @@ function bindSelectedEvent(eventName: string, actionId: string): void {
   editorState.value = bindLowcodeNodeEvent(editorState.value, selectedNode.value.id, eventName, actionId || undefined);
 }
 
-function asText(value: JsonValue | undefined): string {
-  return toLowcodePropInputText(value);
-}
-
 function applyAsset(propName: string, url: string): void {
   const manifest = selectedManifest.value;
   const propSchema = manifest?.propsSchema[propName];
@@ -2937,10 +2880,6 @@ function applySampleProducts(): void {
   const catalog = resourceProductCatalog.value.length ? resourceProductCatalog.value : sampleProducts;
   selectedProductIds.value = catalog.slice(0, 3).map((product) => product.id);
   applySelectedProductsToNode();
-}
-
-function isStructured(propSchema: LowcodePropSchema): boolean {
-  return getLowcodePropEditorControl(propSchema) === "json";
 }
 
 function refreshReleases(): void {
@@ -4280,235 +4219,37 @@ function rollbackPublishSelectedRelease(): void {
             </div>
           </div>
 
-          <div class="property-groups">
-            <section
-              v-for="group in selectedPropGroups"
-              :key="group.key"
-              class="property-group"
-              :class="{ collapsed: isPropGroupCollapsed(group.key) }"
-            >
-              <button type="button" class="property-group-head" @click="togglePropGroup(group.key)">
-                <span>
-                  <strong>{{ group.label }}</strong>
-                  <small>{{ group.description }}</small>
-                </span>
-                <em>{{ group.entries.length }} 项</em>
-                <ChevronDown :size="15" />
-              </button>
-              <div v-if="!isPropGroupCollapsed(group.key)" class="property-group-body">
-                <div
-                  v-for="entry in group.entries"
-                  :key="entry.name"
-                  class="field"
-                >
-                  <span>{{ entry.schema.label }}</span>
-                  <div v-if="isListPropEditor(entry.schema)" class="list-prop-editor">
-                    <div class="list-prop-head">
-                      <small>已配置 {{ getListItems(entry.name).length }} 项</small>
-                      <button type="button" @click="addListItem(entry.name, entry.schema)">新增一项</button>
-                    </div>
-                    <div v-if="!getListItems(entry.name).length" class="mini-empty">暂无列表项，点击新增开始配置</div>
-                    <article
-                      v-for="(item, itemIndex) in getListItems(entry.name)"
-                      :key="`${entry.name}-${itemIndex}`"
-                      class="list-item-editor"
-                      :class="listItemDragClass(entry.name, itemIndex)"
-                      draggable="true"
-                      @dragstart="onListItemDragStart($event, entry.name, itemIndex)"
-                      @dragover="onListItemDragOver($event, entry.name, itemIndex)"
-                      @drop="onListItemDrop($event, entry.name, entry.schema, itemIndex)"
-                      @dragend="onListItemDragEnd"
-                    >
-                      <div class="list-item-head">
-                        <strong>
-                          <GripVertical :size="14" />
-                          <span>第 {{ itemIndex + 1 }} 项</span>
-                        </strong>
-                        <div>
-                          <button type="button" :disabled="itemIndex === 0" @click="moveListItem(entry.name, entry.schema, itemIndex, -1)">上移</button>
-                          <button
-                            type="button"
-                            :disabled="itemIndex === getListItems(entry.name).length - 1"
-                            @click="moveListItem(entry.name, entry.schema, itemIndex, 1)"
-                          >
-                            下移
-                          </button>
-                          <button type="button" @click="duplicateListItem(entry.name, entry.schema, itemIndex)">复制</button>
-                          <button type="button" class="danger" @click="removeListItem(entry.name, entry.schema, itemIndex)">删除</button>
-                        </div>
-                      </div>
-                      <div class="list-field-grid">
-                        <label
-                          v-for="field in listEditorFields(entry.name)"
-                          :key="`${entry.name}-${itemIndex}-${field.name}`"
-                          class="mini-field"
-                          :class="{ wide: field.multiline || field.name === 'imageUrl' || field.name === 'content' }"
-                        >
-                          <span>{{ field.label }}</span>
-                          <textarea
-                            v-if="field.multiline"
-                            rows="2"
-                            :placeholder="field.placeholder"
-                            :value="asText(item[field.name])"
-                            @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLTextAreaElement).value)"
-                          />
-                          <input
-                            v-else-if="!isListImageField(field)"
-                            type="text"
-                            :placeholder="field.placeholder"
-                            :value="asText(item[field.name])"
-                            @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
-                          />
-                          <div v-else class="list-image-field">
-                            <img
-                              v-if="asText(item[field.name])"
-                              :src="asText(item[field.name])"
-                              alt=""
-                            />
-                            <div v-else class="list-image-empty">
-                              <Image :size="16" />
-                              <small>未选择图片</small>
-                            </div>
-                            <div class="list-image-controls">
-                              <input
-                                type="text"
-                                :placeholder="field.placeholder"
-                                :value="asText(item[field.name])"
-                                @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
-                              />
-                              <button
-                                type="button"
-                                class="list-image-action"
-                                :class="{ active: isActiveListAssetTarget(entry.name, itemIndex, field.name) }"
-                                @click="openListAssetPicker(entry.name, entry.schema, itemIndex, field)"
-                              >
-                                选择图片
-                              </button>
-                            </div>
-                          </div>
-                        </label>
-                      </div>
-                      <div
-                        v-if="isListAssetPanelOpen(entry.name, itemIndex)"
-                        class="resource-panel list-asset-panel"
-                      >
-                        <div class="resource-panel-head">
-                          <div>
-                            <strong>
-                              <Image :size="15" />
-                              <span>列表项素材库</span>
-                            </strong>
-                            <small>写入第 {{ itemIndex + 1 }} 项的 {{ listAssetTarget?.fieldLabel }}</small>
-                          </div>
-                          <button type="button" class="panel-close-button" @click="closeListAssetPicker">收起</button>
-                        </div>
-                        <div class="resource-filters">
-                          <label class="search-field">
-                            <Search :size="14" />
-                            <input v-model="assetKeyword" placeholder="搜索素材" />
-                          </label>
-                          <select v-model="assetCategory" aria-label="列表项素材分类">
-                            <option v-for="category in assetCategories" :key="category" :value="category">
-                              {{ category }}
-                            </option>
-                          </select>
-                        </div>
-                        <div class="asset-library list-asset-library">
-                          <button
-                            v-for="asset in filteredAssets"
-                            :key="asset.id"
-                            type="button"
-                            class="asset-card list-asset-card"
-                            @click="applyAssetToListTarget(asset)"
-                          >
-                            <img :src="asset.url" alt="" />
-                            <span>
-                              <strong>{{ asset.title }}</strong>
-                              <small>{{ asset.category }}</small>
-                            </span>
-                          </button>
-                        </div>
-                        <div v-if="isAssetSearching" class="mini-empty">素材搜索中</div>
-                        <div v-else-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
-                      </div>
-                    </article>
-                    <details class="json-fallback">
-                      <summary>JSON 高级编辑</summary>
-                      <textarea
-                        :value="asText(selectedNode.props[entry.name])"
-                        rows="5"
-                        @input="updateProp(entry.name, entry.schema, ($event.target as HTMLTextAreaElement).value)"
-                      />
-                    </details>
-                  </div>
-                  <textarea
-                    v-else-if="isStructured(entry.schema) || entry.schema.setter === 'textarea' || entry.schema.setter === 'richText'"
-                    :value="asText(selectedNode.props[entry.name])"
-                    rows="5"
-                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLTextAreaElement).value)"
-                  />
-                  <div
-                    v-else-if="entry.schema.setter === 'switch' || entry.schema.type === 'boolean'"
-                    class="switch-field"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="asBoolean(selectedNode.props[entry.name])"
-                      @change="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).checked)"
-                    />
-                    <span class="switch-track" aria-hidden="true">
-                      <i />
-                    </span>
-                    <em>{{ asBoolean(selectedNode.props[entry.name]) ? "开启" : "关闭" }}</em>
-                  </div>
-                  <input
-                    v-else-if="entry.schema.setter === 'color'"
-                    type="color"
-                    :value="asText(selectedNode.props[entry.name]) || '#111827'"
-                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
-                  />
-                  <input
-                    v-else
-                    :type="entry.schema.type === 'number' ? 'number' : 'text'"
-                    :value="asText(selectedNode.props[entry.name])"
-                    @input="updateProp(entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
-                  />
-                  <div v-if="['ProductList', 'ProductRankList', 'BrandFeatureSection', 'FlashSaleList'].includes(selectedNode.componentName) && entry.name === 'items'" class="quick-actions">
-                    <button type="button" @click="applySampleProducts">使用示例商品</button>
-                    <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          <div v-if="selectedEventBindings.length" class="event-binding-list">
-            <div class="panel-title compact-title">
-              <PanelRight :size="15" />
-              <span>事件</span>
-            </div>
-            <label
-              v-for="event in selectedEventBindings"
-              :key="event.name"
-              class="field"
-            >
-              <span>{{ event.title }}</span>
-              <select
-                :value="event.actionId"
-                @change="bindSelectedEvent(event.name, ($event.target as HTMLSelectElement).value)"
-              >
-                <option value="">未绑定</option>
-                <option
-                  v-for="action in event.actionOptions"
-                  :key="`${event.name}-${action.id}`"
-                  :value="action.id"
-                >
-                  {{ action.label }}
-                </option>
-              </select>
-              <small v-if="event.missingAction">{{ event.actionLabel }}</small>
-            </label>
-          </div>
+          <EditorPropGroupsPanel
+            v-model:asset-keyword="assetKeyword"
+            v-model:asset-category="assetCategory"
+            :prop-groups="selectedPropGroups"
+            :selected-props="selectedNode.props"
+            :selected-component-name="selectedNode.componentName"
+            :collapsed-groups="collapsedPropGroups"
+            :list-item-drag-state="listItemDragState"
+            :list-asset-target="listAssetTarget"
+            :asset-categories="assetCategories"
+            :filtered-assets="filteredAssets"
+            :is-asset-searching="isAssetSearching"
+            :event-bindings="selectedEventBindings"
+            @toggle-group="togglePropGroup"
+            @update-prop="updateProp"
+            @add-list-item="addListItem"
+            @duplicate-list-item="duplicateListItem"
+            @remove-list-item="removeListItem"
+            @move-list-item="moveListItem"
+            @list-item-drag-start="onListItemDragStart"
+            @list-item-drag-over="onListItemDragOver"
+            @list-item-drop="onListItemDrop"
+            @list-item-drag-end="onListItemDragEnd"
+            @update-list-item-field="updateListItemField"
+            @open-list-asset-picker="openListAssetPicker"
+            @close-list-asset-picker="closeListAssetPicker"
+            @apply-list-asset="applyAssetToListTarget"
+            @apply-sample-products="applySampleProducts"
+            @bind-products-data-source="bindSelectedProductMaterialToDataSource"
+            @bind-event="bindSelectedEvent"
+          />
 
           <div class="toolbar inspector-actions">
             <button title="上移节点" :disabled="isNodeOperationDisabled('moveUp')" @click="moveSelected(-1)">

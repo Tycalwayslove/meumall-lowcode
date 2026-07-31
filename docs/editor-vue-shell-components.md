@@ -121,9 +121,28 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不处理权限、协作锁定、审计或服务端保存。
 
+### `EditorPropGroupsPanel`
+
+路径：`apps/editor-playground/src/components/EditorPropGroupsPanel.vue`
+
+职责：
+
+- 展示右侧属性区的属性分组、基础字段控件、数组列表编辑器、列表项图片素材选择面板和事件绑定列表。
+- 接收 `propGroups`、`selectedProps`、`selectedComponentName`、`collapsedGroups`、列表项拖拽状态、列表项素材目标、素材筛选状态、素材列表和事件绑定展示模型。
+- 通过 emits 抛出分组折叠、属性更新、列表项增删改移、列表项拖拽、列表项素材选择、素材筛选、商品快捷操作和事件绑定操作。
+- 复用 prop groups、prop editor model 和 event binding API 产出的展示模型，以及现有 `.property-*`、`.list-*`、`.resource-*` 和 `.event-binding-list` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不持有选中节点或 Page Schema。
+- 不执行真实 `replaceNodeProps`、节点 events 写回或 dataBinding 写回。
+- 不查询素材、商品、优惠券、门店/达人等资源。
+- 不读取或写入 localStorage。
+- 不处理权限、协作锁定、审计或服务端保存。
+
 ## 后续拆分顺序
 
-1. 右侧属性字段编辑器和资源选择器：优先消费 prop groups、prop editor model、event binding、data source config、action config API。
+1. 右侧资源选择器主面板：优先复用 Resource Library Client，并继续让真实资源查询和写回由宿主 shell 持有。
 2. 右侧页面设置：优先消费 page settings API。
 3. 发布检查、H5 预览入口、交付清单和版本历史：优先消费 readiness、preview links、delivery summary、release history API。
 
