@@ -534,8 +534,17 @@ interface ListItemDragState {
   overIndex?: number;
 }
 
+interface ListAssetTarget {
+  propName: string;
+  propSchema: LowcodePropSchema;
+  itemIndex: number;
+  fieldName: string;
+  fieldLabel: string;
+}
+
 const canvasDropHint = ref<CanvasDropHint>();
 const listItemDragState = ref<ListItemDragState>();
+const listAssetTarget = ref<ListAssetTarget>();
 const pointerCanvasDragState = ref<PointerCanvasDragState>();
 const multiSelectedNodeIds = ref<string[]>([]);
 const collapsedPropGroups = ref<Partial<Record<PropGroupKey, boolean>>>({
@@ -1113,6 +1122,7 @@ watch(
 watch(
   () => selectedNode.value?.id,
   () => {
+    listAssetTarget.value = undefined;
     selectedProductIds.value = getProductIdsFromNode(selectedNode.value);
     selectedCouponIds.value = getIdsFromNodeArrayProp(selectedNode.value, "coupons");
     selectedStoreExpertIds.value = getIdsFromNodeArrayProp(selectedNode.value, "items");
@@ -2797,6 +2807,35 @@ function listEditorFields(propName: string): ListEditorField[] {
   return [...fields].map((name) => commonListEditorFields[name] ?? { name, label: name, placeholder: name });
 }
 
+function isListImageField(field: ListEditorField): boolean {
+  return /(^|[A-Z])imageUrl$/.test(field.name) || field.name === "coverImageUrl" || field.name === "logoImageUrl";
+}
+
+function isActiveListAssetTarget(propName: string, itemIndex: number, fieldName: string): boolean {
+  const target = listAssetTarget.value;
+  return Boolean(target && target.propName === propName && target.itemIndex === itemIndex && target.fieldName === fieldName);
+}
+
+function isListAssetPanelOpen(propName: string, itemIndex: number): boolean {
+  const target = listAssetTarget.value;
+  return Boolean(target && target.propName === propName && target.itemIndex === itemIndex);
+}
+
+function openListAssetPicker(propName: string, propSchema: LowcodePropSchema, itemIndex: number, field: ListEditorField): void {
+  listAssetTarget.value = {
+    propName,
+    propSchema,
+    itemIndex,
+    fieldName: field.name,
+    fieldLabel: field.label,
+  };
+  void refreshImageAssets();
+}
+
+function closeListAssetPicker(): void {
+  listAssetTarget.value = undefined;
+}
+
 function createDefaultListItem(propName: string): JsonObject {
   const id = `${propName}_${Date.now().toString(36)}`;
   if (propName === "rules") {
@@ -3675,6 +3714,18 @@ function applyAsset(propName: string, url: string): void {
 function applyAssetToSelected(asset: LowcodeImageAssetResource): void {
   if (!assetTargetPropName.value) return;
   applyAsset(assetTargetPropName.value, asset.url);
+}
+
+function applyAssetToListTarget(asset: LowcodeImageAssetResource): void {
+  const target = listAssetTarget.value;
+  if (!target) return;
+  if (target.itemIndex < 0 || target.itemIndex >= getPropArray(target.propName).length) {
+    listAssetTarget.value = undefined;
+    return;
+  }
+  updateListItemField(target.propName, target.propSchema, target.itemIndex, target.fieldName, asset.url);
+  releaseMessage.value = `已应用图片素材：${asset.title}`;
+  listAssetTarget.value = undefined;
 }
 
 function applySampleProducts(): void {
@@ -5224,13 +5275,83 @@ function formatAutoSaveTime(value: string): string {
                             @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLTextAreaElement).value)"
                           />
                           <input
-                            v-else
+                            v-else-if="!isListImageField(field)"
                             type="text"
                             :placeholder="field.placeholder"
                             :value="asText(item[field.name])"
                             @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
                           />
+                          <div v-else class="list-image-field">
+                            <img
+                              v-if="asText(item[field.name])"
+                              :src="asText(item[field.name])"
+                              alt=""
+                            />
+                            <div v-else class="list-image-empty">
+                              <Image :size="16" />
+                              <small>未选择图片</small>
+                            </div>
+                            <div class="list-image-controls">
+                              <input
+                                type="text"
+                                :placeholder="field.placeholder"
+                                :value="asText(item[field.name])"
+                                @input="updateListItemField(entry.name, entry.schema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
+                              />
+                              <button
+                                type="button"
+                                class="list-image-action"
+                                :class="{ active: isActiveListAssetTarget(entry.name, itemIndex, field.name) }"
+                                @click="openListAssetPicker(entry.name, entry.schema, itemIndex, field)"
+                              >
+                                选择图片
+                              </button>
+                            </div>
+                          </div>
                         </label>
+                      </div>
+                      <div
+                        v-if="isListAssetPanelOpen(entry.name, itemIndex)"
+                        class="resource-panel list-asset-panel"
+                      >
+                        <div class="resource-panel-head">
+                          <div>
+                            <strong>
+                              <Image :size="15" />
+                              <span>列表项素材库</span>
+                            </strong>
+                            <small>写入第 {{ itemIndex + 1 }} 项的 {{ listAssetTarget?.fieldLabel }}</small>
+                          </div>
+                          <button type="button" class="panel-close-button" @click="closeListAssetPicker">收起</button>
+                        </div>
+                        <div class="resource-filters">
+                          <label class="search-field">
+                            <Search :size="14" />
+                            <input v-model="assetKeyword" placeholder="搜索素材" />
+                          </label>
+                          <select v-model="assetCategory" aria-label="列表项素材分类">
+                            <option v-for="category in assetCategories" :key="category" :value="category">
+                              {{ category }}
+                            </option>
+                          </select>
+                        </div>
+                        <div class="asset-library list-asset-library">
+                          <button
+                            v-for="asset in filteredAssets"
+                            :key="asset.id"
+                            type="button"
+                            class="asset-card list-asset-card"
+                            @click="applyAssetToListTarget(asset)"
+                          >
+                            <img :src="asset.url" alt="" />
+                            <span>
+                              <strong>{{ asset.title }}</strong>
+                              <small>{{ asset.category }}</small>
+                            </span>
+                          </button>
+                        </div>
+                        <div v-if="isAssetSearching" class="mini-empty">素材搜索中</div>
+                        <div v-else-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
                       </div>
                     </article>
                     <details class="json-fallback">

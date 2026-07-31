@@ -435,6 +435,21 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
+  log("检查列表项图片素材选择");
+  const nodeCountBeforeImageCardGrid = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "图片卡片宫格");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：图片卡片宫格')");
+  await page.clickByText(".command-palette-item", "添加物料：图片卡片宫格");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeImageCardGrid)}`);
+  await page.waitForExpression("document.querySelector('.list-image-action')");
+  await page.clickByText(".list-image-action", "选择图片");
+  await page.waitForExpression("document.querySelector('.list-asset-panel') && document.body.innerText.includes('列表项素材库')");
+  await page.clickByText(".list-asset-card", "活动女装横幅");
+  await page.waitForExpression("document.body.innerText.includes('已应用图片素材：活动女装横幅')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.list-image-field img')).some((item) => item.src.includes('1512436991641'))");
+  log("通过：列表项图片字段可从素材库选择并写回缩略预览");
+
   log("检查发布问题可定位节点");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "秒杀商品组");

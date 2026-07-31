@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器和列表项拖拽排序。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、浏览器级 smoke check、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client 和 Template Library Client，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序和列表项图片素材选择。
 
 ## 当前维护范围
 
@@ -86,8 +86,9 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 商品榜单物料：React/Vue H5 物料包已新增 `ProductRankList`，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器商品选择器、大促模板、React H5 runtime 示例和 browser smoke check 已接入。
 - 品牌专题物料：React/Vue H5 物料包已新增 `BrandFeatureSection`，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter/onProductClick` 事件；Vue3 编辑器商品选择器、大促模板、React H5 runtime 示例和 browser smoke check 已接入。
 - 底部转化条物料：React/Vue H5 物料包已新增 `StickyActionBar`，支持标题、说明、主/副按钮、安全区、sticky 开关、跳转链接和 `onPrimaryClick/onSecondaryClick` 事件；大促模板、React H5 runtime 示例和 browser smoke check 已接入。
-- Vue3 编辑器数组属性编辑：属性面板已为 `array` + `textarea` 字段提供列表项编辑器，支持新增、删除、复制、上移、下移和常见字段表单输入，并保留 JSON 高级编辑兜底。
+- Vue3 编辑器数组属性编辑：属性面板已为 `array` + `textarea` 字段提供列表项编辑器，支持新增、删除、复制、上移、下移、常见字段表单输入和图片字段素材库选择，并保留 JSON 高级编辑兜底。
 - Vue3 编辑器数组列表排序：属性面板列表项已支持同一数组属性内 HTML5 拖拽排序，拖拽后写回当前节点 props 数组，并提供拖拽中和目标项视觉状态。
+- Vue3 编辑器列表项图片素材选择：数组列表项中的 `imageUrl`、`coverImageUrl` 和 `logoImageUrl` 类字段会展示缩略图、保留 URL 输入，并可展开内联素材库选择图片后写回当前列表项字段；browser smoke 已覆盖 `ImageCardGrid.items[].imageUrl` 选择素材和缩略图写回。
 - Vue3 编辑器体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，并补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与响应式兜底。
 - Vue3 编辑器物料偏好：左侧物料区已支持星标收藏和最近使用，均以 `componentName` 写入 localStorage；收藏和最近使用物料可在顶部快捷区一键添加。
 - Vue3 编辑器属性面板分组：右侧 props 已按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，支持折叠/展开，并修复新 profile 首次打开默认选中旧节点导致属性区为空的问题。
@@ -181,7 +182,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `28c773e` | 增强 Vue3 编辑器空白画布起步引导。 |
 | 2026-07-31 | `be1633a` | 增强 Vue3 编辑器模板视觉预览。 |
 | 2026-07-31 | `a43cadf` | 新增区块标题基础物料。 |
-| 2026-07-31 | 本提交 | 新增图片卡片宫格物料。 |
+| 2026-07-31 | `73db7af` | 新增图片卡片宫格物料。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器列表项图片素材选择。 |
 
 ## 默认验证命令
 

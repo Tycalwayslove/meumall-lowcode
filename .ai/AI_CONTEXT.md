@@ -28,7 +28,7 @@
 - `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，Vue3 编辑器 playground 右侧素材库、商品选择器、优惠券选择器和门店/达人选择器已通过 resource client 查询数据；后续接真实素材中心、商品中心、优惠券中心、门店/达人中心时优先替换 client，不改 UI 内部查询逻辑。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeTemplateLibraryClient` 和 `createStaticTemplateLibraryClient`，Vue3 编辑器 playground 左侧模板列表已通过 template client 查询，支持搜索、分类过滤、加载态和空状态；后续接 Java 模板市场时优先替换 client，不改 UI 内部查询逻辑。
-- Vue3 编辑器 playground 右侧属性区已提供资源选择器：图片类节点可搜索/分类选择图片，`ProductList`/`ProductRankList`/`BrandFeatureSection`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items` 或重新绑定 `products` 数据源，`CouponBundle` 可多选优惠券写入 `props.coupons`，`CouponSection` 可选择单张优惠券写入主券文案，`StoreExpertSection` 可多选门店/达人写入 `props.items` 或重新绑定 `stores` 数据源。
+- Vue3 编辑器 playground 右侧属性区已提供资源选择器：图片类节点可搜索/分类选择图片，数组列表项中的 `imageUrl`、`coverImageUrl`、`logoImageUrl` 类字段可展开内联素材库选择图片并写回当前项；`ProductList`/`ProductRankList`/`BrandFeatureSection`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items` 或重新绑定 `products` 数据源，`CouponBundle` 可多选优惠券写入 `props.coupons`，`CouponSection` 可选择单张优惠券写入主券文案，`StoreExpertSection` 可多选门店/达人写入 `props.items` 或重新绑定 `stores` 数据源。
 - Vue3 编辑器 playground 画布已支持物料拖拽插入线：拖到节点上半区插入前方，下半区插入后方，拖到 `SectionContainer` 中间区域加入容器，拖到空白区域追加页面末尾。
 - Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - Vue3 编辑器 playground 已补充触屏/手写笔 Pointer Events 拖拽：物料面板、结构树节点和 H5 画布节点都可通过 pointer 移动超过阈值后复用现有 drop hint 完成投放或移动；拖拽完成后会抑制紧随其后的 click，避免额外追加物料。
@@ -38,7 +38,7 @@
 - Vue3 编辑器 playground 右侧面板已提供发布检查清单，覆盖 schema、节点、图片、商品、数据源和动作；生成预览和发布会拦截 error 检查项，保存草稿不拦截。
 - Vue3 编辑器 playground 本地版本列表已支持选择版本对比，摘要展示标题、状态、环境、页面版本、节点数、数据源数和动作数差异，并可将选中版本作为新的 published release 回滚发布。
 - Vue3 编辑器 playground 属性面板已支持 `switch` setter 和 `boolean` 类型字段的开关控件，写入真实 boolean，并兼容旧草稿中的 `"false"`、`"0"`、`"off"` 字符串。
-- Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、门店/达人推荐等常见数组配置，并保留 JSON 高级编辑兜底。
+- Vue3 编辑器 playground 属性面板已支持 `array` + `textarea` 字段的列表项编辑器，覆盖优惠券、规则、导航项、楼层锚点、图片卡片宫格、门店/达人推荐等常见数组配置；图片字段展示缩略图并支持素材库选择，仍保留 URL 输入和 JSON 高级编辑兜底。
 - Vue3 编辑器 playground 数组属性列表项已支持同一属性内 HTML5 拖拽排序，并保留上移、下移、复制、删除和 JSON 高级编辑。
 - Vue3 编辑器 playground 已完成体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，编辑器 shell 补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与窄屏兜底。
 - Vue3 编辑器 playground 属性面板已支持分组折叠：当前物料 props 会按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，组内显示字段数量并可折叠/展开；新 profile 首次打开会默认选中当前 schema 的首个节点，避免属性区为空。
@@ -62,8 +62,8 @@
 - React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `StickyActionBar` 底部转化条，支持标题、说明、主/副按钮、安全区、sticky 开关、跳转链接、`onPrimaryClick` 和 `onSecondaryClick` 事件；Vue3 编辑器大促模板、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `SectionTitle` 区块标题，支持角标、标题、说明、对齐、背景色、标题色、说明色、强调色和上下留白；Vue3 编辑器大促模板、React H5 runtime 示例和 browser smoke check 已接入。
-- React/Vue H5 物料包已新增 `ImageCardGrid` 图片卡片宫格，支持标题、说明、列数、间距、圆角、卡片数组、图片、角标和 `onItemClick`；Vue3 编辑器大促模板、React H5 runtime 示例、数组属性表单和 browser smoke check 已接入，后续可扩展 data source slot 接真实会场/频道数据。
-- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、模板缩略预览和模板起点。
+- React/Vue H5 物料包已新增 `ImageCardGrid` 图片卡片宫格，支持标题、说明、列数、间距、圆角、卡片数组、图片、角标和 `onItemClick`；Vue3 编辑器大促模板、React H5 runtime 示例、数组属性表单、列表项图片素材选择和 browser smoke check 已接入，后续可扩展 data source slot 接真实会场/频道数据。
+- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览，先验证模板 H5 预览入口不会替换当前画布，再应用模板，验证 `通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、模板缩略预览和模板起点。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定
