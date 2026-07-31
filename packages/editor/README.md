@@ -89,6 +89,16 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `toLowcodePropInputText`
 - `toLowcodePropInputBoolean`
 - `normalizeLowcodePropInputValue`
+- `LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS`
+- `createLowcodeDefaultActionParams`
+- `createLowcodeActionConfig`
+- `formatLowcodeActionParamsText`
+- `createLowcodeActionFormItems`
+- `addLowcodeAction`
+- `updateLowcodeAction`
+- `renameLowcodeAction`
+- `setLowcodeActionType`
+- `removeLowcodeAction`
 - `createLowcodeActionOptions`
 - `createLowcodeEventBindingItems`
 - `bindLowcodeNodeEvent`
@@ -138,6 +148,18 @@ The prop editor model helpers keep inspector field behavior reusable across the 
 `toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
+
+## Action Config API
+
+The action config helpers keep Page Schema `actions` editing reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS` defines the default editor action templates for `navigate`, `coupon.receive`, `tracking.click`, and `noop`, including labels and default params.
+
+`createLowcodeDefaultActionParams(actionType)`, `createLowcodeActionConfig(actionType, options)`, `formatLowcodeActionParamsText(action)`, and `createLowcodeActionFormItems(actions, options)` provide the shared model used by action forms.
+
+`addLowcodeAction`, `updateLowcodeAction`, `renameLowcodeAction`, `setLowcodeActionType`, and `removeLowcodeAction` update `LowcodeEditorState` through the same immutable command style as node editing. Renaming an action updates node event refs, and removing an action clears refs that pointed to the removed action.
+
+These helpers do not parse textarea input, render forms, execute actions, call bridges, call coupon APIs, emit tracking events, validate permissions, persist schema, or perform server review. Host shells remain responsible for UI, JSON parse errors, permissions, audit, risk control, and runtime action handlers.
 
 ## Event Binding API
 

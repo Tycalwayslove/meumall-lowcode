@@ -50,11 +50,13 @@ import {
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
+  addLowcodeAction,
   appendNode,
   cloneLowcodePageSchema,
   createLowcodeBlankPageSchema,
   copyNode,
   bindLowcodeNodeEvent,
+  createLowcodeActionFormItems,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEventBindingItems,
@@ -91,6 +93,7 @@ import {
   isLowcodeListPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
   markSaved,
   moveNodeById,
   normalizeLowcodePropInputValue,
@@ -103,12 +106,13 @@ import {
   pruneLowcodeOutlineCollapsedNodeIds,
   redo,
   revealLowcodeOutlineNode,
+  removeLowcodeAction,
   removeNode,
-  removeLowcodeActionRefsFromNodes,
   replaceNodeProps,
-  renameLowcodeActionRefsInNodes,
+  renameLowcodeAction,
   selectNode,
   setEditorMode,
+  setLowcodeActionType,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
@@ -117,6 +121,7 @@ import {
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
   undo,
+  updateLowcodeAction,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
@@ -140,7 +145,6 @@ import {
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
-  type LowcodeActionConfig,
   type LowcodeDataSourceConfig,
   type LowcodeEnvironment,
   type LowcodeMaterialManifest,
@@ -350,12 +354,7 @@ const sampleStoreExperts: LowcodeStoreExpertResource[] = [
   },
 ];
 
-const actionTypeOptions = [
-  { label: "页面跳转", value: "navigate" },
-  { label: "领取优惠券", value: "coupon.receive" },
-  { label: "点击埋点", value: "tracking.click" },
-  { label: "无动作", value: "noop" },
-];
+const actionTypeOptions = LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS;
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
@@ -796,6 +795,11 @@ const selectedEventBindings = computed(() =>
     editorState.value.schema.actions ?? [],
     selectedNode.value?.events,
   ),
+);
+const actionFormItems = computed(() =>
+  createLowcodeActionFormItems(editorState.value.schema.actions ?? [], {
+    typeOptions: actionTypeOptions,
+  }),
 );
 const workspaceStats = computed<WorkspaceStat[]>(() =>
   createLowcodeWorkspaceStats(editorState.value.schema, {
@@ -3206,71 +3210,24 @@ function removeDataSource(index: number): void {
   };
 }
 
-function defaultActionParams(type: string): JsonObject {
-  if (type === "navigate") return { url: "/activity/demo", openInNewTab: false };
-  if (type === "coupon.receive") return { couponId: "coupon_demo" };
-  if (type === "tracking.click") return { eventName: "lowcode_click" };
-  return {};
-}
-
 function addAction(type = "navigate"): void {
-  const nextAction: LowcodeActionConfig = {
-    id: `act_${Date.now().toString(36)}`,
-    type,
-    params: defaultActionParams(type),
-  };
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      actions: [...(editorState.value.schema.actions ?? []), nextAction],
-    },
-    dirty: true,
-    lastAction: "addAction",
-  };
+  editorState.value = addLowcodeAction(editorState.value, type, {
+    typeOptions: actionTypeOptions,
+  });
 }
 
-function updateAction(index: number, patch: Partial<LowcodeActionConfig>): void {
-  const actions = [...(editorState.value.schema.actions ?? [])];
-  const current = actions[index];
-  if (!current) return;
-  actions[index] = {
-    ...current,
-    ...patch,
-  };
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      actions,
-    },
-    dirty: true,
-    lastAction: "updateAction",
-  };
+function updateAction(index: number, patch: Parameters<typeof updateLowcodeAction>[2]): void {
+  editorState.value = updateLowcodeAction(editorState.value, index, patch);
 }
 
 function updateActionId(index: number, nextId: string): void {
-  const actions = [...(editorState.value.schema.actions ?? [])];
-  const current = actions[index];
-  if (!current) return;
-  actions[index] = {
-    ...current,
-    id: nextId,
-  };
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      actions,
-      nodes: renameLowcodeActionRefsInNodes(editorState.value.schema.nodes, current.id, nextId),
-    },
-    dirty: true,
-    lastAction: "updateActionId",
-  };
+  editorState.value = renameLowcodeAction(editorState.value, index, nextId);
 }
 
 function updateActionType(index: number, type: string): void {
-  updateAction(index, { type, params: defaultActionParams(type) });
+  editorState.value = setLowcodeActionType(editorState.value, index, type, {
+    typeOptions: actionTypeOptions,
+  });
 }
 
 function updateActionParams(index: number, value: string): void {
@@ -3283,23 +3240,7 @@ function updateActionParams(index: number, value: string): void {
 }
 
 function removeAction(index: number): void {
-  const actions = [...(editorState.value.schema.actions ?? [])];
-  const [removed] = actions.splice(index, 1);
-  if (!removed) return;
-  editorState.value = {
-    ...editorState.value,
-    schema: {
-      ...editorState.value.schema,
-      actions,
-      nodes: removeLowcodeActionRefsFromNodes(editorState.value.schema.nodes, removed.id),
-    },
-    dirty: true,
-    lastAction: "removeAction",
-  };
-}
-
-function actionParamsText(action: LowcodeActionConfig): string {
-  return JSON.stringify(action.params ?? {}, null, 2);
+  editorState.value = removeLowcodeAction(editorState.value, index);
 }
 
 function bindSelectedEvent(eventName: string, actionId: string): void {
@@ -5290,18 +5231,18 @@ function formatReleaseTime(value: string): string {
         </div>
         <div class="data-source-list">
           <div
-            v-for="(action, index) in editorState.schema.actions ?? []"
-            :key="action.id"
+            v-for="(actionItem, index) in actionFormItems"
+            :key="actionItem.id"
             class="action-card"
           >
             <label class="field">
               <span>ID</span>
-              <input :value="action.id" @input="updateActionId(index, ($event.target as HTMLInputElement).value)" />
+              <input :value="actionItem.id" @input="updateActionId(index, ($event.target as HTMLInputElement).value)" />
             </label>
             <label class="field">
               <span>类型</span>
-              <select :value="action.type" @change="updateActionType(index, ($event.target as HTMLSelectElement).value)">
-                <option v-for="option in actionTypeOptions" :key="option.value" :value="option.value">
+              <select :value="actionItem.type" @change="updateActionType(index, ($event.target as HTMLSelectElement).value)">
+                <option v-for="option in actionTypeOptions" :key="option.type" :value="option.type">
                   {{ option.label }}
                 </option>
               </select>
@@ -5309,7 +5250,7 @@ function formatReleaseTime(value: string): string {
             <label class="field">
               <span>参数 JSON</span>
               <textarea
-                :value="actionParamsText(action)"
+                :value="actionItem.paramsText"
                 rows="4"
                 @change="updateActionParams(index, ($event.target as HTMLTextAreaElement).value)"
               />

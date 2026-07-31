@@ -292,6 +292,32 @@ export interface LowcodeEditorActionOption {
   description: string;
 }
 
+export interface LowcodeEditorActionTypeOption {
+  type: string;
+  label: string;
+  description?: string;
+  defaultParams?: JsonObject;
+}
+
+export interface LowcodeEditorActionFormItem {
+  id: string;
+  type: string;
+  typeLabel: string;
+  paramsText: string;
+  action: LowcodeActionConfig;
+}
+
+export interface CreateLowcodeActionConfigOptions {
+  id?: string;
+  now?: Date;
+  defaultParams?: JsonObject;
+  typeOptions?: readonly LowcodeEditorActionTypeOption[];
+}
+
+export interface CreateLowcodeActionFormItemsOptions {
+  typeOptions?: readonly LowcodeEditorActionTypeOption[];
+}
+
 export interface LowcodeEditorEventBindingItem {
   name: string;
   title: string;
@@ -569,6 +595,32 @@ const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "navigate", paramName: "url", label: "跳转 URL" },
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
   { actionType: "tracking.click", paramName: "eventName", label: "eventName" },
+];
+export const LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS: readonly LowcodeEditorActionTypeOption[] = [
+  {
+    type: "navigate",
+    label: "页面跳转",
+    description: "打开 H5 链接或业务路由",
+    defaultParams: { url: "/activity/demo", openInNewTab: false },
+  },
+  {
+    type: "coupon.receive",
+    label: "领取优惠券",
+    description: "触发优惠券领取动作",
+    defaultParams: { couponId: "coupon_demo" },
+  },
+  {
+    type: "tracking.click",
+    label: "点击埋点",
+    description: "上报运营点击事件",
+    defaultParams: { eventName: "lowcode_click" },
+  },
+  {
+    type: "noop",
+    label: "空动作",
+    description: "仅用于占位或调试",
+    defaultParams: {},
+  },
 ];
 const TEMPLATE_IMAGE_PROP_NAMES = ["imageUrl", "coverImageUrl", "logoImageUrl"];
 const TEMPLATE_TITLE_PROP_NAMES = ["title", "brandName", "text"];
@@ -857,6 +909,45 @@ export function createLowcodeActionOptions(
   }));
 }
 
+export function createLowcodeDefaultActionParams(
+  actionType: string,
+  typeOptions: readonly LowcodeEditorActionTypeOption[] = LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
+): JsonObject {
+  const option = typeOptions.find((item) => item.type === actionType);
+  return cloneJsonObject(option?.defaultParams ?? {});
+}
+
+export function createLowcodeActionConfig(
+  actionType = "navigate",
+  options: CreateLowcodeActionConfigOptions = {},
+): LowcodeActionConfig {
+  const now = options.now ?? new Date();
+  return {
+    id: options.id ?? `act_${now.getTime().toString(36)}`,
+    type: actionType,
+    params: cloneJsonObject(options.defaultParams ?? createLowcodeDefaultActionParams(actionType, options.typeOptions)),
+  };
+}
+
+export function formatLowcodeActionParamsText(action: LowcodeActionConfig): string {
+  return JSON.stringify(action.params ?? {}, null, 2);
+}
+
+export function createLowcodeActionFormItems(
+  actions: readonly LowcodeActionConfig[] = [],
+  options: CreateLowcodeActionFormItemsOptions = {},
+): LowcodeEditorActionFormItem[] {
+  const typeOptions = options.typeOptions ?? LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS;
+  const typeLabelMap = new Map(typeOptions.map((item) => [item.type, item.label]));
+  return actions.map((action) => ({
+    id: action.id,
+    type: action.type,
+    typeLabel: typeLabelMap.get(action.type) ?? action.type,
+    paramsText: formatLowcodeActionParamsText(action),
+    action,
+  }));
+}
+
 export function createLowcodeEventBindingItems(
   events: readonly LowcodeMaterialEventManifest[] = [],
   actions: readonly LowcodeActionConfig[] = [],
@@ -1018,6 +1109,109 @@ export function bindLowcodeNodeEvent(
       };
     },
     "bindNodeEvent",
+  );
+}
+
+export function addLowcodeAction(
+  state: LowcodeEditorState,
+  actionType = "navigate",
+  options: CreateLowcodeActionConfigOptions = {},
+): LowcodeEditorState {
+  const nextAction = createLowcodeActionConfig(actionType, options);
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      actions: [...(state.schema.actions ?? []), nextAction],
+    },
+    "addAction",
+  );
+}
+
+export function updateLowcodeAction(
+  state: LowcodeEditorState,
+  index: number,
+  patch: Partial<LowcodeActionConfig>,
+): LowcodeEditorState {
+  const actions = [...(state.schema.actions ?? [])];
+  const current = actions[index];
+  if (!current) return state;
+  actions[index] = {
+    ...current,
+    ...patch,
+  };
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      actions,
+    },
+    "updateAction",
+  );
+}
+
+export function renameLowcodeAction(
+  state: LowcodeEditorState,
+  index: number,
+  nextActionId: string,
+): LowcodeEditorState {
+  const actions = [...(state.schema.actions ?? [])];
+  const current = actions[index];
+  if (!current) return state;
+  actions[index] = {
+    ...current,
+    id: nextActionId,
+  };
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      actions,
+      nodes: renameLowcodeActionRefsInNodes(state.schema.nodes, current.id, nextActionId),
+    },
+    "updateActionId",
+  );
+}
+
+export function setLowcodeActionType(
+  state: LowcodeEditorState,
+  index: number,
+  actionType: string,
+  options: Pick<CreateLowcodeActionConfigOptions, "defaultParams" | "typeOptions"> = {},
+): LowcodeEditorState {
+  const actions = [...(state.schema.actions ?? [])];
+  const current = actions[index];
+  if (!current) return state;
+  actions[index] = {
+    ...current,
+    type: actionType,
+    params: cloneJsonObject(options.defaultParams ?? createLowcodeDefaultActionParams(actionType, options.typeOptions)),
+  };
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      actions,
+    },
+    "updateActionType",
+  );
+}
+
+export function removeLowcodeAction(
+  state: LowcodeEditorState,
+  index: number,
+): LowcodeEditorState {
+  const actions = [...(state.schema.actions ?? [])];
+  const [removed] = actions.splice(index, 1);
+  if (!removed) return state;
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      actions,
+      nodes: removeLowcodeActionRefsFromNodes(state.schema.nodes, removed.id),
+    },
+    "removeAction",
   );
 }
 

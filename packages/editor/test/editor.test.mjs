@@ -2,13 +2,17 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  addLowcodeAction,
   countLowcodeNodes,
   cloneLowcodePageSchema,
   createEditorState,
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   bindLowcodeNodeEvent,
+  createLowcodeActionConfig,
+  createLowcodeActionFormItems,
   createLowcodeDefaultListItem,
+  createLowcodeDefaultActionParams,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
@@ -37,6 +41,7 @@ import {
   filterLowcodeEditorCommands,
   filterLowcodeMaterialCatalog,
   flattenLowcodeNodes,
+  formatLowcodeActionParamsText,
   formatLowcodeEditorViewportTitle,
   formatLowcodeEditorDraftStatusText,
   formatLowcodeMaterialCatalogSummary,
@@ -53,6 +58,7 @@ import {
   isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
+  LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
   LOWCODE_EDITOR_PROP_GROUP_META,
@@ -63,8 +69,11 @@ import {
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
+  removeLowcodeAction,
   removeLowcodeActionRefsFromNodes,
   renameLowcodeActionRefsInNodes,
+  renameLowcodeAction,
+  setLowcodeActionType,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePreviewLinks,
@@ -72,6 +81,7 @@ import {
   toggleLowcodePropGroupCollapsed,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
+  updateLowcodeAction,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -822,6 +832,80 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     const cleanedNodes = removeLowcodeActionRefsFromNodes(boundState.schema.nodes, "go_home");
     assert.equal(cleanedNodes[0].children[0].events, undefined);
+  });
+
+  it("creates reusable action config models and state helpers", () => {
+    const actionTypeLabels = LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS.map((option) => option.label);
+    assert.deepEqual(actionTypeLabels, ["页面跳转", "领取优惠券", "点击埋点", "空动作"]);
+    assert.deepEqual(createLowcodeDefaultActionParams("navigate"), {
+      url: "/activity/demo",
+      openInNewTab: false,
+    });
+    assert.deepEqual(createLowcodeDefaultActionParams("unknown.action"), {});
+
+    const createdAction = createLowcodeActionConfig("coupon.receive", {
+      id: "receive_coupon",
+      now: new Date("2026-08-01T00:00:00.000Z"),
+    });
+    assert.deepEqual(createdAction, {
+      id: "receive_coupon",
+      type: "coupon.receive",
+      params: { couponId: "coupon_demo" },
+    });
+    assert.equal(formatLowcodeActionParamsText(createdAction), "{\n  \"couponId\": \"coupon_demo\"\n}");
+    assert.deepEqual(createLowcodeActionFormItems([createdAction]), [
+      {
+        id: "receive_coupon",
+        type: "coupon.receive",
+        typeLabel: "领取优惠券",
+        paramsText: "{\n  \"couponId\": \"coupon_demo\"\n}",
+        action: createdAction,
+      },
+    ]);
+
+    const state = createEditorState(createLowcodePageSchema({
+      pageId: "action_page",
+      title: "动作页面",
+      nodes: [
+        createLowcodeNode({
+          id: "button_1",
+          componentName: "ActionButton",
+          materialVersion: "1.0.0",
+          props: { text: "去首页" },
+          events: { click: { actionId: "go_home" } },
+        }),
+      ],
+      actions: [
+        { id: "go_home", type: "navigate", params: { url: "/" } },
+      ],
+    }));
+
+    const addedState = addLowcodeAction(state, "tracking.click", { id: "track_click" });
+    assert.equal(addedState.lastAction, "addAction");
+    assert.equal(addedState.dirty, true);
+    assert.equal(addedState.schema.actions.length, 2);
+    assert.deepEqual(addedState.schema.actions[1].params, { eventName: "lowcode_click" });
+
+    const patchedState = updateLowcodeAction(addedState, 1, {
+      params: { eventName: "hero_click" },
+    });
+    assert.equal(patchedState.lastAction, "updateAction");
+    assert.equal(patchedState.schema.actions[1].params.eventName, "hero_click");
+
+    const renamedState = renameLowcodeAction(patchedState, 0, "go_home_new");
+    assert.equal(renamedState.lastAction, "updateActionId");
+    assert.equal(renamedState.schema.actions[0].id, "go_home_new");
+    assert.equal(renamedState.schema.nodes[0].events.click.actionId, "go_home_new");
+
+    const typedState = setLowcodeActionType(renamedState, 0, "noop");
+    assert.equal(typedState.lastAction, "updateActionType");
+    assert.equal(typedState.schema.actions[0].type, "noop");
+    assert.deepEqual(typedState.schema.actions[0].params, {});
+
+    const removedState = removeLowcodeAction(typedState, 0);
+    assert.equal(removedState.lastAction, "removeAction");
+    assert.equal(removedState.schema.actions.length, 1);
+    assert.equal(removedState.schema.nodes[0].events, undefined);
   });
 
   it("creates version diff items and schema preview snippets", () => {
