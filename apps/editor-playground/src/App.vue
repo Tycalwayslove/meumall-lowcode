@@ -8,6 +8,7 @@ import {
   Database,
   Eye,
   GripVertical,
+  Image,
   Layers,
   MonitorSmartphone,
   PanelRight,
@@ -15,6 +16,7 @@ import {
   Redo2,
   RotateCcw,
   Save,
+  Search,
   Smartphone,
   Trash2,
   Undo2,
@@ -71,26 +73,67 @@ const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http:
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 
-const sampleAssets = [
+interface SampleAsset {
+  id: string;
+  title: string;
+  category: string;
+  url: string;
+  tags: string[];
+}
+
+interface SampleProduct {
+  id: string;
+  title: string;
+  priceText: string;
+  originPriceText?: string;
+  desc: string;
+  imageUrl: string;
+}
+
+const sampleAssets: SampleAsset[] = [
   {
+    id: "asset_hero_fashion",
     title: "活动女装横幅",
+    category: "活动横幅",
     url: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
+    tags: ["女装", "大促", "首屏"],
   },
   {
+    id: "asset_summer_banner",
     title: "夏季穿搭 Banner",
+    category: "活动横幅",
     url: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+    tags: ["夏季", "专题", "穿搭"],
   },
   {
+    id: "asset_product_display",
     title: "质感商品陈列",
+    category: "商品氛围",
     url: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80",
+    tags: ["商品", "陈列", "精选"],
+  },
+  {
+    id: "asset_coupon",
+    title: "新人券视觉",
+    category: "优惠券",
+    url: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=900&q=80",
+    tags: ["优惠券", "新人", "转化"],
+  },
+  {
+    id: "asset_flash_sale",
+    title: "限时秒杀氛围",
+    category: "商品氛围",
+    url: "https://images.unsplash.com/photo-1607082349566-187342175e2f?auto=format&fit=crop&w=900&q=80",
+    tags: ["秒杀", "活动", "促销"],
   },
 ];
 
-const sampleProducts = [
+const sampleProducts: SampleProduct[] = [
   {
     id: "sku_001",
     title: "轻盈通勤手提包",
     priceText: "¥199",
+    originPriceText: "¥299",
     desc: "活动价",
     imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
   },
@@ -98,6 +141,7 @@ const sampleProducts = [
     id: "sku_002",
     title: "夏季舒适凉鞋",
     priceText: "¥129",
+    originPriceText: "¥199",
     desc: "限时补贴",
     imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
   },
@@ -105,8 +149,25 @@ const sampleProducts = [
     id: "sku_003",
     title: "防晒轻薄衬衫",
     priceText: "¥159",
+    originPriceText: "¥239",
     desc: "热卖单品",
     imageUrl: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_004",
+    title: "清爽亚麻短裤",
+    priceText: "¥89",
+    originPriceText: "¥139",
+    desc: "新品上架",
+    imageUrl: "https://images.unsplash.com/photo-1506629905607-d405b7a30db9?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_005",
+    title: "小香风单肩包",
+    priceText: "¥169",
+    originPriceText: "¥259",
+    desc: "爆款返场",
+    imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=300&q=80",
   },
 ];
 
@@ -146,6 +207,11 @@ const releaseMessage = ref("");
 const configPlatformClient = localConfigPlatformClient;
 const releases = ref<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
+const assetKeyword = ref("");
+const assetCategory = ref("全部");
+const assetTargetPropName = ref("");
+const productKeyword = ref("");
+const selectedProductIds = ref<string[]>([]);
 const previewData = ref<JsonObject>({});
 const runtimePreviewData = ref<JsonObject>({});
 const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
@@ -191,6 +257,39 @@ const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.no
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
+const imagePropOptions = computed(() => {
+  const manifest = selectedManifest.value;
+  if (!manifest) return [];
+  return Object.entries(manifest.propsSchema)
+    .filter(([, propSchema]) => propSchema.setter === "image")
+    .map(([name, propSchema]) => ({ name, label: propSchema.label }));
+});
+const canUseAssetLibrary = computed(() => Boolean(selectedNode.value && imagePropOptions.value.length));
+const assetCategories = computed(() => ["全部", ...Array.from(new Set(sampleAssets.map((asset) => asset.category)))]);
+const filteredAssets = computed(() => {
+  const keyword = assetKeyword.value.trim().toLowerCase();
+  return sampleAssets.filter((asset) => {
+    const categoryMatched = assetCategory.value === "全部" || asset.category === assetCategory.value;
+    const keywordMatched =
+      !keyword ||
+      [asset.title, asset.category, ...asset.tags].some((value) => value.toLowerCase().includes(keyword));
+    return categoryMatched && keywordMatched;
+  });
+});
+const isProductMaterialSelected = computed(() =>
+  Boolean(selectedNode.value && ["ProductList", "FlashSaleList"].includes(selectedNode.value.componentName)),
+);
+const filteredProducts = computed(() => {
+  const keyword = productKeyword.value.trim().toLowerCase();
+  if (!keyword) return sampleProducts;
+  return sampleProducts.filter((product) =>
+    [product.id, product.title, product.desc].some((value) => value.toLowerCase().includes(keyword)),
+  );
+});
+const selectedProducts = computed(() => {
+  const selected = new Set(selectedProductIds.value);
+  return sampleProducts.filter((product) => selected.has(product.id));
+});
 const canMoveSelectedUp = computed(() => Boolean(selectedOutlineRow.value && selectedOutlineRow.value.index > 0));
 const canMoveSelectedDown = computed(() => {
   const row = selectedOutlineRow.value;
@@ -205,6 +304,28 @@ watch(
   (schema) => {
     schemaDraft.value = JSON.stringify(schema, null, 2);
   },
+);
+
+watch(
+  imagePropOptions,
+  (options) => {
+    if (!options.length) {
+      assetTargetPropName.value = "";
+      return;
+    }
+    if (!options.some((option) => option.name === assetTargetPropName.value)) {
+      assetTargetPropName.value = options[0]?.name ?? "";
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => selectedNode.value?.id,
+  () => {
+    selectedProductIds.value = getProductIdsFromNode(selectedNode.value);
+  },
+  { immediate: true },
 );
 
 watch(
@@ -254,7 +375,19 @@ function getSiblingCount(parentId?: string): number {
 
 function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
   const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
-  return sampleProducts.slice(0, limit) as JsonValue;
+  return sampleProducts.slice(0, limit).map((product) => ({ ...product })) as unknown as JsonValue;
+}
+
+function getProductIdsFromNode(node: LowcodeNode | undefined): string[] {
+  const items = node?.props.items;
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => {
+      if (!item || typeof item !== "object") return undefined;
+      const id = (item as { id?: unknown }).id;
+      return typeof id === "string" ? id : undefined;
+    })
+    .filter((id): id is string => Boolean(id));
 }
 
 async function refreshPreviewData(schema: LowcodePageSchema): Promise<void> {
@@ -398,6 +531,46 @@ function bindSelectedProductMaterialToDataSource(): void {
     dirty: true,
     lastAction: "bindSelectedProductMaterialToDataSource",
   };
+}
+
+function toggleProductSelection(productId: string): void {
+  const selected = new Set(selectedProductIds.value);
+  if (selected.has(productId)) {
+    selected.delete(productId);
+  } else {
+    selected.add(productId);
+  }
+  selectedProductIds.value = [...selected];
+}
+
+function applySelectedProductsToNode(): void {
+  if (!selectedNode.value || !isProductMaterialSelected.value) return;
+  const items = selectedProducts.value.map((product) => ({ ...product })) as unknown as JsonValue;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => {
+        const dataBinding = { ...(node.dataBinding ?? {}) };
+        delete dataBinding.items;
+        return {
+          ...node,
+          props: {
+            ...node.props,
+            items,
+          },
+          dataBinding: Object.keys(dataBinding).length ? dataBinding : undefined,
+        };
+      }),
+    },
+    dirty: true,
+    lastAction: "applySelectedProductsToNode",
+  };
+}
+
+function clearSelectedProducts(): void {
+  selectedProductIds.value = [];
+  applySelectedProductsToNode();
 }
 
 function updateNodeById(nodes: LowcodeNode[], nodeId: string, updater: (node: LowcodeNode) => LowcodeNode): LowcodeNode[] {
@@ -794,11 +967,14 @@ function applyAsset(propName: string, url: string): void {
   updateProp(propName, propSchema, url);
 }
 
+function applyAssetToSelected(asset: SampleAsset): void {
+  if (!assetTargetPropName.value) return;
+  applyAsset(assetTargetPropName.value, asset.url);
+}
+
 function applySampleProducts(): void {
-  const manifest = selectedManifest.value;
-  const propSchema = manifest?.propsSchema.items;
-  if (!propSchema) return;
-  updateProp("items", propSchema, JSON.stringify(sampleProducts, null, 2));
+  selectedProductIds.value = sampleProducts.slice(0, 3).map((product) => product.id);
+  applySelectedProductsToNode();
 }
 
 function isStructured(propSchema: LowcodePropSchema): boolean {
@@ -1243,6 +1419,96 @@ function formatReleaseTime(value: string): string {
             <span>{{ selectedNode.id }}</span>
           </div>
 
+          <div v-if="canUseAssetLibrary" class="resource-panel">
+            <div class="resource-panel-head">
+              <div>
+                <strong>
+                  <Image :size="15" />
+                  <span>素材库</span>
+                </strong>
+                <small>选择图片后写入当前节点</small>
+              </div>
+              <select v-model="assetTargetPropName" aria-label="素材写入字段">
+                <option v-for="option in imagePropOptions" :key="option.name" :value="option.name">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div class="resource-filters">
+              <label class="search-field">
+                <Search :size="14" />
+                <input v-model="assetKeyword" placeholder="搜索素材" />
+              </label>
+              <select v-model="assetCategory" aria-label="素材分类">
+                <option v-for="category in assetCategories" :key="category" :value="category">
+                  {{ category }}
+                </option>
+              </select>
+            </div>
+            <div class="asset-library">
+              <button
+                v-for="asset in filteredAssets"
+                :key="asset.id"
+                type="button"
+                class="asset-card"
+                @click="applyAssetToSelected(asset)"
+              >
+                <img :src="asset.url" alt="" />
+                <span>
+                  <strong>{{ asset.title }}</strong>
+                  <small>{{ asset.category }}</small>
+                </span>
+              </button>
+            </div>
+            <div v-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
+          </div>
+
+          <div v-if="isProductMaterialSelected" class="resource-panel">
+            <div class="resource-panel-head">
+              <div>
+                <strong>
+                  <Database :size="15" />
+                  <span>商品选择器</span>
+                </strong>
+                <small>已选 {{ selectedProducts.length }} 个商品</small>
+              </div>
+              <button type="button" class="mini-button" @click="applySampleProducts">示例商品</button>
+            </div>
+            <label class="search-field product-search">
+              <Search :size="14" />
+              <input v-model="productKeyword" placeholder="搜索商品名称、SKU 或标签" />
+            </label>
+            <div v-if="selectedNode.dataBinding?.items" class="resource-hint">
+              当前节点正在绑定数据源 products，写入静态商品会取消本节点 items 绑定。
+            </div>
+            <div class="product-picker">
+              <label
+                v-for="product in filteredProducts"
+                :key="product.id"
+                class="product-option"
+                :class="{ selected: selectedProductIds.includes(product.id) }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="selectedProductIds.includes(product.id)"
+                  @change="toggleProductSelection(product.id)"
+                />
+                <img :src="product.imageUrl" alt="" />
+                <span>
+                  <strong>{{ product.title }}</strong>
+                  <small>{{ product.id }} / {{ product.desc }}</small>
+                  <em>{{ product.priceText }}</em>
+                </span>
+              </label>
+            </div>
+            <div v-if="!filteredProducts.length" class="mini-empty">没有匹配商品</div>
+            <div class="resource-actions">
+              <button type="button" @click="applySelectedProductsToNode">应用选中商品</button>
+              <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
+              <button type="button" class="ghost-danger" @click="clearSelectedProducts">清空静态商品</button>
+            </div>
+          </div>
+
           <label
             v-for="(propSchema, propName) in selectedManifest.propsSchema"
             :key="String(propName)"
@@ -1267,17 +1533,6 @@ function formatReleaseTime(value: string): string {
               :value="asText(selectedNode.props[String(propName)])"
               @input="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).value)"
             />
-            <div v-if="propSchema.setter === 'image'" class="asset-picker">
-              <button
-                v-for="asset in sampleAssets"
-                :key="asset.url"
-                type="button"
-                @click="applyAsset(String(propName), asset.url)"
-              >
-                <img :src="asset.url" alt="" />
-                <span>{{ asset.title }}</span>
-              </button>
-            </div>
             <div v-if="['ProductList', 'FlashSaleList'].includes(selectedNode.componentName) && String(propName) === 'items'" class="quick-actions">
               <button type="button" @click="applySampleProducts">使用示例商品</button>
               <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>

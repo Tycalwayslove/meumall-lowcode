@@ -669,6 +669,267 @@ button:disabled {
   font-size: 12px;
 }
 
+.resource-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.resource-panel-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.resource-panel-head > div {
+  min-width: 0;
+}
+
+.resource-panel-head strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #111827;
+  font-size: 13px;
+}
+
+.resource-panel-head small {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.resource-panel-head select {
+  max-width: 128px;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 8px;
+  color: #111827;
+  background: #fff;
+  font-size: 12px;
+}
+
+.resource-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 8px;
+}
+
+.resource-filters select {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 8px;
+  color: #111827;
+  background: #fff;
+  font-size: 12px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  background: #f8fafc;
+}
+
+.search-field input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  color: #111827;
+  background: transparent;
+  outline: 0;
+  font-size: 12px;
+}
+
+.product-search {
+  width: 100%;
+}
+
+.asset-library {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 238px;
+  overflow: auto;
+}
+
+.asset-card {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  padding: 6px;
+  color: #334155;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.asset-card:hover,
+.product-option:hover {
+  border-color: #94a3b8;
+}
+
+.asset-card img {
+  width: 100%;
+  aspect-ratio: 1.35;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.asset-card span,
+.asset-card strong,
+.asset-card small {
+  display: block;
+  min-width: 0;
+}
+
+.asset-card strong {
+  overflow: hidden;
+  color: #111827;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.asset-card small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.resource-hint {
+  padding: 8px 9px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #9a3412;
+  background: #fff7ed;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.product-picker {
+  display: grid;
+  gap: 8px;
+  max-height: 292px;
+  overflow: auto;
+}
+
+.product-option {
+  display: grid;
+  grid-template-columns: 16px 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.product-option.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.product-option input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.product-option img {
+  width: 48px;
+  aspect-ratio: 1;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.product-option span,
+.product-option strong,
+.product-option small,
+.product-option em {
+  display: block;
+  min-width: 0;
+}
+
+.product-option strong {
+  overflow: hidden;
+  color: #111827;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.product-option small {
+  margin-top: 2px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.product-option em {
+  margin-top: 3px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.resource-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.resource-actions button,
+.mini-button {
+  min-height: 30px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #1f2937;
+  background: #fff;
+  font-size: 12px;
+}
+
+.resource-actions .ghost-danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff5f5;
+}
+
+.mini-empty {
+  display: grid;
+  min-height: 42px;
+  place-items: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 12px;
+}
+
 .inspector-actions {
   flex-wrap: wrap;
   align-items: stretch;
