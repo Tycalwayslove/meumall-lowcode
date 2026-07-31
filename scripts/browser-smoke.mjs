@@ -449,6 +449,16 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
+  log("检查留资表单通用物料");
+  const nodeCountBeforeLeadForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "留资表单");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：留资表单')");
+  await page.clickByText(".command-palette-item", "添加物料：留资表单");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeLeadForm)}`);
+  await page.waitForExpression("document.body.innerText.includes('活动预约表单') && document.body.innerText.includes('提交预约') && document.body.innerText.includes('预约人数')");
+  log("通过：留资表单可从快捷命令添加并在 Vue H5 画布渲染");
+
   log("检查列表项图片素材选择");
   const nodeCountBeforeImageCardGrid = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -716,6 +726,7 @@ async function main() {
       { label: "底部转化条物料存在", expression: "document.body.innerText.includes('底部转化条')" },
       { label: "区块标题物料存在", expression: "document.body.innerText.includes('区块标题')" },
       { label: "图片卡片宫格物料存在", expression: "document.body.innerText.includes('图片卡片宫格')" },
+      { label: "留资表单物料存在", expression: "document.body.innerText.includes('留资表单')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
       { label: "默认大促模板包含品牌专题", expression: "document.body.innerText.includes('夏日品牌馆')" },
@@ -752,6 +763,7 @@ async function main() {
       { label: "React H5 商品榜单已渲染", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "React H5 区块标题已渲染", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
       { label: "React H5 图片卡片宫格已渲染", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
+      { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
       { label: "React H5 底部转化条已渲染", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);

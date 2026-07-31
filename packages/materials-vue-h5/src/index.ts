@@ -2,7 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcImage, MlcPrice, MlcTag, MlcText } from "./primitives/index.js";
+import { MlcButton, MlcImage, MlcInput, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -342,6 +342,131 @@ export const ImageCardGrid = defineComponent({
             }),
           ),
         ],
+      );
+    };
+  },
+});
+
+export const LeadFormBlock = defineComponent({
+  name: "LeadFormBlock",
+  props: materialPropOptions,
+  setup(props) {
+    const nameValue = ref("");
+    const phoneValue = ref("");
+    const noteValue = ref("");
+    const submitted = ref(false);
+    const runtimeProps = () => props.props ?? {};
+    const minQuantity = () => Math.max(1, number(runtimeProps().quantityMin, 1));
+    const maxQuantity = () => Math.max(minQuantity(), number(runtimeProps().quantityMax, 9));
+    const quantityValue = ref(1);
+    const agreed = ref(false);
+
+    return () => {
+      const currentProps = runtimeProps();
+      const currentMinQuantity = minQuantity();
+      const currentMaxQuantity = maxQuantity();
+      if (quantityValue.value < currentMinQuantity || quantityValue.value > currentMaxQuantity) {
+        quantityValue.value = Math.min(currentMaxQuantity, Math.max(currentMinQuantity, number(currentProps.quantityDefault, 1)));
+      }
+      if (currentProps.showAgreement === false && !agreed.value) agreed.value = true;
+      const showName = currentProps.showName !== false;
+      const showPhone = currentProps.showPhone !== false;
+      const showNote = currentProps.showNote !== false;
+      const showQuantity = currentProps.showQuantity !== false;
+      const showAgreement = currentProps.showAgreement !== false;
+      const submitDisabled = showAgreement && !agreed.value;
+      const accentColor = text(currentProps.accentColor, "#0f766e");
+      const onSubmit = currentProps.onSubmit;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-lead-form-block",
+          style: {
+            padding: `${number(currentProps.paddingY, 16)}px 12px`,
+            background: text(currentProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "form",
+          {
+            style: {
+              display: "grid",
+              gap: "12px",
+              borderRadius: `${number(currentProps.radius, 14)}px`,
+              padding: "14px",
+              color: text(currentProps.titleColor, "#111827"),
+              background: text(currentProps.cardColor, "#ffffff"),
+              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+            } satisfies CSSProperties,
+            onSubmit: (event: Event) => {
+              event.preventDefault();
+              if (submitDisabled) return;
+              const payload = {
+                name: nameValue.value,
+                phone: phoneValue.value,
+                note: noteValue.value,
+                quantity: quantityValue.value,
+                agreed: agreed.value,
+              };
+              submitted.value = true;
+              if (typeof onSubmit === "function") onSubmit(payload);
+            },
+          },
+          [
+            h("div", { style: { display: "grid", gap: "5px" } }, [
+              h(MlcText, { as: "strong", size: 18, weight: 900, style: { color: text(currentProps.titleColor, "#111827") } }, () => text(currentProps.title, "活动预约表单")),
+              h(MlcText, { as: "p", tone: "muted", style: { color: text(currentProps.textColor, "#64748b") } }, () => text(currentProps.description, "留下联系方式，运营可在后续接入真实提交服务。")),
+            ]),
+            showName
+              ? h("label", { style: { display: "grid", gap: "6px" } }, [
+                  h(MlcText, { as: "span", size: 12, weight: 800, style: { color: text(currentProps.textColor, "#64748b") } }, () => text(currentProps.nameLabel, "姓名")),
+                  h(MlcInput, { value: nameValue.value, placeholder: text(currentProps.namePlaceholder, "请输入姓名"), onChange: (value: string) => (nameValue.value = value) }),
+                ])
+              : null,
+            showPhone
+              ? h("label", { style: { display: "grid", gap: "6px" } }, [
+                  h(MlcText, { as: "span", size: 12, weight: 800, style: { color: text(currentProps.textColor, "#64748b") } }, () => text(currentProps.phoneLabel, "手机号")),
+                  h(MlcInput, { value: phoneValue.value, type: "tel", placeholder: text(currentProps.phonePlaceholder, "请输入手机号"), onChange: (value: string) => (phoneValue.value = value) }),
+                ])
+              : null,
+            showQuantity
+              ? h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" } }, [
+                  h(MlcText, { as: "span", size: 13, weight: 800, style: { color: text(currentProps.textColor, "#64748b") } }, () => text(currentProps.quantityLabel, "预约人数")),
+                  h(MlcStepper, { value: quantityValue.value, min: currentMinQuantity, max: currentMaxQuantity, onChange: (value: number) => (quantityValue.value = value) }),
+                ])
+              : null,
+            showNote
+              ? h("label", { style: { display: "grid", gap: "6px" } }, [
+                  h(MlcText, { as: "span", size: 12, weight: 800, style: { color: text(currentProps.textColor, "#64748b") } }, () => text(currentProps.noteLabel, "备注")),
+                  h(MlcTextarea, { value: noteValue.value, placeholder: text(currentProps.notePlaceholder, "可填写偏好、尺码或到店时间"), onChange: (value: string) => (noteValue.value = value) }),
+                ])
+              : null,
+            showAgreement
+              ? h(MlcSwitch, {
+                  checked: agreed.value,
+                  onChange: (value: boolean) => (agreed.value = value),
+                }, () => text(currentProps.agreementText, "我已阅读并同意活动规则"))
+              : null,
+            h(
+              MlcButton,
+              {
+                type: "submit",
+                block: true,
+                disabled: submitDisabled,
+                style: {
+                  background: accentColor,
+                  borderColor: accentColor,
+                  color: text(currentProps.buttonTextColor, "#ffffff"),
+                } satisfies CSSProperties,
+              },
+              () => text(currentProps.submitText, "提交预约"),
+            ),
+            submitted.value
+              ? h(MlcText, { as: "p", size: 12, tone: "accent", style: { color: accentColor, textAlign: "center" } }, () => text(currentProps.successText, "已提交，本地示例不会保存真实数据。"))
+              : null,
+          ],
+        ),
       );
     };
   },
@@ -2058,6 +2183,77 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         items: { label: "卡片列表", type: "array", setter: "textarea", defaultValue: [] },
       },
       events: [{ name: "onItemClick", title: "点击卡片" }],
+    }),
+  },
+  {
+    component: LeadFormBlock,
+    manifest: createMaterialManifest({
+      componentName: "LeadFormBlock",
+      materialVersion: "0.1.0",
+      title: "留资表单",
+      category: "form",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "活动预约表单",
+        description: "留下联系方式，运营可在后续接入真实提交服务。",
+        showName: true,
+        showPhone: true,
+        showQuantity: true,
+        showNote: true,
+        showAgreement: true,
+        nameLabel: "姓名",
+        phoneLabel: "手机号",
+        quantityLabel: "预约人数",
+        noteLabel: "备注",
+        namePlaceholder: "请输入姓名",
+        phonePlaceholder: "请输入手机号",
+        notePlaceholder: "可填写偏好、尺码或到店时间",
+        quantityMin: 1,
+        quantityMax: 9,
+        quantityDefault: 1,
+        agreementText: "我已阅读并同意活动规则",
+        submitText: "提交预约",
+        successText: "已提交，本地示例不会保存真实数据。",
+        backgroundColor: "#f3f4f6",
+        cardColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        buttonTextColor: "#ffffff",
+        radius: 14,
+        paddingY: 16,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "活动预约表单" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "留下联系方式，运营可在后续接入真实提交服务。" },
+        showName: { label: "显示姓名", type: "boolean", setter: "switch", defaultValue: true },
+        showPhone: { label: "显示手机号", type: "boolean", setter: "switch", defaultValue: true },
+        showQuantity: { label: "显示人数", type: "boolean", setter: "switch", defaultValue: true },
+        showNote: { label: "显示备注", type: "boolean", setter: "switch", defaultValue: true },
+        showAgreement: { label: "显示协议", type: "boolean", setter: "switch", defaultValue: true },
+        nameLabel: { label: "姓名标签", type: "string", setter: "input", defaultValue: "姓名" },
+        phoneLabel: { label: "手机号标签", type: "string", setter: "input", defaultValue: "手机号" },
+        quantityLabel: { label: "人数标签", type: "string", setter: "input", defaultValue: "预约人数" },
+        noteLabel: { label: "备注标签", type: "string", setter: "input", defaultValue: "备注" },
+        namePlaceholder: { label: "姓名提示", type: "string", setter: "input", defaultValue: "请输入姓名" },
+        phonePlaceholder: { label: "手机号提示", type: "string", setter: "input", defaultValue: "请输入手机号" },
+        notePlaceholder: { label: "备注提示", type: "string", setter: "textarea", defaultValue: "可填写偏好、尺码或到店时间" },
+        quantityMin: { label: "人数最小值", type: "number", setter: "number", defaultValue: 1 },
+        quantityMax: { label: "人数最大值", type: "number", setter: "number", defaultValue: 9 },
+        quantityDefault: { label: "人数默认值", type: "number", setter: "number", defaultValue: 1 },
+        agreementText: { label: "协议文案", type: "string", setter: "textarea", defaultValue: "我已阅读并同意活动规则" },
+        submitText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "提交预约" },
+        successText: { label: "提交提示", type: "string", setter: "input", defaultValue: "已提交，本地示例不会保存真实数据。" },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        cardColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 14 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 16 },
+      },
+      events: [{ name: "onSubmit", title: "提交表单" }],
     }),
   },
   {

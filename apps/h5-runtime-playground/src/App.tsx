@@ -450,6 +450,23 @@ const sampleSchema = createLowcodePageSchema({
       ],
     },
     {
+      id: "node_lead_form",
+      componentName: "LeadFormBlock",
+      materialVersion: "0.1.0",
+      props: {
+        title: "预约专属搭配顾问",
+        description: "填写基础信息，后续可对接真实表单提交服务。",
+        submitText: "提交预约",
+        successText: "已提交预约，本示例仅验证本地交互。",
+        accentColor: "#0f766e",
+        backgroundColor: "#f3f4f6",
+        cardColor: "#ffffff",
+      },
+      events: {
+        onSubmit: { actionId: "track_lead_submit" },
+      },
+    },
+    {
       id: "node_spacer",
       componentName: "SpacerBlock",
       materialVersion: "0.1.0",
@@ -592,6 +609,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "floor_anchor_click",
+      },
+    },
+    {
+      id: "track_lead_submit",
+      type: "tracking.click",
+      params: {
+        eventName: "lead_form_submit",
       },
     },
   ],

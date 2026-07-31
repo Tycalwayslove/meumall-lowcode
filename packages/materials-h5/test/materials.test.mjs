@@ -10,6 +10,7 @@ import {
   FlashSaleList,
   FloorAnchorNav,
   h5Materials,
+  LeadFormBlock,
   LiveEntry,
   NavGrid,
   ProductRankList,
@@ -64,7 +65,7 @@ describe("MeuMall H5 material manifests", () => {
   });
 
   it("keeps runtime primitives out of material registries", () => {
-    const primitiveNames = ["MlcButton", "MlcImage", "MlcTag", "MlcText", "MlcPrice"];
+    const primitiveNames = ["MlcButton", "MlcImage", "MlcTag", "MlcText", "MlcPrice", "MlcInput", "MlcTextarea", "MlcSwitch", "MlcStepper"];
 
     for (const name of primitiveNames) {
       assert.equal(manifestNames(h5Materials).includes(name), false, `${name} should not be a React material`);
@@ -131,6 +132,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(flashSaleTypes.has("MlcTag"), true);
     assert.equal(flashSaleTypes.has("MlcText"), true);
     assert.equal(flashSaleTypes.has("MlcPrice"), true);
+    functionSourceIncludes(LeadFormBlock, ["MlcInput", "MlcTextarea", "MlcSwitch", "MlcStepper", "MlcButton", "MlcText"]);
   });
 
   it("registers the activity rule modal material", () => {
@@ -172,6 +174,18 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.title, "专题会场");
     assert.equal(material.manifest.propsSchema.items.setter, "textarea");
     assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
+  });
+
+  it("registers the lead form block material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "LeadFormBlock");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "留资表单");
+    assert.equal(material.manifest.category, "form");
+    assert.equal(material.manifest.defaultProps.submitText, "提交预约");
+    assert.equal(material.manifest.propsSchema.showAgreement.setter, "switch");
+    assert.equal(material.manifest.propsSchema.quantityMax.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onSubmit");
   });
 
   it("registers the coupon bundle material", () => {
