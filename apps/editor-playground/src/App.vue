@@ -44,6 +44,7 @@ import {
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
+  createLowcodeEditorPermissionState,
   createLowcodeEventBindingItems,
   createLowcodeMaterialDetailDataSourceSlotItems,
   createLowcodeMaterialDetailEventItems,
@@ -85,6 +86,7 @@ import {
   formatLowcodeReleaseTime,
   formatLowcodeVersionDiffSummary,
   getLowcodeEditorViewportPreset,
+  getLowcodeEditorActionDisabledReason,
   formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
@@ -92,6 +94,7 @@ import {
   insertLowcodeCanvasNodeByHint,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeFavoriteMaterial,
+  isLowcodeEditorActionAllowed,
   isLowcodeNodeSelected,
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
@@ -172,6 +175,7 @@ import {
   type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
   type LowcodeEditorNodeOperationAction as NodeContextAction,
   type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
+  type LowcodeEditorPermissionAction,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -680,6 +684,7 @@ const canMoveSelectedDown = computed(() => {
   if (!row) return false;
   return row.index < getSiblingCount(row.parentId) - 1;
 });
+const editorPermissionState = computed(() => createLowcodeEditorPermissionState());
 const nodeContextMenuStyle = computed<CSSProperties>(() => {
   const menu = nodeContextMenu.value;
   if (!menu) return {};
@@ -688,12 +693,53 @@ const nodeContextMenuStyle = computed<CSSProperties>(() => {
     top: `${menu.y}px`,
   };
 });
+function canUseEditorAction(action: LowcodeEditorPermissionAction): boolean {
+  return isLowcodeEditorActionAllowed(editorPermissionState.value, action);
+}
+
+function isEditorActionDisabled(action: LowcodeEditorPermissionAction): boolean {
+  return !canUseEditorAction(action);
+}
+
+function getEditorActionDisabledReason(action: LowcodeEditorPermissionAction): string | undefined {
+  return getLowcodeEditorActionDisabledReason(editorPermissionState.value, action);
+}
+
+function createPermissionAwareDescription(action: LowcodeEditorPermissionAction, description: string): string {
+  return getEditorActionDisabledReason(action) ?? description;
+}
+
+function isCommandActionDisabled(action: LowcodeEditorPermissionAction, disabled = false): boolean {
+  return disabled || isEditorActionDisabled(action);
+}
+
+const topToolbarDisabledActions = computed<Partial<Record<LowcodeEditorPermissionAction, string>>>(() => {
+  const actions: LowcodeEditorPermissionAction[] = [
+    "page.create",
+    "draft.save",
+    "schema.export",
+    "schema.import",
+    "preview.create",
+    "publish.submit",
+    "runtime.open",
+  ];
+  return actions.reduce<Partial<Record<LowcodeEditorPermissionAction, string>>>((disabledActions, action) => {
+    const reason = getEditorActionDisabledReason(action);
+    if (reason) disabledActions[action] = reason;
+    return disabledActions;
+  }, {});
+});
+
 const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => createLowcodeNodeOperationItems({
-  canInsert: Boolean(selectedInsertManifest.value),
-  canAddInside: Boolean(selectedNodeIsContainer.value && selectedInsertManifest.value),
-  canMoveUp: canMoveSelectedUp.value,
-  canMoveDown: canMoveSelectedDown.value,
-  canPaste: Boolean(editorState.value.clipboard),
+  canInsert: Boolean(selectedInsertManifest.value) && canUseEditorAction("node.insert"),
+  canAddInside: Boolean(selectedNodeIsContainer.value && selectedInsertManifest.value) && canUseEditorAction("node.insert"),
+  canMoveUp: canMoveSelectedUp.value && canUseEditorAction("node.move"),
+  canMoveDown: canMoveSelectedDown.value && canUseEditorAction("node.move"),
+  canRename: canUseEditorAction("node.rename"),
+  canCopy: canUseEditorAction("node.copy"),
+  canPaste: Boolean(editorState.value.clipboard) && canUseEditorAction("node.paste"),
+  canDuplicate: canUseEditorAction("node.duplicate"),
+  canDelete: canUseEditorAction("node.delete"),
 }));
 const nodeOperationItemMap = computed(() => new Map(
   nodeContextMenuItems.value.map((item) => [item.action, item]),
@@ -883,8 +929,9 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     id: "open-page-start-wizard",
     title: "新建页面",
     group: "常用操作",
-    description: "从空白页或模板开始搭建新的运营 H5。",
+    description: createPermissionAwareDescription("page.create", "从空白页或模板开始搭建新的运营 H5。"),
     keywords: ["new", "create", "start", "blank", "template", "新建", "页面", "模板", "空白"],
+    disabled: isCommandActionDisabled("page.create"),
     run: openPageStartWizard,
   },
   {
@@ -921,90 +968,102 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     id: "save-draft",
     title: "保存草稿",
     group: "常用操作",
-    description: editorState.value.dirty ? "保存当前页面到本地 mock 配置平台。" : "当前页面已保存。",
+    description: createPermissionAwareDescription(
+      "draft.save",
+      editorState.value.dirty ? "保存当前页面到本地 mock 配置平台。" : "当前页面已保存。",
+    ),
     keywords: ["save", "草稿", "保存"],
+    disabled: isCommandActionDisabled("draft.save"),
     run: saveSchema,
   },
   {
     id: "save-template",
     title: "保存为本地模板",
     group: "常用操作",
-    description: "把当前页面沉淀为可复用的本地模板。",
+    description: createPermissionAwareDescription("template.save", "把当前页面沉淀为可复用的本地模板。"),
     keywords: ["template", "save", "模板", "保存为模板", "复用"],
+    disabled: isCommandActionDisabled("template.save"),
     run: saveCurrentPageAsLocalTemplate,
   },
   {
     id: "export-schema",
     title: "导出页面 Schema",
     group: "常用操作",
-    description: "将当前页面配置下载为 JSON 文件。",
+    description: createPermissionAwareDescription("schema.export", "将当前页面配置下载为 JSON 文件。"),
     keywords: ["export", "download", "schema", "json", "导出", "下载"],
+    disabled: isCommandActionDisabled("schema.export"),
     run: exportCurrentSchema,
   },
   {
     id: "import-schema",
     title: "导入页面 Schema",
     group: "常用操作",
-    description: "从本地 JSON 文件导入并校验页面配置。",
+    description: createPermissionAwareDescription("schema.import", "从本地 JSON 文件导入并校验页面配置。"),
     keywords: ["import", "upload", "schema", "json", "导入", "上传"],
+    disabled: isCommandActionDisabled("schema.import"),
     run: triggerSchemaImport,
   },
   {
     id: "create-preview",
     title: "生成预览链接",
     group: "常用操作",
-    description: "通过发布检查后生成 preview release。",
+    description: createPermissionAwareDescription("preview.create", "通过发布检查后生成 preview release。"),
     keywords: ["preview", "release", "预览链接"],
-    disabled: hasPublishBlockingErrors.value,
+    disabled: isCommandActionDisabled("preview.create", hasPublishBlockingErrors.value),
     run: createPreviewRelease,
   },
   {
     id: "publish-page",
     title: "发布当前页面",
     group: "常用操作",
-    description: "通过发布检查后生成 published release。",
+    description: createPermissionAwareDescription("publish.submit", "通过发布检查后生成 published release。"),
     keywords: ["publish", "发布", "上线"],
-    disabled: hasPublishBlockingErrors.value,
+    disabled: isCommandActionDisabled("publish.submit", hasPublishBlockingErrors.value),
     run: publishCurrentPage,
   },
   {
     id: "open-runtime",
     title: "打开已发布 H5",
     group: "常用操作",
-    description: "用内置 runtime 打开当前 pageId 的页面。",
+    description: createPermissionAwareDescription("runtime.open", "用内置 runtime 打开当前 pageId 的页面。"),
     keywords: ["runtime", "h5", "打开"],
+    disabled: isCommandActionDisabled("runtime.open"),
     run: () => openRuntime(),
   },
   {
     id: "open-react-runtime",
     title: "打开 React H5 预览",
     group: "常用操作",
-    description: "把当前 schema 交给 React H5 runtime 渲染。",
+    description: createPermissionAwareDescription("runtime.open", "把当前 schema 交给 React H5 runtime 渲染。"),
     keywords: ["react", "handoff", "h5"],
+    disabled: isCommandActionDisabled("runtime.open"),
     run: () => openReactH5Runtime(),
   },
   {
     id: "clear-canvas",
     title: "清空画布",
     group: "常用操作",
-    description: "保留页面配置，移除当前所有节点。",
+    description: createPermissionAwareDescription("canvas.clear", "保留页面配置，移除当前所有节点。"),
     keywords: ["clear", "blank", "清空", "空白"],
+    disabled: isCommandActionDisabled("canvas.clear"),
     run: clearCanvas,
   },
   ...materials.map((material): CommandPaletteItem => ({
     id: `material-${material.manifest.componentName}`,
     title: `添加物料：${material.manifest.title}`,
     group: "物料",
-    description: `${material.manifest.category} / ${material.manifest.componentName}`,
+    description: createPermissionAwareDescription("material.insert", `${material.manifest.category} / ${material.manifest.componentName}`),
     keywords: [material.manifest.title, material.manifest.componentName, material.manifest.category],
+    disabled: isCommandActionDisabled("material.insert"),
     run: () => addMaterial(material.manifest),
   })),
   ...getAllPageTemplates().map((template): CommandPaletteItem => ({
     id: `template-${template.id}`,
     title: `应用模板：${template.title}`,
     group: "模板",
-    description: `${template.category} / ${template.description}`,
+    description: createPermissionAwareDescription("template.apply", `${template.category} / ${template.description}`),
     keywords: [template.title, template.description, template.category, ...(template.tags ?? [])],
+    disabled: isCommandActionDisabled("template.apply"),
     run: () => applyTemplate({ id: template.id }),
   })),
 ]);
@@ -3155,6 +3214,7 @@ function rollbackPublishSelectedRelease(): void {
       :mode="editorState.mode"
       :can-undo="Boolean(editorState.history.past.length)"
       :can-redo="Boolean(editorState.history.future.length)"
+      :disabled-actions="topToolbarDisabledActions"
       @open-command="openCommandPalette"
       @open-page-start="openPageStartWizard"
       @set-mode="applyEditorMode"

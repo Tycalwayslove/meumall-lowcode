@@ -353,6 +353,47 @@ export interface FilterLowcodeEditorCommandsOptions {
   includeDisabled?: boolean;
 }
 
+export type LowcodeEditorPermissionAction =
+  | "page.create"
+  | "draft.save"
+  | "schema.import"
+  | "schema.export"
+  | "preview.create"
+  | "publish.submit"
+  | "runtime.open"
+  | "template.save"
+  | "template.apply"
+  | "canvas.clear"
+  | "material.insert"
+  | "node.insert"
+  | "node.move"
+  | "node.copy"
+  | "node.paste"
+  | "node.duplicate"
+  | "node.delete"
+  | "node.rename";
+
+export interface LowcodeEditorPermissionDecision {
+  action: LowcodeEditorPermissionAction;
+  allowed: boolean;
+  reason?: string;
+}
+
+export type LowcodeEditorPermissionInput =
+  | boolean
+  | {
+      allowed: boolean;
+      reason?: string;
+    };
+
+export type LowcodeEditorPermissionState = Record<LowcodeEditorPermissionAction, LowcodeEditorPermissionDecision>;
+
+export interface CreateLowcodeEditorPermissionStateOptions {
+  decisions?: Partial<Record<LowcodeEditorPermissionAction, LowcodeEditorPermissionInput>>;
+  readonly?: boolean;
+  readonlyReason?: string;
+}
+
 export type LowcodeEditorNodeOperationAction =
   | "rename"
   | "insertBefore"
@@ -386,7 +427,11 @@ export interface CreateLowcodeNodeOperationItemsOptions {
   canAddInside?: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  canRename?: boolean;
+  canCopy?: boolean;
   canPaste?: boolean;
+  canDuplicate?: boolean;
+  canDelete?: boolean;
 }
 
 export interface LowcodeEditorKeyboardShortcutLike {
@@ -906,6 +951,46 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 ] as const satisfies readonly LowcodeEditorViewportPreset[];
 
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
+
+export const LOWCODE_EDITOR_PERMISSION_ACTIONS = [
+  "page.create",
+  "draft.save",
+  "schema.import",
+  "schema.export",
+  "preview.create",
+  "publish.submit",
+  "runtime.open",
+  "template.save",
+  "template.apply",
+  "canvas.clear",
+  "material.insert",
+  "node.insert",
+  "node.move",
+  "node.copy",
+  "node.paste",
+  "node.duplicate",
+  "node.delete",
+  "node.rename",
+] as const satisfies readonly LowcodeEditorPermissionAction[];
+
+export const LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS = [
+  "page.create",
+  "draft.save",
+  "schema.import",
+  "preview.create",
+  "publish.submit",
+  "template.save",
+  "template.apply",
+  "canvas.clear",
+  "material.insert",
+  "node.insert",
+  "node.move",
+  "node.paste",
+  "node.duplicate",
+  "node.delete",
+  "node.rename",
+] as const satisfies readonly LowcodeEditorPermissionAction[];
+
 export const LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT = 28;
 export const LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT = 6;
 export const LOWCODE_EDITOR_PROP_GROUP_ORDER = ["content", "style", "data", "behavior", "advanced"] as const satisfies readonly LowcodeEditorPropGroupKey[];
@@ -1832,6 +1917,48 @@ export function groupLowcodeEditorCommands<T extends LowcodeEditorCommandEntry>(
   return groups;
 }
 
+function normalizeLowcodeEditorPermissionDecision(
+  action: LowcodeEditorPermissionAction,
+  input?: LowcodeEditorPermissionInput,
+): LowcodeEditorPermissionDecision {
+  if (typeof input === "boolean") return { action, allowed: input };
+  if (input) return { action, allowed: input.allowed, reason: input.reason };
+  return { action, allowed: true };
+}
+
+export function createLowcodeEditorPermissionState(
+  options: CreateLowcodeEditorPermissionStateOptions = {},
+): LowcodeEditorPermissionState {
+  const readonlyReason = options.readonlyReason ?? "当前页面为只读状态，暂不可编辑。";
+  const readonlyActions = new Set<LowcodeEditorPermissionAction>(
+    options.readonly ? LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS : [],
+  );
+
+  return LOWCODE_EDITOR_PERMISSION_ACTIONS.reduce((state, action) => {
+    const decision = normalizeLowcodeEditorPermissionDecision(action, options.decisions?.[action]);
+    state[action] = readonlyActions.has(action)
+      ? { action, allowed: false, reason: decision.allowed ? readonlyReason : decision.reason ?? readonlyReason }
+      : decision;
+    return state;
+  }, {} as LowcodeEditorPermissionState);
+}
+
+export function isLowcodeEditorActionAllowed(
+  state: Partial<LowcodeEditorPermissionState> | undefined,
+  action: LowcodeEditorPermissionAction,
+): boolean {
+  return state?.[action]?.allowed ?? true;
+}
+
+export function getLowcodeEditorActionDisabledReason(
+  state: Partial<LowcodeEditorPermissionState> | undefined,
+  action: LowcodeEditorPermissionAction,
+): string | undefined {
+  const decision = state?.[action];
+  if (!decision || decision.allowed) return undefined;
+  return decision.reason ?? "当前操作不可用。";
+}
+
 export function createLowcodeNodeOperationItems(
   options: CreateLowcodeNodeOperationItemsOptions = {},
 ): LowcodeEditorNodeOperationItem[] {
@@ -1840,6 +1967,7 @@ export function createLowcodeNodeOperationItems(
     {
       action: "rename",
       label: "重命名节点",
+      disabled: !(options.canRename ?? true),
     },
     {
       action: "insertBefore",
@@ -1870,6 +1998,7 @@ export function createLowcodeNodeOperationItems(
       action: "copy",
       label: "复制节点",
       shortcut: "⌘/Ctrl C",
+      disabled: !(options.canCopy ?? true),
     },
     {
       action: "paste",
@@ -1881,12 +2010,14 @@ export function createLowcodeNodeOperationItems(
       action: "duplicate",
       label: "创建副本",
       shortcut: "⌘/Ctrl D",
+      disabled: !(options.canDuplicate ?? true),
     },
     {
       action: "delete",
       label: "删除节点",
       shortcut: "Delete",
       danger: true,
+      disabled: !(options.canDelete ?? true),
     },
   ];
 }

@@ -119,13 +119,23 @@ interface LowcodeEditorState {
 
 快捷命令 API 从命令条目的 title、group、description 和 keywords 派生搜索文本，默认最多展示 28 条，并默认保留 disabled 命令，方便 UI 壳展示不可用状态。API 只处理命令目录展示模型，不执行命令、不绑定快捷键、不做权限判断、不修改 Page Schema、Material Manifest 或 renderer 行为。
 
+编辑器权限能力 API：
+
+- `LOWCODE_EDITOR_PERMISSION_ACTIONS`
+- `LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS`
+- `createLowcodeEditorPermissionState`
+- `isLowcodeEditorActionAllowed`
+- `getLowcodeEditorActionDisabledReason`
+
+编辑器权限能力 API 从宿主提供的 action 决策和 readonly 基线派生稳定权限状态，覆盖页面新建、草稿保存、Schema 导入导出、预览发布、runtime 打开、模板、画布和节点操作。默认所有 action 允许，readonly 基线会禁用写操作，并保留 `schema.export`、`runtime.open` 和 `node.copy` 等查看/复制类操作。API 不读取用户角色、不调用 Java 菜单权限或审批接口、不执行锁续期、不做审计、不执行真实命令、不修改 Page Schema、Material Manifest 或 renderer 行为；宿主 shell 负责把业务权限、审批状态、协作锁定和只读状态映射成 action 决策。
+
 节点操作模型 API：
 
 - `createLowcodeNodeOperationItems`
 - `resolveLowcodeNodeShortcutAction`
 - `createLowcodeNodeOperationMessage`
 
-节点操作模型 API 从宿主提供的可插入、可加入容器、可移动、可粘贴等状态派生节点右键菜单、画布工具条、节点卡片快捷操作、快捷键动作和反馈文案。快捷键覆盖 Delete/Backspace、`Meta/Ctrl + C`、`Meta/Ctrl + V`、`Meta/Ctrl + D`、`Meta/Ctrl + Z`、`Meta/Ctrl + Shift + Z` 和 `Ctrl + Y`。API 不执行节点命令、不绑定 DOM 事件、不定位菜单、不滚动画布、不弹确认框、不处理权限或审计、不修改 Page Schema、Material Manifest 或 renderer 行为。
+节点操作模型 API 从宿主提供的可插入、可加入容器、可移动、可重命名、可复制、可粘贴、可创建副本、可删除等状态派生节点右键菜单、画布工具条、节点卡片快捷操作、快捷键动作和反馈文案。快捷键覆盖 Delete/Backspace、`Meta/Ctrl + C`、`Meta/Ctrl + V`、`Meta/Ctrl + D`、`Meta/Ctrl + Z`、`Meta/Ctrl + Shift + Z` 和 `Ctrl + Y`。API 不执行节点命令、不绑定 DOM 事件、不定位菜单、不滚动画布、不弹确认框、不处理权限或审计、不修改 Page Schema、Material Manifest 或 renderer 行为。
 
 结构树 API：
 
@@ -325,6 +335,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 物料偏好模型 API 只派生收藏和最近使用列表模型、解析规则和提示文案，不依赖 DOM、localStorage、HTTP、用户体系、权限、审计或多端同步服务。
 - 物料详情模型 API 只派生物料详情展示、可插入节点输入和默认预览 schema，不依赖 DOM、renderer、资源中心、Java API、权限、审计或物料市场上下架状态。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
+- 编辑器权限能力 API 只表达宿主已决策的 action 可用态和禁用原因，不读取角色、不调用 Java 接口、不执行审批或协作锁定，不修改 Page Schema、Material Manifest 或 renderer 行为。
 - 节点操作模型 API 只派生菜单项、快捷键动作和反馈文案，不执行 `insertNode`、`removeNode`、`copyNode`、`pasteNode`、`duplicateNode`、`moveNodeById`、`undo` 或 `redo`。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 节点选择模型 API 只派生多选状态、同父级判断、多选摘要和成组拖拽候选，不执行 DOM 拖拽或节点移动，不修改 Page Schema、Material Manifest 或 renderer 行为。

@@ -28,6 +28,7 @@ import {
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
+  createLowcodeEditorPermissionState,
   createLowcodeActionOptions,
   createLowcodeEventBindingItems,
   createLowcodeListEditorFields,
@@ -88,10 +89,12 @@ import {
   getLowcodePropEditorControl,
   getLowcodeSelectedGroupNodeIdsForDrag,
   groupLowcodeEditorCommands,
+  getLowcodeEditorActionDisabledReason,
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeListImageField,
+  isLowcodeEditorActionAllowed,
   isLowcodeListPropEditor,
   isLowcodeFavoriteMaterial,
   isLowcodeNodeSelected,
@@ -106,6 +109,8 @@ import {
   LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
   LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
+  LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS,
+  LOWCODE_EDITOR_PERMISSION_ACTIONS,
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
@@ -785,13 +790,54 @@ describe("@meumall/lowcode-editor readiness", () => {
     ]);
   });
 
+  it("creates reusable editor permission state", () => {
+    const defaultState = createLowcodeEditorPermissionState();
+    assert.deepEqual(Object.keys(defaultState), [...LOWCODE_EDITOR_PERMISSION_ACTIONS]);
+    assert.equal(isLowcodeEditorActionAllowed(defaultState, "draft.save"), true);
+    assert.equal(getLowcodeEditorActionDisabledReason(defaultState, "draft.save"), undefined);
+
+    const deniedState = createLowcodeEditorPermissionState({
+      decisions: {
+        "publish.submit": {
+          allowed: false,
+          reason: "当前账号没有发布权限。",
+        },
+      },
+    });
+    assert.equal(isLowcodeEditorActionAllowed(deniedState, "publish.submit"), false);
+    assert.equal(getLowcodeEditorActionDisabledReason(deniedState, "publish.submit"), "当前账号没有发布权限。");
+    assert.equal(isLowcodeEditorActionAllowed(deniedState, "schema.export"), true);
+
+    const readonlyState = createLowcodeEditorPermissionState({
+      readonly: true,
+      readonlyReason: "审批中页面暂不可编辑。",
+      decisions: {
+        "draft.save": {
+          allowed: true,
+          reason: "宿主误传允许保存也应被只读基线拦截。",
+        },
+      },
+    });
+    LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS.forEach((action) => {
+      assert.equal(isLowcodeEditorActionAllowed(readonlyState, action), false);
+    });
+    assert.equal(getLowcodeEditorActionDisabledReason(readonlyState, "draft.save"), "审批中页面暂不可编辑。");
+    assert.equal(isLowcodeEditorActionAllowed(readonlyState, "schema.export"), true);
+    assert.equal(isLowcodeEditorActionAllowed(readonlyState, "runtime.open"), true);
+    assert.equal(isLowcodeEditorActionAllowed(readonlyState, "node.copy"), true);
+  });
+
   it("creates reusable node operation models and shortcuts", () => {
     const items = createLowcodeNodeOperationItems({
       canInsert: false,
       canAddInside: true,
       canMoveUp: false,
       canMoveDown: true,
+      canRename: false,
+      canCopy: false,
       canPaste: false,
+      canDuplicate: false,
+      canDelete: false,
     });
     const itemByAction = new Map(items.map((item) => [item.action, item]));
 
@@ -807,14 +853,19 @@ describe("@meumall/lowcode-editor readiness", () => {
       "duplicate",
       "delete",
     ]);
+    assert.equal(itemByAction.get("rename")?.disabled, true);
     assert.equal(itemByAction.get("insertBefore")?.disabled, true);
     assert.equal(itemByAction.get("insertAfter")?.disabled, true);
     assert.equal(itemByAction.get("addInside")?.disabled, false);
     assert.equal(itemByAction.get("moveUp")?.disabled, true);
     assert.equal(itemByAction.get("moveDown")?.disabled, false);
+    assert.equal(itemByAction.get("copy")?.disabled, true);
     assert.equal(itemByAction.get("paste")?.disabled, true);
+    assert.equal(itemByAction.get("duplicate")?.disabled, true);
+    assert.equal(itemByAction.get("delete")?.disabled, true);
     assert.equal(itemByAction.get("delete")?.danger, true);
     assert.equal(itemByAction.get("copy")?.shortcut, "⌘/Ctrl C");
+    assert.equal(createLowcodeNodeOperationItems().find((item) => item.action === "delete")?.disabled, false);
     assert.equal(resolveLowcodeNodeShortcutAction({ key: "Delete" }, { hasSelectedNode: true }), "delete");
     assert.equal(resolveLowcodeNodeShortcutAction({ key: "Backspace" }, { hasSelectedNode: false }), undefined);
     assert.equal(resolveLowcodeNodeShortcutAction({ key: "c", metaKey: true }, { hasSelectedNode: true }), "copy");
