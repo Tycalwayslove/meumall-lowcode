@@ -31,4 +31,15 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.items.setter, "textarea");
     assert.equal(material.manifest.events?.[0]?.name, "onAnchorClick");
   });
+
+  it("registers the coupon bundle material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "CouponBundle");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "组合券包");
+    assert.equal(material.manifest.defaultProps.receiveAllText, "一键领取");
+    assert.equal(material.manifest.propsSchema.coupons.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onReceive");
+    assert.equal(material.manifest.events?.[1]?.name, "onReceiveAll");
+  });
 });

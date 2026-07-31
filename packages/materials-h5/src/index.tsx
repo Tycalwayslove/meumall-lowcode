@@ -143,6 +143,99 @@ export function CouponSection({ props }: MaterialProps) {
   );
 }
 
+export function CouponBundle({ props }: MaterialProps) {
+  const coupons = list(props.coupons);
+  const visibleCoupons = coupons.length
+    ? coupons
+    : [
+        { id: "coupon_1", title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30" },
+        { id: "coupon_2", title: "满 399 减 80", thresholdText: "精选商品", valueText: "¥80" },
+      ];
+  const onReceive = props.onReceive;
+  const onReceiveAll = props.onReceiveAll;
+
+  return (
+    <section
+      style={{
+        padding: "14px 12px",
+        background: text(props.backgroundColor, "#fff7ed"),
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ display: "block", color: text(props.titleColor, "#9a3412"), fontSize: 17 }}>
+            {text(props.title, "组合券包")}
+          </strong>
+          <span style={{ display: "block", marginTop: 3, color: "#9a3412", opacity: 0.78, fontSize: 12 }}>
+            {text(props.subtitle, "多张优惠券一次领取，下单更划算。")}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof onReceiveAll === "function") onReceiveAll();
+          }}
+          style={{
+            flex: "0 0 auto",
+            minHeight: 34,
+            border: 0,
+            borderRadius: 999,
+            padding: "0 14px",
+            color: "#ffffff",
+            background: text(props.buttonColor, "#ea580c"),
+            fontSize: 13,
+            fontWeight: 700,
+          }}
+        >
+          {text(props.receiveAllText, "一键领取")}
+        </button>
+      </div>
+      <div style={{ display: "grid", gap: 9 }}>
+        {visibleCoupons.map((coupon, index) => (
+          <button
+            key={String(coupon.id ?? index)}
+            type="button"
+            onClick={() => {
+              if (typeof onReceive === "function") onReceive(coupon);
+            }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "76px minmax(0, 1fr) auto",
+              alignItems: "center",
+              gap: 10,
+              minHeight: 72,
+              border: "1px solid rgba(234, 88, 12, 0.22)",
+              borderRadius: 10,
+              padding: "10px 12px",
+              color: "#7c2d12",
+              background: "#ffffff",
+              textAlign: "left",
+            }}
+          >
+            <strong style={{ color: text(props.amountColor, "#dc2626"), fontSize: 22, lineHeight: 1 }}>
+              {String(coupon.valueText ?? "¥10")}
+            </strong>
+            <span style={{ minWidth: 0 }}>
+              <strong style={{ display: "block", color: "#111827", fontSize: 14 }}>{String(coupon.title ?? `优惠券 ${index + 1}`)}</strong>
+              <small style={{ display: "block", marginTop: 4, color: "#9a3412", fontSize: 12 }}>
+                {String(coupon.thresholdText ?? "指定商品可用")}
+              </small>
+              {coupon.expireText ? (
+                <small style={{ display: "block", marginTop: 3, color: "#94a3b8", fontSize: 11 }}>
+                  {String(coupon.expireText)}
+                </small>
+              ) : null}
+            </span>
+            <span style={{ color: text(props.buttonColor, "#ea580c"), fontSize: 12, fontWeight: 800 }}>
+              {String(coupon.buttonText ?? text(props.receiveText, "领取"))}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ActivityRuleModal({ props }: MaterialProps) {
   const [open, setOpen] = React.useState(false);
   const rules = ruleList(props.rules);
@@ -713,6 +806,45 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: CouponBundle,
+    manifest: createMaterialManifest({
+      componentName: "CouponBundle",
+      materialVersion: "0.1.0",
+      title: "组合券包",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "新人组合券",
+        subtitle: "多张优惠券一次领取，下单更划算。",
+        receiveAllText: "一键领取",
+        receiveText: "领取",
+        backgroundColor: "#fff7ed",
+        titleColor: "#9a3412",
+        amountColor: "#dc2626",
+        buttonColor: "#ea580c",
+        coupons: [
+          { id: "coupon_30", title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30", expireText: "领取后 7 天有效" },
+          { id: "coupon_80", title: "满 399 减 80", thresholdText: "精选商品", valueText: "¥80", expireText: "数量有限" },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "新人组合券" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "多张优惠券一次领取，下单更划算。" },
+        receiveAllText: { label: "批量按钮", type: "string", setter: "input", defaultValue: "一键领取" },
+        receiveText: { label: "单券按钮", type: "string", setter: "input", defaultValue: "领取" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fff7ed" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#9a3412" },
+        amountColor: { label: "金额色", type: "string", setter: "color", defaultValue: "#dc2626" },
+        buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#ea580c" },
+        coupons: { label: "优惠券列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [
+        { name: "onReceive", title: "点击单券" },
+        { name: "onReceiveAll", title: "点击一键领取" },
+      ],
     }),
   },
   {

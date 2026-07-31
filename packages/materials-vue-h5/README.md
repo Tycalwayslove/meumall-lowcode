@@ -11,6 +11,7 @@ Current materials:
 - `ActionButton`
 - `ProductList`
 - `CouponSection`
+- `CouponBundle`
 - `ActivityRuleModal`
 - `SpacerBlock`
 - `CountdownTimer`

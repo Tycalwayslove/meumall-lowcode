@@ -183,6 +183,30 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_coupon_bundle",
+      componentName: "CouponBundle",
+      materialVersion: "0.1.0",
+      props: {
+        title: "大促组合券",
+        subtitle: "平台券、品类券一次领，凑单更划算。",
+        receiveAllText: "一键领取",
+        receiveText: "领取",
+        backgroundColor: "#fff7ed",
+        titleColor: "#9a3412",
+        amountColor: "#dc2626",
+        buttonColor: "#ea580c",
+        coupons: [
+          { id: "coupon_platform_30", title: "满 199 减 30", thresholdText: "平台通用券", valueText: "¥30", expireText: "领取后 7 天有效" },
+          { id: "coupon_category_80", title: "满 399 减 80", thresholdText: "包袋鞋履可用", valueText: "¥80", expireText: "每日限量" },
+          { id: "coupon_shipping", title: "满 99 包邮", thresholdText: "指定区域可用", valueText: "包邮", expireText: "活动期内有效" },
+        ],
+      },
+      events: {
+        onReceive: { actionId: "receive_coupon" },
+        onReceiveAll: { actionId: "receive_coupon_bundle" },
+      },
+    },
+    {
       id: "node_flash_sale",
       componentName: "FlashSaleList",
       materialVersion: "0.1.0",
@@ -298,6 +322,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "coupon.receive",
       params: {
         couponId: "new-user-coupon",
+      },
+    },
+    {
+      id: "receive_coupon_bundle",
+      type: "coupon.receive",
+      params: {
+        couponId: "summer-coupon-bundle",
       },
     },
     {

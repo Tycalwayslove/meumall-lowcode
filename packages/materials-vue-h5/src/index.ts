@@ -263,6 +263,116 @@ export const CouponSection = defineComponent({
   },
 });
 
+export const CouponBundle = defineComponent({
+  name: "CouponBundle",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const coupons = list(runtimeProps.coupons);
+      const visibleCoupons = coupons.length
+        ? coupons
+        : [
+            { id: "coupon_1", title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30" },
+            { id: "coupon_2", title: "满 399 减 80", thresholdText: "精选商品", valueText: "¥80" },
+          ];
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-coupon-bundle",
+          style: {
+            padding: "14px 12px",
+            background: text(runtimeProps.backgroundColor, "#fff7ed"),
+          },
+        },
+        [
+          h(
+            "div",
+            { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "10px" } },
+            [
+              h("div", { style: { minWidth: 0 } }, [
+                h("strong", { style: { display: "block", color: text(runtimeProps.titleColor, "#9a3412"), fontSize: "17px" } }, text(runtimeProps.title, "组合券包")),
+                h(
+                  "span",
+                  { style: { display: "block", marginTop: "3px", color: "#9a3412", opacity: 0.78, fontSize: "12px" } },
+                  text(runtimeProps.subtitle, "多张优惠券一次领取，下单更划算。"),
+                ),
+              ]),
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onReceiveAll;
+                    if (typeof handler === "function") handler();
+                  },
+                  style: {
+                    flex: "0 0 auto",
+                    minHeight: "34px",
+                    border: 0,
+                    borderRadius: "999px",
+                    padding: "0 14px",
+                    color: "#ffffff",
+                    background: text(runtimeProps.buttonColor, "#ea580c"),
+                    fontSize: "13px",
+                    fontWeight: 700,
+                  } satisfies CSSProperties,
+                },
+                text(runtimeProps.receiveAllText, "一键领取"),
+              ),
+            ],
+          ),
+          h(
+            "div",
+            { style: { display: "grid", gap: "9px" } },
+            visibleCoupons.map((coupon, index) =>
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    const handler = runtimeProps.onReceive;
+                    if (typeof handler === "function") handler(coupon);
+                  },
+                  style: {
+                    display: "grid",
+                    gridTemplateColumns: "76px minmax(0, 1fr) auto",
+                    alignItems: "center",
+                    gap: "10px",
+                    minHeight: "72px",
+                    border: "1px solid rgba(234, 88, 12, 0.22)",
+                    borderRadius: "10px",
+                    padding: "10px 12px",
+                    color: "#7c2d12",
+                    background: "#ffffff",
+                    textAlign: "left",
+                  } satisfies CSSProperties,
+                },
+                [
+                  h("strong", { style: { color: text(runtimeProps.amountColor, "#dc2626"), fontSize: "22px", lineHeight: 1 } }, String(coupon.valueText ?? "¥10")),
+                  h("span", { style: { minWidth: 0 } }, [
+                    h("strong", { style: { display: "block", color: "#111827", fontSize: "14px" } }, String(coupon.title ?? `优惠券 ${index + 1}`)),
+                    h("small", { style: { display: "block", marginTop: "4px", color: "#9a3412", fontSize: "12px" } }, String(coupon.thresholdText ?? "指定商品可用")),
+                    coupon.expireText
+                      ? h("small", { style: { display: "block", marginTop: "3px", color: "#94a3b8", fontSize: "11px" } }, String(coupon.expireText))
+                      : null,
+                  ]),
+                  h(
+                    "span",
+                    { style: { color: text(runtimeProps.buttonColor, "#ea580c"), fontSize: "12px", fontWeight: 800 } },
+                    String(coupon.buttonText ?? text(runtimeProps.receiveText, "领取")),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const ActivityRuleModal = defineComponent({
   name: "ActivityRuleModal",
   props: materialPropOptions,
@@ -998,6 +1108,45 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: CouponBundle,
+    manifest: createMaterialManifest({
+      componentName: "CouponBundle",
+      materialVersion: "0.1.0",
+      title: "组合券包",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "新人组合券",
+        subtitle: "多张优惠券一次领取，下单更划算。",
+        receiveAllText: "一键领取",
+        receiveText: "领取",
+        backgroundColor: "#fff7ed",
+        titleColor: "#9a3412",
+        amountColor: "#dc2626",
+        buttonColor: "#ea580c",
+        coupons: [
+          { id: "coupon_30", title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30", expireText: "领取后 7 天有效" },
+          { id: "coupon_80", title: "满 399 减 80", thresholdText: "精选商品", valueText: "¥80", expireText: "数量有限" },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "新人组合券" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "多张优惠券一次领取，下单更划算。" },
+        receiveAllText: { label: "批量按钮", type: "string", setter: "input", defaultValue: "一键领取" },
+        receiveText: { label: "单券按钮", type: "string", setter: "input", defaultValue: "领取" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fff7ed" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#9a3412" },
+        amountColor: { label: "金额色", type: "string", setter: "color", defaultValue: "#dc2626" },
+        buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#ea580c" },
+        coupons: { label: "优惠券列表", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [
+        { name: "onReceive", title: "点击单券" },
+        { name: "onReceiveAll", title: "点击一键领取" },
+      ],
     }),
   },
   {

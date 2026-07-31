@@ -159,6 +159,26 @@ export const pageTemplates: PageTemplate[] = [
           },
         },
         {
+          id: "summer_coupon_bundle",
+          componentName: "CouponBundle",
+          materialVersion: "0.1.0",
+          props: {
+            title: "大促组合券",
+            subtitle: "平台券、品类券一次领，凑单更划算。",
+            receiveAllText: "一键领取",
+            receiveText: "领取",
+            backgroundColor: "#fff7ed",
+            titleColor: "#9a3412",
+            amountColor: "#dc2626",
+            buttonColor: "#ea580c",
+            coupons: [
+              { id: "coupon_platform_30", title: "满 199 减 30", thresholdText: "平台通用券", valueText: "¥30", expireText: "领取后 7 天有效" },
+              { id: "coupon_category_80", title: "满 399 减 80", thresholdText: "包袋鞋履可用", valueText: "¥80", expireText: "每日限量" },
+              { id: "coupon_shipping", title: "满 99 包邮", thresholdText: "指定区域可用", valueText: "包邮", expireText: "活动期内有效" },
+            ],
+          },
+        },
+        {
           id: "summer_container",
           componentName: "SectionContainer",
           materialVersion: "0.1.0",

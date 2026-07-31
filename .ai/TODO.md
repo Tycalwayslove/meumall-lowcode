@@ -10,7 +10,7 @@
 
 - 继续完善 Vue3 编辑器 UI：移动端 Pointer Events 拖拽、吸附线、多选拖拽、接入真实素材/商品中心、发布审批、服务端发布校验、JSON 级版本 diff 和真实回滚流程。
 - 将本地页面模板库升级为 Java 配置平台模板市场，补充模板版本、上下架和权限。
-- 继续补充电商活动页高阶物料：门店/达人推荐和组合券包。
+- 继续补充电商活动页高阶物料：门店/达人推荐。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、审批、分页、previewToken 和错误码。
 - 在 `hybird-meumall` 真实业务仓库创建低代码 H5 路由，并按 `.ai-workspace/contracts/h5-runtime-integration-v1.md` 接入 npm 包。
 - 将本地 URL schema handoff 的生产入口替换为 Java 配置平台 releaseId/pageId 查询协议。
