@@ -399,6 +399,19 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('已复制预览链接：当前草稿 React H5') || document.body.innerText.includes('复制失败：请手动复制 当前草稿 React H5')");
   log("通过：H5 预览入口展示链接并提供复制反馈");
 
+  log("检查交付分享清单");
+  await page.waitForExpression("document.querySelector('.delivery-panel') && document.body.innerText.includes('交付清单')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('Page ID'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('节点'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('数据源'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('动作'))");
+  await page.waitForExpression("document.querySelector('.delivery-link-status') && document.body.innerText.includes('当前草稿 React H5') && document.body.innerText.includes('页面草稿/最新版本 H5')");
+  await page.clickFirst(".delivery-copy-schema-button");
+  await page.waitForExpression("document.body.innerText.includes('已复制页面 Schema：夏日好物节') || document.body.innerText.includes('复制失败：请从源码区手动复制 Schema')");
+  await page.clickFirst(".delivery-export-schema-button");
+  await page.waitForExpression("document.body.innerText.includes('已导出页面 Schema：夏日好物节')");
+  log("通过：交付清单展示页面摘要、H5 入口状态，并可复制/导出 Schema");
+
   log("检查页面设置面板");
   await page.fillFieldByLabel("标题", "夏日好物节-页面设置");
   await page.fillFieldByLabel("描述", "页面设置 smoke 验证");

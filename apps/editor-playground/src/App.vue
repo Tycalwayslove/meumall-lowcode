@@ -490,6 +490,11 @@ interface PreviewLinkItem {
   url: string;
 }
 
+interface DeliveryMetricItem {
+  label: string;
+  value: string;
+}
+
 interface WorkspaceStat {
   label: string;
   value: string;
@@ -972,6 +977,22 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() => {
   }
   return items;
 });
+const deliverySchemaJson = computed(() => JSON.stringify(editorState.value.schema, null, 2));
+const deliverySchemaSizeText = computed(() => formatByteSize(new Blob([deliverySchemaJson.value]).size));
+const deliveryStatusText = computed(() => {
+  if (hasPublishBlockingErrors.value) return `${publishCheckSummary.value.error} 个阻塞项`;
+  if (publishCheckSummary.value.warning) return `${publishCheckSummary.value.warning} 个提醒`;
+  return "检查通过";
+});
+const deliveryMetrics = computed<DeliveryMetricItem[]>(() => [
+  { label: "页面标题", value: editorState.value.schema.title || "未命名 H5 页面" },
+  { label: "Page ID", value: editorState.value.schema.pageId },
+  { label: "节点", value: `${schemaNodeCount(editorState.value.schema)} 个` },
+  { label: "数据源", value: `${editorState.value.schema.dataSources?.length ?? 0} 个` },
+  { label: "动作", value: `${editorState.value.schema.actions?.length ?? 0} 个` },
+  { label: "Schema", value: deliverySchemaSizeText.value },
+  { label: "检查", value: deliveryStatusText.value },
+]);
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(getAllPageTemplates().map((template) => template.category)))]);
 const pageStartTemplates = computed<TemplateListItem[]>(() => getAllPageTemplates().map(createTemplateListItem));
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
@@ -3958,6 +3979,14 @@ function createSchemaExportFileName(schema: LowcodePageSchema): string {
   return `meumall-lowcode-${pageId}-${timestamp}.json`;
 }
 
+function formatByteSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(kb >= 100 ? 0 : 1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(mb >= 100 ? 0 : 1)} MB`;
+}
+
 function exportCurrentSchema(): void {
   closeCommandPalette();
   const schema = editorState.value.schema;
@@ -3973,6 +4002,16 @@ function exportCurrentSchema(): void {
   URL.revokeObjectURL(url);
   schemaTransferMessage.value = `已导出页面 Schema：${schema.title || schema.pageId}`;
   releaseMessage.value = schemaTransferMessage.value;
+}
+
+async function copyCurrentSchema(): Promise<void> {
+  try {
+    await copyTextToClipboard(deliverySchemaJson.value);
+    schemaTransferMessage.value = `已复制页面 Schema：${editorState.value.schema.title || editorState.value.schema.pageId}`;
+    releaseMessage.value = schemaTransferMessage.value;
+  } catch {
+    releaseMessage.value = "复制失败：请从源码区手动复制 Schema";
+  }
 }
 
 function triggerSchemaImport(): void {
@@ -5149,6 +5188,42 @@ function formatAutoSaveTime(value: string): string {
             </div>
           </article>
         </div>
+      </section>
+
+      <section class="panel-section delivery-panel">
+        <div class="panel-title">
+          <Check :size="16" />
+          <span>交付清单</span>
+          <small>{{ deliveryStatusText }}</small>
+        </div>
+        <div class="delivery-summary-grid">
+          <article v-for="metric in deliveryMetrics" :key="metric.label">
+            <span>{{ metric.label }}</span>
+            <strong>{{ metric.value }}</strong>
+          </article>
+        </div>
+        <div class="delivery-link-status">
+          <strong>H5 交付入口</strong>
+          <span
+            v-for="item in previewLinkItems"
+            :key="item.id"
+          >
+            {{ item.title }}
+          </span>
+        </div>
+        <div class="delivery-actions">
+          <button type="button" class="delivery-copy-schema-button" @click="copyCurrentSchema">
+            <Copy :size="13" />
+            复制 Schema
+          </button>
+          <button type="button" class="delivery-export-schema-button" @click="exportCurrentSchema">
+            <Download :size="13" />
+            导出 Schema
+          </button>
+        </div>
+        <p class="delivery-note">
+          当前链接用于本地 playground 验收；正式环境仍需切换到 Java 配置平台的 previewToken 或 releaseId 查询。
+        </p>
       </section>
 
       <section class="panel-section">

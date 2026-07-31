@@ -50,6 +50,7 @@
 - Vue3 编辑器 playground 已支持本地自动保存和恢复提示：schema 变更后延迟 700ms 写入 localStorage 草稿，顶栏展示自动保存状态；从 localStorage 恢复草稿时显示“已恢复本地草稿”。这仍是本地 mock，后续接 Java 配置平台时应替换为服务端草稿自动保存。
 - Vue3 编辑器 playground 已支持发布检查节点定位：节点级图片、商品、数据源和动作配置问题会在右侧发布检查中展示“定位”入口，点击后自动切回设计模式、选中节点、展开结构树路径并滚动画布到目标节点。
 - Vue3 编辑器 playground 已支持 H5 预览入口：右侧发布区域集中展示当前草稿 React H5 链接、页面草稿/最新版本内置 H5 链接和最近发布版本 H5 链接，并支持打开和复制反馈。
+- Vue3 编辑器 playground 已支持交付分享清单：右侧发布区域集中展示页面标题、pageId、节点数、数据源数、动作数、Schema JSON 体积、发布检查状态、H5 交付入口状态，并提供复制当前 Page Schema JSON 和导出 Schema 文件入口；当前链接仍是本地 playground / URL schema handoff，正式环境需替换为 Java previewToken 或 releaseId。
 - Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时先复用 `validateLowcodePageSchema` 校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。
@@ -67,7 +68,7 @@
 - React/Vue H5 物料包已新增 `SectionTitle` 区块标题，支持角标、标题、说明、对齐、背景色、标题色、说明色、强调色和上下留白；Vue3 编辑器大促模板、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `ImageCardGrid` 图片卡片宫格，支持标题、说明、列数、间距、圆角、卡片数组、图片、角标和 `onItemClick`；Vue3 编辑器大促模板、React H5 runtime 示例、数组属性表单、列表项图片素材选择和 browser smoke check 已接入，后续可扩展 data source slot 接真实会场/频道数据。
 - React/Vue H5 物料包已新增 `LeadFormBlock` 留资表单通用物料，复用内部 `MlcInput`、`MlcTextarea`、`MlcSwitch`、`MlcStepper`、`MlcButton` 和 `MlcText` primitives，支持姓名、手机号、人数、备注、协议开关、提交按钮和 `onSubmit` 安全 action；当前只做本地运行时交互，不接真实表单提交接口。
-- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、留资表单物料、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览、本地自定义模板保存、模板 H5 预览入口不会替换当前画布、应用模板、`通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、本地模板、模板缩略预览和模板起点。
+- 根目录已提供 `pnpm smoke:browser`，通过零依赖 Node 脚本启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时会验证区块标题物料、图片卡片宫格物料、留资表单物料、交付分享清单、列表项图片素材选择、页面设置写入 schema、物料详情默认 H5 预览和一键添加，搜索 `商品专题页` 模板，检查模板视觉缩略预览、本地自定义模板保存、模板 H5 预览入口不会替换当前画布、应用模板、`通勤好物专题` 画布更新、源码 schema 包含 `product-topic-demo`、源码/预览/设计模式切换，以及新建页面向导中的空白 H5 页面、空白画布快捷起步、本地模板、模板缩略预览和模板起点。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 - 新增业务物料前必须先按 `docs/material-layering-architecture.md` 判断：是否能通过通用物料和模板解决，是否需要新增业务无关 primitives，是否应该落在 Generic Materials 还是 Business Materials。
 
