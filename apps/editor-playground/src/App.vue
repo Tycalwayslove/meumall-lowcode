@@ -67,6 +67,7 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
+  createLowcodePropGroups,
   duplicateNode,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
@@ -78,6 +79,7 @@ import {
   formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
   insertNode,
+  isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
   markSaved,
   moveNodeById,
@@ -93,9 +95,12 @@ import {
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
+  toggleLowcodePropGroupCollapsed,
   undo,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorOutlineRow as OutlineRow,
+  type LowcodeEditorPropGroup as PropEditorGroup,
+  type LowcodeEditorPropGroupKey as PropGroupKey,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
@@ -450,7 +455,6 @@ let suppressNextAutoSave = false;
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
-type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
 type NodeContextAction = "rename" | "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
 
@@ -521,18 +525,6 @@ interface CommandPaletteItem extends LowcodeEditorCommandEntry {
   run: () => void | Promise<void>;
 }
 
-interface PropEditorEntry {
-  name: string;
-  schema: LowcodePropSchema;
-}
-
-interface PropEditorGroup {
-  key: PropGroupKey;
-  label: string;
-  description: string;
-  entries: PropEditorEntry[];
-}
-
 interface ListEditorField {
   name: string;
   label: string;
@@ -569,41 +561,6 @@ const LIST_ITEM_DRAG_TYPE = "application/x-meumall-list-item";
 const POINTER_DRAG_START_DISTANCE = 8;
 let suppressNextClick = false;
 
-const propGroupOrder: PropGroupKey[] = ["content", "style", "data", "behavior", "advanced"];
-const propGroupMeta: Record<PropGroupKey, Pick<PropEditorGroup, "label" | "description">> = {
-  content: { label: "内容配置", description: "标题、文案、图片和按钮内容。" },
-  style: { label: "样式配置", description: "颜色、圆角、间距和排版表现。" },
-  data: { label: "数据配置", description: "商品、券、规则、导航项和数据源字段。" },
-  behavior: { label: "行为配置", description: "跳转链接、吸顶、平滑滚动等交互行为。" },
-  advanced: { label: "其他配置", description: "暂未归类的物料字段。" },
-};
-
-const contentPropNames = new Set([
-  "title",
-  "subtitle",
-  "summary",
-  "content",
-  "label",
-  "text",
-  "primaryText",
-  "secondaryText",
-  "html",
-  "buttonText",
-  "receiveText",
-  "receiveAllText",
-  "statusText",
-  "viewerText",
-  "badgeText",
-  "modalTitle",
-  "brandName",
-  "description",
-  "alt",
-  "imageUrl",
-  "coverImageUrl",
-  "logoImageUrl",
-]);
-const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
-const behaviorPropNames = new Set(["linkUrl", "primaryLinkUrl", "secondaryLinkUrl", "sticky", "smooth", "offsetTop", "safeArea", "showSecondary"]);
 const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
 
 const commonListEditorFields: Record<string, ListEditorField> = {
@@ -664,18 +621,7 @@ const selectedNodeDisplayName = computed(() => selectedNode.value ? getNodeDispl
 const selectedPropGroups = computed<PropEditorGroup[]>(() => {
   const manifest = selectedManifest.value;
   if (!manifest) return [];
-  const groups = new Map<PropGroupKey, PropEditorEntry[]>();
-  Object.entries(manifest.propsSchema).forEach(([name, propSchema]) => {
-    const groupKey = propGroupKeyFor(name, propSchema);
-    groups.set(groupKey, [...(groups.get(groupKey) ?? []), { name, schema: propSchema }]);
-  });
-  return propGroupOrder
-    .map((key) => ({
-      key,
-      ...propGroupMeta[key],
-      entries: groups.get(key) ?? [],
-    }))
-    .filter((group) => group.entries.length > 0);
+  return createLowcodePropGroups(manifest.propsSchema);
 });
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() =>
@@ -2563,29 +2509,12 @@ function getListItems(propName: string): Record<string, JsonValue>[] {
   return getPropArray(propName).map((item) => toEditableListItem(item));
 }
 
-function propGroupKeyFor(propName: string, propSchema: LowcodePropSchema): PropGroupKey {
-  const normalized = propName.toLowerCase();
-  if (dataPropNames.has(propName) || propSchema.setter === "dataSourceSelector" || propSchema.type === "array") return "data";
-  if (
-    propSchema.setter === "color" ||
-    /(color|radius|padding|height|width|size|columns|background|accent)/.test(normalized)
-  ) {
-    return "style";
-  }
-  if (behaviorPropNames.has(propName) || propSchema.type === "boolean" || propSchema.setter === "switch") return "behavior";
-  if (contentPropNames.has(propName) || ["image", "richText", "textarea"].includes(propSchema.setter)) return "content";
-  return "advanced";
-}
-
 function isPropGroupCollapsed(key: PropGroupKey): boolean {
-  return Boolean(collapsedPropGroups.value[key]);
+  return isLowcodePropGroupCollapsed(collapsedPropGroups.value, key);
 }
 
 function togglePropGroup(key: PropGroupKey): void {
-  collapsedPropGroups.value = {
-    ...collapsedPropGroups.value,
-    [key]: !collapsedPropGroups.value[key],
-  };
+  collapsedPropGroups.value = toggleLowcodePropGroupCollapsed(collapsedPropGroups.value, key);
 }
 
 function isListPropEditor(propSchema: LowcodePropSchema): boolean {

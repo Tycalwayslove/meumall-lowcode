@@ -106,6 +106,17 @@ interface LowcodeEditorState {
 
 结构树 API 从 Page Schema nodes 和可选物料 manifest 派生结构树行模型、搜索文本、搜索命中、折叠可见性、选中路径和可见数量摘要。关键词匹配覆盖节点 id、componentName、`meta.name`、物料标题和物料分类；折叠祖先会隐藏子节点，但当前选中路径保持可见。API 不执行节点选择、不处理 DOM 滚动、不处理拖拽、多选、重命名或权限。
 
+属性分组 API：
+
+- `LOWCODE_EDITOR_PROP_GROUP_ORDER`
+- `LOWCODE_EDITOR_PROP_GROUP_META`
+- `getLowcodePropGroupKey`
+- `createLowcodePropGroups`
+- `isLowcodePropGroupCollapsed`
+- `toggleLowcodePropGroupCollapsed`
+
+属性分组 API 从物料 `propsSchema` 的字段名、setter 和字段类型派生内容配置、样式配置、数据配置、行为配置和其他配置分组，并提供默认中文分组文案、稳定排序和折叠状态纯 helper。API 不渲染具体 setter 控件、不打开资源选择器、不修改 Page Schema 值、不处理字段权限或审计。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -120,6 +131,7 @@ interface LowcodeEditorState {
 - 物料目录 API 只派生编辑器展示模型，不新增或改写物料 manifest 字段。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
+- 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式

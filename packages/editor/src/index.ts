@@ -5,6 +5,7 @@ import type {
   LowcodeMaterialManifest,
   LowcodePageSchema,
   LowcodePlatform,
+  LowcodePropSchema,
   LowcodeVisibilityRule,
 } from "@meumall/lowcode-schema";
 import { createLowcodeNode, createLowcodePageSchema, validateLowcodePageSchema } from "@meumall/lowcode-schema";
@@ -179,6 +180,35 @@ export interface LowcodeEditorOutlineVisibility<T extends LowcodeEditorOutlineRo
   summary: string;
 }
 
+export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
+
+export interface LowcodeEditorPropGroupMeta {
+  label: string;
+  description: string;
+}
+
+export interface LowcodeEditorPropEditorEntry {
+  name: string;
+  schema: LowcodePropSchema;
+}
+
+export interface LowcodeEditorPropGroup {
+  key: LowcodeEditorPropGroupKey;
+  label: string;
+  description: string;
+  entries: LowcodeEditorPropEditorEntry[];
+}
+
+export type LowcodeEditorPropGroupCollapsedState = Partial<Record<LowcodeEditorPropGroupKey, boolean>>;
+
+export interface CreateLowcodePropGroupsOptions {
+  groupOrder?: readonly LowcodeEditorPropGroupKey[];
+  groupMeta?: Partial<Record<LowcodeEditorPropGroupKey, LowcodeEditorPropGroupMeta>>;
+  contentPropNames?: readonly string[];
+  dataPropNames?: readonly string[];
+  behaviorPropNames?: readonly string[];
+}
+
 export interface LowcodeEditorActionParamRule {
   actionType: string;
   paramName: string;
@@ -326,6 +356,14 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
 export const LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT = 28;
+export const LOWCODE_EDITOR_PROP_GROUP_ORDER = ["content", "style", "data", "behavior", "advanced"] as const satisfies readonly LowcodeEditorPropGroupKey[];
+export const LOWCODE_EDITOR_PROP_GROUP_META = {
+  content: { label: "内容配置", description: "标题、文案、图片和按钮内容。" },
+  style: { label: "样式配置", description: "颜色、圆角、间距和排版表现。" },
+  data: { label: "数据配置", description: "商品、券、规则、导航项和数据源字段。" },
+  behavior: { label: "行为配置", description: "跳转链接、吸顶、平滑滚动等交互行为。" },
+  advanced: { label: "其他配置", description: "暂未归类的物料字段。" },
+} as const satisfies Record<LowcodeEditorPropGroupKey, LowcodeEditorPropGroupMeta>;
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
@@ -337,6 +375,41 @@ const TEMPLATE_IMAGE_PROP_NAMES = ["imageUrl", "coverImageUrl", "logoImageUrl"];
 const TEMPLATE_TITLE_PROP_NAMES = ["title", "brandName", "text"];
 const TEMPLATE_SUBTITLE_PROP_NAMES = ["subtitle", "description", "summary"];
 const DEFAULT_BLANK_PAGE_ID_PREFIX = "blank-h5";
+const DEFAULT_CONTENT_PROP_NAMES = [
+  "title",
+  "subtitle",
+  "summary",
+  "content",
+  "label",
+  "text",
+  "primaryText",
+  "secondaryText",
+  "html",
+  "buttonText",
+  "receiveText",
+  "receiveAllText",
+  "statusText",
+  "viewerText",
+  "badgeText",
+  "modalTitle",
+  "brandName",
+  "description",
+  "alt",
+  "imageUrl",
+  "coverImageUrl",
+  "logoImageUrl",
+];
+const DEFAULT_DATA_PROP_NAMES = ["items", "coupons", "rules", "sellingPoints"];
+const DEFAULT_BEHAVIOR_PROP_NAMES = [
+  "linkUrl",
+  "primaryLinkUrl",
+  "secondaryLinkUrl",
+  "sticky",
+  "smooth",
+  "offsetTop",
+  "safeArea",
+  "showSecondary",
+];
 
 export function createEditorState(schema: LowcodePageSchema, options: CreateEditorStateOptions = {}): LowcodeEditorState {
   return {
@@ -845,6 +918,77 @@ export function revealLowcodeOutlineNode(
   const collapsed = new Set(collapsedNodeIds);
   row.ancestorIds.forEach((ancestorId) => collapsed.delete(ancestorId));
   return [...collapsed];
+}
+
+export function getLowcodePropGroupKey(
+  propName: string,
+  propSchema: LowcodePropSchema,
+  options: CreateLowcodePropGroupsOptions = {},
+): LowcodeEditorPropGroupKey {
+  const normalized = propName.toLowerCase();
+  const contentPropNames = new Set(options.contentPropNames ?? DEFAULT_CONTENT_PROP_NAMES);
+  const dataPropNames = new Set(options.dataPropNames ?? DEFAULT_DATA_PROP_NAMES);
+  const behaviorPropNames = new Set(options.behaviorPropNames ?? DEFAULT_BEHAVIOR_PROP_NAMES);
+
+  if (dataPropNames.has(propName) || propSchema.setter === "dataSourceSelector" || propSchema.type === "array") {
+    return "data";
+  }
+  if (
+    propSchema.setter === "color" ||
+    /(color|radius|padding|height|width|size|columns|background|accent)/.test(normalized)
+  ) {
+    return "style";
+  }
+  if (behaviorPropNames.has(propName) || propSchema.type === "boolean" || propSchema.setter === "switch") {
+    return "behavior";
+  }
+  if (contentPropNames.has(propName) || ["image", "richText", "textarea"].includes(propSchema.setter)) {
+    return "content";
+  }
+  return "advanced";
+}
+
+export function createLowcodePropGroups(
+  propsSchema: Record<string, LowcodePropSchema>,
+  options: CreateLowcodePropGroupsOptions = {},
+): LowcodeEditorPropGroup[] {
+  const order = options.groupOrder ?? LOWCODE_EDITOR_PROP_GROUP_ORDER;
+  const meta = {
+    ...LOWCODE_EDITOR_PROP_GROUP_META,
+    ...(options.groupMeta ?? {}),
+  };
+  const groups = new Map<LowcodeEditorPropGroupKey, LowcodeEditorPropEditorEntry[]>();
+
+  Object.entries(propsSchema).forEach(([name, propSchema]) => {
+    const groupKey = getLowcodePropGroupKey(name, propSchema, options);
+    groups.set(groupKey, [...(groups.get(groupKey) ?? []), { name, schema: propSchema }]);
+  });
+
+  return order
+    .map((key) => ({
+      key,
+      label: meta[key].label,
+      description: meta[key].description,
+      entries: groups.get(key) ?? [],
+    }))
+    .filter((group) => group.entries.length > 0);
+}
+
+export function isLowcodePropGroupCollapsed(
+  collapsedState: LowcodeEditorPropGroupCollapsedState,
+  key: LowcodeEditorPropGroupKey,
+): boolean {
+  return Boolean(collapsedState[key]);
+}
+
+export function toggleLowcodePropGroupCollapsed(
+  collapsedState: LowcodeEditorPropGroupCollapsedState,
+  key: LowcodeEditorPropGroupKey,
+): LowcodeEditorPropGroupCollapsedState {
+  return {
+    ...collapsedState,
+    [key]: !collapsedState[key],
+  };
 }
 
 export function countLowcodeNodes(schema: LowcodePageSchema): number {

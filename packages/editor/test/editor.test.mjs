@@ -15,6 +15,7 @@ import {
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
   createLowcodePageStartState,
+  createLowcodePropGroups,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
   createLowcodeSchemaPreviewSnippet,
@@ -32,14 +33,19 @@ import {
   getLowcodeEditorViewportPreset,
   getLowcodeNodeDisplayName,
   groupLowcodeEditorCommands,
+  getLowcodePropGroupKey,
+  isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
+  LOWCODE_EDITOR_PROP_GROUP_META,
+  LOWCODE_EDITOR_PROP_GROUP_ORDER,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
+  toggleLowcodePropGroupCollapsed,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -391,6 +397,48 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(pruneLowcodeOutlineCollapsedNodeIds(["container_1", "banner_1", "missing"], rows), ["container_1"]);
     assert.deepEqual(revealLowcodeOutlineNode("products_1", ["container_1"], rows), []);
     assert.deepEqual(revealLowcodeOutlineNode("button_1", ["container_1"], rows), ["container_1"]);
+  });
+
+  it("creates reusable property groups and collapsed state", () => {
+    const propsSchema = {
+      title: { label: "标题", type: "string", setter: "input", defaultValue: "" },
+      backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+      items: { label: "商品", type: "array", setter: "textarea", defaultValue: [] },
+      sticky: { label: "吸顶", type: "boolean", setter: "switch", defaultValue: false },
+      trackingCode: { label: "埋点扩展", type: "string", setter: "input", defaultValue: "" },
+    };
+
+    assert.deepEqual(LOWCODE_EDITOR_PROP_GROUP_ORDER, ["content", "style", "data", "behavior", "advanced"]);
+    assert.equal(LOWCODE_EDITOR_PROP_GROUP_META.content.label, "内容配置");
+    assert.equal(getLowcodePropGroupKey("title", propsSchema.title), "content");
+    assert.equal(getLowcodePropGroupKey("coverImageUrl", { label: "图片", type: "string", setter: "image", defaultValue: "" }), "content");
+    assert.equal(getLowcodePropGroupKey("backgroundColor", propsSchema.backgroundColor), "style");
+    assert.equal(getLowcodePropGroupKey("items", propsSchema.items), "data");
+    assert.equal(getLowcodePropGroupKey("products", { label: "数据源", type: "string", setter: "dataSourceSelector", defaultValue: "" }), "data");
+    assert.equal(getLowcodePropGroupKey("sticky", propsSchema.sticky), "behavior");
+    assert.equal(getLowcodePropGroupKey("trackingCode", propsSchema.trackingCode), "advanced");
+
+    const groups = createLowcodePropGroups(propsSchema);
+    assert.deepEqual(groups.map((group) => group.key), ["content", "style", "data", "behavior", "advanced"]);
+    assert.deepEqual(groups.map((group) => group.entries.map((entry) => entry.name)), [
+      ["title"],
+      ["backgroundColor"],
+      ["items"],
+      ["sticky"],
+      ["trackingCode"],
+    ]);
+
+    const customGroups = createLowcodePropGroups(propsSchema, {
+      groupOrder: ["data", "content", "advanced"],
+      groupMeta: { data: { label: "资源配置", description: "自定义资源说明。" } },
+    });
+    assert.deepEqual(customGroups.map((group) => group.key), ["data", "content", "advanced"]);
+    assert.equal(customGroups[0].label, "资源配置");
+
+    const collapsed = toggleLowcodePropGroupCollapsed({ advanced: true }, "content");
+    assert.equal(isLowcodePropGroupCollapsed(collapsed, "content"), true);
+    assert.equal(isLowcodePropGroupCollapsed(collapsed, "advanced"), true);
+    assert.equal(isLowcodePropGroupCollapsed(toggleLowcodePropGroupCollapsed(collapsed, "content"), "content"), false);
   });
 
   it("creates version diff items and schema preview snippets", () => {

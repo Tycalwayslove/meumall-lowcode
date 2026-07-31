@@ -30,6 +30,12 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeOutlineVisibility`
 - `pruneLowcodeOutlineCollapsedNodeIds`
 - `revealLowcodeOutlineNode`
+- `LOWCODE_EDITOR_PROP_GROUP_ORDER`
+- `LOWCODE_EDITOR_PROP_GROUP_META`
+- `getLowcodePropGroupKey`
+- `createLowcodePropGroups`
+- `isLowcodePropGroupCollapsed`
+- `toggleLowcodePropGroupCollapsed`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -200,6 +206,22 @@ The outline helpers keep editor structure trees reusable across the Vue3 playgro
 `revealLowcodeOutlineNode(nodeId, collapsedNodeIds, rows)` returns collapsed ids with the selected node ancestors expanded.
 
 These helpers do not select nodes, scroll canvases, rename nodes, handle drag-and-drop, or check permissions. Host shells remain responsible for UI state, DOM behavior, and user-facing interactions.
+
+## Property Group API
+
+The property group helpers keep material property panels reusable across the Vue3 playground and future management-console shells.
+
+`LOWCODE_EDITOR_PROP_GROUP_ORDER` defines the default display order: content, style, data, behavior, advanced.
+
+`LOWCODE_EDITOR_PROP_GROUP_META` provides the default Chinese labels and descriptions currently used by the editor property panel.
+
+`getLowcodePropGroupKey(propName, propSchema, options)` classifies one prop by name, setter, and schema type.
+
+`createLowcodePropGroups(propsSchema, options)` turns a material `propsSchema` into grouped entries with labels, descriptions, and stable order.
+
+`isLowcodePropGroupCollapsed(state, key)` and `toggleLowcodePropGroupCollapsed(state, key)` provide pure helpers for group collapsed state.
+
+These helpers do not render setter controls, open resource pickers, edit Page Schema values, or check permissions. Host shells remain responsible for concrete form controls, validation messages, resource selection, and user-facing interactions.
 
 ## Contract
 
