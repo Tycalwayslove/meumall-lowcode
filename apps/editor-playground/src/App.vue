@@ -292,6 +292,7 @@ interface ListItemDragState {
 const canvasDropHint = ref<CanvasDropHint>();
 const listItemDragState = ref<ListItemDragState>();
 const pointerCanvasDragState = ref<PointerCanvasDragState>();
+const multiSelectedNodeIds = ref<string[]>([]);
 
 const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
 const NODE_DRAG_TYPE = "application/x-meumall-node";
@@ -355,6 +356,18 @@ const selectedManifest = computed(() =>
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
 const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
+const multiSelectedNodeIdSet = computed(() => new Set(multiSelectedNodeIds.value));
+const multiSelectedRows = computed(() => outlineRows.value.filter((row) => multiSelectedNodeIdSet.value.has(row.node.id)));
+const multiSelectSameParent = computed(() => {
+  if (multiSelectedRows.value.length < 2) return true;
+  const parentId = multiSelectedRows.value[0]?.parentId;
+  return multiSelectedRows.value.every((row) => row.parentId === parentId);
+});
+const multiSelectSummary = computed(() => {
+  const count = multiSelectedRows.value.length;
+  if (count <= 1) return "";
+  return multiSelectSameParent.value ? `已多选 ${count} 个同层节点，可成组拖拽` : `已多选 ${count} 个节点，跨层级时拖动单节点`;
+});
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
@@ -423,6 +436,14 @@ watch(
   (schema) => {
     schemaDraft.value = JSON.stringify(schema, null, 2);
   },
+);
+
+watch(
+  outlineRows,
+  () => {
+    pruneMultiSelection();
+  },
+  { immediate: true },
 );
 
 watch(
@@ -506,6 +527,55 @@ function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): Outli
 
 function flattenNodeList(nodes: LowcodeNode[]): LowcodeNode[] {
   return nodes.flatMap((node) => [node, ...flattenNodeList(node.children ?? [])]);
+}
+
+function getSiblingNodes(nodes: LowcodeNode[], parentId?: string): LowcodeNode[] | undefined {
+  if (!parentId) return nodes;
+  for (const node of nodes) {
+    if (node.id === parentId) return node.children ?? [];
+    const children = getSiblingNodes(node.children ?? [], parentId);
+    if (children) return children;
+  }
+  return undefined;
+}
+
+function replaceSiblingNodes(nodes: LowcodeNode[], parentId: string | undefined, siblings: LowcodeNode[]): LowcodeNode[] | undefined {
+  if (!parentId) return siblings;
+  let replaced = false;
+  const nextNodes = nodes.map((node) => {
+    if (node.id === parentId) {
+      replaced = true;
+      return {
+        ...node,
+        children: siblings,
+      };
+    }
+    if (!node.children?.length) return node;
+    const nextChildren = replaceSiblingNodes(node.children, parentId, siblings);
+    if (!nextChildren) return node;
+    replaced = true;
+    return {
+      ...node,
+      children: nextChildren,
+    };
+  });
+  return replaced ? nextNodes : undefined;
+}
+
+function commitPlaygroundSchemaChange(schema: LowcodePageSchema, action: string, selectedNodeId?: string): void {
+  const state = editorState.value;
+  editorState.value = {
+    ...state,
+    schema,
+    selectedNodeId: selectedNodeId ?? state.selectedNodeId,
+    history: {
+      ...state.history,
+      past: [...state.history.past, state.schema].slice(-state.history.limit),
+      future: [],
+    },
+    dirty: true,
+    lastAction: action,
+  };
 }
 
 function schemaNodeCount(schema: LowcodePageSchema): number {
@@ -720,6 +790,10 @@ function onMaterialClick(event: MouseEvent, manifest: LowcodeMaterialManifest): 
 
 function onOutlineNodeClick(event: MouseEvent, nodeId: string): void {
   if (consumeSuppressedClick(event)) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey) {
+    toggleMultiSelected(nodeId);
+    return;
+  }
   select(nodeId);
 }
 
@@ -778,6 +852,7 @@ function onMaterialPointerDown(event: PointerEvent, manifest: LowcodeMaterialMan
 }
 
 function onOutlineNodePointerDown(event: PointerEvent, nodeId: string): void {
+  if (isTouchLikePointer(event)) selectNodeForDrag(nodeId);
   startPointerCanvasDrag(event, "node", { nodeId });
 }
 
@@ -786,7 +861,7 @@ function onPhoneFramePointerDown(event: PointerEvent): void {
   const nodeElement = getRuntimeNodeElementFromTarget(event.target);
   const nodeId = nodeElement?.dataset.lowcodeNodeId;
   if (!nodeId) return;
-  select(nodeId);
+  selectNodeForDrag(nodeId);
   startPointerCanvasDrag(event, "node", { nodeId });
 }
 
@@ -856,6 +931,45 @@ function consumeSuppressedClick(event: MouseEvent): boolean {
   event.stopPropagation();
   suppressNextClick = false;
   return true;
+}
+
+function isNodeMultiSelected(nodeId: string): boolean {
+  return multiSelectedNodeIdSet.value.has(nodeId);
+}
+
+function canDragSelectedGroup(nodeId: string): boolean {
+  return isNodeMultiSelected(nodeId) && multiSelectedRows.value.length > 1 && multiSelectSameParent.value;
+}
+
+function toggleMultiSelected(nodeId: string): void {
+  const selected = new Set(multiSelectedNodeIds.value);
+  if (selected.has(nodeId)) {
+    selected.delete(nodeId);
+  } else {
+    selected.add(nodeId);
+  }
+  if (!selected.size) selected.add(nodeId);
+  multiSelectedNodeIds.value = [...selected];
+  editorState.value = selectNode(editorState.value, nodeId);
+}
+
+function selectNodeForDrag(nodeId: string): void {
+  if (isNodeMultiSelected(nodeId)) {
+    editorState.value = selectNode(editorState.value, nodeId);
+    return;
+  }
+  select(nodeId);
+}
+
+function pruneMultiSelection(): void {
+  const available = new Set(outlineRows.value.map((row) => row.node.id));
+  const nextSelected = multiSelectedNodeIds.value.filter((nodeId) => available.has(nodeId));
+  if (!nextSelected.length && editorState.value.selectedNodeId && available.has(editorState.value.selectedNodeId)) {
+    nextSelected.push(editorState.value.selectedNodeId);
+  }
+  if (nextSelected.join("|") !== multiSelectedNodeIds.value.join("|")) {
+    multiSelectedNodeIds.value = nextSelected;
+  }
 }
 
 function findOutlineRowByNodeId(nodeId: string): OutlineRow | undefined {
@@ -1050,7 +1164,93 @@ function getAdjustedMoveIndex(sourceRow: OutlineRow, targetRow: OutlineRow, plac
   return index;
 }
 
+function selectedGroupNodeIdsForDrag(seedNodeId: string): string[] {
+  if (!isNodeMultiSelected(seedNodeId) || multiSelectedRows.value.length < 2 || !multiSelectSameParent.value) {
+    return [seedNodeId];
+  }
+  return [...multiSelectedRows.value]
+    .sort((a, b) => a.index - b.index)
+    .map((row) => row.node.id);
+}
+
+function getGroupDropTarget(hint: CanvasDropHint): { parentId?: string; index: number; targetRow?: OutlineRow } | undefined {
+  if (!hint.targetNodeId || hint.placement === "append") {
+    return {
+      parentId: undefined,
+      index: editorState.value.schema.nodes.length,
+    };
+  }
+  const targetRow = findOutlineRowByNodeId(hint.targetNodeId);
+  if (!targetRow) return undefined;
+  if (hint.placement === "inside") {
+    return {
+      parentId: targetRow.node.id,
+      index: targetRow.node.children?.length ?? 0,
+      targetRow,
+    };
+  }
+  return {
+    parentId: targetRow.parentId,
+    index: hint.placement === "before" ? targetRow.index : targetRow.index + 1,
+    targetRow,
+  };
+}
+
+function isInvalidGroupParent(nodeIds: string[], parentId: string | undefined): boolean {
+  if (!parentId) return false;
+  if (nodeIds.includes(parentId)) return true;
+  return nodeIds.some((nodeId) => nodeContains(findNode(editorState.value.schema.nodes, nodeId), parentId));
+}
+
+function moveCanvasNodeGroup(nodeIds: string[], hint: CanvasDropHint): boolean {
+  if (nodeIds.length < 2) return false;
+  const sourceRows = nodeIds.map((nodeId) => findOutlineRowByNodeId(nodeId));
+  if (sourceRows.some((row): row is undefined => row === undefined)) return false;
+  const rows = sourceRows as OutlineRow[];
+  const sourceParentId = rows[0]?.parentId;
+  if (!rows.every((row) => row.parentId === sourceParentId)) return false;
+
+  const target = getGroupDropTarget(hint);
+  if (!target) return false;
+  if (target.targetRow && nodeIds.includes(target.targetRow.node.id)) return true;
+  if (isInvalidGroupParent(nodeIds, target.parentId)) return true;
+
+  const selected = new Set(nodeIds);
+  const sourceSiblings = getSiblingNodes(editorState.value.schema.nodes, sourceParentId);
+  if (!sourceSiblings) return false;
+  const movingNodes = sourceSiblings.filter((node) => selected.has(node.id));
+  if (movingNodes.length !== nodeIds.length) return false;
+
+  const remainingSourceSiblings = sourceSiblings.filter((node) => !selected.has(node.id));
+  let nextNodes = replaceSiblingNodes(editorState.value.schema.nodes, sourceParentId, remainingSourceSiblings);
+  if (!nextNodes) return false;
+
+  const removedBeforeTarget = sourceParentId === target.parentId ? rows.filter((row) => row.index < target.index).length : 0;
+  const targetIndex = Math.max(0, target.index - removedBeforeTarget);
+  const targetSiblings = getSiblingNodes(nextNodes, target.parentId);
+  if (!targetSiblings) return false;
+
+  const nextTargetSiblings = [...targetSiblings];
+  nextTargetSiblings.splice(Math.min(targetIndex, nextTargetSiblings.length), 0, ...movingNodes);
+  nextNodes = replaceSiblingNodes(nextNodes, target.parentId, nextTargetSiblings);
+  if (!nextNodes) return false;
+
+  commitPlaygroundSchemaChange(
+    {
+      ...editorState.value.schema,
+      nodes: nextNodes,
+    },
+    "moveNodeGroup",
+    nodeIds[0],
+  );
+  multiSelectedNodeIds.value = nodeIds;
+  return true;
+}
+
 function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
+  const groupNodeIds = selectedGroupNodeIdsForDrag(nodeId);
+  if (moveCanvasNodeGroup(groupNodeIds, hint)) return;
+
   const sourceRow = findOutlineRowByNodeId(nodeId);
   if (!sourceRow) return;
   if (!hint.targetNodeId || hint.placement === "append") {
@@ -1129,7 +1329,7 @@ function onNodeDragStart(event: DragEvent, nodeId: string): void {
 }
 
 function onCanvasNodeDragStart(node: LowcodeNode, event: DragEvent): void {
-  select(node.id);
+  selectNodeForDrag(node.id);
   onNodeDragStart(event, node.id);
 }
 
@@ -1141,10 +1341,13 @@ function onNodeDrop(event: DragEvent, target: OutlineRow): void {
   const nodeId = event.dataTransfer?.getData(NODE_DRAG_TYPE) || draggedNodeId.value;
   if (!nodeId) return;
   if (target.node.id === nodeId) return;
-  editorState.value = moveNodeById(editorState.value, {
-    nodeId,
-    targetParentId: target.parentId,
-    index: target.index,
+  moveCanvasNode(nodeId, {
+    source: "node",
+    placement: "before",
+    targetNodeId: target.node.id,
+    targetTitle: registry.get(target.node.componentName)?.manifest.title ?? target.node.componentName,
+    style: {},
+    guides: [],
   });
   draggedNodeId.value = undefined;
 }
@@ -1419,6 +1622,7 @@ function asBoolean(value: unknown): boolean {
 
 function select(nodeId: string): void {
   editorState.value = selectNode(editorState.value, nodeId);
+  multiSelectedNodeIds.value = [nodeId];
 }
 
 function removeSelected(): void {
@@ -2079,11 +2283,18 @@ function formatReleaseTime(value: string): string {
           <Layers :size="16" />
           <span>结构</span>
         </div>
+        <div v-if="multiSelectSummary" class="outline-selection-summary">
+          {{ multiSelectSummary }}
+        </div>
         <button
           v-for="row in outlineRows"
           :key="row.node.id"
           class="outline-item"
-          :class="{ selected: editorState.selectedNodeId === row.node.id }"
+          :class="{
+            selected: editorState.selectedNodeId === row.node.id,
+            'multi-selected': isNodeMultiSelected(row.node.id),
+            'group-draggable': canDragSelectedGroup(row.node.id),
+          }"
           :style="{ paddingLeft: `${12 + row.depth * 18}px` }"
           draggable="true"
           @pointerdown="onOutlineNodePointerDown($event, row.node.id)"
@@ -2093,7 +2304,15 @@ function formatReleaseTime(value: string): string {
           @click="onOutlineNodeClick($event, row.node.id)"
         >
           <GripVertical :size="15" class="drag-icon" />
-          <span>{{ row.index + 1 }}</span>
+          <span
+            class="outline-check"
+            :class="{ checked: isNodeMultiSelected(row.node.id) }"
+            title="多选节点"
+            @click.stop="toggleMultiSelected(row.node.id)"
+          >
+            {{ isNodeMultiSelected(row.node.id) ? "✓" : "" }}
+          </span>
+          <span class="outline-index">{{ row.index + 1 }}</span>
           <strong>{{ registry.get(row.node.componentName)?.manifest.title ?? row.node.componentName }}</strong>
         </button>
       </section>

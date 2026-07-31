@@ -251,25 +251,66 @@ button:disabled {
   min-height: 42px;
 }
 
+.outline-selection-summary {
+  margin: -2px 0 8px;
+  padding: 7px 9px;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  color: #0f766e;
+  background: #f0fdfa;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .drag-icon {
   flex: 0 0 auto;
   color: #94a3b8;
 }
 
-.outline-item > span {
+.outline-item .outline-check,
+.outline-item .outline-index {
   display: grid;
   place-items: center;
+  flex: 0 0 auto;
   width: 22px;
   height: 22px;
   border-radius: 7px;
+  font-size: 12px;
+}
+
+.outline-item .outline-check {
+  border: 1px solid #cbd5e1;
+  color: #0f766e;
+  background: #fff;
+  font-weight: 800;
+}
+
+.outline-item .outline-check.checked {
+  border-color: #14b8a6;
+  background: #ccfbf1;
+}
+
+.outline-item .outline-index {
   color: #475569;
   background: #eef2f7;
-  font-size: 12px;
 }
 
 .outline-item.selected {
   border-color: #111827;
   box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.08);
+}
+
+.outline-item.multi-selected {
+  border-color: #5eead4;
+  background: #f8fffd;
+}
+
+.outline-item.group-draggable {
+  box-shadow: inset 3px 0 0 #14b8a6;
+}
+
+.outline-item strong {
+  min-width: 0;
 }
 
 .container-target {
