@@ -98,6 +98,7 @@ Vue 3 H5 renderer:
 
 Vue 3 H5 business materials:
 
+- Section container
 - Activity hero
 - Image banner
 - Product list

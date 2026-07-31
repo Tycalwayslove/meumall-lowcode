@@ -23,7 +23,9 @@ import {
   copyNode,
   createEditorState,
   duplicateNode,
+  insertNode,
   markSaved,
+  moveNodeById,
   pasteNode,
   redo,
   removeNode,
@@ -51,6 +53,45 @@ import {
 } from "@meumall/lowcode-schema";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
+
+const sampleAssets = [
+  {
+    title: "活动女装横幅",
+    url: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    title: "夏季穿搭 Banner",
+    url: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    title: "质感商品陈列",
+    url: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80",
+  },
+];
+
+const sampleProducts = [
+  {
+    id: "sku_001",
+    title: "轻盈通勤手提包",
+    priceText: "¥199",
+    desc: "活动价",
+    imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_002",
+    title: "夏季舒适凉鞋",
+    priceText: "¥129",
+    desc: "限时补贴",
+    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_003",
+    title: "防晒轻薄衬衫",
+    priceText: "¥159",
+    desc: "热卖单品",
+    imageUrl: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=300&q=80",
+  },
+];
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
@@ -91,26 +132,38 @@ const initialSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_container",
+      componentName: "SectionContainer",
+      materialVersion: "0.1.0",
+      props: {
+        title: "精选专区",
+        subtitle: "容器中可以继续添加物料。",
+        backgroundColor: "#ffffff",
+        padding: 12,
+        radius: 10,
+      },
+      children: [
+        {
+          id: "node_banner_nested",
+          componentName: "ImageBanner",
+          materialVersion: "0.1.0",
+          props: {
+            imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+            alt: "",
+            radius: 8,
+          },
+        },
+      ],
+    },
+    {
       id: "node_products",
       componentName: "ProductList",
       materialVersion: "0.1.0",
       props: {
-        items: [
-          {
-            id: "sku_001",
-            title: "轻盈通勤手提包",
-            priceText: "¥199",
-            desc: "活动价",
-            imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
-          },
-          {
-            id: "sku_002",
-            title: "夏季舒适凉鞋",
-            priceText: "¥129",
-            desc: "限时补贴",
-            imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
-          },
-        ],
+        items: sampleProducts.slice(0, 2),
+      },
+      dataBinding: {
+        items: "products",
       },
     },
   ],
@@ -155,7 +208,9 @@ const selectedNode = computed(() => findNode(editorState.value.schema.nodes, edi
 const selectedManifest = computed(() =>
   selectedNode.value ? registry.get(selectedNode.value.componentName)?.manifest : undefined,
 );
-const pageJson = computed(() => JSON.stringify(editorState.value.schema, null, 2));
+const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
+const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
+const previewData = computed<JsonObject>(() => resolvePreviewData(editorState.value.schema.dataSources ?? []));
 
 watch(
   () => editorState.value.schema,
@@ -174,12 +229,63 @@ function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefine
   return undefined;
 }
 
-function addMaterial(manifest: LowcodeMaterialManifest): void {
-  editorState.value = appendNode(editorState.value, {
+interface OutlineRow {
+  node: LowcodeNode;
+  index: number;
+  depth: number;
+  parentId?: string;
+}
+
+function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string): OutlineRow[] {
+  return nodes.flatMap((node, index) => [
+    { node, index, depth, parentId },
+    ...flattenNodes(node.children ?? [], depth + 1, node.id),
+  ]);
+}
+
+function resolvePreviewData(dataSources: LowcodeDataSourceConfig[]): JsonObject {
+  return dataSources.reduce<JsonObject>((data, dataSource) => {
+    if (!dataSource.bindTo) return data;
+    if (dataSource.type === "product.byActivity" || dataSource.type === "product.byIds") {
+      const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
+      data[dataSource.bindTo] = sampleProducts.slice(0, limit);
+      return data;
+    }
+    data[dataSource.bindTo] = dataSource.params ?? {};
+    return data;
+  }, {});
+}
+
+function createNodeInput(manifest: LowcodeMaterialManifest) {
+  const node = {
     componentName: manifest.componentName,
     materialVersion: manifest.materialVersion,
     props: { ...manifest.defaultProps },
     meta: { name: manifest.title },
+  };
+  if (manifest.componentName === "ProductList") {
+    return {
+      ...node,
+      dataBinding: {
+        items: "products",
+      },
+    };
+  }
+  return node;
+}
+
+function addMaterial(manifest: LowcodeMaterialManifest): void {
+  editorState.value = appendNode(editorState.value, createNodeInput(manifest));
+}
+
+function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void {
+  if (!selectedNode.value || !selectedNodeIsContainer.value) {
+    addMaterial(manifest);
+    return;
+  }
+  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
+    parentId: selectedNode.value.id,
+    select: true,
   });
 }
 
@@ -192,7 +298,7 @@ function onDragStart(event: DragEvent, manifest: LowcodeMaterialManifest): void 
 function onCanvasDrop(event: DragEvent): void {
   const componentName = event.dataTransfer?.getData("application/x-meumall-material");
   const material = materials.find((item) => item.manifest.componentName === componentName);
-  if (material) addMaterial(material.manifest);
+  if (material) addMaterialToSelectedContainer(material.manifest);
 }
 
 function onNodeDragStart(event: DragEvent, nodeId: string): void {
@@ -201,12 +307,15 @@ function onNodeDragStart(event: DragEvent, nodeId: string): void {
   if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
 }
 
-function onNodeDrop(event: DragEvent, targetIndex: number): void {
+function onNodeDrop(event: DragEvent, target: OutlineRow): void {
   const nodeId = event.dataTransfer?.getData("application/x-meumall-node") || draggedNodeId.value;
   if (!nodeId) return;
-  const fromIndex = editorState.value.schema.nodes.findIndex((node) => node.id === nodeId);
-  if (fromIndex < 0 || fromIndex === targetIndex) return;
-  editorState.value = moveNode(editorState.value, fromIndex, targetIndex);
+  if (target.node.id === nodeId) return;
+  editorState.value = moveNodeById(editorState.value, {
+    nodeId,
+    targetParentId: target.parentId,
+    index: target.index,
+  });
   draggedNodeId.value = undefined;
 }
 
@@ -215,6 +324,36 @@ function moveSelected(offset: number): void {
   const fromIndex = editorState.value.schema.nodes.findIndex((node) => node.id === selectedNode.value?.id);
   if (fromIndex < 0) return;
   editorState.value = moveNode(editorState.value, fromIndex, fromIndex + offset);
+}
+
+function bindSelectedProductListToDataSource(): void {
+  if (!selectedNode.value) return;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => ({
+        ...node,
+        dataBinding: {
+          ...(node.dataBinding ?? {}),
+          items: "products",
+        },
+      })),
+    },
+    dirty: true,
+    lastAction: "bindSelectedProductListToDataSource",
+  };
+}
+
+function updateNodeById(nodes: LowcodeNode[], nodeId: string, updater: (node: LowcodeNode) => LowcodeNode): LowcodeNode[] {
+  return nodes.map((node) => {
+    if (node.id === nodeId) return updater(node);
+    if (!node.children?.length) return node;
+    return {
+      ...node,
+      children: updateNodeById(node.children, nodeId, updater),
+    };
+  });
 }
 
 function updateProp(propName: string, propSchema: LowcodePropSchema, value: unknown): void {
@@ -403,6 +542,20 @@ function asText(value: JsonValue | undefined): string {
   return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
 }
 
+function applyAsset(propName: string, url: string): void {
+  const manifest = selectedManifest.value;
+  const propSchema = manifest?.propsSchema[propName];
+  if (!propSchema) return;
+  updateProp(propName, propSchema, url);
+}
+
+function applySampleProducts(): void {
+  const manifest = selectedManifest.value;
+  const propSchema = manifest?.propsSchema.items;
+  if (!propSchema) return;
+  updateProp("items", propSchema, JSON.stringify(sampleProducts, null, 2));
+}
+
 function isStructured(propSchema: LowcodePropSchema): boolean {
   return propSchema.type === "array" || propSchema.type === "object" || propSchema.setter === "dataSourceSelector";
 }
@@ -472,6 +625,18 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
           </span>
           <Plus :size="15" />
         </button>
+        <div v-if="selectedNodeIsContainer" class="container-target">
+          <strong>当前容器：{{ selectedManifest?.title }}</strong>
+          <span>点击下方按钮可把物料加入选中容器</span>
+          <button
+            v-for="material in materials"
+            :key="`child-${material.manifest.componentName}`"
+            @click="addMaterialToSelectedContainer(material.manifest)"
+          >
+            <Plus :size="14" />
+            <span>{{ material.manifest.title }}</span>
+          </button>
+        </div>
       </section>
 
       <section class="panel-section">
@@ -480,19 +645,20 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
           <span>结构</span>
         </div>
         <button
-          v-for="(node, index) in editorState.schema.nodes"
-          :key="node.id"
+          v-for="row in outlineRows"
+          :key="row.node.id"
           class="outline-item"
-          :class="{ selected: editorState.selectedNodeId === node.id }"
+          :class="{ selected: editorState.selectedNodeId === row.node.id }"
+          :style="{ paddingLeft: `${12 + row.depth * 18}px` }"
           draggable="true"
-          @dragstart="onNodeDragStart($event, node.id)"
+          @dragstart="onNodeDragStart($event, row.node.id)"
           @dragover.prevent
-          @drop.prevent="onNodeDrop($event, index)"
-          @click="select(node.id)"
+          @drop.prevent="onNodeDrop($event, row)"
+          @click="select(row.node.id)"
         >
           <GripVertical :size="15" class="drag-icon" />
-          <span>{{ index + 1 }}</span>
-          <strong>{{ registry.get(node.componentName)?.manifest.title ?? node.componentName }}</strong>
+          <span>{{ row.index + 1 }}</span>
+          <strong>{{ registry.get(row.node.componentName)?.manifest.title ?? row.node.componentName }}</strong>
         </button>
       </section>
     </aside>
@@ -532,6 +698,7 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
           <LowcodeVueRenderer
             :schema="editorState.schema"
             :registry="registry"
+            :data="previewData"
             :editable="editorState.mode === 'design'"
             :selected-node-id="editorState.selectedNodeId"
             :fallback="'暂无内容'"
@@ -618,6 +785,21 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
               :value="asText(selectedNode.props[String(propName)])"
               @input="updateProp(String(propName), propSchema, ($event.target as HTMLInputElement).value)"
             />
+            <div v-if="propSchema.setter === 'image'" class="asset-picker">
+              <button
+                v-for="asset in sampleAssets"
+                :key="asset.url"
+                type="button"
+                @click="applyAsset(String(propName), asset.url)"
+              >
+                <img :src="asset.url" alt="" />
+                <span>{{ asset.title }}</span>
+              </button>
+            </div>
+            <div v-if="selectedNode.componentName === 'ProductList' && String(propName) === 'items'" class="quick-actions">
+              <button type="button" @click="applySampleProducts">使用示例商品</button>
+              <button type="button" @click="bindSelectedProductListToDataSource">绑定数据源 products</button>
+            </div>
           </label>
 
           <div class="toolbar inspector-actions">

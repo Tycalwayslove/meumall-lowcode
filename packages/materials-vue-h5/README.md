@@ -2,5 +2,4 @@
 
 Vue 3 H5 business materials for MeuMall low-code pages.
 
-The initial material set includes activity hero, image banner, rich text, product list, and coupon section.
-
+The initial material set includes section container, activity hero, image banner, rich text, product list, and coupon section.

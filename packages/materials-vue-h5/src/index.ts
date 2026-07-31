@@ -246,7 +246,68 @@ export const CouponSection = defineComponent({
   },
 });
 
+export const SectionContainer = defineComponent({
+  name: "SectionContainer",
+  props: materialPropOptions,
+  setup(props, { slots }) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const title = text(runtimeProps.title);
+      const subtitle = text(runtimeProps.subtitle);
+      const children = slots.default?.();
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-section-container",
+          style: {
+            margin: "10px 0",
+            padding: `${number(runtimeProps.padding, 12)}px`,
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+            borderRadius: `${number(runtimeProps.radius, 10)}px`,
+          },
+        },
+        [
+          title
+            ? h("h2", { style: { margin: "0 0 6px", color: "#111827", fontSize: "18px" } }, title)
+            : null,
+          subtitle
+            ? h("p", { style: { margin: "0 0 12px", color: "#64748b", fontSize: "13px", lineHeight: 1.6 } }, subtitle)
+            : null,
+          children?.length
+            ? h("div", { class: "mlc-section-container__body" }, children)
+            : h("div", { class: "mlc-section-container__empty" }, "向容器中添加物料"),
+        ],
+      );
+    };
+  },
+});
+
 export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
+  {
+    component: SectionContainer,
+    manifest: createMaterialManifest({
+      componentName: "SectionContainer",
+      materialVersion: "0.1.0",
+      title: "容器区块",
+      category: "layout",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "精选专区",
+        subtitle: "可在容器中继续添加 Banner、商品或优惠券。",
+        backgroundColor: "#ffffff",
+        padding: 12,
+        radius: 10,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "精选专区" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "可在容器中继续添加 Banner、商品或优惠券。" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12 },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+      },
+    }),
+  },
   {
     component: ActivityHero,
     manifest: createMaterialManifest({
