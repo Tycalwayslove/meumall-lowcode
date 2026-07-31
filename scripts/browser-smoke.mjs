@@ -452,6 +452,28 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.querySelector('.editor-shell')");
   await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
   log("通过：可切回设计模式");
+
+  log("检查新建页面向导");
+  await page.clickByText(".toolbar button", "新建");
+  await page.waitForExpression("document.querySelector('.page-start-dialog') && document.body.innerText.includes('空白 H5 页面') && document.body.innerText.includes('从模板开始')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('商品专题页') && item.innerText.includes('节点'))");
+  log("通过：新建页面向导可打开并展示空白页与模板起点");
+
+  await page.clickByText(".page-start-blank", "空白 H5 页面");
+  await page.waitForExpression("document.body.innerText.includes('已创建空白 H5 页面')");
+  await page.waitForExpression("document.body.innerText.includes('未命名 H5 页面')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === 0");
+  log("通过：新建页面向导可创建空白 H5 页面");
+
+  await page.clickByText(".toolbar button", "保存草稿");
+  await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
+  await page.clickByText(".toolbar button", "新建");
+  await page.waitForExpression("document.querySelector('.page-start-dialog')");
+  await page.clickByText(".page-start-template", "商品专题页");
+  await page.waitForExpression("!document.querySelector('.page-start-dialog')");
+  await page.waitForExpression("document.body.innerText.includes('通勤好物专题')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
+  log("通过：新建页面向导可从模板起点进入可编辑 H5 页面");
 }
 
 async function assertInspectorGroups(page) {

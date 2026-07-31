@@ -68,6 +68,7 @@ import {
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
 import {
+  createLowcodePageSchema,
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
@@ -339,6 +340,7 @@ const renamingOutlineNodeId = ref<string>();
 const outlineRenameDraft = ref("");
 const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
+const pageStartWizardOpen = ref(false);
 const nodeContextMenu = ref<NodeContextMenuState | undefined>();
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
 const isTemplateSearching = ref(false);
@@ -887,7 +889,16 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() => {
   return items;
 });
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(pageTemplates.map((template) => template.category)))]);
+const pageStartTemplates = computed<TemplateListItem[]>(() => pageTemplates.map(createTemplateListItem));
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
+  {
+    id: "open-page-start-wizard",
+    title: "新建页面",
+    group: "常用操作",
+    description: "从空白页或模板开始搭建新的运营 H5。",
+    keywords: ["new", "create", "start", "blank", "template", "新建", "页面", "模板", "空白"],
+    run: openPageStartWizard,
+  },
   {
     id: "mode-design",
     title: "切换到设计模式",
@@ -1293,6 +1304,20 @@ function schemaNodeCount(schema: LowcodePageSchema): number {
   return flattenNodeList(schema.nodes).length;
 }
 
+function createTemplateListItem(template: LowcodeTemplateResource): TemplateListItem {
+  return {
+    id: template.id,
+    title: template.title,
+    description: template.description,
+    category: template.category,
+    tags: template.tags ?? [],
+    version: template.version,
+    nodeCount: schemaNodeCount(template.schema),
+    dataSourceCount: template.schema.dataSources?.length ?? 0,
+    actionCount: template.schema.actions?.length ?? 0,
+  };
+}
+
 function templateTags(template: TemplateListItem): string[] {
   return template.tags.slice(0, 4);
 }
@@ -1342,17 +1367,7 @@ async function refreshTemplates(): Promise<void> {
       status: "published",
     }));
     if (seq !== templateSearchSeq) return;
-    visiblePageTemplates.value = result.items.map((template) => ({
-      id: template.id,
-      title: template.title,
-      description: template.description,
-      category: template.category,
-      tags: template.tags ?? [],
-      version: template.version,
-      nodeCount: schemaNodeCount(template.schema),
-      dataSourceCount: template.schema.dataSources?.length ?? 0,
-      actionCount: template.schema.actions?.length ?? 0,
-    }));
+    visiblePageTemplates.value = result.items.map(createTemplateListItem);
   } catch {
     if (seq === templateSearchSeq) visiblePageTemplates.value = [];
   } finally {
@@ -2957,6 +2972,70 @@ function resetSchema(): void {
   refreshReleases();
 }
 
+function createBlankPageSchema(): LowcodePageSchema {
+  const now = new Date();
+  const pageId = `blank-h5-${now.getTime().toString(36)}`;
+  return createLowcodePageSchema({
+    pageId,
+    title: "未命名 H5 页面",
+    pageType: "custom",
+    targetPlatforms: ["h5"],
+    layout: {
+      safeArea: true,
+      backgroundColor: "#f8fafc",
+      maxWidth: 430,
+    },
+    nodes: [],
+    tracking: {
+      pageName: "lowcode_blank_h5",
+      channelParamKeys: ["utm_source", "channel"],
+      exposure: true,
+      click: true,
+    },
+    publishMeta: {
+      environment: "test",
+      operator: "playground",
+    },
+    editor: {
+      canvasWidth: 375,
+      notes: "从新建页面向导创建的空白 H5 页面。",
+    },
+  });
+}
+
+function openPageStartWizard(): void {
+  closeCommandPalette();
+  pageStartWizardOpen.value = true;
+}
+
+function closePageStartWizard(): void {
+  pageStartWizardOpen.value = false;
+}
+
+function createBlankPageFromWizard(): void {
+  if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认新建空白页面并替换当前页面吗？")) {
+    return;
+  }
+  const schema = createBlankPageSchema();
+  window.localStorage.removeItem(STORAGE_KEY);
+  const nextState = createEditorState(schema, {
+    mode: "design",
+    viewport: editorState.value.viewport,
+  });
+  editorState.value = {
+    ...nextState,
+    dirty: true,
+    lastAction: "createBlankPage",
+  };
+  schemaDraft.value = JSON.stringify(schema, null, 2);
+  jsonError.value = "";
+  multiSelectedNodeIds.value = [];
+  collapsedOutlineNodeIds.value = [];
+  releaseMessage.value = "已创建空白 H5 页面";
+  closePageStartWizard();
+  refreshReleases();
+}
+
 function clearCanvas(): void {
   if (editorState.value.schema.nodes.length && !window.confirm("确认清空当前画布吗？")) return;
   commitPlaygroundSchemaChange(
@@ -2976,6 +3055,7 @@ function clearCanvas(): void {
 }
 
 function openCommandPalette(): void {
+  closePageStartWizard();
   commandKeyword.value = "";
   commandPaletteOpen.value = true;
   void nextTick(() => {
@@ -3014,6 +3094,11 @@ function onGlobalKeydown(event: KeyboardEvent): void {
   if (event.key === "Escape" && commandPaletteOpen.value) {
     event.preventDefault();
     closeCommandPalette();
+    return;
+  }
+  if (event.key === "Escape" && pageStartWizardOpen.value) {
+    event.preventDefault();
+    closePageStartWizard();
     return;
   }
   if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
@@ -3072,7 +3157,7 @@ function handleEditorNodeShortcut(event: KeyboardEvent): void {
   }
 }
 
-async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
+async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onApplied?: () => void): Promise<void> {
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
     return;
   }
@@ -3091,7 +3176,12 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">): Pro
   schemaDraft.value = JSON.stringify(schema, null, 2);
   jsonError.value = "";
   releaseMessage.value = `已应用模板：${templateDetail.title}`;
+  onApplied?.();
   refreshReleases();
+}
+
+async function applyTemplateFromStartWizard(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
+  await applyTemplate(template, closePageStartWizard);
 }
 
 async function previewTemplate(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
@@ -3653,6 +3743,10 @@ function formatAutoSaveTime(value: string): string {
           <Search :size="17" />
           <span>命令</span>
         </button>
+        <button type="button" title="新建页面" class="page-start-trigger" @click="openPageStartWizard">
+          <Plus :size="17" />
+          <span>新建</span>
+        </button>
         <button title="设计" :class="{ active: editorState.mode === 'design' }" @click="editorState = setEditorMode(editorState, 'design')">
           <MonitorSmartphone :size="17" />
           <span>设计</span>
@@ -3732,6 +3826,65 @@ function formatAutoSaveTime(value: string): string {
             <span class="command-group">{{ item.disabled ? "不可用" : item.group }}</span>
           </button>
           <div v-if="!visibleCommandPaletteItems.length" class="mini-empty">没有匹配命令</div>
+        </div>
+      </section>
+    </div>
+
+    <div
+      v-if="pageStartWizardOpen"
+      class="page-start-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="新建页面向导"
+      @click.self="closePageStartWizard"
+    >
+      <section class="page-start-dialog">
+        <div class="page-start-head">
+          <div>
+            <strong>新建 H5 页面</strong>
+            <span>选择一个起点开始搭建，当前草稿会在替换前确认。</span>
+          </div>
+          <button type="button" title="关闭新建页面向导" @click="closePageStartWizard">
+            <X :size="18" />
+          </button>
+        </div>
+
+        <button type="button" class="page-start-blank" @click="createBlankPageFromWizard">
+          <span class="page-start-icon"><Plus :size="22" /></span>
+          <span>
+            <strong>空白 H5 页面</strong>
+            <small>适合从零拖拽物料搭建活动页，创建后可立即添加基础物料。</small>
+          </span>
+          <em>开始搭建</em>
+        </button>
+
+        <div class="page-start-subtitle">
+          <Layers :size="15" />
+          <span>从模板开始</span>
+        </div>
+        <div class="page-start-template-grid">
+          <button
+            v-for="template in pageStartTemplates"
+            :key="`start-${template.id}`"
+            type="button"
+            class="page-start-template"
+            @click="applyTemplateFromStartWizard(template)"
+          >
+            <span class="page-start-template-head">
+              <strong>{{ template.title }}</strong>
+              <em>{{ templateVersionText(template) }}</em>
+            </span>
+            <small>{{ template.category }} / {{ template.description }}</small>
+            <span v-if="templateTags(template).length" class="template-tags">
+              <i
+                v-for="tag in templateTags(template)"
+                :key="`start-${template.id}-${tag}`"
+              >
+                {{ tag }}
+              </i>
+            </span>
+            <span class="template-summary">{{ templateSummaryText(template) }}</span>
+          </button>
         </div>
       </section>
     </div>

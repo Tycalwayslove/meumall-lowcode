@@ -244,6 +244,12 @@ button:focus-visible {
   background: #eef2ff;
 }
 
+.toolbar .page-start-trigger {
+  border-color: #0f766e;
+  color: #0f766e;
+  background: #ecfdf5;
+}
+
 .toolbar button:active,
 .viewport-switch button:active,
 .template-item:active,
@@ -329,6 +335,180 @@ button:focus-visible {
 .command-palette-item:disabled {
   cursor: not-allowed;
   opacity: 0.52;
+}
+
+.page-start-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: 74px 18px 18px;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.page-start-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(760px, 100%);
+  max-height: min(760px, calc(100dvh - 112px));
+  overflow: auto;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 10px;
+  padding: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+}
+
+.page-start-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.page-start-head strong {
+  display: block;
+  color: #111827;
+  font-size: 18px;
+}
+
+.page-start-head span {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.page-start-head button {
+  display: inline-flex;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #475569;
+  background: #fff;
+}
+
+.page-start-blank {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 78px;
+  border: 1px solid #99f6e4;
+  border-radius: 8px;
+  padding: 14px;
+  color: #111827;
+  background: #f0fdfa;
+  text-align: left;
+}
+
+.page-start-blank:hover,
+.page-start-blank:focus-visible {
+  border-color: #0f766e;
+  background: #ccfbf1;
+}
+
+.page-start-icon {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #fff;
+  background: #0f766e;
+}
+
+.page-start-blank strong,
+.page-start-template strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+}
+
+.page-start-blank small,
+.page-start-template small {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.page-start-blank em {
+  color: #0f766e;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.page-start-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.page-start-template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.page-start-template {
+  display: grid;
+  align-content: start;
+  width: 100%;
+  min-height: 156px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  padding: 12px;
+  color: inherit;
+  background: #ffffff;
+  text-align: left;
+}
+
+.page-start-template:hover,
+.page-start-template:focus-visible {
+  border-color: #0f766e;
+  background: #f8fffd;
+}
+
+.page-start-template-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.page-start-template-head strong {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.page-start-template-head em {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .node-context-backdrop {
@@ -2684,8 +2864,29 @@ button:focus-visible {
     padding: 18px 10px;
   }
 
+  .page-start-overlay {
+    padding: 18px 10px;
+  }
+
   .command-palette {
     max-height: calc(100dvh - 36px);
+  }
+
+  .page-start-dialog {
+    max-height: calc(100dvh - 36px);
+  }
+
+  .page-start-blank {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .page-start-blank em {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .page-start-template-grid {
+    grid-template-columns: 1fr;
   }
 
   .command-palette-item {
