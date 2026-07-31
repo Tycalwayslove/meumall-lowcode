@@ -72,7 +72,7 @@ React H5 renderer:
 
 ### `@meumall/lowcode-materials-h5`
 
-React H5 business materials:
+React H5 materials:
 
 - Activity hero
 - Image banner
@@ -82,6 +82,10 @@ React H5 business materials:
 - Promotion entry
 - Register guide
 - Rich text
+
+Materials should be layered as generic materials and business materials. Generic materials provide business-agnostic blocks such as section title, image banner, action button and spacer. Business materials compose business concepts such as product, coupon, brand, store, expert and live entry.
+
+基础组件、通用物料和业务物料的详细分层规则见 `docs/material-layering-architecture.md`。
 - Sticky action bar
 
 ### `@meumall/lowcode-renderer-vue-h5`
@@ -96,7 +100,7 @@ Vue 3 H5 renderer:
 
 ### `@meumall/lowcode-materials-vue-h5`
 
-Vue 3 H5 business materials:
+Vue 3 H5 materials:
 
 - Section container
 - Activity hero
@@ -104,6 +108,8 @@ Vue 3 H5 business materials:
 - Product list
 - Coupon section
 - Rich text
+
+Vue H5 materials must keep the same `componentName` and manifest semantics as React H5 materials. Runtime primitives for Vue should evolve separately from editor UI controls.
 
 ### `@meumall/lowcode-editor`
 
@@ -156,6 +162,7 @@ H5 packages only consume published or preview schema.
 Mini-program support should reuse `schema` and `core`, then add:
 
 ```text
+@meumall/lowcode-primitives-miniapp
 @meumall/lowcode-renderer-miniapp
 @meumall/lowcode-materials-miniapp
 ```

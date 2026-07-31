@@ -6,8 +6,12 @@
 editor -> schema
 renderer-h5 -> core -> schema
 materials-h5 -> core -> schema
+future primitives-react-h5 -> future design-tokens
+future materials-h5 -> future primitives-react-h5
 renderer-vue-h5 -> core -> schema
 materials-vue-h5 -> renderer-vue-h5 -> core -> schema
+future primitives-vue-h5 -> future design-tokens
+future materials-vue-h5 -> future primitives-vue-h5
 adapters -> schema
 editor-playground -> editor + renderer-vue-h5 + materials-vue-h5
 h5-runtime-playground -> renderer-h5 + materials-h5 + core + schema
@@ -43,6 +47,8 @@ npm 包：`@meumall/lowcode-materials-h5`
 
 负责 MeuMall H5 运营页面物料。物料必须声明 manifest，不得依赖 `hybird-meumall` 内部模块。
 
+物料内部需要按 `docs/material-layering-architecture.md` 区分通用物料和业务物料。后续基础 Button、Image、Tag、Price 等能力稳定后，可以抽到独立 runtime primitives 包；当前未实现该包边界。
+
 ### `packages/renderer-vue-h5`
 
 npm 包：`@meumall/lowcode-renderer-vue-h5`
@@ -54,6 +60,18 @@ npm 包：`@meumall/lowcode-renderer-vue-h5`
 npm 包：`@meumall/lowcode-materials-vue-h5`
 
 负责 Vue 3 版本 H5 运营物料。物料 manifest 与 `schema/core` 共用，组件实现面向 Vue runtime。
+
+Vue H5 物料与 React H5 物料必须保持同一 `componentName` 和 manifest 语义。Vue runtime primitives 与编辑器后台 UI 控件分开治理。
+
+### 规划中的 runtime primitives
+
+规划包：
+
+- `@meumall/lowcode-design-tokens`
+- `@meumall/lowcode-primitives-react-h5`
+- `@meumall/lowcode-primitives-vue-h5`
+
+这些包当前尚未实现。触发条件和演进路线见 `docs/material-layering-architecture.md`。原则上 primitives 不声明低代码 manifest，不依赖 schema/core/editor/renderer，只提供业务无关的运行时基础 UI。
 
 ### `packages/editor`
 
@@ -113,7 +131,9 @@ H5 消费方。通过 npm 引入 schema、renderer、materials 和 adapters，�
 - `core` 只依赖 `schema`。
 - `renderer-*` 可以依赖 `core` 和 `schema`，不得依赖 `editor`。
 - `materials-*` 可以依赖 `core` 和 `schema`，不得依赖业务项目。
+- 未来 `materials-*` 可以依赖对应端 `primitives-*`，但 `primitives-*` 不得反向依赖 `materials-*`、`renderer-*`、`editor`、`schema` 或 `core`。
 - `editor` 可以依赖 `core` 和 `schema`，不得依赖 renderer 的私有实现。
+- `editor` 不直接依赖 H5 runtime primitives；编辑器后台控件单独治理或接入管理台组件库。
 - `adapters` 可以依赖 `schema`，宿主实现通过注册注入。
 - `apps/*` 可以组合各包做集成验证，但不得让包反向依赖 app。
 

@@ -9,6 +9,7 @@ During the first architecture and MVP phase, keep all packages in this monorepo.
 Consider splitting only when one of these becomes true:
 
 - `schema/core` needs independent lifecycle and strict governance.
+- runtime primitives API becomes stable and is reused by multiple material groups.
 - `materials-h5` changes much more frequently than core packages.
 - editor becomes a full product with its own release cadence.
 - mini-program renderer requires a separate team and CI.
@@ -21,6 +22,9 @@ meumall-lowcode-contracts
   -> core
 
 meumall-lowcode-h5
+  -> design-tokens
+  -> primitives-react-h5
+  -> primitives-vue-h5
   -> renderer-h5
   -> materials-h5
   -> adapters
@@ -37,3 +41,4 @@ meumall-lowcode-miniapp
 
 Only split after npm package boundaries are stable. Do not split by folder before package APIs are stable.
 
+Runtime primitives should not be split out on day one. First build an internal primitives layer inside the materials packages, migrate several generic materials to prove the API, then split into npm packages after the API is stable. See `docs/material-layering-architecture.md`.
