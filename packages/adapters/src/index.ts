@@ -158,14 +158,43 @@ export interface LowcodeProductResource {
   tags?: string[];
 }
 
+export interface LowcodeCouponResource {
+  id: string;
+  title: string;
+  thresholdText: string;
+  valueText: string;
+  expireText: string;
+  buttonText?: string;
+  tags?: string[];
+}
+
+export type LowcodeStoreExpertResourceKind = "store" | "expert";
+
+export interface LowcodeStoreExpertResource {
+  id: string;
+  kind: LowcodeStoreExpertResourceKind;
+  typeText: string;
+  title: string;
+  subtitle: string;
+  metricText?: string;
+  desc?: string;
+  imageUrl: string;
+  buttonText?: string;
+  tags?: string[];
+}
+
 export interface LowcodeResourceLibraryClient {
   searchImageAssets(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeImageAssetResource>>;
   searchProducts(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeProductResource>>;
+  searchCoupons?(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeCouponResource>>;
+  searchStoreExperts?(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeStoreExpertResource>>;
 }
 
 export interface CreateStaticResourceLibraryClientInput {
   imageAssets?: LowcodeImageAssetResource[];
   products?: LowcodeProductResource[];
+  coupons?: LowcodeCouponResource[];
+  storeExperts?: LowcodeStoreExpertResource[];
 }
 
 export type LowcodeTemplateStatus = "draft" | "published" | "archived";
@@ -266,6 +295,8 @@ function cloneTemplateResource(template: LowcodeTemplateResource): LowcodeTempla
 export function createStaticResourceLibraryClient(input: CreateStaticResourceLibraryClientInput = {}): LowcodeResourceLibraryClient {
   const imageAssets = input.imageAssets ?? [];
   const products = input.products ?? [];
+  const coupons = input.coupons ?? [];
+  const storeExperts = input.storeExperts ?? [];
 
   return {
     searchImageAssets(query = {}) {
@@ -289,6 +320,38 @@ export function createStaticResourceLibraryClient(input: CreateStaticResourceLib
         if (!resourceMatchesTags(product.tags, query.tags)) return false;
         return resourceMatchesKeyword(
           [product.id, product.title, product.desc, product.priceText, product.originPriceText, ...(product.tags ?? [])],
+          keyword,
+        );
+      });
+      return {
+        items: applyResourceLimit(items, query.limit),
+        total: items.length,
+      };
+    },
+    searchCoupons(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const items = coupons.filter((coupon) => {
+        if (!resourceMatchesIds(coupon.id, query.ids)) return false;
+        if (!resourceMatchesTags(coupon.tags, query.tags)) return false;
+        return resourceMatchesKeyword(
+          [coupon.id, coupon.title, coupon.thresholdText, coupon.valueText, coupon.expireText, coupon.buttonText, ...(coupon.tags ?? [])],
+          keyword,
+        );
+      });
+      return {
+        items: applyResourceLimit(items, query.limit),
+        total: items.length,
+      };
+    },
+    searchStoreExperts(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const category = query.category && query.category !== "全部" ? query.category : undefined;
+      const items = storeExperts.filter((item) => {
+        if (category && item.typeText !== category && item.kind !== category) return false;
+        if (!resourceMatchesIds(item.id, query.ids)) return false;
+        if (!resourceMatchesTags(item.tags, query.tags)) return false;
+        return resourceMatchesKeyword(
+          [item.id, item.kind, item.typeText, item.title, item.subtitle, item.metricText, item.desc, item.buttonText, ...(item.tags ?? [])],
           keyword,
         );
       });

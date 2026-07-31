@@ -151,12 +151,58 @@ describe("@meumall/lowcode-adapters", () => {
           tags: ["鞋履"],
         },
       ],
+      coupons: [
+        {
+          id: "coupon_30",
+          title: "满 199 减 30",
+          thresholdText: "平台通用券",
+          valueText: "¥30",
+          expireText: "领取后 7 天有效",
+          tags: ["新人", "平台"],
+        },
+        {
+          id: "coupon_shipping",
+          title: "满 99 包邮",
+          thresholdText: "指定区域可用",
+          valueText: "包邮",
+          expireText: "活动期内有效",
+          tags: ["物流"],
+        },
+      ],
+      storeExperts: [
+        {
+          id: "store_jingan",
+          kind: "store",
+          typeText: "门店",
+          title: "MeuMall 上海静安店",
+          subtitle: "本周热卖搭配到店试穿",
+          metricText: "4.9 分",
+          desc: "距你 2.1km",
+          imageUrl: "https://example.com/store.png",
+          tags: ["上海", "门店"],
+        },
+        {
+          id: "expert_summer",
+          kind: "expert",
+          typeText: "达人",
+          title: "小夏的通勤穿搭",
+          subtitle: "每日更新包袋和鞋履组合",
+          metricText: "12.8w 粉丝",
+          desc: "直播中",
+          imageUrl: "https://example.com/expert.png",
+          tags: ["达人", "直播"],
+        },
+      ],
     });
 
     const bannerResult = client.searchImageAssets({ category: "活动横幅", keyword: "首屏" });
     const couponResult = client.searchImageAssets({ ids: ["asset_coupon"] });
     const productResult = client.searchProducts({ keyword: "sku_00", limit: 1 });
     const taggedProductResult = client.searchProducts({ tags: ["鞋履"] });
+    const couponSearchResult = client.searchCoupons({ keyword: "包邮" });
+    const taggedCouponResult = client.searchCoupons({ tags: ["新人"], limit: 1 });
+    const storeResult = client.searchStoreExperts({ category: "门店" });
+    const expertResult = client.searchStoreExperts({ keyword: "直播" });
 
     assert.equal(bannerResult.total, 1);
     assert.equal(bannerResult.items[0].id, "asset_hero");
@@ -165,6 +211,10 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(productResult.items.length, 1);
     assert.equal(productResult.items[0].id, "sku_001");
     assert.equal(taggedProductResult.items[0].id, "sku_002");
+    assert.equal(couponSearchResult.items[0].id, "coupon_shipping");
+    assert.equal(taggedCouponResult.items[0].id, "coupon_30");
+    assert.equal(storeResult.items[0].id, "store_jingan");
+    assert.equal(expertResult.items[0].id, "expert_summer");
   });
 
   it("searches and clones static page templates through a template library client", async () => {

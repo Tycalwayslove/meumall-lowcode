@@ -58,19 +58,22 @@ The Vue editor playground currently uses a localStorage implementation of the sa
 
 ## Resource Library Client
 
-`LowcodeResourceLibraryClient` describes editor-facing resource search for assets and products:
+`LowcodeResourceLibraryClient` describes editor-facing resource search for assets, products, coupons, stores, and experts:
 
 - `searchImageAssets(query)`
 - `searchProducts(query)`
+- `searchCoupons(query)`
+- `searchStoreExperts(query)`
 
 The first integration stage supports:
 
 - keyword search by id/title/category/tags/description.
 - image asset category filtering.
+- store/expert type filtering through `category`.
 - tag and id filtering.
 - result limiting.
 
-`createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape and keep UI logic unchanged.
+`createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape for image assets, products, coupons, stores, and experts while keeping UI logic unchanged.
 
 ## Template Library Client
 

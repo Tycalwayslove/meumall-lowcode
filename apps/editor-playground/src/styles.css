@@ -1239,6 +1239,10 @@ button:disabled {
   background: #f8fafc;
 }
 
+.coupon-option {
+  grid-template-columns: 16px minmax(0, 1fr);
+}
+
 .product-option.selected {
   border-color: #2563eb;
   background: #eff6ff;

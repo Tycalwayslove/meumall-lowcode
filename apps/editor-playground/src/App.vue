@@ -30,9 +30,11 @@ import {
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
+  type LowcodeCouponResource,
   type LowcodeImageAssetResource,
   type LowcodeProductResource,
   type LowcodeResourceSearchResult,
+  type LowcodeStoreExpertResource,
   type LowcodeTemplateResource,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
@@ -160,6 +162,87 @@ const sampleProducts: LowcodeProductResource[] = [
   },
 ];
 
+const sampleCoupons: LowcodeCouponResource[] = [
+  {
+    id: "coupon_platform_30",
+    title: "满 199 减 30",
+    thresholdText: "平台通用券",
+    valueText: "¥30",
+    expireText: "领取后 7 天有效",
+    buttonText: "领取",
+    tags: ["大促", "平台", "新人"],
+  },
+  {
+    id: "coupon_category_80",
+    title: "满 399 减 80",
+    thresholdText: "包袋鞋履可用",
+    valueText: "¥80",
+    expireText: "每日限量",
+    buttonText: "领取",
+    tags: ["品类", "包袋", "鞋履"],
+  },
+  {
+    id: "coupon_shipping",
+    title: "满 99 包邮",
+    thresholdText: "指定区域可用",
+    valueText: "包邮",
+    expireText: "活动期内有效",
+    buttonText: "领取",
+    tags: ["物流", "转化"],
+  },
+];
+
+const sampleStoreExperts: LowcodeStoreExpertResource[] = [
+  {
+    id: "store_jingan",
+    kind: "store",
+    typeText: "门店",
+    title: "MeuMall 上海静安店",
+    subtitle: "本周热卖搭配到店试穿",
+    metricText: "4.9 分",
+    desc: "距你 2.1km",
+    imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+    buttonText: "到店",
+    tags: ["上海", "线下", "试穿"],
+  },
+  {
+    id: "store_hangzhou",
+    kind: "store",
+    typeText: "门店",
+    title: "MeuMall 杭州湖滨店",
+    subtitle: "湖滨商圈新品试穿与自提",
+    metricText: "4.8 分",
+    desc: "距你 4.6km",
+    imageUrl: "https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=300&q=80",
+    buttonText: "查看",
+    tags: ["杭州", "门店", "自提"],
+  },
+  {
+    id: "expert_summer",
+    kind: "expert",
+    typeText: "达人",
+    title: "小夏的通勤穿搭",
+    subtitle: "每日更新包袋和鞋履组合",
+    metricText: "12.8w 粉丝",
+    desc: "直播中",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80",
+    buttonText: "进直播",
+    tags: ["达人", "通勤", "直播"],
+  },
+  {
+    id: "expert_minimal",
+    kind: "expert",
+    typeText: "达人",
+    title: "阿岚的极简衣橱",
+    subtitle: "高频复购基础款搭配",
+    metricText: "8.6w 粉丝",
+    desc: "本周精选",
+    imageUrl: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=300&q=80",
+    buttonText: "查看",
+    tags: ["达人", "基础款", "搭配"],
+  },
+];
+
 const actionTypeOptions = [
   { label: "页面跳转", value: "navigate" },
   { label: "领取优惠券", value: "coupon.receive" },
@@ -172,6 +255,8 @@ const materials = registry.list();
 const resourceLibraryClient = createStaticResourceLibraryClient({
   imageAssets: sampleAssets,
   products: sampleProducts,
+  coupons: sampleCoupons,
+  storeExperts: sampleStoreExperts,
 });
 const templateLibraryClient = createStaticTemplateLibraryClient({
   templates: pageTemplates,
@@ -179,6 +264,8 @@ const templateLibraryClient = createStaticTemplateLibraryClient({
 const previewDataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
+  "store.byIds": resolveSampleStoreExpertDataSource,
+  "expert.byActivity": resolveSampleStoreExpertDataSource,
   "custom.http": (dataSource) => dataSource.params ?? {},
 });
 
@@ -214,11 +301,22 @@ const assetCategory = ref("全部");
 const assetTargetPropName = ref("");
 const productKeyword = ref("");
 const selectedProductIds = ref<string[]>([]);
+const couponKeyword = ref("");
+const selectedCouponIds = ref<string[]>([]);
+const storeExpertKeyword = ref("");
+const storeExpertCategory = ref("全部");
+const selectedStoreExpertIds = ref<string[]>([]);
 const filteredAssets = ref<LowcodeImageAssetResource[]>([]);
 const filteredProducts = ref<LowcodeProductResource[]>([]);
+const filteredCoupons = ref<LowcodeCouponResource[]>([]);
+const filteredStoreExperts = ref<LowcodeStoreExpertResource[]>([]);
 const resourceProductCatalog = ref<LowcodeProductResource[]>([]);
+const resourceCouponCatalog = ref<LowcodeCouponResource[]>([]);
+const resourceStoreExpertCatalog = ref<LowcodeStoreExpertResource[]>([]);
 const isAssetSearching = ref(false);
 const isProductSearching = ref(false);
+const isCouponSearching = ref(false);
+const isStoreExpertSearching = ref(false);
 const previewData = ref<JsonObject>({});
 const runtimePreviewData = ref<JsonObject>({});
 const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
@@ -231,6 +329,8 @@ let runtimeResolutionSeq = 0;
 let templateSearchSeq = 0;
 let assetSearchSeq = 0;
 let productSearchSeq = 0;
+let couponSearchSeq = 0;
+let storeExpertSearchSeq = 0;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
@@ -392,9 +492,22 @@ const assetCategories = computed(() => ["全部", ...Array.from(new Set(sampleAs
 const isProductMaterialSelected = computed(() =>
   Boolean(selectedNode.value && ["ProductList", "FlashSaleList"].includes(selectedNode.value.componentName)),
 );
+const isCouponBundleSelected = computed(() => selectedNode.value?.componentName === "CouponBundle");
+const isCouponSectionSelected = computed(() => selectedNode.value?.componentName === "CouponSection");
+const canUseCouponLibrary = computed(() => Boolean(isCouponBundleSelected.value || isCouponSectionSelected.value));
+const isStoreExpertMaterialSelected = computed(() => selectedNode.value?.componentName === "StoreExpertSection");
+const storeExpertCategories = computed(() => ["全部", ...Array.from(new Set(sampleStoreExperts.map((item) => item.typeText)))]);
 const selectedProducts = computed(() => {
   const selected = new Set(selectedProductIds.value);
   return resourceProductCatalog.value.filter((product) => selected.has(product.id));
+});
+const selectedCoupons = computed(() => {
+  const selected = new Set(selectedCouponIds.value);
+  return resourceCouponCatalog.value.filter((coupon) => selected.has(coupon.id));
+});
+const selectedStoreExperts = computed(() => {
+  const selected = new Set(selectedStoreExpertIds.value);
+  return resourceStoreExpertCatalog.value.filter((item) => selected.has(item.id));
 });
 const canMoveSelectedUp = computed(() => Boolean(selectedOutlineRow.value && selectedOutlineRow.value.index > 0));
 const canMoveSelectedDown = computed(() => {
@@ -457,6 +570,8 @@ watch(
   () => selectedNode.value?.id,
   () => {
     selectedProductIds.value = getProductIdsFromNode(selectedNode.value);
+    selectedCouponIds.value = getIdsFromNodeArrayProp(selectedNode.value, "coupons");
+    selectedStoreExpertIds.value = getIdsFromNodeArrayProp(selectedNode.value, "items");
   },
   { immediate: true },
 );
@@ -481,6 +596,22 @@ watch(
   productKeyword,
   () => {
     void refreshProducts();
+  },
+  { immediate: true },
+);
+
+watch(
+  couponKeyword,
+  () => {
+    void refreshCoupons();
+  },
+  { immediate: true },
+);
+
+watch(
+  [storeExpertKeyword, storeExpertCategory],
+  () => {
+    void refreshStoreExperts();
   },
   { immediate: true },
 );
@@ -687,14 +818,67 @@ async function refreshProducts(): Promise<void> {
   }
 }
 
+async function refreshCoupons(): Promise<void> {
+  const seq = ++couponSearchSeq;
+  isCouponSearching.value = true;
+  try {
+    const searchCoupons = resourceLibraryClient.searchCoupons;
+    const [catalogResult, searchResult] = await Promise.all([
+      toResourceSearchResult(searchCoupons?.() ?? { items: [], total: 0 }),
+      toResourceSearchResult(searchCoupons?.({ keyword: couponKeyword.value }) ?? { items: [], total: 0 }),
+    ]);
+    if (seq !== couponSearchSeq) return;
+    resourceCouponCatalog.value = catalogResult.items;
+    filteredCoupons.value = searchResult.items;
+  } catch {
+    if (seq === couponSearchSeq) {
+      resourceCouponCatalog.value = [];
+      filteredCoupons.value = [];
+    }
+  } finally {
+    if (seq === couponSearchSeq) isCouponSearching.value = false;
+  }
+}
+
+async function refreshStoreExperts(): Promise<void> {
+  const seq = ++storeExpertSearchSeq;
+  isStoreExpertSearching.value = true;
+  try {
+    const searchStoreExperts = resourceLibraryClient.searchStoreExperts;
+    const [catalogResult, searchResult] = await Promise.all([
+      toResourceSearchResult(searchStoreExperts?.() ?? { items: [], total: 0 }),
+      toResourceSearchResult(searchStoreExperts?.({
+        keyword: storeExpertKeyword.value,
+        category: storeExpertCategory.value,
+      }) ?? { items: [], total: 0 }),
+    ]);
+    if (seq !== storeExpertSearchSeq) return;
+    resourceStoreExpertCatalog.value = catalogResult.items;
+    filteredStoreExperts.value = searchResult.items;
+  } catch {
+    if (seq === storeExpertSearchSeq) {
+      resourceStoreExpertCatalog.value = [];
+      filteredStoreExperts.value = [];
+    }
+  } finally {
+    if (seq === storeExpertSearchSeq) isStoreExpertSearching.value = false;
+  }
+}
+
 function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
   const catalog = resourceProductCatalog.value.length ? resourceProductCatalog.value : sampleProducts;
   const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : catalog.length;
   return catalog.slice(0, limit).map((product) => ({ ...product })) as unknown as JsonValue;
 }
 
-function getProductIdsFromNode(node: LowcodeNode | undefined): string[] {
-  const items = node?.props.items;
+function resolveSampleStoreExpertDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
+  const catalog = resourceStoreExpertCatalog.value.length ? resourceStoreExpertCatalog.value : sampleStoreExperts;
+  const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : catalog.length;
+  return catalog.slice(0, limit).map((item) => ({ ...item })) as unknown as JsonValue;
+}
+
+function getIdsFromNodeArrayProp(node: LowcodeNode | undefined, propName: string): string[] {
+  const items = node?.props[propName];
   if (!Array.isArray(items)) return [];
   return items
     .map((item) => {
@@ -703,6 +887,10 @@ function getProductIdsFromNode(node: LowcodeNode | undefined): string[] {
       return typeof id === "string" ? id : undefined;
     })
     .filter((id): id is string => Boolean(id));
+}
+
+function getProductIdsFromNode(node: LowcodeNode | undefined): string[] {
+  return getIdsFromNodeArrayProp(node, "items");
 }
 
 async function refreshPreviewData(schema: LowcodePageSchema): Promise<void> {
@@ -1468,6 +1656,37 @@ function bindSelectedProductMaterialToDataSource(): void {
   };
 }
 
+function bindSelectedStoreExpertMaterialToDataSource(): void {
+  if (!selectedNode.value || !isStoreExpertMaterialSelected.value) return;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => ({
+        ...node,
+        dataBinding: {
+          ...(node.dataBinding ?? {}),
+          items: "stores",
+        },
+      })),
+      dataSources: upsertDataSource(editorState.value.schema.dataSources ?? [], {
+        id: "ds_stores",
+        type: "store.byIds",
+        bindTo: "stores",
+        params: {
+          limit: 4,
+        },
+        cache: {
+          ttlSeconds: 120,
+          scope: "public",
+        },
+      }),
+    },
+    dirty: true,
+    lastAction: "bindSelectedStoreExpertMaterialToDataSource",
+  };
+}
+
 function toggleProductSelection(productId: string): void {
   const selected = new Set(selectedProductIds.value);
   if (selected.has(productId)) {
@@ -1476,6 +1695,30 @@ function toggleProductSelection(productId: string): void {
     selected.add(productId);
   }
   selectedProductIds.value = [...selected];
+}
+
+function toggleCouponSelection(couponId: string): void {
+  if (isCouponSectionSelected.value) {
+    selectedCouponIds.value = selectedCouponIds.value.includes(couponId) ? [] : [couponId];
+    return;
+  }
+  const selected = new Set(selectedCouponIds.value);
+  if (selected.has(couponId)) {
+    selected.delete(couponId);
+  } else {
+    selected.add(couponId);
+  }
+  selectedCouponIds.value = [...selected];
+}
+
+function toggleStoreExpertSelection(itemId: string): void {
+  const selected = new Set(selectedStoreExpertIds.value);
+  if (selected.has(itemId)) {
+    selected.delete(itemId);
+  } else {
+    selected.add(itemId);
+  }
+  selectedStoreExpertIds.value = [...selected];
 }
 
 function applySelectedProductsToNode(): void {
@@ -1503,9 +1746,78 @@ function applySelectedProductsToNode(): void {
   };
 }
 
+function applySelectedCouponsToNode(): void {
+  if (!selectedNode.value || !canUseCouponLibrary.value) return;
+  const coupons = selectedCoupons.value.map((coupon) => ({ ...coupon })) as unknown as JsonValue[];
+  const primaryCoupon = selectedCoupons.value[0];
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => {
+        if (node.componentName === "CouponSection") {
+          if (!primaryCoupon) return node;
+          return {
+            ...node,
+            props: {
+              ...node.props,
+              title: primaryCoupon.title,
+              buttonText: primaryCoupon.buttonText ?? node.props.buttonText ?? "立即领取",
+            },
+          };
+        }
+        return {
+          ...node,
+          props: {
+            ...node.props,
+            coupons,
+          },
+        };
+      }),
+    },
+    dirty: true,
+    lastAction: "applySelectedCouponsToNode",
+  };
+}
+
+function applySelectedStoreExpertsToNode(): void {
+  if (!selectedNode.value || !isStoreExpertMaterialSelected.value) return;
+  const items = selectedStoreExperts.value.map((item) => ({ ...item })) as unknown as JsonValue;
+  editorState.value = {
+    ...editorState.value,
+    schema: {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, selectedNode.value.id, (node) => {
+        const dataBinding = { ...(node.dataBinding ?? {}) };
+        delete dataBinding.items;
+        return {
+          ...node,
+          props: {
+            ...node.props,
+            items,
+          },
+          dataBinding: Object.keys(dataBinding).length ? dataBinding : undefined,
+        };
+      }),
+    },
+    dirty: true,
+    lastAction: "applySelectedStoreExpertsToNode",
+  };
+}
+
 function clearSelectedProducts(): void {
   selectedProductIds.value = [];
   applySelectedProductsToNode();
+}
+
+function clearSelectedCoupons(): void {
+  selectedCouponIds.value = [];
+  applySelectedCouponsToNode();
+}
+
+function clearSelectedStoreExperts(): void {
+  selectedStoreExpertIds.value = [];
+  applySelectedStoreExpertsToNode();
 }
 
 function isRecord(value: unknown): value is Record<string, JsonValue> {
@@ -1859,6 +2171,12 @@ function addDataSource(): void {
     dirty: true,
     lastAction: "addDataSource",
   };
+}
+
+function upsertDataSource(dataSources: LowcodeDataSourceConfig[], nextDataSource: LowcodeDataSourceConfig): LowcodeDataSourceConfig[] {
+  const index = dataSources.findIndex((dataSource) => dataSource.id === nextDataSource.id);
+  if (index < 0) return [...dataSources, nextDataSource];
+  return dataSources.map((dataSource, currentIndex) => (currentIndex === index ? nextDataSource : dataSource));
 }
 
 function updateDataSource(index: number, patch: Partial<LowcodeDataSourceConfig>): void {
@@ -2783,6 +3101,101 @@ function formatReleaseTime(value: string): string {
               <button type="button" @click="applySelectedProductsToNode">应用选中商品</button>
               <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
               <button type="button" class="ghost-danger" @click="clearSelectedProducts">清空静态商品</button>
+            </div>
+          </div>
+
+          <div v-if="canUseCouponLibrary" class="resource-panel">
+            <div class="resource-panel-head">
+              <div>
+                <strong>
+                  <Database :size="15" />
+                  <span>优惠券库</span>
+                </strong>
+                <small>{{ isCouponSectionSelected ? "选择 1 张主券" : `已选 ${selectedCoupons.length} 张优惠券` }}</small>
+              </div>
+            </div>
+            <label class="search-field product-search">
+              <Search :size="14" />
+              <input v-model="couponKeyword" placeholder="搜索优惠券名称、门槛或标签" />
+            </label>
+            <div class="product-picker">
+              <label
+                v-for="coupon in filteredCoupons"
+                :key="coupon.id"
+                class="product-option coupon-option"
+                :class="{ selected: selectedCouponIds.includes(coupon.id) }"
+              >
+                <input
+                  :type="isCouponSectionSelected ? 'radio' : 'checkbox'"
+                  name="coupon-resource"
+                  :checked="selectedCouponIds.includes(coupon.id)"
+                  @change="toggleCouponSelection(coupon.id)"
+                />
+                <span>
+                  <strong>{{ coupon.title }}</strong>
+                  <small>{{ coupon.id }} / {{ coupon.thresholdText }}</small>
+                  <em>{{ coupon.valueText }} · {{ coupon.expireText }}</em>
+                </span>
+              </label>
+            </div>
+            <div v-if="isCouponSearching" class="mini-empty">优惠券搜索中</div>
+            <div v-else-if="!filteredCoupons.length" class="mini-empty">没有匹配优惠券</div>
+            <div class="resource-actions">
+              <button type="button" @click="applySelectedCouponsToNode">{{ isCouponSectionSelected ? "应用主券" : "应用选中券" }}</button>
+              <button type="button" class="ghost-danger" @click="clearSelectedCoupons">清空选择</button>
+            </div>
+          </div>
+
+          <div v-if="isStoreExpertMaterialSelected" class="resource-panel">
+            <div class="resource-panel-head">
+              <div>
+                <strong>
+                  <Database :size="15" />
+                  <span>门店/达人库</span>
+                </strong>
+                <small>已选 {{ selectedStoreExperts.length }} 个推荐项</small>
+              </div>
+            </div>
+            <div class="resource-filters">
+              <label class="search-field">
+                <Search :size="14" />
+                <input v-model="storeExpertKeyword" placeholder="搜索门店、达人或标签" />
+              </label>
+              <select v-model="storeExpertCategory" aria-label="门店达人分类">
+                <option v-for="category in storeExpertCategories" :key="category" :value="category">
+                  {{ category }}
+                </option>
+              </select>
+            </div>
+            <div v-if="selectedNode.dataBinding?.items" class="resource-hint">
+              当前节点正在绑定数据源 stores，写入静态推荐会取消本节点 items 绑定。
+            </div>
+            <div class="product-picker">
+              <label
+                v-for="item in filteredStoreExperts"
+                :key="item.id"
+                class="product-option"
+                :class="{ selected: selectedStoreExpertIds.includes(item.id) }"
+              >
+                <input
+                  type="checkbox"
+                  :checked="selectedStoreExpertIds.includes(item.id)"
+                  @change="toggleStoreExpertSelection(item.id)"
+                />
+                <img :src="item.imageUrl" alt="" />
+                <span>
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ item.typeText }} / {{ item.subtitle }}</small>
+                  <em>{{ item.metricText }} {{ item.desc }}</em>
+                </span>
+              </label>
+            </div>
+            <div v-if="isStoreExpertSearching" class="mini-empty">门店/达人搜索中</div>
+            <div v-else-if="!filteredStoreExperts.length" class="mini-empty">没有匹配推荐项</div>
+            <div class="resource-actions">
+              <button type="button" @click="applySelectedStoreExpertsToNode">应用选中推荐</button>
+              <button type="button" @click="bindSelectedStoreExpertMaterialToDataSource">绑定数据源 stores</button>
+              <button type="button" class="ghost-danger" @click="clearSelectedStoreExperts">清空静态推荐</button>
             </div>
           </div>
 
