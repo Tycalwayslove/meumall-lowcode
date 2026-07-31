@@ -97,6 +97,7 @@ import {
   isLowcodeNodeSelected,
   isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
+  insertLowcodeCanvasNodeByHint,
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
@@ -149,6 +150,8 @@ import {
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
   recordLowcodeRecentMaterial,
+  moveLowcodeCanvasNodeByHint,
+  moveLowcodeCanvasNodeGroupByHint,
   resolveLowcodeCanvasDropPlacement,
 } from "../dist/index.js";
 import {
@@ -1146,6 +1149,120 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(createLowcodeCanvasDropTarget(rows, { placement: "before", targetNodeId: "missing" }, 2), undefined);
     assert.equal(createLowcodeCanvasNodeMoveTarget(rows, { placement: "before", targetNodeId: "button_1" }, "missing", 2), undefined);
     assert.equal(createLowcodeCanvasGroupMoveTarget(rows, { placement: "after", targetNodeId: "button_1" }, ["banner_1", "button_1"], 2), undefined);
+  });
+
+  it("applies reusable canvas operations to editor state", () => {
+    function createState() {
+      return createEditorState(createLowcodePageSchema({
+        pageId: "canvas_operation_page",
+        title: "画布操作页面",
+        pageType: "activity",
+        nodes: [
+          createLowcodeNode({
+            id: "container_1",
+            componentName: "SectionContainer",
+            materialVersion: "1.0.0",
+            props: {},
+            children: [
+              createLowcodeNode({
+                id: "banner_1",
+                componentName: "ImageBanner",
+                materialVersion: "1.0.0",
+                props: {},
+              }),
+              createLowcodeNode({
+                id: "products_1",
+                componentName: "ProductList",
+                materialVersion: "1.0.0",
+                props: {},
+              }),
+            ],
+          }),
+          createLowcodeNode({
+            id: "button_1",
+            componentName: "ActionButton",
+            materialVersion: "1.0.0",
+            props: {},
+          }),
+        ],
+      }));
+    }
+
+    let state = createState();
+    let result = insertLowcodeCanvasNodeByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "after", targetNodeId: "banner_1" },
+      {
+        id: "notice_1",
+        componentName: "NoticeBar",
+        materialVersion: "1.0.0",
+        props: {},
+      },
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.changed, true);
+    assert.equal(result.state.selectedNodeId, "notice_1");
+    assert.equal(result.state.lastAction, "insertNode");
+    assert.deepEqual(result.state.schema.nodes[0].children.map((node) => node.id), ["banner_1", "notice_1", "products_1"]);
+
+    state = createState();
+    result = moveLowcodeCanvasNodeByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "after", targetNodeId: "products_1" },
+      "banner_1",
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.changed, true);
+    assert.equal(result.state.selectedNodeId, "banner_1");
+    assert.deepEqual(result.state.schema.nodes[0].children.map((node) => node.id), ["products_1", "banner_1"]);
+
+    state = createState();
+    result = moveLowcodeCanvasNodeByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "inside", targetNodeId: "banner_1" },
+      "container_1",
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.changed, false);
+    assert.equal(result.state, state);
+
+    state = createState();
+    result = moveLowcodeCanvasNodeGroupByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "after", targetNodeId: "button_1" },
+      ["banner_1", "products_1"],
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.changed, true);
+    assert.equal(result.state.selectedNodeId, "banner_1");
+    assert.deepEqual(result.state.schema.nodes.map((node) => node.id), ["container_1", "button_1", "banner_1", "products_1"]);
+    assert.deepEqual(result.state.schema.nodes[0].children, []);
+
+    state = createState();
+    result = moveLowcodeCanvasNodeGroupByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "after", targetNodeId: "products_1" },
+      ["banner_1", "products_1"],
+    );
+    assert.equal(result.handled, true);
+    assert.equal(result.changed, false);
+    assert.equal(result.state, state);
+
+    state = createState();
+    result = moveLowcodeCanvasNodeGroupByHint(
+      state,
+      createLowcodeOutlineRows(state.schema.nodes),
+      { placement: "after", targetNodeId: "button_1" },
+      ["banner_1", "button_1"],
+    );
+    assert.equal(result.handled, false);
+    assert.equal(result.changed, false);
+    assert.equal(result.state, state);
   });
 
   it("creates reusable property groups and collapsed state", () => {

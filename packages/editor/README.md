@@ -56,6 +56,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `getLowcodeAdjustedCanvasMoveIndex`
 - `createLowcodeCanvasNodeMoveTarget`
 - `createLowcodeCanvasGroupMoveTarget`
+- `insertLowcodeCanvasNodeByHint`
+- `moveLowcodeCanvasNodeByHint`
+- `moveLowcodeCanvasNodeGroupByHint`
 - `LOWCODE_EDITOR_PROP_GROUP_ORDER`
 - `LOWCODE_EDITOR_PROP_GROUP_META`
 - `getLowcodePropGroupKey`
@@ -517,6 +520,18 @@ The canvas drop target helpers keep `parentId + index` derivation reusable acros
 `createLowcodeCanvasNodeMoveTarget(rows, hint, sourceNodeId, rootNodeCount)` derives a single-node move target. `createLowcodeCanvasGroupMoveTarget(rows, hint, sourceNodeIds, rootNodeCount)` derives a same-parent group move target and adjusts the target index after removing selected source nodes.
 
 These helpers do not insert materials, move nodes, replace siblings, mutate Page Schema, query DOM, bind events, check permissions, write audit records, persist state, or handle cross-parent group move semantics. Host shells remain responsible for actual schema commands, group move execution, permission checks, collaboration locks, audit, and server saving.
+
+## Canvas Operation API
+
+The canvas operation helpers keep schema writes for material drops and node drops reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`insertLowcodeCanvasNodeByHint(state, rows, hint, node)` resolves a canvas drop target from outline rows and inserts a node through the existing editor command pipeline. It returns `{ state, handled, changed }`, so host shells can distinguish a successful state change from a handled no-op.
+
+`moveLowcodeCanvasNodeByHint(state, rows, hint, nodeId)` resolves a single-node move target and delegates the actual write to `moveNodeById`, including self/descendant no-op protection.
+
+`moveLowcodeCanvasNodeGroupByHint(state, rows, hint, nodeIds)` moves a same-parent selected node group while preserving sibling order. It treats dropping onto a selected target or invalid descendant parent as handled no-op, and returns `handled: false` when the provided selection is not a valid same-parent group.
+
+These helpers do not query DOM, bind DragEvent or Pointer Events, render guide elements, inspect permissions, write audit records, persist state, confirm destructive actions, or save to the server. Host shells remain responsible for event handling, element measurement, user feedback, permission checks, collaboration locks, audit, and server saving.
 
 ## Property Group API
 

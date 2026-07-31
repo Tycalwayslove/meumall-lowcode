@@ -525,6 +525,12 @@ export interface LowcodeEditorCanvasDropTarget<T extends Pick<LowcodeEditorOutli
   targetRow?: T;
 }
 
+export interface LowcodeEditorCanvasOperationResult {
+  state: LowcodeEditorState;
+  handled: boolean;
+  changed: boolean;
+}
+
 export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 
 export interface LowcodeEditorPropGroupMeta {
@@ -2805,6 +2811,122 @@ export function createLowcodeCanvasGroupMoveTarget<
   };
 }
 
+export function insertLowcodeCanvasNodeByHint<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  state: LowcodeEditorState,
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  node: NodeInput,
+): LowcodeEditorCanvasOperationResult {
+  const target = createLowcodeCanvasDropTarget(rows, hint, state.schema.nodes.length);
+  const nextState = target
+    ? insertNode(state, node, { parentId: target.parentId, index: target.index, select: true })
+    : appendNode(state, node);
+
+  return {
+    state: nextState,
+    handled: true,
+    changed: nextState !== state,
+  };
+}
+
+export function moveLowcodeCanvasNodeByHint<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  state: LowcodeEditorState,
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  nodeId: string,
+): LowcodeEditorCanvasOperationResult {
+  const target = createLowcodeCanvasNodeMoveTarget(rows, hint, nodeId, state.schema.nodes.length);
+  if (!target) return createNoopCanvasOperationResult(state, false);
+
+  const nextState = moveNodeById(state, {
+    nodeId,
+    targetParentId: target.parentId,
+    index: target.index,
+  });
+
+  return {
+    state: nextState,
+    handled: true,
+    changed: nextState !== state,
+  };
+}
+
+export function moveLowcodeCanvasNodeGroupByHint<
+  T extends Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index">,
+>(
+  state: LowcodeEditorState,
+  rows: readonly T[],
+  hint: Pick<LowcodeEditorCanvasDropHint, "placement" | "targetNodeId">,
+  nodeIds: readonly string[],
+): LowcodeEditorCanvasOperationResult {
+  if (nodeIds.length < 2) return createNoopCanvasOperationResult(state, false);
+
+  const sourceRows = nodeIds.map((nodeId) => rows.find((row) => row.node.id === nodeId));
+  if (sourceRows.some((row): row is undefined => row === undefined)) {
+    return createNoopCanvasOperationResult(state, false);
+  }
+
+  const resolvedSourceRows = sourceRows as T[];
+  const sourceParentId = resolvedSourceRows[0]?.parentId;
+  if (!resolvedSourceRows.every((row) => row.parentId === sourceParentId)) {
+    return createNoopCanvasOperationResult(state, false);
+  }
+
+  const target = createLowcodeCanvasGroupMoveTarget(rows, hint, nodeIds, state.schema.nodes.length);
+  if (!target) return createNoopCanvasOperationResult(state, false);
+
+  const selected = new Set(nodeIds);
+  if (target.targetRow && selected.has(target.targetRow.node.id)) {
+    return createNoopCanvasOperationResult(state, true);
+  }
+  const targetParentId = target.parentId;
+  if (targetParentId) {
+    const targetIsSelectedOrDescendant = selected.has(targetParentId) ||
+      nodeIds.some((nodeId) => isDescendant(state.schema.nodes, nodeId, targetParentId));
+    if (targetIsSelectedOrDescendant) {
+      return createNoopCanvasOperationResult(state, true);
+    }
+  }
+
+  const sourceSiblings = getSiblingNodesByParent(state.schema.nodes, sourceParentId);
+  if (!sourceSiblings) return createNoopCanvasOperationResult(state, false);
+
+  const movingNodes = sourceSiblings.filter((node) => selected.has(node.id));
+  if (movingNodes.length !== nodeIds.length) return createNoopCanvasOperationResult(state, false);
+
+  const remainingSourceSiblings = sourceSiblings.filter((node) => !selected.has(node.id));
+  let nextNodes = replaceSiblingNodesByParent(state.schema.nodes, sourceParentId, remainingSourceSiblings);
+  if (!nextNodes) return createNoopCanvasOperationResult(state, false);
+
+  const targetSiblings = getSiblingNodesByParent(nextNodes, target.parentId);
+  if (!targetSiblings) return createNoopCanvasOperationResult(state, false);
+
+  const nextTargetSiblings = [...targetSiblings];
+  nextTargetSiblings.splice(clampIndex(target.index, nextTargetSiblings.length), 0, ...movingNodes);
+  nextNodes = replaceSiblingNodesByParent(nextNodes, target.parentId, nextTargetSiblings);
+  if (!nextNodes) return createNoopCanvasOperationResult(state, false);
+
+  const nextState = commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      nodes: nextNodes,
+    },
+    "moveCanvasNodeGroup",
+    nodeIds[0],
+  );
+
+  return {
+    state: nextState,
+    handled: true,
+    changed: true,
+  };
+}
+
 export function getLowcodePropGroupKey(
   propName: string,
   propSchema: LowcodePropSchema,
@@ -3633,6 +3755,17 @@ function commitSchemaChange(
   };
 }
 
+function createNoopCanvasOperationResult(
+  state: LowcodeEditorState,
+  handled: boolean,
+): LowcodeEditorCanvasOperationResult {
+  return {
+    state,
+    handled,
+    changed: false,
+  };
+}
+
 function pushHistory(history: LowcodePageSchema[], schema: LowcodePageSchema, limit: number): LowcodePageSchema[] {
   return [...history, schema].slice(-limit);
 }
@@ -3703,6 +3836,24 @@ function insertIntoNodes(
     };
   });
 
+  return result.updated ? result.nodes : undefined;
+}
+
+function getSiblingNodesByParent(nodes: LowcodeNode[], parentId: string | undefined): LowcodeNode[] | undefined {
+  if (!parentId) return nodes;
+  return findNode(nodes, parentId)?.children ?? [];
+}
+
+function replaceSiblingNodesByParent(
+  nodes: LowcodeNode[],
+  parentId: string | undefined,
+  siblings: LowcodeNode[],
+): LowcodeNode[] | undefined {
+  if (!parentId) return siblings;
+  const result = updateNodes(nodes, parentId, (parent) => ({
+    ...parent,
+    children: siblings,
+  }));
   return result.updated ? result.nodes : undefined;
 }
 

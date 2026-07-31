@@ -59,9 +59,6 @@ import {
   bindLowcodeNodeEvent,
   canLowcodeDragSelectedGroup,
   createLowcodeCanvasAppendDropHint,
-  createLowcodeCanvasDropTarget,
-  createLowcodeCanvasGroupMoveTarget,
-  createLowcodeCanvasNodeMoveTarget,
   createLowcodeCanvasTargetDropHint,
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
@@ -116,6 +113,7 @@ import {
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
   insertNode,
+  insertLowcodeCanvasNodeByHint,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeFavoriteMaterial,
   isLowcodeNodeSelected,
@@ -132,6 +130,8 @@ import {
   LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
   markSaved,
   moveNodeById,
+  moveLowcodeCanvasNodeByHint,
+  moveLowcodeCanvasNodeGroupByHint,
   normalizeLowcodePropInputValue,
   pasteNode,
   formatLowcodeEditorDraftStatusText,
@@ -180,7 +180,6 @@ import {
   type LowcodeEditorCommandEntry,
   type LowcodeEditorCanvasDragSource as CanvasDragSource,
   type LowcodeEditorCanvasDropHint as CanvasDropHint,
-  type LowcodeEditorCanvasDropTarget as CanvasDropTarget,
   type LowcodeEditorCanvasFrameMetrics as CanvasFrameMetrics,
   type LowcodeEditorCanvasPoint as CanvasPoint,
   type LowcodeEditorCanvasRect as CanvasRect,
@@ -1149,50 +1148,12 @@ function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefine
   return undefined;
 }
 
-function nodeContains(node: LowcodeNode | undefined, nodeId: string): boolean {
-  if (!node) return false;
-  return Boolean(findNode(node.children ?? [], nodeId));
-}
-
 function getNodeDisplayName(node: LowcodeNode): string {
   return getLowcodeNodeDisplayName(node, registry.get(node.componentName)?.manifest);
 }
 
 function getNodeSubtitle(row: OutlineRow): string {
   return row.subtitle;
-}
-
-function getSiblingNodes(nodes: LowcodeNode[], parentId?: string): LowcodeNode[] | undefined {
-  if (!parentId) return nodes;
-  for (const node of nodes) {
-    if (node.id === parentId) return node.children ?? [];
-    const children = getSiblingNodes(node.children ?? [], parentId);
-    if (children) return children;
-  }
-  return undefined;
-}
-
-function replaceSiblingNodes(nodes: LowcodeNode[], parentId: string | undefined, siblings: LowcodeNode[]): LowcodeNode[] | undefined {
-  if (!parentId) return siblings;
-  let replaced = false;
-  const nextNodes = nodes.map((node) => {
-    if (node.id === parentId) {
-      replaced = true;
-      return {
-        ...node,
-        children: siblings,
-      };
-    }
-    if (!node.children?.length) return node;
-    const nextChildren = replaceSiblingNodes(node.children, parentId, siblings);
-    if (!nextChildren) return node;
-    replaced = true;
-    return {
-      ...node,
-      children: nextChildren,
-    };
-  });
-  return replaced ? nextNodes : undefined;
 }
 
 function commitPlaygroundSchemaChange(schema: LowcodePageSchema, action: string, selectedNodeId?: string): void {
@@ -1961,60 +1922,10 @@ function selectedGroupNodeIdsForDrag(seedNodeId: string): string[] {
   return getLowcodeSelectedGroupNodeIdsForDrag(outlineRows.value, multiSelectedNodeIds.value, seedNodeId);
 }
 
-function getGroupDropTarget(hint: CanvasDropHint, nodeIds: string[]): CanvasDropTarget<OutlineRow> | undefined {
-  return createLowcodeCanvasGroupMoveTarget(
-    outlineRows.value,
-    hint,
-    nodeIds,
-    editorState.value.schema.nodes.length,
-  );
-}
-
-function isInvalidGroupParent(nodeIds: string[], parentId: string | undefined): boolean {
-  if (!parentId) return false;
-  if (nodeIds.includes(parentId)) return true;
-  return nodeIds.some((nodeId) => nodeContains(findNode(editorState.value.schema.nodes, nodeId), parentId));
-}
-
 function moveCanvasNodeGroup(nodeIds: string[], hint: CanvasDropHint): boolean {
-  if (nodeIds.length < 2) return false;
-  const sourceRows = nodeIds.map((nodeId) => findOutlineRowByNodeId(nodeId));
-  if (sourceRows.some((row): row is undefined => row === undefined)) return false;
-  const rows = sourceRows as OutlineRow[];
-  const sourceParentId = rows[0]?.parentId;
-  if (!rows.every((row) => row.parentId === sourceParentId)) return false;
-
-  const target = getGroupDropTarget(hint, nodeIds);
-  if (!target) return false;
-  if (target.targetRow && nodeIds.includes(target.targetRow.node.id)) return true;
-  if (isInvalidGroupParent(nodeIds, target.parentId)) return true;
-
-  const selected = new Set(nodeIds);
-  const sourceSiblings = getSiblingNodes(editorState.value.schema.nodes, sourceParentId);
-  if (!sourceSiblings) return false;
-  const movingNodes = sourceSiblings.filter((node) => selected.has(node.id));
-  if (movingNodes.length !== nodeIds.length) return false;
-
-  const remainingSourceSiblings = sourceSiblings.filter((node) => !selected.has(node.id));
-  let nextNodes = replaceSiblingNodes(editorState.value.schema.nodes, sourceParentId, remainingSourceSiblings);
-  if (!nextNodes) return false;
-
-  const targetSiblings = getSiblingNodes(nextNodes, target.parentId);
-  if (!targetSiblings) return false;
-
-  const nextTargetSiblings = [...targetSiblings];
-  nextTargetSiblings.splice(Math.min(target.index, nextTargetSiblings.length), 0, ...movingNodes);
-  nextNodes = replaceSiblingNodes(nextNodes, target.parentId, nextTargetSiblings);
-  if (!nextNodes) return false;
-
-  commitPlaygroundSchemaChange(
-    {
-      ...editorState.value.schema,
-      nodes: nextNodes,
-    },
-    "moveNodeGroup",
-    nodeIds[0],
-  );
+  const result = moveLowcodeCanvasNodeGroupByHint(editorState.value, outlineRows.value, hint, nodeIds);
+  if (!result.handled) return false;
+  editorState.value = result.state;
   multiSelectedNodeIds.value = nodeIds;
   return true;
 }
@@ -2023,59 +1934,13 @@ function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
   const groupNodeIds = selectedGroupNodeIdsForDrag(nodeId);
   if (moveCanvasNodeGroup(groupNodeIds, hint)) return;
 
-  const target = createLowcodeCanvasNodeMoveTarget(
-    outlineRows.value,
-    hint,
-    nodeId,
-    editorState.value.schema.nodes.length,
-  );
-  if (!target) return;
-  if (!target.targetRow || hint.placement === "append") {
-    editorState.value = moveNodeById(editorState.value, {
-      nodeId,
-      index: target.index,
-    });
-    return;
-  }
-  if (hint.placement === "inside") {
-    editorState.value = moveNodeById(editorState.value, {
-      nodeId,
-      targetParentId: target.parentId,
-      index: target.index,
-    });
-    return;
-  }
-  editorState.value = moveNodeById(editorState.value, {
-    nodeId,
-    targetParentId: target.parentId,
-    index: target.index,
-  });
+  const result = moveLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, nodeId);
+  editorState.value = result.state;
 }
 
 function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: CanvasDropHint): void {
-  const target = createLowcodeCanvasDropTarget(
-    outlineRows.value,
-    hint,
-    editorState.value.schema.nodes.length,
-  );
-  if (!target || !target.targetRow || hint.placement === "append") {
-    addMaterial(manifest);
-    return;
-  }
-  if (hint.placement === "inside") {
-    editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-      parentId: target.parentId,
-      index: target.index,
-      select: true,
-    });
-    recordRecentMaterial(manifest);
-    return;
-  }
-  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-    parentId: target.parentId,
-    index: target.index,
-    select: true,
-  });
+  const result = insertLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, createNodeInput(manifest));
+  editorState.value = result.state;
   recordRecentMaterial(manifest);
 }
 
