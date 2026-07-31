@@ -78,6 +78,7 @@ apps/h5-runtime-playground
 pnpm install
 pnpm dev
 pnpm dev:h5
+pnpm test
 pnpm typecheck
 pnpm build
 ```

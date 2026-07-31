@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展，并新增编辑器页面模板库。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库，并建立 schema/core/adapters 基础单元测试体系。
 
 ## 当前维护范围
 
@@ -44,6 +44,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 编辑器到 React H5 runtime handoff：通过 URL schema 参数打开当前编辑 schema 的 React H5 渲染结果。
 - 基础电商物料扩展：新增 `ActionButton`、`NoticeBar`、`SpacerBlock`，并同步 Vue/React H5 物料包。
 - 页面模板库：编辑器左侧可一键应用大促活动页、新人券领取页和商品专题页模板。
+- 基础单元测试：根目录提供 `pnpm test`，覆盖 schema、core 和 adapters 公开 API 基础回归。
 
 ## 已知缺口
 
@@ -56,7 +57,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - 尚未接入 `hybird-meumall`。
 - 尚未配置 npm registry/token。
-- 尚未建立单元测试体系。
+- 组件级 DOM 测试、浏览器交互测试和 visual regression 尚未建立。
 
 ## 最近变更
 
@@ -74,12 +75,14 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `54b2ccf` | 新增独立 React H5 runtime playground。 |
 | 2026-07-31 | `03cca93` | 打通编辑器到 React H5 runtime 的 schema handoff。 |
 | 2026-07-31 | `915c9ef` | 扩展行动按钮、公告条和间距块基础物料。 |
-| 2026-07-31 | 待提交 | 新增编辑器页面模板库。 |
+| 2026-07-31 | `32cc2aa` | 新增编辑器页面模板库。 |
+| 2026-07-31 | 待提交 | 建立 schema/core/adapters 基础单元测试体系。 |
 
 ## 默认验证命令
 
 ```bash
 pnpm typecheck
 pnpm build
+pnpm test
 pnpm dev
 ```

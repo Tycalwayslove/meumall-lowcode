@@ -4,7 +4,6 @@
 
 - 细化 Page Schema v1 契约字段语义，推动 draft -> ready。
 - 定义 Material Manifest v1 契约文档。
-- 建立基础单元测试。
 - 确认 npm registry、scope 和 access。
 
 ## P1
@@ -18,6 +17,7 @@
 - 将本地 URL schema handoff 替换为 Java 配置平台 previewId/pageId 查询协议。
 - 补充 data source resolver 生命周期和真实请求预览。
 - 补充 action 安全白名单。
+- 扩展组件级 DOM 测试、浏览器交互 smoke check 和 visual regression。
 
 ## P2
 
