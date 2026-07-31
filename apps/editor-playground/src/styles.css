@@ -2132,7 +2132,7 @@ button:focus-visible {
 
 .publish-check {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 4px 8px;
   padding: 9px;
   border: 1px solid #dce1ea;
@@ -2165,6 +2165,30 @@ button:focus-visible {
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
+}
+
+.publish-locate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 48px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #1f2937;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.publish-locate-button:hover,
+.publish-locate-button:focus-visible {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
 }
 
 .publish-check.is-pass {

@@ -344,6 +344,20 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
+  log("检查发布问题可定位节点");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "秒杀商品组");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：秒杀商品组')");
+  await page.clickByText(".command-palette-item", "添加物料：秒杀商品组");
+  await page.waitForExpression("document.body.innerText.includes('秒杀商品组 没有静态商品，也没有绑定商品数据源')");
+  await page.clickByText(".toolbar button", "预览");
+  await page.waitForExpression("!document.querySelector('.phone-frame .mlc-runtime-node.is-selected')");
+  await page.clickChildByText(".publish-check", "秒杀商品组 没有静态商品", ".publish-locate-button");
+  await page.waitForExpression("document.body.innerText.includes('已定位：秒杀商品组')");
+  await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('秒杀商品组')); })()");
+  await page.waitForExpression("(() => { const selected = document.querySelector('.phone-frame .mlc-runtime-node.is-selected'); return Boolean(selected && selected.innerText.includes('限时秒杀')); })()");
+  log("通过：发布检查定位可切回设计态并选中问题节点");
+
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "源码");
   await page.clickByText(".command-palette-item", "切换到源码模式");

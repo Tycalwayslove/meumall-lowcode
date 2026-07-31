@@ -12,6 +12,7 @@ import {
   GripVertical,
   Image,
   Layers,
+  LocateFixed,
   MoreHorizontal,
   MonitorSmartphone,
   Pencil,
@@ -417,6 +418,8 @@ interface PublishCheck {
   title: string;
   status: PublishCheckStatus;
   description: string;
+  nodeId?: string;
+  nodeTitle?: string;
 }
 
 interface ReleaseDiffItem {
@@ -1420,7 +1423,7 @@ function runtimeDataStatusText(): string {
 function createPublishChecks(): PublishCheck[] {
   const schema = editorState.value.schema;
   const nodes = flattenNodeList(schema.nodes);
-  const missingImages = nodes.flatMap((node) => {
+  const missingImageChecks: PublishCheck[] = nodes.flatMap((node) => {
     const manifest = registry.get(node.componentName)?.manifest;
     if (!manifest) return [];
     return Object.entries(manifest.propsSchema)
@@ -1429,24 +1432,99 @@ function createPublishChecks(): PublishCheck[] {
         const value = node.props[propName];
         return typeof value !== "string" || value.trim().length === 0;
       })
-      .map(([propName]) => `${manifest.title}.${propName}`);
+      .map(([propName, propSchema]) => ({
+        id: `image-${node.id}-${propName}`,
+        title: "图片素材",
+        status: "warning" as const,
+        description: `${getNodeDisplayName(node)} 的「${propSchema.label ?? propName}」为空`,
+        nodeId: node.id,
+        nodeTitle: getNodeDisplayName(node),
+      }));
   });
-  const emptyProductNodes = nodes.filter((node) => {
-    if (!["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(node.componentName)) return false;
-    if (node.dataBinding?.items) return false;
-    return !Array.isArray(node.props.items) || node.props.items.length === 0;
+  const emptyProductChecks: PublishCheck[] = nodes.flatMap((node) => {
+    if (!["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(node.componentName)) return [];
+    if (node.dataBinding?.items) return [];
+    if (Array.isArray(node.props.items) && node.props.items.length > 0) return [];
+    return [{
+      id: `products-${node.id}`,
+      title: "商品内容",
+      status: "warning" as const,
+      description: `${getNodeDisplayName(node)} 没有静态商品，也没有绑定商品数据源`,
+      nodeId: node.id,
+      nodeTitle: getNodeDisplayName(node),
+    }];
   });
-  const dataSourceErrors = previewDataSourceRecords.value.filter((record) => record.status === "error");
+  const dataSourceErrorChecks: PublishCheck[] = previewDataSourceRecords.value
+    .filter((record) => record.status === "error")
+    .map((record) => {
+      const boundNode = nodes.find((node) => Object.values(node.dataBinding ?? {}).includes(record.id));
+      return {
+        id: `data-source-${record.id}`,
+        title: "数据源解析",
+        status: "error" as const,
+        description: `${record.id} 解析失败${record.error ? `：${record.error}` : ""}`,
+        nodeId: boundNode?.id,
+        nodeTitle: boundNode ? getNodeDisplayName(boundNode) : undefined,
+      };
+    });
   const actions = new Set((schema.actions ?? []).map((action) => action.id));
-  const missingActionRefs = nodes.flatMap((node) =>
+  const actionNodeUsage = new Map<string, { nodeId: string; nodeTitle: string; eventName: string }>();
+  nodes.forEach((node) => {
+    Object.entries(node.events ?? {}).forEach(([eventName, ref]) => {
+      if (!actionNodeUsage.has(ref.actionId)) {
+        actionNodeUsage.set(ref.actionId, {
+          nodeId: node.id,
+          nodeTitle: getNodeDisplayName(node),
+          eventName,
+        });
+      }
+    });
+  });
+  const missingActionChecks: PublishCheck[] = nodes.flatMap((node) =>
     Object.entries(node.events ?? [])
       .filter(([, ref]) => !actions.has(ref.actionId))
-      .map(([eventName, ref]) => `${node.id}.${eventName} -> ${ref.actionId}`),
+      .map(([eventName, ref]) => ({
+        id: `action-ref-${node.id}-${eventName}`,
+        title: "动作配置",
+        status: "error" as const,
+        description: `${getNodeDisplayName(node)} 的 ${eventName} 引用了不存在的动作 ${ref.actionId}`,
+        nodeId: node.id,
+        nodeTitle: getNodeDisplayName(node),
+      })),
   );
-  const actionWarnings = (schema.actions ?? []).flatMap((action) => {
-    if (action.type === "navigate" && !getParamString(action.params, "url", "")) return [`${action.id} 缺少跳转 URL`];
-    if (action.type === "coupon.receive" && !getParamString(action.params, "couponId", "")) return [`${action.id} 缺少 couponId`];
-    if (action.type === "tracking.click" && !getParamString(action.params, "eventName", "")) return [`${action.id} 缺少 eventName`];
+  const actionWarningChecks: PublishCheck[] = (schema.actions ?? []).flatMap((action) => {
+    const usage = actionNodeUsage.get(action.id);
+    const target = {
+      nodeId: usage?.nodeId,
+      nodeTitle: usage?.nodeTitle,
+    };
+    if (action.type === "navigate" && !getParamString(action.params, "url", "")) {
+      return [{
+        id: `action-param-${action.id}-url`,
+        title: "动作配置",
+        status: "warning" as const,
+        description: `${action.id} 缺少跳转 URL${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
+        ...target,
+      }];
+    }
+    if (action.type === "coupon.receive" && !getParamString(action.params, "couponId", "")) {
+      return [{
+        id: `action-param-${action.id}-couponId`,
+        title: "动作配置",
+        status: "warning" as const,
+        description: `${action.id} 缺少 couponId${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
+        ...target,
+      }];
+    }
+    if (action.type === "tracking.click" && !getParamString(action.params, "eventName", "")) {
+      return [{
+        id: `action-param-${action.id}-eventName`,
+        title: "动作配置",
+        status: "warning" as const,
+        description: `${action.id} 缺少 eventName${usage ? `，当前被 ${usage.nodeTitle} 的 ${usage.eventName} 使用` : ""}`,
+        ...target,
+      }];
+    }
     return [];
   });
 
@@ -1463,38 +1541,30 @@ function createPublishChecks(): PublishCheck[] {
       status: nodes.length > 0 ? "pass" : "error",
       description: nodes.length > 0 ? `已配置 ${nodes.length} 个节点` : "页面没有任何节点",
     },
-    {
+    ...(missingImageChecks.length ? missingImageChecks : [{
       id: "images",
       title: "图片素材",
-      status: missingImages.length ? "warning" : "pass",
-      description: missingImages.length ? `${missingImages.length} 个图片字段为空：${missingImages.slice(0, 3).join("、")}` : "图片类字段已配置",
-    },
-    {
+      status: "pass" as const,
+      description: "图片类字段已配置",
+    }]),
+    ...(emptyProductChecks.length ? emptyProductChecks : [{
       id: "products",
       title: "商品内容",
-      status: emptyProductNodes.length ? "warning" : "pass",
-      description: emptyProductNodes.length
-        ? `${emptyProductNodes.length} 个商品组件没有静态商品或数据源绑定`
-        : "商品组件已有静态商品或数据源绑定",
-    },
-    {
+      status: "pass" as const,
+      description: "商品组件已有静态商品或数据源绑定",
+    }]),
+    ...(dataSourceErrorChecks.length ? dataSourceErrorChecks : [{
       id: "dataSources",
       title: "数据源解析",
-      status: dataSourceErrors.length ? "error" : "pass",
-      description: dataSourceErrors.length
-        ? `${dataSourceErrors.length} 个数据源解析失败：${dataSourceErrors.map((record) => record.id).join("、")}`
-        : `数据源状态正常，共 ${previewDataSourceRecords.value.length} 个`,
-    },
-    {
+      status: "pass" as const,
+      description: `数据源状态正常，共 ${previewDataSourceRecords.value.length} 个`,
+    }]),
+    ...(missingActionChecks.length || actionWarningChecks.length ? [...missingActionChecks, ...actionWarningChecks] : [{
       id: "actions",
       title: "动作配置",
-      status: missingActionRefs.length ? "error" : actionWarnings.length ? "warning" : "pass",
-      description: missingActionRefs.length
-        ? `${missingActionRefs.length} 个事件引用了不存在的动作`
-        : actionWarnings.length
-          ? actionWarnings.slice(0, 3).join("；")
-          : `动作配置正常，共 ${(schema.actions ?? []).length} 个`,
-    },
+      status: "pass" as const,
+      description: `动作配置正常，共 ${(schema.actions ?? []).length} 个`,
+    }]),
   ];
 }
 
@@ -1799,6 +1869,21 @@ function scrollCanvasNodeIntoView(nodeId: string): void {
       behavior: "smooth",
     });
   });
+}
+
+function locatePublishCheck(check: PublishCheck): void {
+  if (!check.nodeId) return;
+  const target = findNode(editorState.value.schema.nodes, check.nodeId);
+  if (!target) {
+    releaseMessage.value = `定位失败：节点 ${check.nodeId} 不存在`;
+    return;
+  }
+  closeNodeContextMenu();
+  editorState.value = setEditorMode(selectNode(editorState.value, check.nodeId), "design");
+  multiSelectedNodeIds.value = [check.nodeId];
+  revealOutlineNode(check.nodeId);
+  scrollCanvasNodeIntoView(check.nodeId);
+  releaseMessage.value = `已定位：${check.nodeTitle ?? getNodeDisplayName(target)}`;
 }
 
 function getRuntimeNodeElementFromTarget(target: EventTarget | null | undefined): HTMLElement | undefined {
@@ -3907,6 +3992,16 @@ function formatAutoSaveTime(value: string): string {
           >
             <strong>{{ check.title }}</strong>
             <span>{{ check.status }}</span>
+            <button
+              v-if="check.nodeId"
+              type="button"
+              class="publish-locate-button"
+              :title="`定位到 ${check.nodeTitle ?? check.nodeId}`"
+              @click="locatePublishCheck(check)"
+            >
+              <LocateFixed :size="13" />
+              定位
+            </button>
             <p>{{ check.description }}</p>
           </article>
         </div>
