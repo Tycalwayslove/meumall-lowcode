@@ -205,7 +205,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `73a3ed1` | 增强 Vue3 编辑器本地版本备注和筛选。 |
 | 2026-08-01 | `61e8f54` | 补充 npm 包发布 dry-run 预检。 |
 | 2026-08-01 | `5ff31c9` | 记录 npm dry-run 提交号。 |
-| 2026-08-01 | `本提交` | 增强 React H5 runtime 诊断和空态演示。 |
+| 2026-08-01 | `3b45950` | 增强 React H5 runtime 诊断和空态演示。 |
 
 ## 默认验证命令
 
