@@ -2,10 +2,16 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  ActivityRuleModal,
   BrandFeatureSection,
   CouponBundle,
+  CouponSection,
+  CountdownTimer,
+  FlashSaleList,
+  FloorAnchorNav,
   h5Materials,
   LiveEntry,
+  NavGrid,
   ProductRankList,
   StickyActionBar,
   StoreExpertSection,
@@ -34,6 +40,14 @@ function elementTypeNames(element, names = new Set()) {
   }
 
   return names;
+}
+
+function functionSourceIncludes(fn, names) {
+  const source = Function.prototype.toString.call(fn);
+
+  for (const name of names) {
+    assert.equal(source.includes(name), true, `${fn.name} should compose ${name}`);
+  }
 }
 
 describe("MeuMall H5 material manifests", () => {
@@ -66,6 +80,18 @@ describe("MeuMall H5 material manifests", () => {
     const brandFeatureTypes = elementTypeNames(BrandFeatureSection({ props: {}, node: baseNode }));
     const liveEntryTypes = elementTypeNames(LiveEntry({ props: { coverImageUrl: "https://example.com/live.jpg" }, node: baseNode }));
     const storeExpertTypes = elementTypeNames(StoreExpertSection({ props: {}, node: baseNode }));
+    const couponSectionTypes = elementTypeNames(CouponSection({ props: {}, node: baseNode }));
+    const countdownTypes = elementTypeNames(CountdownTimer({ props: {}, node: baseNode }));
+    const navGridTypes = elementTypeNames(NavGrid({ props: { items: [{ id: "nav_1", title: "会场", subtitle: "精选" }] }, node: baseNode }));
+    const floorAnchorTypes = elementTypeNames(FloorAnchorNav({ props: { title: "楼层导航" }, node: baseNode }));
+    const flashSaleTypes = elementTypeNames(
+      FlashSaleList({
+        props: {
+          items: [{ id: "sku_1", title: "秒杀商品", priceText: "¥99", originPriceText: "¥199", imageUrl: "https://example.com/sku.jpg" }],
+        },
+        node: baseNode,
+      }),
+    );
 
     assert.equal(productRankTypes.has("MlcButton"), true);
     assert.equal(productRankTypes.has("MlcImage"), true);
@@ -91,6 +117,20 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(storeExpertTypes.has("MlcImage"), true);
     assert.equal(storeExpertTypes.has("MlcTag"), true);
     assert.equal(storeExpertTypes.has("MlcText"), true);
+    assert.equal(couponSectionTypes.has("MlcButton"), true);
+    assert.equal(couponSectionTypes.has("MlcText"), true);
+    functionSourceIncludes(ActivityRuleModal, ["MlcButton", "MlcText"]);
+    assert.equal(countdownTypes.has("MlcTag"), true);
+    assert.equal(countdownTypes.has("MlcText"), true);
+    assert.equal(navGridTypes.has("MlcButton"), true);
+    assert.equal(navGridTypes.has("MlcText"), true);
+    assert.equal(floorAnchorTypes.has("MlcButton"), true);
+    assert.equal(floorAnchorTypes.has("MlcText"), true);
+    assert.equal(flashSaleTypes.has("MlcButton"), true);
+    assert.equal(flashSaleTypes.has("MlcImage"), true);
+    assert.equal(flashSaleTypes.has("MlcTag"), true);
+    assert.equal(flashSaleTypes.has("MlcText"), true);
+    assert.equal(flashSaleTypes.has("MlcPrice"), true);
   });
 
   it("registers the activity rule modal material", () => {

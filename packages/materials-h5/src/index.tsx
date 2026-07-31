@@ -763,25 +763,23 @@ export function CouponSection({ props }: MaterialProps) {
   const title = text(props.title, "优惠券");
   return (
     <section style={{ padding: 16, background: text(props.backgroundColor, "#fff7ed") }}>
-      <h2 style={{ margin: "0 0 12px", fontSize: 18 }}>{title}</h2>
-      <button
-        type="button"
+      <MlcText as="h2" size={18} weight={800} style={{ margin: "0 0 12px", color: "#111827" }}>{title}</MlcText>
+      <MlcButton
+        block
+        radius={8}
         onClick={() => {
           const handler = props.onReceive;
           if (typeof handler === "function") handler();
         }}
         style={{
-          width: "100%",
           height: 44,
           border: 0,
-          borderRadius: 8,
           color: "#ffffff",
           background: text(props.buttonColor, "#111827"),
-          fontWeight: 700,
         }}
       >
         {text(props.buttonText, "领取优惠券")}
-      </button>
+      </MlcButton>
     </section>
   );
 }
@@ -896,30 +894,27 @@ export function ActivityRuleModal({ props }: MaterialProps) {
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          <strong style={{ display: "block", color: "#111827", fontSize: 15 }}>
+          <MlcText as="strong" size={15} weight={800} style={{ display: "block", color: "#111827" }}>
             {text(props.title, "活动规则")}
-          </strong>
-          <span style={{ display: "block", marginTop: 4, color: "#6b7280", fontSize: 12, lineHeight: 1.5 }}>
+          </MlcText>
+          <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 4, color: "#6b7280", lineHeight: 1.5 }}>
             {text(props.summary, "查看活动参与条件、优惠说明和有效时间。")}
-          </span>
+          </MlcText>
         </div>
-        <button
-          type="button"
+        <MlcButton
+          size="sm"
+          radius={999}
           onClick={openModal}
           style={{
             flex: "0 0 auto",
-            minHeight: 34,
             border: 0,
-            borderRadius: 999,
-            padding: "0 14px",
             color: "#ffffff",
             background: text(props.primaryColor, "#111827"),
             fontSize: 13,
-            fontWeight: 700,
           }}
         >
           {text(props.buttonText, "查看规则")}
-        </button>
+        </MlcButton>
       </div>
 
       {open ? (
@@ -960,23 +955,25 @@ export function ActivityRuleModal({ props }: MaterialProps) {
                 background: "#ffffff",
               }}
             >
-              <strong style={{ color: "#111827", fontSize: 17 }}>{text(props.modalTitle, "活动规则")}</strong>
-              <button
-                type="button"
+              <MlcText as="strong" size={17} weight={800} style={{ color: "#111827" }}>{text(props.modalTitle, "活动规则")}</MlcText>
+              <MlcButton
                 aria-label="关闭规则弹窗"
+                size="sm"
+                radius={999}
                 onClick={() => setOpen(false)}
                 style={{
                   width: 32,
                   height: 32,
                   border: 0,
-                  borderRadius: 999,
+                  minHeight: 32,
+                  padding: 0,
                   color: "#475569",
                   background: "#f1f5f9",
                   fontSize: 18,
                 }}
               >
                 ×
-              </button>
+              </MlcButton>
             </div>
             <ol style={{ display: "grid", gap: 10, margin: 0, padding: "0 18px 18px 36px" }}>
               {(rules.length ? rules : ["活动规则以页面展示和结算结果为准。"]).map((rule, index) => {
@@ -984,8 +981,8 @@ export function ActivityRuleModal({ props }: MaterialProps) {
                 const content = typeof rule === "string" ? "" : text(rule.content);
                 return (
                   <li key={`${title}-${index}`} style={{ color: "#374151", lineHeight: 1.65, fontSize: 14 }}>
-                    <strong style={{ color: "#111827" }}>{title}</strong>
-                    {content ? <span style={{ display: "block", marginTop: 2 }}>{content}</span> : null}
+                    <MlcText as="strong" size={14} weight={800} style={{ color: "#111827" }}>{title}</MlcText>
+                    {content ? <MlcText as="span" size={14} style={{ display: "block", marginTop: 2, color: "#374151" }}>{content}</MlcText> : null}
                   </li>
                 );
               })}
@@ -1192,25 +1189,27 @@ export function CountdownTimer({ props }: MaterialProps) {
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ minWidth: 0 }}>
-          <strong style={{ display: "block", fontSize: 15 }}>{text(props.title, "限时秒杀")}</strong>
-          <span style={{ display: "block", marginTop: 3, opacity: 0.86, fontSize: 12 }}>{text(props.subtitle, "距离活动结束")}</span>
+          <MlcText as="strong" size={15} weight={800} style={{ display: "block", color: text(props.textColor, "#ffffff") }}>{text(props.title, "限时秒杀")}</MlcText>
+          <MlcText size={12} style={{ display: "block", marginTop: 3, color: text(props.textColor, "#ffffff"), opacity: 0.86 }}>{text(props.subtitle, "距离活动结束")}</MlcText>
         </div>
         <div style={{ display: "flex", gap: 5, flex: "0 0 auto" }}>
           {boxes.map((box) => (
-            <span key={box.label} style={{ display: "grid", gap: 2, minWidth: 34, textAlign: "center" }}>
-              <strong
+            <MlcTag key={box.label} radius={0} style={{ display: "grid", gap: 2, minWidth: 34, padding: 0, color: "inherit", background: "transparent", textAlign: "center" }}>
+              <MlcText
+                as="strong"
+                size={14}
+                weight={800}
                 style={{
                   padding: "5px 6px",
                   borderRadius: 6,
                   color: text(props.numberColor, "#dc2626"),
                   background: "#ffffff",
-                  fontSize: 14,
                 }}
               >
                 {box.value}
-              </strong>
-              <small style={{ color: "inherit", opacity: 0.78 }}>{box.label}</small>
-            </span>
+              </MlcText>
+              <MlcText size={11} style={{ color: "inherit", opacity: 0.78 }}>{box.label}</MlcText>
+            </MlcTag>
           ))}
         </div>
       </div>
@@ -1228,9 +1227,9 @@ export function NavGrid({ props }: MaterialProps) {
         {items.map((item, index) => {
           const linkUrl = text(item.linkUrl);
           return (
-            <button
+            <MlcButton
               key={String(item.id ?? index)}
-              type="button"
+              radius={number(props.radius, 8)}
               onClick={() => {
                 if (typeof onNavigate === "function") onNavigate(item);
                 if (linkUrl) window.location.href = linkUrl;
@@ -1241,15 +1240,14 @@ export function NavGrid({ props }: MaterialProps) {
                 placeItems: "center",
                 minHeight: 68,
                 border: 0,
-                borderRadius: number(props.radius, 8),
                 color: text(props.textColor, "#111827"),
                 background: text(item.backgroundColor, text(props.itemBackgroundColor, "#f8fafc")),
                 textAlign: "center",
               }}
             >
-              <strong style={{ fontSize: 14 }}>{String(item.title ?? `导航 ${index + 1}`)}</strong>
-              {item.subtitle ? <span style={{ color: "#64748b", fontSize: 11 }}>{String(item.subtitle)}</span> : null}
-            </button>
+              <MlcText as="strong" size={14} weight={800} style={{ color: "inherit" }}>{String(item.title ?? `导航 ${index + 1}`)}</MlcText>
+              {item.subtitle ? <MlcText size={11} tone="muted">{String(item.subtitle)}</MlcText> : null}
+            </MlcButton>
           );
         })}
       </div>
@@ -1290,22 +1288,20 @@ export function FloorAnchorNav({ props }: MaterialProps) {
       }}
     >
       {text(props.title) ? (
-        <strong style={{ display: "block", marginBottom: 8, color: text(props.textColor, "#111827"), fontSize: 14 }}>
+        <MlcText as="strong" size={14} weight={800} style={{ display: "block", marginBottom: 8, color: text(props.textColor, "#111827") }}>
           {text(props.title)}
-        </strong>
+        </MlcText>
       ) : null}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         {(items.length ? items : [{ id: "anchor_1", title: "楼层", targetId: "" }]).map((item, index) => (
-          <button
+          <MlcButton
             key={String(item.id ?? index)}
-            type="button"
+            size="sm"
+            radius={number(props.radius, 999)}
             onClick={() => scrollToTarget(item)}
             style={{
               flex: "0 0 auto",
-              minHeight: 34,
               border: 0,
-              borderRadius: number(props.radius, 999),
-              padding: "0 14px",
               color: text(props.textColor, "#111827"),
               background: text(item.backgroundColor, text(props.itemBackgroundColor, "#f3f4f6")),
               fontSize: 13,
@@ -1314,7 +1310,7 @@ export function FloorAnchorNav({ props }: MaterialProps) {
             }}
           >
             {String(item.title ?? `楼层 ${index + 1}`)}
-          </button>
+          </MlcButton>
         ))}
       </div>
     </section>
@@ -1328,37 +1324,38 @@ export function FlashSaleList({ props }: MaterialProps) {
     <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#ffffff") }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
         <div>
-          <strong style={{ display: "block", color: "#111827", fontSize: 17 }}>{text(props.title, "限时秒杀")}</strong>
-          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>{text(props.subtitle, "爆品限量抢购")}</span>
+          <MlcText as="strong" size={17} weight={800} style={{ display: "block", color: "#111827" }}>{text(props.title, "限时秒杀")}</MlcText>
+          <MlcText size={12} tone="muted" style={{ display: "block", marginTop: 3 }}>{text(props.subtitle, "爆品限量抢购")}</MlcText>
         </div>
-        <span style={{ alignSelf: "start", color: "#dc2626", fontSize: 12, fontWeight: 700 }}>{text(props.badgeText, "秒杀中")}</span>
+        <MlcTag style={{ alignSelf: "start", color: "#dc2626", background: "#fee2e2" }}>{text(props.badgeText, "秒杀中")}</MlcTag>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
         {items.map((item, index) => (
-          <button
+          <MlcButton
             key={String(item.id ?? index)}
-            type="button"
+            radius={10}
             onClick={() => {
               if (typeof onProductClick === "function") onProductClick(item);
             }}
             style={{
+              display: "block",
               overflow: "hidden",
+              width: "100%",
               border: "1px solid #eef0f3",
-              borderRadius: 10,
               padding: 0,
               background: "#ffffff",
               textAlign: "left",
             }}
           >
             {typeof item.imageUrl === "string" ? (
-              <img src={item.imageUrl} alt="" style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover" }} />
+              <MlcImage src={item.imageUrl} alt="" ratio="1 / 1" />
             ) : null}
             <span style={{ display: "grid", gap: 5, padding: 9 }}>
-              <strong style={{ color: "#111827", fontSize: 13, lineHeight: 1.35 }}>{String(item.title ?? "秒杀商品")}</strong>
-              <span style={{ color: "#dc2626", fontWeight: 800 }}>{String(item.priceText ?? "")}</span>
-              <span style={{ color: "#94a3b8", fontSize: 11, textDecoration: "line-through" }}>{String(item.originPriceText ?? "")}</span>
+              <MlcText as="strong" size={13} weight={800} style={{ color: "#111827", lineHeight: 1.35 }}>{String(item.title ?? "秒杀商品")}</MlcText>
+              <MlcPrice amountText={String(item.priceText ?? "")} size={14} style={{ color: "#dc2626" }} />
+              <MlcText size={11} tone="muted" style={{ color: "#94a3b8", textDecoration: "line-through" }}>{String(item.originPriceText ?? "")}</MlcText>
             </span>
-          </button>
+          </MlcButton>
         ))}
       </div>
     </section>

@@ -27,6 +27,12 @@ Currently migrated materials:
 - `BrandFeatureSection`
 - `LiveEntry`
 - `StoreExpertSection`
+- `FlashSaleList`
+- `ActivityRuleModal`
+- `CouponSection`
+- `NavGrid`
+- `FloorAnchorNav`
+- `CountdownTimer`
 
 See `docs/material-layering-architecture.md` for the layering plan.
 

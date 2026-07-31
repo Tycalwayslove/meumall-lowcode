@@ -1124,26 +1124,24 @@ export const CouponSection = defineComponent({
           },
         },
         [
-          h("h2", { style: { margin: "0 0 12px", fontSize: "18px", color: "#111827" } }, text(runtimeProps.title, "优惠券")),
+          h(MlcText, { as: "h2", size: 18, weight: 800, style: { margin: "0 0 12px", color: "#111827" } }, () => text(runtimeProps.title, "优惠券")),
           h(
-            "button",
+            MlcButton,
             {
-              type: "button",
+              block: true,
+              radius: 8,
               onClick: () => {
                 const handler = runtimeProps.onReceive;
                 if (typeof handler === "function") handler();
               },
               style: {
-                width: "100%",
                 height: "44px",
                 border: 0,
-                borderRadius: "8px",
                 color: "#ffffff",
                 background: text(runtimeProps.buttonColor, "#111827"),
-                fontWeight: 700,
               },
             },
-            text(runtimeProps.buttonText, "领取优惠券"),
+            () => text(runtimeProps.buttonText, "领取优惠券"),
           ),
         ],
       );
@@ -1295,17 +1293,22 @@ export const ActivityRuleModal = defineComponent({
             { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" } },
             [
               h("div", { style: { minWidth: 0 } }, [
-                h("strong", { style: { display: "block", color: "#111827", fontSize: "15px" } }, text(runtimeProps.title, "活动规则")),
                 h(
-                  "span",
-                  { style: { display: "block", marginTop: "4px", color: "#6b7280", fontSize: "12px", lineHeight: 1.5 } },
-                  text(runtimeProps.summary, "查看活动参与条件、优惠说明和有效时间。"),
+                  MlcText,
+                  { as: "strong", size: 15, weight: 800, style: { display: "block", color: "#111827" } },
+                  () => text(runtimeProps.title, "活动规则"),
+                ),
+                h(
+                  MlcText,
+                  { size: 12, tone: "muted", style: { display: "block", marginTop: "4px", color: "#6b7280", lineHeight: 1.5 } },
+                  () => text(runtimeProps.summary, "查看活动参与条件、优惠说明和有效时间。"),
                 ),
               ]),
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  size: "sm",
+                  radius: 999,
                   onClick: () => {
                     const handler = runtimeProps.onOpen;
                     if (typeof handler === "function") handler();
@@ -1313,17 +1316,13 @@ export const ActivityRuleModal = defineComponent({
                   },
                   style: {
                     flex: "0 0 auto",
-                    minHeight: "34px",
                     border: 0,
-                    borderRadius: "999px",
-                    padding: "0 14px",
                     color: "#ffffff",
                     background: text(runtimeProps.primaryColor, "#111827"),
                     fontSize: "13px",
-                    fontWeight: 700,
                   } satisfies CSSProperties,
                 },
-                text(runtimeProps.buttonText, "查看规则"),
+                () => text(runtimeProps.buttonText, "查看规则"),
               ),
             ],
           ),
@@ -1374,26 +1373,28 @@ export const ActivityRuleModal = defineComponent({
                           },
                         },
                         [
-                          h("strong", { style: { color: "#111827", fontSize: "17px" } }, text(runtimeProps.modalTitle, "活动规则")),
+                          h(MlcText, { as: "strong", size: 17, weight: 800, style: { color: "#111827" } }, () => text(runtimeProps.modalTitle, "活动规则")),
                           h(
-                            "button",
+                            MlcButton,
                             {
-                              type: "button",
                               "aria-label": "关闭规则弹窗",
+                              size: "sm",
+                              radius: 999,
                               onClick: () => {
                                 open.value = false;
                               },
                               style: {
                                 width: "32px",
                                 height: "32px",
+                                minHeight: "32px",
                                 border: 0,
-                                borderRadius: "999px",
+                                padding: 0,
                                 color: "#475569",
                                 background: "#f1f5f9",
                                 fontSize: "18px",
                               },
                             },
-                            "×",
+                            () => "×",
                           ),
                         ],
                       ),
@@ -1404,8 +1405,8 @@ export const ActivityRuleModal = defineComponent({
                           const title = typeof rule === "string" ? rule : text(rule.title, `规则 ${index + 1}`);
                           const content = typeof rule === "string" ? "" : text(rule.content);
                           return h("li", { style: { color: "#374151", lineHeight: 1.65, fontSize: "14px" } }, [
-                            h("strong", { style: { color: "#111827" } }, title),
-                            content ? h("span", { style: { display: "block", marginTop: "2px" } }, content) : null,
+                            h(MlcText, { as: "strong", size: 14, weight: 800, style: { color: "#111827" } }, () => title),
+                            content ? h(MlcText, { as: "span", size: 14, style: { display: "block", marginTop: "2px", color: "#374151" } }, () => content) : null,
                           ]);
                         }),
                       ),
@@ -1672,28 +1673,34 @@ export const CountdownTimer = defineComponent({
             { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" } },
             [
               h("div", { style: { minWidth: 0 } }, [
-                h("strong", { style: { display: "block", fontSize: "15px" } }, text(runtimeProps.title, "限时秒杀")),
-                h("span", { style: { display: "block", marginTop: "3px", opacity: 0.86, fontSize: "12px" } }, text(runtimeProps.subtitle, "距离活动结束")),
+                h(MlcText, { as: "strong", size: 15, weight: 800, style: { display: "block", color: text(runtimeProps.textColor, "#ffffff") } }, () =>
+                  text(runtimeProps.title, "限时秒杀"),
+                ),
+                h(MlcText, { size: 12, style: { display: "block", marginTop: "3px", color: text(runtimeProps.textColor, "#ffffff"), opacity: 0.86 } }, () =>
+                  text(runtimeProps.subtitle, "距离活动结束"),
+                ),
               ]),
               h(
                 "div",
                 { style: { display: "flex", gap: "5px", flex: "0 0 auto" } },
                 boxes.map((box) =>
-                  h("span", { style: { display: "grid", gap: "2px", minWidth: "34px", textAlign: "center" } }, [
+                  h(MlcTag, { radius: 0, style: { display: "grid", gap: "2px", minWidth: "34px", padding: 0, color: "inherit", background: "transparent", textAlign: "center" } }, () => [
                     h(
-                      "strong",
+                      MlcText,
                       {
+                        as: "strong",
+                        size: 14,
+                        weight: 800,
                         style: {
                           padding: "5px 6px",
                           borderRadius: "6px",
                           color: text(runtimeProps.numberColor, "#dc2626"),
                           background: "#ffffff",
-                          fontSize: "14px",
                         },
                       },
-                      box.value,
+                      () => box.value,
                     ),
-                    h("small", { style: { color: "inherit", opacity: 0.78 } }, box.label),
+                    h(MlcText, { size: 11, style: { color: "inherit", opacity: 0.78 } }, () => box.label),
                   ]),
                 ),
               ),
@@ -1729,9 +1736,9 @@ export const NavGrid = defineComponent({
             items.map((item, index) => {
               const linkUrl = text(item.linkUrl);
               return h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  radius: number(runtimeProps.radius, 8),
                   onClick: () => {
                     const handler = runtimeProps.onNavigate;
                     if (typeof handler === "function") handler(item);
@@ -1743,15 +1750,14 @@ export const NavGrid = defineComponent({
                     placeItems: "center",
                     minHeight: "68px",
                     border: 0,
-                    borderRadius: `${number(runtimeProps.radius, 8)}px`,
                     color: text(runtimeProps.textColor, "#111827"),
                     background: text(item.backgroundColor, text(runtimeProps.itemBackgroundColor, "#f8fafc")),
                     textAlign: "center",
                   } satisfies CSSProperties,
                 },
-                [
-                  h("strong", { style: { fontSize: "14px" } }, String(item.title ?? `导航 ${index + 1}`)),
-                  item.subtitle ? h("span", { style: { color: "#64748b", fontSize: "11px" } }, String(item.subtitle)) : null,
+                () => [
+                  h(MlcText, { as: "strong", size: 14, weight: 800, style: { color: "inherit" } }, () => String(item.title ?? `导航 ${index + 1}`)),
+                  item.subtitle ? h(MlcText, { size: 11, tone: "muted" }, () => String(item.subtitle)) : null,
                 ],
               );
             }),
@@ -1805,9 +1811,9 @@ export const FloorAnchorNav = defineComponent({
         [
           text(runtimeProps.title)
             ? h(
-                "strong",
-                { style: { display: "block", marginBottom: "8px", color: text(runtimeProps.textColor, "#111827"), fontSize: "14px" } },
-                text(runtimeProps.title),
+                MlcText,
+                { as: "strong", size: 14, weight: 800, style: { display: "block", marginBottom: "8px", color: text(runtimeProps.textColor, "#111827") } },
+                () => text(runtimeProps.title),
               )
             : null,
           h(
@@ -1822,16 +1828,14 @@ export const FloorAnchorNav = defineComponent({
             },
             visibleItems.map((item, index) =>
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  size: "sm",
+                  radius: number(runtimeProps.radius, 999),
                   onClick: () => scrollToTarget(item),
                   style: {
                     flex: "0 0 auto",
-                    minHeight: "34px",
                     border: 0,
-                    borderRadius: `${number(runtimeProps.radius, 999)}px`,
-                    padding: "0 14px",
                     color: text(runtimeProps.textColor, "#111827"),
                     background: text(item.backgroundColor, text(runtimeProps.itemBackgroundColor, "#f3f4f6")),
                     fontSize: "13px",
@@ -1839,7 +1843,7 @@ export const FloorAnchorNav = defineComponent({
                     whiteSpace: "nowrap",
                   } satisfies CSSProperties,
                 },
-                String(item.title ?? `楼层 ${index + 1}`),
+                () => String(item.title ?? `楼层 ${index + 1}`),
               ),
             ),
           ),
@@ -1868,48 +1872,48 @@ export const FlashSaleList = defineComponent({
         [
           h("div", { style: { display: "flex", justifyContent: "space-between", gap: "10px", marginBottom: "10px" } }, [
             h("div", [
-              h("strong", { style: { display: "block", color: "#111827", fontSize: "17px" } }, text(runtimeProps.title, "限时秒杀")),
-              h("span", { style: { display: "block", marginTop: "3px", color: "#64748b", fontSize: "12px" } }, text(runtimeProps.subtitle, "爆品限量抢购")),
+              h(MlcText, { as: "strong", size: 17, weight: 800, style: { display: "block", color: "#111827" } }, () => text(runtimeProps.title, "限时秒杀")),
+              h(MlcText, { size: 12, tone: "muted", style: { display: "block", marginTop: "3px" } }, () => text(runtimeProps.subtitle, "爆品限量抢购")),
             ]),
-            h("span", { style: { alignSelf: "start", color: "#dc2626", fontSize: "12px", fontWeight: 700 } }, text(runtimeProps.badgeText, "秒杀中")),
+            h(MlcTag, { style: { alignSelf: "start", color: "#dc2626", background: "#fee2e2" } }, () => text(runtimeProps.badgeText, "秒杀中")),
           ]),
           h(
             "div",
             { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px" } },
             items.map((item, index) =>
               h(
-                "button",
+                MlcButton,
                 {
-                  type: "button",
+                  radius: 10,
                   onClick: () => {
                     const handler = runtimeProps.onProductClick;
                     if (typeof handler === "function") handler(item);
                   },
                   style: {
+                    display: "block",
                     overflow: "hidden",
+                    width: "100%",
                     border: "1px solid #eef0f3",
-                    borderRadius: "10px",
                     padding: 0,
                     background: "#ffffff",
                     textAlign: "left",
                   } satisfies CSSProperties,
                 },
-                [
+                () => [
                   typeof item.imageUrl === "string"
-                    ? h("img", {
+                    ? h(MlcImage, {
                         src: item.imageUrl,
                         alt: "",
+                        ratio: "1 / 1",
                         style: {
                           width: "100%",
-                          aspectRatio: "1 / 1",
-                          objectFit: "cover",
                         },
                       })
                     : null,
                   h("span", { style: { display: "grid", gap: "5px", padding: "9px" } }, [
-                    h("strong", { style: { color: "#111827", fontSize: "13px", lineHeight: 1.35 } }, String(item.title ?? `秒杀商品 ${index + 1}`)),
-                    h("span", { style: { color: "#dc2626", fontWeight: 800 } }, String(item.priceText ?? "")),
-                    h("span", { style: { color: "#94a3b8", fontSize: "11px", textDecoration: "line-through" } }, String(item.originPriceText ?? "")),
+                    h(MlcText, { as: "strong", size: 13, weight: 800, style: { color: "#111827", lineHeight: 1.35 } }, () => String(item.title ?? `秒杀商品 ${index + 1}`)),
+                    h(MlcPrice, { amountText: String(item.priceText ?? ""), size: 14, style: { color: "#dc2626" } }),
+                    h(MlcText, { size: 11, tone: "muted", style: { color: "#94a3b8", textDecoration: "line-through" } }, () => String(item.originPriceText ?? "")),
                   ]),
                 ],
               ),
