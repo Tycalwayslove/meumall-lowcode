@@ -215,6 +215,7 @@ import {
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
+import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorWorkspaceStats from "./components/EditorWorkspaceStats.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
@@ -3391,113 +3392,20 @@ function rollbackPublishSelectedRelease(): void {
       </section>
     </div>
 
-    <div
+    <EditorMaterialDetail
       v-if="selectedMaterialDetailManifest"
-      class="material-detail-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="物料详情"
-      @click.self="closeMaterialDetail"
-    >
-      <section class="material-detail-dialog">
-        <div class="material-detail-head">
-          <div>
-            <strong>{{ selectedMaterialDetailManifest.title }}</strong>
-            <span>{{ selectedMaterialDetailManifest.category }} / {{ selectedMaterialDetailManifest.componentName }}</span>
-          </div>
-          <button type="button" title="关闭物料详情" @click="closeMaterialDetail">
-            <X :size="18" />
-          </button>
-        </div>
-
-        <div class="material-detail-body">
-          <div class="material-detail-info">
-            <dl class="material-detail-meta">
-              <div>
-                <dt>版本</dt>
-                <dd>{{ materialDetailSummary?.materialVersion }}</dd>
-              </div>
-              <div>
-                <dt>平台</dt>
-                <dd>{{ materialDetailSummary?.platformText }}</dd>
-              </div>
-              <div>
-                <dt>配置项</dt>
-                <dd>{{ materialDetailSummary?.propCount ?? 0 }} 个</dd>
-              </div>
-            </dl>
-
-            <div class="material-detail-section">
-              <strong>配置字段</strong>
-              <div class="material-prop-list">
-                <div
-                  v-for="entry in materialDetailPropEntries"
-                  :key="entry.name"
-                  class="material-prop-item"
-                >
-                  <span>
-                    <b>{{ entry.label }}</b>
-                    <small>{{ entry.name }} / {{ entry.setter }}</small>
-                  </span>
-                  <em>{{ entry.type }}{{ entry.required ? " / 必填" : "" }}</em>
-                </div>
-                <div v-if="!materialDetailPropEntries.length" class="mini-empty">无配置字段</div>
-              </div>
-            </div>
-
-            <div class="material-detail-section">
-              <strong>事件</strong>
-              <div class="material-chip-list">
-                <span
-                  v-for="event in materialDetailEventItems"
-                  :key="event.name"
-                >
-                  {{ event.title }} / {{ event.name }}
-                </span>
-                <span v-if="!materialDetailEventItems.length">无事件</span>
-              </div>
-            </div>
-
-            <div class="material-detail-section">
-              <strong>数据槽</strong>
-              <div class="material-chip-list">
-                <span
-                  v-for="slot in materialDetailDataSourceSlotItems"
-                  :key="slot.name"
-                >
-                  {{ slot.name }} / {{ slot.acceptedTypesText }}
-                </span>
-                <span v-if="!materialDetailDataSourceSlotItems.length">无数据槽</span>
-              </div>
-            </div>
-
-            <div class="material-detail-actions">
-              <button type="button" @click="addMaterialFromDetail">
-                <Plus :size="15" />
-                <span>添加到画布</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="material-detail-preview">
-            <div class="material-preview-phone">
-              <div class="material-preview-status">
-                <span>默认 H5 预览</span>
-                <span>{{ selectedMaterialDetailManifest.componentName }}</span>
-              </div>
-              <LowcodeVueRenderer
-                v-if="materialDetailPreviewSchema"
-                :schema="materialDetailPreviewSchema"
-                :registry="registry"
-                :data="previewData"
-                :action-executor="actionExecutor"
-                :fallback="'物料无法预览'"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+      :manifest="selectedMaterialDetailManifest"
+      :summary="materialDetailSummary"
+      :prop-entries="materialDetailPropEntries"
+      :event-items="materialDetailEventItems"
+      :data-source-slot-items="materialDetailDataSourceSlotItems"
+      :preview-schema="materialDetailPreviewSchema"
+      :registry="registry"
+      :preview-data="previewData"
+      :action-executor="actionExecutor"
+      @close="closeMaterialDetail"
+      @add="addMaterialFromDetail"
+    />
 
     <div
       v-if="nodeContextMenu"
