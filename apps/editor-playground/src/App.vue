@@ -257,10 +257,18 @@ interface ListEditorField {
   multiline?: boolean;
 }
 
+interface ListItemDragState {
+  propName: string;
+  fromIndex: number;
+  overIndex?: number;
+}
+
 const canvasDropHint = ref<CanvasDropHint>();
+const listItemDragState = ref<ListItemDragState>();
 
 const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
 const NODE_DRAG_TYPE = "application/x-meumall-node";
+const LIST_ITEM_DRAG_TYPE = "application/x-meumall-list-item";
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -1051,6 +1059,50 @@ function moveListItem(propName: string, propSchema: LowcodePropSchema, index: nu
   if (item === undefined) return;
   items.splice(targetIndex, 0, item);
   updateListProp(propName, propSchema, items);
+}
+
+function reorderListItem(propName: string, propSchema: LowcodePropSchema, fromIndex: number, toIndex: number): void {
+  const items = getPropArray(propName);
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) return;
+  const [item] = items.splice(fromIndex, 1);
+  if (item === undefined) return;
+  items.splice(toIndex, 0, item);
+  updateListProp(propName, propSchema, items);
+}
+
+function onListItemDragStart(event: DragEvent, propName: string, index: number): void {
+  listItemDragState.value = { propName, fromIndex: index, overIndex: index };
+  event.dataTransfer?.setData(LIST_ITEM_DRAG_TYPE, JSON.stringify({ propName, index }));
+  event.dataTransfer?.setData("text/plain", `${propName}:${index}`);
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+}
+
+function onListItemDragOver(event: DragEvent, propName: string, index: number): void {
+  const state = listItemDragState.value;
+  if (!state || state.propName !== propName) return;
+  event.preventDefault();
+  listItemDragState.value = { ...state, overIndex: index };
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+}
+
+function onListItemDrop(event: DragEvent, propName: string, propSchema: LowcodePropSchema, index: number): void {
+  const state = listItemDragState.value;
+  if (!state || state.propName !== propName) return;
+  event.preventDefault();
+  reorderListItem(propName, propSchema, state.fromIndex, index);
+  listItemDragState.value = undefined;
+}
+
+function onListItemDragEnd(): void {
+  listItemDragState.value = undefined;
+}
+
+function listItemDragClass(propName: string, index: number): Record<string, boolean> {
+  const state = listItemDragState.value;
+  return {
+    dragging: Boolean(state && state.propName === propName && state.fromIndex === index),
+    "drag-over": Boolean(state && state.propName === propName && state.overIndex === index && state.fromIndex !== index),
+  };
 }
 
 function updateListItemField(propName: string, propSchema: LowcodePropSchema, index: number, fieldName: string, value: string): void {
@@ -2153,9 +2205,18 @@ function formatReleaseTime(value: string): string {
                 v-for="(item, itemIndex) in getListItems(String(propName))"
                 :key="`${String(propName)}-${itemIndex}`"
                 class="list-item-editor"
+                :class="listItemDragClass(String(propName), itemIndex)"
+                draggable="true"
+                @dragstart="onListItemDragStart($event, String(propName), itemIndex)"
+                @dragover="onListItemDragOver($event, String(propName), itemIndex)"
+                @drop="onListItemDrop($event, String(propName), propSchema, itemIndex)"
+                @dragend="onListItemDragEnd"
               >
                 <div class="list-item-head">
-                  <strong>第 {{ itemIndex + 1 }} 项</strong>
+                  <strong>
+                    <GripVertical :size="14" />
+                    <span>第 {{ itemIndex + 1 }} 项</span>
+                  </strong>
                   <div>
                     <button type="button" :disabled="itemIndex === 0" @click="moveListItem(String(propName), propSchema, itemIndex, -1)">上移</button>
                     <button

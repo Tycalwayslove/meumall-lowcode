@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料和数组属性列表编辑器。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料、数组属性列表编辑器和列表项拖拽排序。
 
 ## 当前维护范围
 
@@ -64,12 +64,13 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 组合券包物料：React/Vue H5 物料包已新增 `CouponBundle`，支持多券展示、一键领取、单券领取和 `onReceive/onReceiveAll` 事件；大促模板和 React H5 runtime 示例已接入。
 - 门店/达人推荐物料：React/Vue H5 物料包已新增 `StoreExpertSection`，支持门店/达人混合推荐、多项展示、静态列表配置、预留 `items` data source slot 和 `onItemClick` 事件；大促模板和 React H5 runtime 示例已接入。
 - Vue3 编辑器数组属性编辑：属性面板已为 `array` + `textarea` 字段提供列表项编辑器，支持新增、删除、复制、上移、下移和常见字段表单输入，并保留 JSON 高级编辑兜底。
+- Vue3 编辑器数组列表排序：属性面板列表项已支持同一数组属性内 HTML5 拖拽排序，拖拽后写回当前节点 props 数组，并提供拖拽中和目标项视觉状态。
 
 ## 已知缺口
 
-- 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器和数组属性列表编辑器，但还不是正式管理台组件。
+- 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
-- 画布拖拽已支持新物料投放和已有节点移动；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
+- 画布拖拽已支持新物料投放、已有节点移动和数组列表项排序；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
 - Java 配置平台 API 仍为前端草案，待 Java 配置平台负责人确认响应包装、鉴权、审批、服务端发布校验、版本 diff、回滚审计和分页。
 - 当前发布链路已抽象为 config platform client，但仍使用 localStorage mock，尚未切换真实 Java HTTP client。
@@ -114,7 +115,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `494bfac` | 增强 Vue3 编辑器布尔开关属性编辑。 |
 | 2026-07-31 | `c587e3e` | 新增组合券包物料并接入 H5 示例。 |
 | 2026-07-31 | `2b6d726` | 新增门店/达人推荐物料并接入 H5 示例。 |
-| 2026-07-31 | 本提交 | 增强 Vue3 编辑器数组属性列表编辑。 |
+| 2026-07-31 | `557697a` | 增强 Vue3 编辑器数组属性列表编辑。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器数组列表拖拽排序。 |
 
 ## 默认验证命令
 
