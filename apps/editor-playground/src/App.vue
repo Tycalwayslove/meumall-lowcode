@@ -93,6 +93,7 @@ import {
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
 const MATERIAL_FAVORITES_KEY = "meumall-lowcode-material-favorites";
 const MATERIAL_RECENT_KEY = "meumall-lowcode-material-recent";
+const CUSTOM_TEMPLATES_KEY = "meumall-lowcode-custom-templates";
 const AUTO_SAVE_DELAY_MS = 700;
 const RECENT_MATERIAL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
@@ -296,9 +297,6 @@ const resourceLibraryClient = createStaticResourceLibraryClient({
   coupons: sampleCoupons,
   storeExperts: sampleStoreExperts,
 });
-const templateLibraryClient = createStaticTemplateLibraryClient({
-  templates: pageTemplates,
-});
 const previewDataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
@@ -352,6 +350,7 @@ const materialKeyword = ref("");
 const materialCategory = ref("全部");
 const favoriteMaterialComponentNames = ref<string[]>(loadStoredMaterialComponentNames(MATERIAL_FAVORITES_KEY));
 const recentMaterialComponentNames = ref<string[]>(loadStoredMaterialComponentNames(MATERIAL_RECENT_KEY));
+const localCustomTemplates = shallowRef<PageTemplate[]>(loadStoredCustomTemplates());
 const materialPreferenceMessage = ref("");
 const outlineKeyword = ref("");
 const collapsedOutlineNodeIds = ref<string[]>([]);
@@ -973,8 +972,8 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() => {
   }
   return items;
 });
-const templateCategories = computed(() => ["全部", ...Array.from(new Set(pageTemplates.map((template) => template.category)))]);
-const pageStartTemplates = computed<TemplateListItem[]>(() => pageTemplates.map(createTemplateListItem));
+const templateCategories = computed(() => ["全部", ...Array.from(new Set(getAllPageTemplates().map((template) => template.category)))]);
+const pageStartTemplates = computed<TemplateListItem[]>(() => getAllPageTemplates().map(createTemplateListItem));
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
   {
     id: "open-page-start-wizard",
@@ -1021,6 +1020,14 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     description: editorState.value.dirty ? "保存当前页面到本地 mock 配置平台。" : "当前页面已保存。",
     keywords: ["save", "草稿", "保存"],
     run: saveSchema,
+  },
+  {
+    id: "save-template",
+    title: "保存为本地模板",
+    group: "常用操作",
+    description: "把当前页面沉淀为可复用的本地模板。",
+    keywords: ["template", "save", "模板", "保存为模板", "复用"],
+    run: saveCurrentPageAsLocalTemplate,
   },
   {
     id: "export-schema",
@@ -1088,7 +1095,7 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     keywords: [material.manifest.title, material.manifest.componentName, material.manifest.category],
     run: () => addMaterial(material.manifest),
   })),
-  ...pageTemplates.map((template): CommandPaletteItem => ({
+  ...getAllPageTemplates().map((template): CommandPaletteItem => ({
     id: `template-${template.id}`,
     title: `应用模板：${template.title}`,
     group: "模板",
@@ -1161,7 +1168,7 @@ watch(
 );
 
 watch(
-  [templateKeyword, templateCategory],
+  [templateKeyword, templateCategory, localCustomTemplates],
   () => {
     void refreshTemplates();
   },
@@ -1383,6 +1390,53 @@ function storeMaterialComponentNames(key: string, componentNames: string[]): voi
   window.localStorage.setItem(key, JSON.stringify(componentNames));
 }
 
+function isUnknownRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function clonePageSchema(schema: LowcodePageSchema): LowcodePageSchema {
+  return JSON.parse(JSON.stringify(schema)) as LowcodePageSchema;
+}
+
+function isTemplateResource(value: unknown): value is PageTemplate {
+  if (!isUnknownRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.title === "string" &&
+    typeof value.description === "string" &&
+    typeof value.category === "string" &&
+    value.status === "published" &&
+    validateLowcodePageSchema(value.schema).valid
+  );
+}
+
+function loadStoredCustomTemplates(): PageTemplate[] {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(CUSTOM_TEMPLATES_KEY) ?? "[]") as unknown;
+    return Array.isArray(parsed) ? parsed.filter(isTemplateResource) : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeCustomTemplates(templates: PageTemplate[]): void {
+  window.localStorage.setItem(CUSTOM_TEMPLATES_KEY, JSON.stringify(templates));
+}
+
+function getAllPageTemplates(): PageTemplate[] {
+  const staticTemplates = pageTemplates as unknown as PageTemplate[];
+  const templates: PageTemplate[] = [];
+  for (const template of localCustomTemplates.value) templates.push(template);
+  for (const template of staticTemplates) templates.push(template);
+  return templates;
+}
+
+function createCurrentTemplateLibraryClient() {
+  return createStaticTemplateLibraryClient({
+    templates: getAllPageTemplates(),
+  });
+}
+
 function isKnownMaterialComponentName(componentName: string): boolean {
   return materials.some((item) => item.manifest.componentName === componentName);
 }
@@ -1557,7 +1611,7 @@ async function refreshTemplates(): Promise<void> {
   const seq = ++templateSearchSeq;
   isTemplateSearching.value = true;
   try {
-    const result = await Promise.resolve(templateLibraryClient.searchTemplates({
+    const result = await Promise.resolve(createCurrentTemplateLibraryClient().searchTemplates({
       keyword: templateKeyword.value,
       category: templateCategory.value,
       status: "published",
@@ -3418,7 +3472,7 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onAp
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
     return;
   }
-  const templateDetail = await Promise.resolve(templateLibraryClient.getTemplate(template.id));
+  const templateDetail = await Promise.resolve(createCurrentTemplateLibraryClient().getTemplate(template.id));
   if (!templateDetail) {
     releaseMessage.value = "模板不存在或已下架";
     return;
@@ -3442,13 +3496,37 @@ async function applyTemplateFromStartWizard(template: Pick<LowcodeTemplateResour
 }
 
 async function previewTemplate(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
-  const templateDetail = await Promise.resolve(templateLibraryClient.getTemplate(template.id));
+  const templateDetail = await Promise.resolve(createCurrentTemplateLibraryClient().getTemplate(template.id));
   if (!templateDetail) {
     releaseMessage.value = "模板不存在或已下架";
     return;
   }
   openReactH5Runtime(templateDetail.schema);
   releaseMessage.value = `已打开模板 H5 预览：${templateDetail.title}`;
+}
+
+function saveCurrentPageAsLocalTemplate(): void {
+  const schema = clonePageSchema(editorState.value.schema);
+  const now = new Date().toISOString();
+  const title = `${schema.title || "未命名 H5 页面"} 模板`;
+  const template: PageTemplate = {
+    id: `local-template-${Date.now().toString(36)}`,
+    title,
+    description: "从当前页面保存的本地自定义模板。",
+    category: "本地模板",
+    status: "published",
+    tags: ["本地", "自定义"],
+    version: "local",
+    updatedAt: now,
+    schema,
+  };
+  localCustomTemplates.value = [template, ...localCustomTemplates.value].slice(0, 20);
+  storeCustomTemplates(localCustomTemplates.value);
+  templateCategory.value = "全部";
+  templateKeyword.value = title;
+  releaseMessage.value = `已保存本地模板：${title}`;
+  closeCommandPalette();
+  void refreshTemplates();
 }
 
 function applyJson(): void {
@@ -4459,6 +4537,10 @@ function formatAutoSaveTime(value: string): string {
         <div class="panel-title">
           <Layers :size="16" />
           <span>模板</span>
+          <button type="button" class="template-save-current-button" title="保存当前页面为本地模板" @click="saveCurrentPageAsLocalTemplate">
+            <Save :size="13" />
+            <span>保存为模板</span>
+          </button>
         </div>
         <div class="template-filters">
           <label class="search-field">

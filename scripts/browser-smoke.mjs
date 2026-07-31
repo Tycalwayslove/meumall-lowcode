@@ -525,6 +525,22 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-schema-preview pre')).some((item) => item.innerText.includes('nodeCount') && item.innerText.includes('pageId'))");
   log("通过：本地版本对比展示字段差异和 schema 片段详情");
 
+  log("检查本地自定义模板");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "保存为模板");
+  await page.waitForExpression("document.body.innerText.includes('保存为本地模板')");
+  await page.clickByText(".command-palette-item", "保存为本地模板");
+  await page.waitForExpression("document.body.innerText.includes('已保存本地模板：版本差异 Smoke 当前草稿 模板')");
+  await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-custom-templates'); return Boolean(raw && raw.includes('版本差异 Smoke 当前草稿 模板')); })()");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('版本差异 Smoke 当前草稿 模板') && item.innerText.includes('本地模板'))");
+  await page.clickChildByText(".template-item", "版本差异 Smoke 当前草稿 模板", ".template-preview-button");
+  await page.waitForExpression("document.body.innerText.includes('已打开模板 H5 预览：版本差异 Smoke 当前草稿 模板')");
+  await page.evaluate("window.confirm = () => true");
+  await page.clickByText(".template-main-button", "版本差异 Smoke 当前草稿 模板");
+  await page.waitForExpression("document.body.innerText.includes('已应用模板：版本差异 Smoke 当前草稿 模板')");
+  await page.waitForExpression("document.body.innerText.includes('版本差异 Smoke 当前草稿')");
+  log("通过：当前页面可保存为本地模板、预览并应用回画布");
+
   log("检查模板卡片摘要");
   await page.fillByPlaceholder("搜索模板", "");
   await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('大促活动页') && item.innerText.includes('v1.0.0') && item.innerText.includes('大促') && item.innerText.includes('节点') && item.innerText.includes('数据源') && item.innerText.includes('动作'))");
@@ -599,7 +615,8 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.querySelector('.page-start-dialog') && document.body.innerText.includes('空白 H5 页面') && document.body.innerText.includes('从模板开始')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('商品专题页') && item.innerText.includes('节点'))");
   await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('商品专题页') && item.querySelector('.page-start-template-preview img'))");
-  log("通过：新建页面向导可打开并展示空白页、模板起点和模板缩略预览");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.page-start-template')).some((item) => item.innerText.includes('版本差异 Smoke 当前草稿 模板') && item.innerText.includes('本地模板'))");
+  log("通过：新建页面向导可打开并展示空白页、模板起点、本地模板和模板缩略预览");
 
   await page.clickByText(".page-start-blank", "空白 H5 页面");
   await page.waitForExpression("document.body.innerText.includes('已创建空白 H5 页面')");
