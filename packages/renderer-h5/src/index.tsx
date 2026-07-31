@@ -25,6 +25,22 @@ export interface LowcodeRendererProps {
   onRenderError?: (error: Error, node?: LowcodeNode) => void;
 }
 
+export function createLowcodeMissingMaterialFallback(node: LowcodeNode): React.ReactElement {
+  return (
+    <div className="mlc-runtime-missing" data-lowcode-node-id={node.id} data-lowcode-missing={node.componentName}>
+      缺少物料：{node.componentName}
+    </div>
+  );
+}
+
+export function createLowcodeRenderErrorFallback(node: LowcodeNode): React.ReactElement {
+  return (
+    <div className="mlc-runtime-error" data-lowcode-node-id={node.id} data-lowcode-error={node.id}>
+      组件渲染失败：{node.componentName}
+    </div>
+  );
+}
+
 class MaterialErrorBoundary extends React.Component<
   {
     node: LowcodeNode;
@@ -45,7 +61,7 @@ class MaterialErrorBoundary extends React.Component<
 
   render() {
     if (this.state.error) {
-      return <div data-lowcode-error={this.props.node.id}>组件渲染失败</div>;
+      return createLowcodeRenderErrorFallback(this.props.node);
     }
     return this.props.children;
   }
@@ -70,7 +86,7 @@ function renderNode({
 
   const material = registry.get(node.componentName);
   if (!material) {
-    return <div data-lowcode-missing={node.componentName}>缺少物料：{node.componentName}</div>;
+    return createLowcodeMissingMaterialFallback(node);
   }
 
   const Component = material.component;

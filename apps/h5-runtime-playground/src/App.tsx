@@ -15,6 +15,7 @@ import { h5Materials } from "@meumall/lowcode-materials-h5";
 import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
 import {
   createLowcodePageSchema,
+  createMaterialManifest,
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
@@ -22,6 +23,10 @@ import {
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
+
+function BrokenBlock(): never {
+  throw new Error("BrokenBlock render failed");
+}
 
 const sampleProducts = [
   {
@@ -693,6 +698,39 @@ const emptyDemoSchema = createLowcodePageSchema({
   },
 });
 
+const brokenDemoSchema = createLowcodePageSchema({
+  pageId: "broken-runtime-demo",
+  pageVersion: "demo-broken-20260801",
+  status: "published",
+  title: "异常兜底演示",
+  pageType: "activity",
+  targetPlatforms: ["h5"],
+  layout: {
+    safeArea: true,
+    backgroundColor: "#f3f4f6",
+    maxWidth: 430,
+  },
+  nodes: [
+    {
+      id: "node_missing_material",
+      componentName: "MissingMaterialBlock",
+      materialVersion: "0.1.0",
+      props: {},
+    },
+    {
+      id: "node_broken_material",
+      componentName: "BrokenBlock",
+      materialVersion: "0.1.0",
+      props: {},
+    },
+  ],
+  publishMeta: {
+    environment: "test",
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    operator: "runtime-demo",
+  },
+});
+
 function cloneSchema(schema: LowcodePageSchema): LowcodePageSchema {
   return JSON.parse(JSON.stringify(schema)) as LowcodePageSchema;
 }
@@ -776,7 +814,21 @@ const localRuntimeConfigPlatformClient: LowcodeConfigPlatformClient = {
   },
 };
 
-const registry = createMaterialRegistry(h5Materials);
+const registry = createMaterialRegistry([
+  ...h5Materials,
+  {
+    component: BrokenBlock,
+    manifest: createMaterialManifest({
+      componentName: "BrokenBlock",
+      materialVersion: "0.1.0",
+      title: "异常演示物料",
+      category: "content",
+      platforms: ["h5"],
+      defaultProps: {},
+      propsSchema: {},
+    }),
+  },
+]);
 const dataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
@@ -789,7 +841,7 @@ interface RuntimeSchemaSource {
   error?: string;
 }
 
-type RuntimeRequestedSource = "schema" | "releaseId" | "pageId" | "emptyDemo" | "none";
+type RuntimeRequestedSource = "schema" | "releaseId" | "pageId" | "emptyDemo" | "brokenDemo" | "none";
 
 interface RuntimeSchemaInputInfo {
   encodedSchema?: string;
@@ -813,6 +865,14 @@ function getRuntimeSchemaInputInfo(): RuntimeSchemaInputInfo {
       requestedLabel: "empty demo",
       requestedValue: "?demo=empty",
       fallbackSchema: emptyDemoSchema,
+    };
+  }
+  if (demo === "broken") {
+    return {
+      requestedSource: "brokenDemo",
+      requestedLabel: "broken demo",
+      requestedValue: "?demo=broken",
+      fallbackSchema: brokenDemoSchema,
     };
   }
   if (encodedSchema) {
@@ -874,6 +934,7 @@ function createRuntimeSourceNote(input: RuntimeSchemaInputInfo, runtimeSchema: R
   if (runtimeSchema.error) return `已启用 fallback：${runtimeSchema.error}`;
   if (input.requestedSource === "none") return "当前无 URL 参数，使用本地 sample schema 作为 H5 runtime 默认演示。";
   if (input.requestedSource === "emptyDemo") return "当前使用空页面演示 schema，用于验证 H5 runtime 空态不白屏。";
+  if (input.requestedSource === "brokenDemo") return "当前使用异常兜底演示 schema，用于验证未知物料和组件异常不白屏。";
   if (runtimeSchema.source === "encoded") return "当前 schema 来自编辑器 URL handoff，仅适合本地演示和排障。";
   return "当前 schema 已按请求入口加载。";
 }
@@ -912,6 +973,7 @@ export function App() {
     { label: "PageId", href: "/?pageId=summer-campaign-demo", desc: "模拟生产 pageId 入口" },
     { label: "ReleaseId", href: "/?releaseId=preview_demo", desc: "模拟预览 release 入口" },
     { label: "Empty", href: "/?demo=empty", desc: "空页面降级演示" },
+    { label: "Broken", href: "/?demo=broken", desc: "未知物料和渲染异常演示" },
   ];
   const actionExecutor = useMemo(() => {
     const actionRegistry = createSafeActionRegistry({

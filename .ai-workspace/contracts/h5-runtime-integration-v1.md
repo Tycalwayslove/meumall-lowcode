@@ -159,8 +159,8 @@ const { data, records } = await resolveLowcodeDataSources(schema.dataSources ?? 
 
 组件级：
 
-- 未知物料：renderer 显示缺失物料 fallback。
-- 单组件渲染错误：React H5 renderer error boundary 捕获，不影响整页。
+- 未知物料：renderer 显示缺失物料 fallback，并输出 `mlc-runtime-missing`、`data-lowcode-node-id` 和 `data-lowcode-missing` 便于诊断和 smoke check。
+- 单组件渲染错误：React/Vue H5 renderer 局部 error boundary 捕获，并输出 `mlc-runtime-error`、`data-lowcode-node-id` 和 `data-lowcode-error`；宿主应通过 `onRenderError` 上报，不影响整页。
 - 数据源失败：组件使用默认 props 或 empty 状态。
 - action 失败：展示轻提示并上报。
 
@@ -195,7 +195,8 @@ Java 配置平台发布后，H5 侧至少验证：
 4. 页面首屏非空。
 5. 数据源失败不会白屏。
 6. 未知物料显示缺失物料 fallback。
-7. 核心 action 点击不会抛出未捕获异常。
+7. 单组件渲染异常只展示局部 fallback，不导致整页白屏。
+8. 核心 action 点击不会抛出未捕获异常。
 
 ## 回滚
 

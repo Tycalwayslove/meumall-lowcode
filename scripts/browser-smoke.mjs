@@ -21,6 +21,7 @@ const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
 const h5RuntimeMissingPageUrl = `${h5RuntimeUrl}?pageId=missing-page`;
 const h5RuntimeEmptyUrl = `${h5RuntimeUrl}?demo=empty`;
+const h5RuntimeBrokenUrl = `${h5RuntimeUrl}?demo=broken`;
 
 const children = [];
 let chromeUserDataDir;
@@ -865,6 +866,14 @@ async function main() {
       { label: "React H5 empty demo shell 已挂载", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('empty demo')" },
       { label: "React H5 empty demo 展示安全空态", expression: "document.body.innerText.includes('空页面演示') && document.body.innerText.includes('页面暂无内容，H5 runtime 已进入安全空态')" },
       { label: "React H5 empty demo 节点数为 0", expression: "document.body.innerText.includes('节点数') && document.body.innerText.includes('0')" },
+    ]);
+
+    await assertPage(page, h5RuntimeBrokenUrl, [
+      { label: "React H5 broken demo shell 已挂载", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('broken demo')" },
+      { label: "React H5 broken demo 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('异常兜底演示')" },
+      { label: "React H5 broken demo 展示未知物料兜底", expression: "document.querySelector('[data-lowcode-missing=\"MissingMaterialBlock\"]') && document.body.innerText.includes('缺少物料：MissingMaterialBlock')" },
+      { label: "React H5 broken demo 展示异常物料兜底", expression: "document.querySelector('[data-lowcode-error=\"node_broken_material\"]') && document.body.innerText.includes('组件渲染失败：BrokenBlock')" },
+      { label: "React H5 broken demo 记录渲染错误", expression: "document.body.innerText.includes('node_broken_material: BrokenBlock render failed')" },
     ]);
   } finally {
     await page.close();

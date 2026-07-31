@@ -16,3 +16,10 @@ This package renders `LowcodePageSchema` with a Vue material registry. It is int
 - `onNodeDragEnd`
 
 These props are intended for editor preview selection, highlighting and canvas-level drag orchestration. The renderer only exposes generic node callbacks; editor packages or host apps decide how to move schema nodes.
+
+## Fallbacks
+
+- Empty `schema.nodes` renders the caller-provided `fallback`.
+- Unknown materials render a local fallback with `mlc-runtime-missing`, `data-lowcode-node-id`, and `data-lowcode-missing`.
+- Material render errors are caught by a local boundary and render `mlc-runtime-error`, `data-lowcode-node-id`, and `data-lowcode-error`.
+- Hosts can pass optional `onRenderError` to report material render errors to diagnostics or monitoring.

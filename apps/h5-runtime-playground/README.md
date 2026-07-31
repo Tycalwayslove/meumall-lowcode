@@ -41,6 +41,7 @@ http://localhost:5174/?pageId=summer-campaign-demo
 http://localhost:5174/?releaseId=preview_demo
 http://localhost:5174/?pageId=missing-page
 http://localhost:5174/?demo=empty
+http://localhost:5174/?demo=broken
 ```
 
 - `schema` simulates editor URL handoff and is only for local demos or debugging.
@@ -48,6 +49,7 @@ http://localhost:5174/?demo=empty
 - `releaseId=preview_demo` loads the local preview release schema through the same client mock.
 - Unknown `pageId` or `releaseId` values fall back to the local sample schema and show the fallback reason.
 - `demo=empty` renders an empty Page Schema to verify the H5 runtime empty state does not white-screen.
+- `demo=broken` renders an unknown material and a throwing local material to verify renderer-level local fallback does not white-screen.
 
 The left diagnostics panel shows the requested entry, effective schema source, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
 

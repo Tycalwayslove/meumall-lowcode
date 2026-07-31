@@ -1,6 +1,8 @@
 import {
   defineComponent,
   h,
+  ref,
+  onErrorCaptured,
   type Component,
   type PropType,
   type VNodeChild,
@@ -17,6 +19,44 @@ import type { JsonObject, LowcodeNode, LowcodePageSchema } from "@meumall/lowcod
 export type VueH5MaterialComponent = Component;
 export type RuntimeMaterialProps = Record<string, unknown>;
 export type LowcodeVueRendererNodeDragHandler = (node: LowcodeNode, event: DragEvent) => void;
+
+export function createLowcodeVueMissingMaterialFallback(node: LowcodeNode): VNodeChild {
+  return h("div", { class: "mlc-runtime-missing", "data-lowcode-node-id": node.id, "data-lowcode-missing": node.componentName }, [
+    `缺少物料：${node.componentName}`,
+  ]);
+}
+
+export function createLowcodeVueRenderErrorFallback(node: LowcodeNode): VNodeChild {
+  return h("div", { class: "mlc-runtime-error", "data-lowcode-node-id": node.id, "data-lowcode-error": node.id }, [
+    `组件渲染失败：${node.componentName}`,
+  ]);
+}
+
+const LowcodeVueMaterialBoundary = defineComponent({
+  name: "LowcodeVueMaterialBoundary",
+  props: {
+    node: {
+      type: Object as PropType<LowcodeNode>,
+      required: true,
+    },
+    onRenderError: {
+      type: Function as PropType<(error: Error, node?: LowcodeNode) => void>,
+      default: undefined,
+    },
+  },
+  setup(props, { slots }) {
+    const error = ref<Error | undefined>();
+
+    onErrorCaptured((capturedError) => {
+      const normalizedError = capturedError instanceof Error ? capturedError : new Error(String(capturedError));
+      error.value = normalizedError;
+      props.onRenderError?.(normalizedError, props.node);
+      return false;
+    });
+
+    return () => (error.value ? createLowcodeVueRenderErrorFallback(props.node) : slots.default?.());
+  },
+});
 
 export const LowcodeVueRenderer = defineComponent({
   name: "LowcodeVueRenderer",
@@ -65,6 +105,10 @@ export const LowcodeVueRenderer = defineComponent({
       type: Function as PropType<LowcodeVueRendererNodeDragHandler>,
       default: undefined,
     },
+    onRenderError: {
+      type: Function as PropType<(error: Error, node?: LowcodeNode) => void>,
+      default: undefined,
+    },
   },
   setup(props) {
     const renderNode = (node: LowcodeNode): VNodeChild => {
@@ -72,9 +116,7 @@ export const LowcodeVueRenderer = defineComponent({
 
       const material = props.registry.get(node.componentName);
       if (!material) {
-        return h("div", { class: "mlc-runtime-missing", "data-lowcode-missing": node.componentName }, [
-          `缺少物料：${node.componentName}`,
-        ]);
+        return createLowcodeVueMissingMaterialFallback(node);
       }
 
       const runtimeContext = createRuntimeContext(props.schema, props.data);
@@ -88,16 +130,24 @@ export const LowcodeVueRenderer = defineComponent({
       const children = node.children?.map((child) => renderNode(child)) ?? [];
 
       const renderedNode = h(
-        material.component,
+        LowcodeVueMaterialBoundary,
         {
-          key: node.id,
-          props: {
-            ...materialProps,
-            ...events,
-          },
           node,
+          onRenderError: props.onRenderError,
         },
-        () => children,
+        () =>
+          h(
+            material.component,
+            {
+              key: node.id,
+              props: {
+                ...materialProps,
+                ...events,
+              },
+              node,
+            },
+            () => children,
+          ),
       );
 
       return h(
