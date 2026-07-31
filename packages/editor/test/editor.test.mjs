@@ -4,6 +4,8 @@ import { describe, it } from "node:test";
 import {
   countLowcodeNodes,
   cloneLowcodePageSchema,
+  createEditorState,
+  createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   createLowcodeDeliverySummary,
   createLowcodePageStartState,
@@ -13,10 +15,15 @@ import {
   createLowcodeTemplateListItem,
   createLowcodeTemplatePreviewMeta,
   createLowcodeVersionDiffItems,
+  findLowcodeEditorViewportPreset,
   flattenLowcodeNodes,
+  formatLowcodeEditorViewportTitle,
   formatLowcodeTemplateSummary,
   formatLowcodeTemplateVersion,
+  getLowcodeEditorViewportPreset,
   getLowcodeNodeDisplayName,
+  LOWCODE_H5_VIEWPORT_PRESETS,
+  setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
 } from "../dist/index.js";
@@ -355,6 +362,28 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(state.viewport.width, 390);
     assert.equal(state.dirty, true);
     assert.equal(state.lastAction, "createBlankPage");
+  });
+
+  it("provides reusable H5 viewport presets for editor shells", () => {
+    const standard = getLowcodeEditorViewportPreset("h5-standard");
+    assert.ok(standard);
+    assert.equal(LOWCODE_H5_VIEWPORT_PRESETS.length, 3);
+    assert.equal(standard.title, "标准屏");
+    assert.equal(standard.width, 390);
+    assert.equal(findLowcodeEditorViewportPreset({ platform: "h5", width: 360 })?.id, "h5-compact");
+    assert.equal(formatLowcodeEditorViewportTitle({ platform: "h5", width: 390 }), "标准屏 390");
+    assert.equal(formatLowcodeEditorViewportTitle({ platform: "h5", width: 414 }), "自定义 414");
+
+    const viewport = createLowcodeEditorViewportFromPreset(standard);
+    assert.equal(viewport.platform, "h5");
+    assert.equal(viewport.width, 390);
+    assert.equal(viewport.scale, 1);
+
+    const state = createEditorState(createLowcodePageSchema({ pageId: "viewport_page", title: "视口页面" }));
+    const nextState = setEditorViewportPreset(state, standard);
+    assert.equal(nextState.viewport.platform, "h5");
+    assert.equal(nextState.viewport.width, 390);
+    assert.equal(nextState.lastAction, "setEditorViewport");
   });
 
   it("clones template schemas before creating page start states", () => {

@@ -59,6 +59,7 @@
 - `@meumall/lowcode-editor` 已沉淀框架无关 version summary API：`createLowcodeVersionDiffItems`、`createLowcodeSchemaPreviewSnippet` 和 `createLowcodeSchemaPreviewItems`；Vue3 editor playground 的本地版本差异详情和 Schema 片段预览已改为复用这些 API，后续接 Java 配置平台版本 diff、回滚确认和审计展示时优先对齐 editor 包口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 template summary API：`createLowcodeTemplatePreviewMeta`、`createLowcodeTemplateListItem`、`sliceLowcodeTemplateTags`、`formatLowcodeTemplateVersion` 和 `formatLowcodeTemplateSummary`；Vue3 editor playground 的模板卡片、模板起点和本地自定义模板展示已改为复用这些 API，后续接 Java 模板市场和管理台模板选择页时优先对齐 editor 包口径。
 - `@meumall/lowcode-editor` 已沉淀框架无关 page start API：`createLowcodeBlankPageSchema`、`cloneLowcodePageSchema` 和 `createLowcodePageStartState`；Vue3 editor playground 的新建空白 H5 页面、重置示例页和应用模板已改为复用这些 API，后续管理台新建页面、模板起步和 release 回滚草稿可优先对齐 editor 包口径。
+- `@meumall/lowcode-editor` 已沉淀框架无关 viewport preset API：`LOWCODE_H5_VIEWPORT_PRESETS`、`getLowcodeEditorViewportPreset`、`findLowcodeEditorViewportPreset`、`createLowcodeEditorViewportFromPreset`、`formatLowcodeEditorViewportTitle` 和 `setEditorViewportPreset`；Vue3 editor playground 的 H5 画布视口预设已改为复用这些 API，后续管理台接入时不要复制 360/390/430 魔法数字。
 - Vue3 编辑器 playground 已支持 Page Schema 文件导入导出：工具栏、源码区和快捷命令均可导出当前 schema JSON；导入本地 JSON 时先复用 `validateLowcodePageSchema` 校验，非法 JSON 或非法 schema 会展示错误且不覆盖当前画布，合法 schema 会替换画布并进入可继续编辑、预览和保存的草稿状态。
 - Vue3 编辑器 playground 已支持物料收藏与最近使用：左侧物料区可以星标收藏物料，添加物料后会记录最近使用；两类偏好均按 `componentName` 写入 localStorage，后续迁管理台时可替换为用户偏好接口。
 - Vue3 编辑器 playground 已支持模板卡片摘要：左侧模板卡片展示版本、标签、节点数、数据源数和动作数，摘要从模板 schema 计算，后续 Java 模板市场可改为服务端返回。

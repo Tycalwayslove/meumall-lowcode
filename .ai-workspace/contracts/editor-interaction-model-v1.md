@@ -50,6 +50,7 @@ interface LowcodeEditorState {
 - `selectNode`
 - `setEditorMode`
 - `setEditorViewport`
+- `setEditorViewportPreset`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -66,6 +67,16 @@ interface LowcodeEditorState {
 - `redo`
 - `markSaved`
 
+视口预设 API：
+
+- `LOWCODE_H5_VIEWPORT_PRESETS`
+- `getLowcodeEditorViewportPreset`
+- `findLowcodeEditorViewportPreset`
+- `createLowcodeEditorViewportFromPreset`
+- `formatLowcodeEditorViewportTitle`
+
+当前 H5 预设包含 360 紧凑屏、390 标准屏和 430 大屏。预设只服务编辑器 shell 的画布展示，不写入 Page Schema。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -76,6 +87,7 @@ interface LowcodeEditorState {
 - command 不依赖 React/Vue。
 - command 不依赖 H5 业务项目内部代码。
 - 历史记录只保存 schema 快照，不保存 UI 临时状态。
+- 视口预设只改变 `LowcodeEditorState.viewport`，不改变 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式
@@ -96,4 +108,3 @@ interface LowcodeEditorState {
 
 - npm 发布前：回滚提交。
 - npm 发布后：保持旧 command 兼容，新增替代 command；必要时发布修复版本。
-

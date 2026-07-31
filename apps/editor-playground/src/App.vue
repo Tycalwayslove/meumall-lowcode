@@ -62,11 +62,16 @@ import {
   createLowcodeTemplateListItem,
   createLowcodeVersionDiffItems,
   createEditorState,
+  createLowcodeEditorViewportFromPreset,
   duplicateNode,
   formatLowcodeTemplateSummary,
+  findLowcodeEditorViewportPreset,
+  formatLowcodeEditorViewportTitle,
+  getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
   insertNode,
+  LOWCODE_H5_VIEWPORT_PRESETS,
   markSaved,
   moveNodeById,
   pasteNode,
@@ -75,7 +80,7 @@ import {
   replaceNodeProps,
   selectNode,
   setEditorMode,
-  setEditorViewport,
+  setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
   undo,
@@ -84,6 +89,7 @@ import {
   type LowcodeEditorPublishCheck as PublishCheck,
   type LowcodeEditorSchemaPreviewItem as ReleaseSchemaPreviewItem,
   type LowcodeEditorTemplateListItem as TemplateListItem,
+  type LowcodeEditorViewportPreset,
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -118,6 +124,8 @@ const RECENT_MATERIAL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
+const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
+const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
 const pageTypeOptions: Array<{ label: string; value: LowcodePageType }> = [
   { label: "活动页", value: "activity" },
   { label: "推广页", value: "promotion" },
@@ -351,7 +359,7 @@ const loadedSchema = loadedSchemaResult.schema;
 const editorState = shallowRef<LowcodeEditorState>(
   createEditorState(loadedSchema, {
     selectedNodeId: loadedSchema.nodes[0]?.id,
-    viewport: { width: 390 },
+    viewport: createLowcodeEditorViewportFromPreset(defaultH5ViewportPreset),
   }),
 );
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
@@ -587,13 +595,6 @@ const contentPropNames = new Set([
 const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
 const behaviorPropNames = new Set(["linkUrl", "primaryLinkUrl", "secondaryLinkUrl", "sticky", "smooth", "offsetTop", "safeArea", "showSecondary"]);
 const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
-const h5ViewportPresets = [
-  { id: "compact", title: "紧凑屏", width: 360 },
-  { id: "standard", title: "标准屏", width: 390 },
-  { id: "large", title: "大屏", width: 430 },
-] as const;
-
-type H5ViewportPreset = (typeof h5ViewportPresets)[number];
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -832,13 +833,10 @@ const canvasStarterMaterials = computed(() => {
     .filter((item) => order.has(item.manifest.componentName))
     .sort((a, b) => (order.get(a.manifest.componentName) ?? 0) - (order.get(b.manifest.componentName) ?? 0));
 });
-const activeH5ViewportPreset = computed<H5ViewportPreset | undefined>(() =>
-  h5ViewportPresets.find((preset) => preset.width === editorState.value.viewport.width),
+const activeH5ViewportPreset = computed<LowcodeEditorViewportPreset | undefined>(() =>
+  findLowcodeEditorViewportPreset(editorState.value.viewport, h5ViewportPresets),
 );
-const activeH5ViewportTitle = computed(() => {
-  const preset = activeH5ViewportPreset.value;
-  return preset ? `${preset.title} ${preset.width}` : `自定义 ${editorState.value.viewport.width}`;
-});
+const activeH5ViewportTitle = computed(() => formatLowcodeEditorViewportTitle(editorState.value.viewport, h5ViewportPresets));
 const phoneFrameStyle = computed<CSSProperties>(() => ({
   width: `${editorState.value.viewport.width}px`,
 }));
@@ -2935,8 +2933,8 @@ function closeNodeContextMenu(): void {
   nodeContextMenu.value = undefined;
 }
 
-function applyH5ViewportPreset(preset: H5ViewportPreset): void {
-  editorState.value = setEditorViewport(editorState.value, { width: preset.width });
+function applyH5ViewportPreset(preset: LowcodeEditorViewportPreset): void {
+  editorState.value = setEditorViewportPreset(editorState.value, preset);
 }
 
 function onCanvasContextMenu(event: MouseEvent): void {

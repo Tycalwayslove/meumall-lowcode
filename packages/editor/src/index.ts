@@ -18,6 +18,16 @@ export interface LowcodeEditorViewport {
   scale?: number;
 }
 
+export interface LowcodeEditorViewportPreset {
+  id: string;
+  platform: LowcodePlatform;
+  title: string;
+  description?: string;
+  width: number;
+  height?: number;
+  scale?: number;
+}
+
 export interface LowcodeEditorHistory {
   past: LowcodePageSchema[];
   future: LowcodePageSchema[];
@@ -229,6 +239,14 @@ const DEFAULT_VIEWPORT: LowcodeEditorViewport = {
   scale: 1,
 };
 
+export const LOWCODE_H5_VIEWPORT_PRESETS = [
+  { id: "h5-compact", platform: "h5", title: "紧凑屏", description: "小屏 H5 宽度", width: 360, scale: 1 },
+  { id: "h5-standard", platform: "h5", title: "标准屏", description: "主流 H5 宽度", width: 390, scale: 1 },
+  { id: "h5-large", platform: "h5", title: "大屏", description: "大屏 H5 宽度", width: 430, scale: 1 },
+] as const satisfies readonly LowcodeEditorViewportPreset[];
+
+export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
+
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "navigate", paramName: "url", label: "跳转 URL" },
@@ -286,6 +304,46 @@ export function setEditorViewport(
     },
     lastAction: "setEditorViewport",
   };
+}
+
+export function getLowcodeEditorViewportPreset(
+  presetId: string,
+  presets: readonly LowcodeEditorViewportPreset[] = LOWCODE_H5_VIEWPORT_PRESETS,
+): LowcodeEditorViewportPreset | undefined {
+  return presets.find((preset) => preset.id === presetId);
+}
+
+export function findLowcodeEditorViewportPreset(
+  viewport: Pick<LowcodeEditorViewport, "platform" | "width">,
+  presets: readonly LowcodeEditorViewportPreset[] = LOWCODE_H5_VIEWPORT_PRESETS,
+): LowcodeEditorViewportPreset | undefined {
+  return presets.find((preset) => preset.platform === viewport.platform && preset.width === viewport.width);
+}
+
+export function createLowcodeEditorViewportFromPreset(
+  preset: LowcodeEditorViewportPreset,
+): LowcodeEditorViewport {
+  return {
+    platform: preset.platform,
+    width: preset.width,
+    height: preset.height,
+    scale: preset.scale ?? 1,
+  };
+}
+
+export function formatLowcodeEditorViewportTitle(
+  viewport: Pick<LowcodeEditorViewport, "platform" | "width">,
+  presets: readonly LowcodeEditorViewportPreset[] = LOWCODE_H5_VIEWPORT_PRESETS,
+): string {
+  const preset = findLowcodeEditorViewportPreset(viewport, presets);
+  return preset ? `${preset.title} ${preset.width}` : `自定义 ${viewport.width}`;
+}
+
+export function setEditorViewportPreset(
+  state: LowcodeEditorState,
+  preset: LowcodeEditorViewportPreset,
+): LowcodeEditorState {
+  return setEditorViewport(state, createLowcodeEditorViewportFromPreset(preset));
 }
 
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {

@@ -10,6 +10,12 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `selectNode`
 - `setEditorMode`
 - `setEditorViewport`
+- `setEditorViewportPreset`
+- `LOWCODE_H5_VIEWPORT_PRESETS`
+- `getLowcodeEditorViewportPreset`
+- `findLowcodeEditorViewportPreset`
+- `createLowcodeEditorViewportFromPreset`
+- `formatLowcodeEditorViewportTitle`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -114,6 +120,26 @@ The page start helpers keep blank-page creation, template application, and futur
 `createLowcodePageStartState(schema, options)` creates a fresh editor state for a new blank page or selected template. It selects the first node by default, keeps host-provided viewport/mode options, and lets the shell decide whether the new state should be dirty.
 
 Host shells remain responsible for confirmation dialogs, local or server draft persistence, permissions, and user-facing messages.
+
+## Viewport Preset API
+
+The viewport helpers keep H5 canvas device presets reusable across the Vue3 playground and future management-console shells.
+
+`LOWCODE_H5_VIEWPORT_PRESETS` currently contains:
+
+- `h5-compact`: 360px compact H5 preview.
+- `h5-standard`: 390px standard H5 preview.
+- `h5-large`: 430px large H5 preview.
+
+`getLowcodeEditorViewportPreset(id)` resolves a preset by id.
+
+`findLowcodeEditorViewportPreset(viewport)` matches the current editor viewport by platform and width.
+
+`createLowcodeEditorViewportFromPreset(preset)` converts a preset into a `LowcodeEditorViewport`.
+
+`formatLowcodeEditorViewportTitle(viewport)` returns labels such as `标准屏 390`, with `自定义 {width}` as the fallback.
+
+`setEditorViewportPreset(state, preset)` applies a preset through the existing viewport state command. Viewport presets are editor-shell state only; they do not write to Page Schema or material manifests.
 
 ## Contract
 
