@@ -384,7 +384,17 @@ type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
 type PublishCheckStatus = "pass" | "warning" | "error";
-type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
+interface TemplateListItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  tags: string[];
+  version?: string;
+  nodeCount: number;
+  dataSourceCount: number;
+  actionCount: number;
+}
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
 type NodeContextAction = "rename" | "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
@@ -972,12 +982,7 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     group: "模板",
     description: `${template.category} / ${template.description}`,
     keywords: [template.title, template.description, template.category, ...(template.tags ?? [])],
-    run: () => applyTemplate({
-      id: template.id,
-      title: template.title,
-      description: template.description,
-      category: template.category,
-    }),
+    run: () => applyTemplate({ id: template.id }),
   })),
 ]);
 const visibleCommandPaletteItems = computed(() => {
@@ -1288,6 +1293,18 @@ function schemaNodeCount(schema: LowcodePageSchema): number {
   return flattenNodeList(schema.nodes).length;
 }
 
+function templateTags(template: TemplateListItem): string[] {
+  return template.tags.slice(0, 4);
+}
+
+function templateVersionText(template: TemplateListItem): string {
+  return template.version ? `v${template.version}` : "未标版本";
+}
+
+function templateSummaryText(template: TemplateListItem): string {
+  return `${template.nodeCount} 个节点 / ${template.dataSourceCount} 个数据源 / ${template.actionCount} 个动作`;
+}
+
 function createReleaseDiffItems(current: LowcodePageSchema, selected: LowcodePageSchema): ReleaseDiffItem[] {
   const items = [
     { label: "标题", current: current.title, selected: selected.title },
@@ -1330,6 +1347,11 @@ async function refreshTemplates(): Promise<void> {
       title: template.title,
       description: template.description,
       category: template.category,
+      tags: template.tags ?? [],
+      version: template.version,
+      nodeCount: schemaNodeCount(template.schema),
+      dataSourceCount: template.schema.dataSources?.length ?? 0,
+      actionCount: template.schema.actions?.length ?? 0,
     }));
   } catch {
     if (seq === templateSearchSeq) visiblePageTemplates.value = [];
@@ -3050,7 +3072,7 @@ function handleEditorNodeShortcut(event: KeyboardEvent): void {
   }
 }
 
-async function applyTemplate(template: TemplateListItem): Promise<void> {
+async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
     return;
   }
@@ -3768,8 +3790,20 @@ function formatAutoSaveTime(value: string): string {
           @click="applyTemplate(template)"
         >
           <span>
-            <strong>{{ template.title }}</strong>
+            <span class="template-item-head">
+              <strong>{{ template.title }}</strong>
+              <em>{{ templateVersionText(template) }}</em>
+            </span>
             <small>{{ template.category }} / {{ template.description }}</small>
+            <span v-if="templateTags(template).length" class="template-tags">
+              <i
+                v-for="tag in templateTags(template)"
+                :key="`${template.id}-${tag}`"
+              >
+                {{ tag }}
+              </i>
+            </span>
+            <span class="template-summary">{{ templateSummaryText(template) }}</span>
           </span>
           <Plus :size="15" />
         </button>

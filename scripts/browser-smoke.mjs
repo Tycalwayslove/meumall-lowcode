@@ -417,6 +417,11 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
   log("通过：快捷命令可保存草稿");
 
+  log("检查模板卡片摘要");
+  await page.fillByPlaceholder("搜索模板", "");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.template-item')).some((item) => item.innerText.includes('大促活动页') && item.innerText.includes('v1.0.0') && item.innerText.includes('大促') && item.innerText.includes('节点') && item.innerText.includes('数据源') && item.innerText.includes('动作'))");
+  log("通过：模板卡片展示标签、版本和结构摘要");
+
   log("检查编辑器模板应用和模式切换操作流");
   await page.fillByPlaceholder("搜索模板", "商品");
   await page.waitForExpression("Array.from(document.querySelectorAll('.template-item strong')).some((item) => item.innerText.includes('商品专题页'))");

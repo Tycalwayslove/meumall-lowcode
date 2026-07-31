@@ -530,6 +530,62 @@ button:focus-visible {
   background: #f4fbfa;
 }
 
+.template-item > span {
+  min-width: 0;
+}
+
+.template-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.template-item-head strong {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.template-item-head em {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: #0f766e;
+  background: #ccfbf1;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.template-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.template-tags i {
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: #0369a1;
+  background: #f0f9ff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.template-summary {
+  display: block;
+  margin-top: 7px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .template-filters,
 .material-filters {
   display: grid;
