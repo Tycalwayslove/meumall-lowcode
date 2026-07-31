@@ -64,6 +64,7 @@ import {
   createLowcodeEventBindingItems,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
+  createLowcodePageSettingsForm,
   createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
@@ -97,6 +98,10 @@ import {
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
+  LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES,
+  LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
+  LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
+  LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS,
   markSaved,
   moveNodeById,
   normalizeLowcodePropInputValue,
@@ -127,6 +132,14 @@ import {
   undo,
   updateLowcodeAction,
   updateLowcodeDataSource,
+  updateLowcodePageBackgroundColor,
+  updateLowcodePageDescription,
+  updateLowcodePageMaxWidth,
+  updateLowcodePageSafeArea,
+  updateLowcodePageStatus,
+  updateLowcodePageTitle,
+  updateLowcodePageType,
+  updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
@@ -177,19 +190,10 @@ const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
 const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
-const pageTypeOptions: Array<{ label: string; value: LowcodePageType }> = [
-  { label: "活动页", value: "activity" },
-  { label: "推广页", value: "promotion" },
-  { label: "商品专题", value: "topic" },
-  { label: "落地页", value: "landing" },
-  { label: "自定义", value: "custom" },
-];
-const publishEnvironmentOptions: Array<{ label: string; value: LowcodeEnvironment }> = [
-  { label: "测试环境", value: "test" },
-  { label: "预发环境", value: "pre" },
-  { label: "生产环境", value: "prod" },
-];
-const pageBackgroundSwatches = ["#f8fafc", "#f3f4f6", "#fff7ed", "#fef2f2", "#f0fdfa", "#eff6ff", "#111827"];
+const pageTypeOptions = LOWCODE_EDITOR_PAGE_TYPE_OPTIONS;
+const pageStatusOptions = LOWCODE_EDITOR_PAGE_STATUS_OPTIONS;
+const publishEnvironmentOptions = LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS;
+const pageBackgroundSwatches = LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES;
 
 const sampleAssets: LowcodeImageAssetResource[] = [
   {
@@ -785,6 +789,14 @@ const materialDetailPreviewSchema = computed<LowcodePageSchema | undefined>(() =
     },
   });
 });
+const pageSettingsForm = computed(() =>
+  createLowcodePageSettingsForm(editorState.value.schema, {
+    pageTypeOptions,
+    statusOptions: pageStatusOptions,
+    publishEnvironmentOptions,
+    backgroundSwatches: pageBackgroundSwatches,
+  }),
+);
 const selectedParentTitle = computed(() => {
   const parentId = selectedOutlineRow.value?.parentId;
   if (!parentId) return "页面根级";
@@ -3063,83 +3075,36 @@ function replaceCurrentSchema(
   refreshReleases();
 }
 
-function commitPageSchema(schema: LowcodePageSchema, action: string): void {
-  editorState.value = {
-    ...editorState.value,
-    schema,
-    dirty: true,
-    lastAction: action,
-  };
-}
-
 function updatePageTitle(value: string): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    title: value,
-  }, "updatePageTitle");
+  editorState.value = updateLowcodePageTitle(editorState.value, value);
 }
 
 function updatePageDescription(value: string): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    description: value,
-  }, "updatePageDescription");
+  editorState.value = updateLowcodePageDescription(editorState.value, value);
 }
 
 function updatePageStatus(status: LowcodePageStatus): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    status,
-  }, "updatePageStatus");
+  editorState.value = updateLowcodePageStatus(editorState.value, status);
 }
 
 function updatePageType(pageType: LowcodePageType): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    pageType,
-  }, "updatePageType");
+  editorState.value = updateLowcodePageType(editorState.value, pageType);
 }
 
 function updatePublishEnvironment(environment: LowcodeEnvironment): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    publishMeta: {
-      ...editorState.value.schema.publishMeta,
-      environment,
-    },
-  }, "updatePublishEnvironment");
+  editorState.value = updateLowcodePublishEnvironment(editorState.value, environment);
 }
 
 function updatePageBackgroundColor(backgroundColor: string): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    layout: {
-      ...editorState.value.schema.layout,
-      backgroundColor,
-    },
-  }, "updatePageBackgroundColor");
+  editorState.value = updateLowcodePageBackgroundColor(editorState.value, backgroundColor);
 }
 
 function updatePageSafeArea(safeArea: boolean): void {
-  commitPageSchema({
-    ...editorState.value.schema,
-    layout: {
-      ...editorState.value.schema.layout,
-      safeArea,
-    },
-  }, "updatePageSafeArea");
+  editorState.value = updateLowcodePageSafeArea(editorState.value, safeArea);
 }
 
 function updatePageMaxWidth(value: string): void {
-  const maxWidth = Number(value);
-  if (!Number.isFinite(maxWidth) || maxWidth < 320 || maxWidth > 960) return;
-  commitPageSchema({
-    ...editorState.value.schema,
-    layout: {
-      ...editorState.value.schema.layout,
-      maxWidth,
-    },
-  }, "updatePageMaxWidth");
+  editorState.value = updateLowcodePageMaxWidth(editorState.value, value);
 }
 
 function addDataSource(): void {
@@ -4342,7 +4307,7 @@ function formatReleaseTime(value: string): string {
           <label class="field">
             <span>标题</span>
             <input
-              :value="editorState.schema.title"
+              :value="pageSettingsForm.title"
               placeholder="请输入页面标题"
               @input="updatePageTitle(($event.target as HTMLInputElement).value)"
             />
@@ -4350,7 +4315,7 @@ function formatReleaseTime(value: string): string {
           <label class="field">
             <span>描述</span>
             <textarea
-              :value="editorState.schema.description ?? ''"
+              :value="pageSettingsForm.description"
               placeholder="请输入页面描述，方便运营和验收识别"
               @input="updatePageDescription(($event.target as HTMLTextAreaElement).value)"
             ></textarea>
@@ -4359,11 +4324,11 @@ function formatReleaseTime(value: string): string {
             <label class="field">
               <span>页面类型</span>
               <select
-                :value="editorState.schema.pageType ?? 'custom'"
+                :value="pageSettingsForm.pageType"
                 @change="updatePageType(($event.target as HTMLSelectElement).value as LowcodePageType)"
               >
                 <option
-                  v-for="option in pageTypeOptions"
+                  v-for="option in pageSettingsForm.pageTypeOptions"
                   :key="option.value"
                   :value="option.value"
                 >
@@ -4373,7 +4338,7 @@ function formatReleaseTime(value: string): string {
             </label>
             <label class="field">
               <span>Page ID</span>
-              <input :value="editorState.schema.pageId" readonly />
+              <input :value="pageSettingsForm.pageId" readonly />
             </label>
           </div>
         </div>
@@ -4385,16 +4350,16 @@ function formatReleaseTime(value: string): string {
             <input
               class="page-color-input"
               type="color"
-              :value="editorState.schema.layout.backgroundColor ?? '#f8fafc'"
+              :value="pageSettingsForm.backgroundColor"
               @input="updatePageBackgroundColor(($event.target as HTMLInputElement).value)"
             />
           </label>
           <div class="page-color-swatches" aria-label="页面背景快捷色板">
             <button
-              v-for="color in pageBackgroundSwatches"
+              v-for="color in pageSettingsForm.backgroundSwatches"
               :key="color"
               type="button"
-              :class="{ active: editorState.schema.layout.backgroundColor === color }"
+              :class="{ active: pageSettingsForm.backgroundColor === color }"
               :style="{ backgroundColor: color }"
               :title="`设置背景色 ${color}`"
               @click="updatePageBackgroundColor(color)"
@@ -4403,7 +4368,7 @@ function formatReleaseTime(value: string): string {
           <label class="switch-field page-safe-switch">
             <input
               type="checkbox"
-              :checked="editorState.schema.layout.safeArea !== false"
+              :checked="pageSettingsForm.safeArea"
               @change="updatePageSafeArea(($event.target as HTMLInputElement).checked)"
             />
             <span class="switch-track"><i></i></span>
@@ -4416,7 +4381,7 @@ function formatReleaseTime(value: string): string {
               min="320"
               max="960"
               step="1"
-              :value="editorState.schema.layout.maxWidth ?? 430"
+              :value="pageSettingsForm.maxWidth"
               @input="updatePageMaxWidth(($event.target as HTMLInputElement).value)"
             />
           </label>
@@ -4427,18 +4392,21 @@ function formatReleaseTime(value: string): string {
           <div class="page-settings-grid">
             <label class="field">
               <span>状态</span>
-              <select :value="editorState.schema.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
-                <option value="draft">draft</option>
-                <option value="preview">preview</option>
-                <option value="published">published</option>
-                <option value="disabled">disabled</option>
+              <select :value="pageSettingsForm.status" @change="updatePageStatus(($event.target as HTMLSelectElement).value as LowcodePageStatus)">
+                <option
+                  v-for="option in pageSettingsForm.statusOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
               </select>
             </label>
             <label class="field">
               <span>环境</span>
-              <select :value="editorState.schema.publishMeta.environment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as LowcodeEnvironment)">
+              <select :value="pageSettingsForm.publishEnvironment" @change="updatePublishEnvironment(($event.target as HTMLSelectElement).value as LowcodeEnvironment)">
                 <option
-                  v-for="option in publishEnvironmentOptions"
+                  v-for="option in pageSettingsForm.publishEnvironmentOptions"
                   :key="option.value"
                   :value="option.value"
                 >

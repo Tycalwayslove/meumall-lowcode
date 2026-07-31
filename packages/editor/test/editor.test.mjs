@@ -28,6 +28,7 @@ import {
   createLowcodeOutlineRowSearchText,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
+  createLowcodePageSettingsForm,
   createLowcodePageStartState,
   createLowcodePropGroups,
   createLowcodePreviewLinkItem,
@@ -66,11 +67,16 @@ import {
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
+  LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES,
+  LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
+  LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
+  LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
   normalizeLowcodePropInputValue,
+  normalizeLowcodePageMaxWidth,
   parseLowcodeSchemaFileContent,
   parseLowcodeEditorDraftContent,
   pickLowcodeMaterialEntriesByComponentNames,
@@ -91,6 +97,14 @@ import {
   toLowcodePropInputText,
   updateLowcodeAction,
   updateLowcodeDataSource,
+  updateLowcodePageBackgroundColor,
+  updateLowcodePageDescription,
+  updateLowcodePageMaxWidth,
+  updateLowcodePageSafeArea,
+  updateLowcodePageStatus,
+  updateLowcodePageTitle,
+  updateLowcodePageType,
+  updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
 } from "../dist/index.js";
 import {
@@ -842,6 +856,95 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     const cleanedNodes = removeLowcodeActionRefsFromNodes(boundState.schema.nodes, "go_home");
     assert.equal(cleanedNodes[0].children[0].events, undefined);
+  });
+
+  it("creates reusable page settings models and state helpers", () => {
+    assert.deepEqual(LOWCODE_EDITOR_PAGE_TYPE_OPTIONS.map((option) => option.value), [
+      "activity",
+      "promotion",
+      "topic",
+      "landing",
+      "custom",
+    ]);
+    assert.deepEqual(LOWCODE_EDITOR_PAGE_STATUS_OPTIONS.map((option) => option.value), [
+      "draft",
+      "preview",
+      "published",
+      "disabled",
+    ]);
+    assert.deepEqual(LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS.map((option) => option.value), ["test", "pre", "prod"]);
+    assert.equal(LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES.includes("#f8fafc"), true);
+    assert.equal(normalizeLowcodePageMaxWidth("430"), 430);
+    assert.equal(normalizeLowcodePageMaxWidth("430.6"), 431);
+    assert.equal(normalizeLowcodePageMaxWidth("319"), undefined);
+    assert.equal(normalizeLowcodePageMaxWidth("961"), undefined);
+    assert.equal(normalizeLowcodePageMaxWidth("abc"), undefined);
+
+    const state = createEditorState(createLowcodePageSchema({
+      pageId: "settings_page",
+      title: "旧标题",
+      description: "旧描述",
+      status: "draft",
+      pageType: "activity",
+      layout: {
+        backgroundColor: "#ffffff",
+        safeArea: true,
+        maxWidth: 390,
+      },
+      nodes: [],
+      publishMeta: {
+        environment: "test",
+        operator: "tester",
+      },
+    }));
+
+    const form = createLowcodePageSettingsForm(state.schema);
+    assert.equal(form.pageId, "settings_page");
+    assert.equal(form.title, "旧标题");
+    assert.equal(form.description, "旧描述");
+    assert.equal(form.pageType, "activity");
+    assert.equal(form.status, "draft");
+    assert.equal(form.publishEnvironment, "test");
+    assert.equal(form.backgroundColor, "#ffffff");
+    assert.equal(form.safeArea, true);
+    assert.equal(form.maxWidth, 390);
+
+    const titledState = updateLowcodePageTitle(state, "新标题");
+    assert.equal(titledState.lastAction, "updatePageTitle");
+    assert.equal(titledState.dirty, true);
+    assert.equal(titledState.schema.title, "新标题");
+
+    const describedState = updateLowcodePageDescription(titledState, "新描述");
+    assert.equal(describedState.lastAction, "updatePageDescription");
+    assert.equal(describedState.schema.description, "新描述");
+
+    const typedState = updateLowcodePageType(describedState, "topic");
+    assert.equal(typedState.lastAction, "updatePageType");
+    assert.equal(typedState.schema.pageType, "topic");
+
+    const statusState = updateLowcodePageStatus(typedState, "preview");
+    assert.equal(statusState.lastAction, "updatePageStatus");
+    assert.equal(statusState.schema.status, "preview");
+
+    const environmentState = updateLowcodePublishEnvironment(statusState, "pre");
+    assert.equal(environmentState.lastAction, "updatePublishEnvironment");
+    assert.equal(environmentState.schema.publishMeta.environment, "pre");
+    assert.equal(environmentState.schema.publishMeta.operator, "tester");
+
+    const colorState = updateLowcodePageBackgroundColor(environmentState, "#f8fafc");
+    assert.equal(colorState.lastAction, "updatePageBackgroundColor");
+    assert.equal(colorState.schema.layout.backgroundColor, "#f8fafc");
+
+    const safeAreaState = updateLowcodePageSafeArea(colorState, false);
+    assert.equal(safeAreaState.lastAction, "updatePageSafeArea");
+    assert.equal(safeAreaState.schema.layout.safeArea, false);
+
+    const invalidWidthState = updateLowcodePageMaxWidth(safeAreaState, "1200");
+    assert.equal(invalidWidthState, safeAreaState);
+
+    const widthState = updateLowcodePageMaxWidth(safeAreaState, "430");
+    assert.equal(widthState.lastAction, "updatePageMaxWidth");
+    assert.equal(widthState.schema.layout.maxWidth, 430);
   });
 
   it("creates reusable data source config models and state helpers", () => {

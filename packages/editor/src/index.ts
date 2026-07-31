@@ -3,10 +3,13 @@ import type {
   JsonValue,
   LowcodeActionConfig,
   LowcodeDataSourceConfig,
+  LowcodeEnvironment,
   LowcodeNode,
   LowcodeMaterialManifest,
   LowcodeMaterialEventManifest,
   LowcodePageSchema,
+  LowcodePageStatus,
+  LowcodePageType,
   LowcodePlatform,
   LowcodePropSchema,
   LowcodeVisibilityRule,
@@ -105,6 +108,51 @@ export interface CreateLowcodeWorkspaceStatsOptions {
   publishCheckSummary?: LowcodeEditorPublishCheckSummary;
   dirty?: boolean;
   nodeCount?: number;
+}
+
+export interface LowcodeEditorPageTypeOption {
+  label: string;
+  value: LowcodePageType;
+}
+
+export interface LowcodeEditorPageStatusOption {
+  label: string;
+  value: LowcodePageStatus;
+}
+
+export interface LowcodeEditorPublishEnvironmentOption {
+  label: string;
+  value: LowcodeEnvironment;
+}
+
+export interface LowcodeEditorPageSettingsForm {
+  pageId: string;
+  title: string;
+  description: string;
+  pageType: LowcodePageType;
+  status: LowcodePageStatus;
+  publishEnvironment: LowcodeEnvironment;
+  backgroundColor: string;
+  safeArea: boolean;
+  maxWidth: number;
+  pageTypeOptions: readonly LowcodeEditorPageTypeOption[];
+  statusOptions: readonly LowcodeEditorPageStatusOption[];
+  publishEnvironmentOptions: readonly LowcodeEditorPublishEnvironmentOption[];
+  backgroundSwatches: readonly string[];
+}
+
+export interface CreateLowcodePageSettingsFormOptions {
+  defaultBackgroundColor?: string;
+  defaultMaxWidth?: number;
+  pageTypeOptions?: readonly LowcodeEditorPageTypeOption[];
+  statusOptions?: readonly LowcodeEditorPageStatusOption[];
+  publishEnvironmentOptions?: readonly LowcodeEditorPublishEnvironmentOption[];
+  backgroundSwatches?: readonly string[];
+}
+
+export interface NormalizeLowcodePageMaxWidthOptions {
+  min?: number;
+  max?: number;
 }
 
 export interface LowcodeEditorDataSourceResolutionRecord {
@@ -634,6 +682,33 @@ const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
   { actionType: "tracking.click", paramName: "eventName", label: "eventName" },
 ];
+export const LOWCODE_EDITOR_PAGE_TYPE_OPTIONS: readonly LowcodeEditorPageTypeOption[] = [
+  { label: "活动页", value: "activity" },
+  { label: "推广页", value: "promotion" },
+  { label: "商品专题", value: "topic" },
+  { label: "落地页", value: "landing" },
+  { label: "自定义", value: "custom" },
+];
+export const LOWCODE_EDITOR_PAGE_STATUS_OPTIONS: readonly LowcodeEditorPageStatusOption[] = [
+  { label: "draft", value: "draft" },
+  { label: "preview", value: "preview" },
+  { label: "published", value: "published" },
+  { label: "disabled", value: "disabled" },
+];
+export const LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS: readonly LowcodeEditorPublishEnvironmentOption[] = [
+  { label: "测试环境", value: "test" },
+  { label: "预发环境", value: "pre" },
+  { label: "生产环境", value: "prod" },
+];
+export const LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES = [
+  "#f8fafc",
+  "#f3f4f6",
+  "#fff7ed",
+  "#fef2f2",
+  "#f0fdfa",
+  "#eff6ff",
+  "#111827",
+] as const;
 export const LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS: readonly LowcodeEditorDataSourceTypeOption[] = [
   {
     type: "product.byActivity",
@@ -976,6 +1051,150 @@ export function pickLowcodeMaterialEntriesByComponentNames<T extends LowcodeEdit
     const material = materialMap.get(componentName);
     return material ? [material] : [];
   });
+}
+
+export function normalizeLowcodePageMaxWidth(
+  value: string | number,
+  options: NormalizeLowcodePageMaxWidthOptions = {},
+): number | undefined {
+  const min = options.min ?? 320;
+  const max = options.max ?? 960;
+  const maxWidth = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(maxWidth) || maxWidth < min || maxWidth > max) return undefined;
+  return Math.round(maxWidth);
+}
+
+export function createLowcodePageSettingsForm(
+  schema: LowcodePageSchema,
+  options: CreateLowcodePageSettingsFormOptions = {},
+): LowcodeEditorPageSettingsForm {
+  return {
+    pageId: schema.pageId,
+    title: schema.title,
+    description: schema.description ?? "",
+    pageType: schema.pageType ?? "custom",
+    status: schema.status,
+    publishEnvironment: schema.publishMeta.environment,
+    backgroundColor: schema.layout.backgroundColor ?? options.defaultBackgroundColor ?? "#f8fafc",
+    safeArea: schema.layout.safeArea !== false,
+    maxWidth: schema.layout.maxWidth ?? options.defaultMaxWidth ?? 430,
+    pageTypeOptions: options.pageTypeOptions ?? LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
+    statusOptions: options.statusOptions ?? LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
+    publishEnvironmentOptions: options.publishEnvironmentOptions ?? LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS,
+    backgroundSwatches: options.backgroundSwatches ?? LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES,
+  };
+}
+
+export function updateLowcodePageTitle(state: LowcodeEditorState, title: string): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      title,
+    },
+    "updatePageTitle",
+  );
+}
+
+export function updateLowcodePageDescription(state: LowcodeEditorState, description: string): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      description,
+    },
+    "updatePageDescription",
+  );
+}
+
+export function updateLowcodePageStatus(state: LowcodeEditorState, status: LowcodePageStatus): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      status,
+    },
+    "updatePageStatus",
+  );
+}
+
+export function updateLowcodePageType(state: LowcodeEditorState, pageType: LowcodePageType): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      pageType,
+    },
+    "updatePageType",
+  );
+}
+
+export function updateLowcodePublishEnvironment(
+  state: LowcodeEditorState,
+  environment: LowcodeEnvironment,
+): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      publishMeta: {
+        ...state.schema.publishMeta,
+        environment,
+      },
+    },
+    "updatePublishEnvironment",
+  );
+}
+
+export function updateLowcodePageBackgroundColor(
+  state: LowcodeEditorState,
+  backgroundColor: string,
+): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      layout: {
+        ...state.schema.layout,
+        backgroundColor,
+      },
+    },
+    "updatePageBackgroundColor",
+  );
+}
+
+export function updateLowcodePageSafeArea(state: LowcodeEditorState, safeArea: boolean): LowcodeEditorState {
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      layout: {
+        ...state.schema.layout,
+        safeArea,
+      },
+    },
+    "updatePageSafeArea",
+  );
+}
+
+export function updateLowcodePageMaxWidth(
+  state: LowcodeEditorState,
+  value: string | number,
+  options: NormalizeLowcodePageMaxWidthOptions = {},
+): LowcodeEditorState {
+  const maxWidth = normalizeLowcodePageMaxWidth(value, options);
+  if (maxWidth === undefined) return state;
+  return commitSchemaChange(
+    state,
+    {
+      ...state.schema,
+      layout: {
+        ...state.schema.layout,
+        maxWidth,
+      },
+    },
+    "updatePageMaxWidth",
+  );
 }
 
 export function createLowcodeDefaultDataSourceParams(

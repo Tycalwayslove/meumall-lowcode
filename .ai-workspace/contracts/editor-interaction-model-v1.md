@@ -131,6 +131,25 @@ interface LowcodeEditorState {
 
 属性字段模型 API 从 `LowcodePropSchema`、字段名、组件名和当前列表项派生属性面板控件类型、列表项字段模型、图片字段标记、默认新增项和输入值转换结果。API 不渲染 Vue/React 控件、不处理 DOM、不打开资源选择器、不执行保存、不处理权限、审计或服务端校验。
 
+页面设置模型 API：
+
+- `LOWCODE_EDITOR_PAGE_TYPE_OPTIONS`
+- `LOWCODE_EDITOR_PAGE_STATUS_OPTIONS`
+- `LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS`
+- `LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES`
+- `createLowcodePageSettingsForm`
+- `normalizeLowcodePageMaxWidth`
+- `updateLowcodePageTitle`
+- `updateLowcodePageDescription`
+- `updateLowcodePageStatus`
+- `updateLowcodePageType`
+- `updateLowcodePublishEnvironment`
+- `updateLowcodePageBackgroundColor`
+- `updateLowcodePageSafeArea`
+- `updateLowcodePageMaxWidth`
+
+页面设置模型 API 从 Page Schema 派生页面基础配置、布局配置和发布配置的表单展示模型，并提供标题、描述、状态、类型、发布环境、背景色、安全区和 H5 最大宽度写回 helper。最大宽度默认只接受 320 到 960 的数值，非法输入返回原状态不写回。API 不渲染 Vue/React 控件、不处理 DOM、不执行服务端发布校验、不处理权限、审批、协作锁定、审计或服务端保存。
+
 数据源配置模型 API：
 
 - `LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS`
@@ -218,6 +237,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。
+- 页面设置模型 API 只派生 Page Schema 页面设置表单模型和页面字段写回 helper，不依赖 DOM、管理台组件库、Java API、权限、审批、协作锁定或服务端保存。
 - 数据源配置模型 API 只派生 Page Schema dataSources 表单模型、预览解析状态展示模型和 data source 变更 helper，不执行 HTTP 请求，不依赖 DOM、Java API、鉴权、缓存、权限、风控或服务端保存。
 - 动作配置模型 API 只派生 Page Schema actions 表单模型和 action 变更 helper，不执行 action，不依赖 DOM、桥能力、业务接口、权限、风控或服务端保存。
 - 事件绑定模型 API 只派生物料事件到 Page Schema action 的绑定展示模型和节点 action ref 变更，不执行 action，不依赖 DOM、桥能力、业务接口、权限、风控或服务端保存。

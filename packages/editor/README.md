@@ -89,6 +89,20 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `toLowcodePropInputText`
 - `toLowcodePropInputBoolean`
 - `normalizeLowcodePropInputValue`
+- `LOWCODE_EDITOR_PAGE_TYPE_OPTIONS`
+- `LOWCODE_EDITOR_PAGE_STATUS_OPTIONS`
+- `LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS`
+- `LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES`
+- `createLowcodePageSettingsForm`
+- `normalizeLowcodePageMaxWidth`
+- `updateLowcodePageTitle`
+- `updateLowcodePageDescription`
+- `updateLowcodePageStatus`
+- `updateLowcodePageType`
+- `updateLowcodePublishEnvironment`
+- `updateLowcodePageBackgroundColor`
+- `updateLowcodePageSafeArea`
+- `updateLowcodePageMaxWidth`
 - `LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS`
 - `createLowcodeDefaultDataSourceParams`
 - `createLowcodeDataSourceConfig`
@@ -158,6 +172,20 @@ The prop editor model helpers keep inspector field behavior reusable across the 
 `toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
+
+## Page Settings API
+
+The page settings helpers keep Page Schema page-level editing reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`LOWCODE_EDITOR_PAGE_TYPE_OPTIONS`, `LOWCODE_EDITOR_PAGE_STATUS_OPTIONS`, `LOWCODE_EDITOR_PUBLISH_ENVIRONMENT_OPTIONS`, and `LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES` define the default options currently used by editor shells.
+
+`createLowcodePageSettingsForm(schema, options)` derives the page settings form model from Page Schema, including title, description, type, status, publish environment, background color, safe-area flag, max width, option lists, and background swatches.
+
+`normalizeLowcodePageMaxWidth(value, options)` applies the shared H5 max-width guard. By default it accepts integer-rounded values from 320 to 960 and returns `undefined` for invalid input.
+
+`updateLowcodePageTitle`, `updateLowcodePageDescription`, `updateLowcodePageStatus`, `updateLowcodePageType`, `updateLowcodePublishEnvironment`, `updateLowcodePageBackgroundColor`, `updateLowcodePageSafeArea`, and `updateLowcodePageMaxWidth` update `LowcodeEditorState` through the same immutable command style as node editing.
+
+These helpers do not render forms, open color pickers, validate permissions, run publish approval, call Java APIs, persist schema, or lock collaborative edits. Host shells remain responsible for UI, permission states, review flows, audit records, and server-side validation.
 
 ## Data Source Config API
 
