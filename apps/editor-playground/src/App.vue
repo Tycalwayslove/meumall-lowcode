@@ -71,6 +71,8 @@ import {
   createLowcodeMaterialPreviewSchema,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
+  createLowcodeNodeOperationItems,
+  createLowcodeNodeOperationMessage,
   createLowcodePublishBlockedMessage,
   createLowcodePageSettingsForm,
   createLowcodePageStartState,
@@ -136,6 +138,7 @@ import {
   removeNode,
   replaceNodeProps,
   renameLowcodeAction,
+  resolveLowcodeNodeShortcutAction,
   selectNode,
   setEditorMode,
   setLowcodeActionType,
@@ -178,6 +181,8 @@ import {
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
   type LowcodeEditorWorkspaceStat as WorkspaceStat,
   type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
+  type LowcodeEditorNodeOperationAction as NodeContextAction,
+  type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -508,7 +513,6 @@ type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
-type NodeContextAction = "rename" | "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -547,13 +551,6 @@ interface NodeContextMenuState {
   nodeId: string;
   x: number;
   y: number;
-}
-
-interface NodeContextMenuItem {
-  action: NodeContextAction;
-  label: string;
-  disabled?: boolean;
-  danger?: boolean;
 }
 
 interface CommandPaletteItem extends LowcodeEditorCommandEntry {
@@ -711,55 +708,16 @@ const nodeContextMenuStyle = computed<CSSProperties>(() => {
     top: `${menu.y}px`,
   };
 });
-const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => [
-  {
-    action: "rename",
-    label: "重命名节点",
-  },
-  {
-    action: "insertBefore",
-    label: "前方插入",
-    disabled: !selectedInsertManifest.value,
-  },
-  {
-    action: "insertAfter",
-    label: "后方插入",
-    disabled: !selectedInsertManifest.value,
-  },
-  {
-    action: "addInside",
-    label: "加入容器",
-    disabled: !selectedNodeIsContainer.value || !selectedInsertManifest.value,
-  },
-  {
-    action: "moveUp",
-    label: "上移节点",
-    disabled: !canMoveSelectedUp.value,
-  },
-  {
-    action: "moveDown",
-    label: "下移节点",
-    disabled: !canMoveSelectedDown.value,
-  },
-  {
-    action: "copy",
-    label: "复制节点",
-  },
-  {
-    action: "paste",
-    label: "粘贴节点",
-    disabled: !editorState.value.clipboard,
-  },
-  {
-    action: "duplicate",
-    label: "创建副本",
-  },
-  {
-    action: "delete",
-    label: "删除节点",
-    danger: true,
-  },
-]);
+const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => createLowcodeNodeOperationItems({
+  canInsert: Boolean(selectedInsertManifest.value),
+  canAddInside: Boolean(selectedNodeIsContainer.value && selectedInsertManifest.value),
+  canMoveUp: canMoveSelectedUp.value,
+  canMoveDown: canMoveSelectedDown.value,
+  canPaste: Boolean(editorState.value.clipboard),
+}));
+const nodeOperationItemMap = computed(() => new Map(
+  nodeContextMenuItems.value.map((item) => [item.action, item]),
+));
 const publishChecks = computed(() => createPublishChecks());
 const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
@@ -1623,6 +1581,7 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
     select: true,
   });
   recordRecentMaterial(manifest);
+  showNodeOperationMessage("addInside", { materialTitle: manifest.title });
 }
 
 function onMaterialClick(event: MouseEvent, manifest: LowcodeMaterialManifest): void {
@@ -2280,11 +2239,13 @@ function moveSelected(offset: number): void {
   if (!row) return;
   const nextIndex = row.index + offset;
   if (nextIndex < 0 || nextIndex >= getSiblingCount(row.parentId)) return;
+  const action = offset < 0 ? "moveUp" : "moveDown";
   editorState.value = moveNodeById(editorState.value, {
     nodeId: row.node.id,
     targetParentId: row.parentId,
     index: nextIndex,
   });
+  showNodeOperationMessage(action, { nodeTitle: getNodeDisplayName(row.node) });
 }
 
 function bindSelectedProductMaterialToDataSource(): void {
@@ -2685,24 +2646,41 @@ function select(nodeId: string): void {
   multiSelectedNodeIds.value = [nodeId];
 }
 
+function isNodeOperationDisabled(action: NodeContextAction): boolean {
+  return Boolean(nodeOperationItemMap.value.get(action)?.disabled);
+}
+
+function showNodeOperationMessage(
+  action: Parameters<typeof createLowcodeNodeOperationMessage>[0],
+  options: Parameters<typeof createLowcodeNodeOperationMessage>[1] = {},
+): void {
+  releaseMessage.value = createLowcodeNodeOperationMessage(action, options);
+}
+
 function removeSelected(): void {
   if (!selectedNode.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = removeNode(editorState.value, selectedNode.value.id);
+  showNodeOperationMessage("delete", { nodeTitle });
   closeNodeContextMenu();
 }
 
 function duplicateSelected(): void {
   if (!selectedNode.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = duplicateNode(editorState.value, selectedNode.value.id);
+  showNodeOperationMessage("duplicate", { nodeTitle });
 }
 
 function copySelected(): void {
   if (!selectedNode.value) return;
   editorState.value = copyNode(editorState.value, selectedNode.value.id);
+  showNodeOperationMessage("copy", { nodeTitle: selectedNodeDisplayName.value });
 }
 
 function pasteCopied(): void {
   editorState.value = pasteNode(editorState.value);
+  showNodeOperationMessage("paste");
 }
 
 function clampContextMenuPosition(event: MouseEvent): Pick<NodeContextMenuState, "x" | "y"> {
@@ -2751,7 +2729,10 @@ function runNodeContextMenuAction(item: NodeContextMenuItem): void {
   if (item.disabled) return;
   switch (item.action) {
     case "rename":
-      if (selectedNode.value) startOutlineRename(selectedNode.value.id);
+      if (selectedNode.value) {
+        startOutlineRename(selectedNode.value.id);
+        showNodeOperationMessage("rename", { nodeTitle: selectedNodeDisplayName.value });
+      }
       return;
     case "insertBefore":
       insertMaterialAroundSelected("before");
@@ -2790,6 +2771,9 @@ function insertMaterialAroundSelected(placement: "before" | "after"): void {
   if (!manifest) return;
   if (!row) {
     addMaterial(manifest);
+    showNodeOperationMessage(placement === "before" ? "insertBefore" : "insertAfter", {
+      materialTitle: manifest.title,
+    });
     return;
   }
   editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
@@ -2798,6 +2782,9 @@ function insertMaterialAroundSelected(placement: "before" | "after"): void {
     select: true,
   });
   recordRecentMaterial(manifest);
+  showNodeOperationMessage(placement === "before" ? "insertBefore" : "insertAfter", {
+    materialTitle: manifest.title,
+  });
 }
 
 function insertMaterialInsideSelectedContainer(): void {
@@ -2933,44 +2920,33 @@ function onGlobalKeydown(event: KeyboardEvent): void {
 
 function handleEditorNodeShortcut(event: KeyboardEvent): void {
   if (commandPaletteOpen.value || isEditableKeyboardTarget(event.target)) return;
-  const key = event.key.toLowerCase();
-  const hasCommandModifier = event.metaKey || event.ctrlKey;
+  const shortcutAction = resolveLowcodeNodeShortcutAction(event, {
+    hasSelectedNode: Boolean(selectedNode.value),
+    canPaste: Boolean(editorState.value.clipboard),
+  });
+  if (!shortcutAction) return;
 
-  if ((event.key === "Delete" || event.key === "Backspace") && selectedNode.value) {
-    event.preventDefault();
-    removeSelected();
-    return;
-  }
-
-  if (!hasCommandModifier) return;
-
-  if (key === "c" && selectedNode.value) {
-    event.preventDefault();
-    copySelected();
-    return;
-  }
-
-  if (key === "v" && editorState.value.clipboard) {
-    event.preventDefault();
-    pasteCopied();
-    return;
-  }
-
-  if (key === "d" && selectedNode.value) {
-    event.preventDefault();
-    duplicateSelected();
-    return;
-  }
-
-  if (key === "z") {
-    event.preventDefault();
-    editorState.value = event.shiftKey ? redo(editorState.value) : undo(editorState.value);
-    return;
-  }
-
-  if (key === "y" && event.ctrlKey) {
-    event.preventDefault();
-    editorState.value = redo(editorState.value);
+  event.preventDefault();
+  switch (shortcutAction) {
+    case "delete":
+      removeSelected();
+      return;
+    case "copy":
+      copySelected();
+      return;
+    case "paste":
+      pasteCopied();
+      return;
+    case "duplicate":
+      duplicateSelected();
+      return;
+    case "undo":
+      editorState.value = undo(editorState.value);
+      showNodeOperationMessage("undo");
+      return;
+    case "redo":
+      editorState.value = redo(editorState.value);
+      showNodeOperationMessage("redo");
   }
 }
 
@@ -3809,6 +3785,7 @@ function rollbackPublishSelectedRelease(): void {
         <Copy v-else-if="item.action === 'copy' || item.action === 'duplicate'" :size="15" />
         <Trash2 v-else-if="item.action === 'delete'" :size="15" />
         <span>{{ item.label }}</span>
+        <small v-if="item.shortcut">{{ item.shortcut }}</small>
       </button>
     </div>
 
@@ -4141,28 +4118,38 @@ function rollbackPublishSelectedRelease(): void {
             </select>
           </label>
           <div class="context-actions">
-            <button type="button" title="在当前节点前插入" @click="insertMaterialAroundSelected('before')">
+            <button
+              type="button"
+              title="在当前节点前插入"
+              :disabled="isNodeOperationDisabled('insertBefore')"
+              @click="insertMaterialAroundSelected('before')"
+            >
               <ArrowUp :size="15" />
               <span>前方插入</span>
             </button>
-            <button type="button" title="在当前节点后插入" @click="insertMaterialAroundSelected('after')">
+            <button
+              type="button"
+              title="在当前节点后插入"
+              :disabled="isNodeOperationDisabled('insertAfter')"
+              @click="insertMaterialAroundSelected('after')"
+            >
               <ArrowDown :size="15" />
               <span>后方插入</span>
             </button>
             <button
               type="button"
               title="加入选中容器"
-              :disabled="!selectedNodeIsContainer"
+              :disabled="isNodeOperationDisabled('addInside')"
               @click="insertMaterialInsideSelectedContainer"
             >
               <Plus :size="15" />
               <span>加入容器</span>
             </button>
-            <button type="button" title="上移当前节点" :disabled="!canMoveSelectedUp" @click="moveSelected(-1)">
+            <button type="button" title="上移当前节点" :disabled="isNodeOperationDisabled('moveUp')" @click="moveSelected(-1)">
               <ArrowUp :size="15" />
               <span>上移</span>
             </button>
-            <button type="button" title="下移当前节点" :disabled="!canMoveSelectedDown" @click="moveSelected(1)">
+            <button type="button" title="下移当前节点" :disabled="isNodeOperationDisabled('moveDown')" @click="moveSelected(1)">
               <ArrowDown :size="15" />
               <span>下移</span>
             </button>
@@ -5050,11 +5037,11 @@ function rollbackPublishSelectedRelease(): void {
           </div>
 
           <div class="toolbar inspector-actions">
-            <button title="上移节点" :disabled="!canMoveSelectedUp" @click="moveSelected(-1)">
+            <button title="上移节点" :disabled="isNodeOperationDisabled('moveUp')" @click="moveSelected(-1)">
               <ArrowUp :size="16" />
               <span>上移</span>
             </button>
-            <button title="下移节点" :disabled="!canMoveSelectedDown" @click="moveSelected(1)">
+            <button title="下移节点" :disabled="isNodeOperationDisabled('moveDown')" @click="moveSelected(1)">
               <ArrowDown :size="16" />
               <span>下移</span>
             </button>
@@ -5062,7 +5049,7 @@ function rollbackPublishSelectedRelease(): void {
               <Copy :size="16" />
               <span>复制</span>
             </button>
-            <button title="粘贴节点" :disabled="!editorState.clipboard" @click="pasteCopied">
+            <button title="粘贴节点" :disabled="isNodeOperationDisabled('paste')" @click="pasteCopied">
               <Plus :size="16" />
               <span>粘贴</span>
             </button>

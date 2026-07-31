@@ -353,6 +353,59 @@ export interface FilterLowcodeEditorCommandsOptions {
   includeDisabled?: boolean;
 }
 
+export type LowcodeEditorNodeOperationAction =
+  | "rename"
+  | "insertBefore"
+  | "insertAfter"
+  | "addInside"
+  | "moveUp"
+  | "moveDown"
+  | "copy"
+  | "paste"
+  | "duplicate"
+  | "delete";
+
+export type LowcodeEditorNodeShortcutAction =
+  | "delete"
+  | "copy"
+  | "paste"
+  | "duplicate"
+  | "undo"
+  | "redo";
+
+export interface LowcodeEditorNodeOperationItem {
+  action: LowcodeEditorNodeOperationAction;
+  label: string;
+  shortcut?: string;
+  disabled?: boolean;
+  danger?: boolean;
+}
+
+export interface CreateLowcodeNodeOperationItemsOptions {
+  canInsert?: boolean;
+  canAddInside?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  canPaste?: boolean;
+}
+
+export interface LowcodeEditorKeyboardShortcutLike {
+  key: string;
+  metaKey?: boolean;
+  ctrlKey?: boolean;
+  shiftKey?: boolean;
+}
+
+export interface ResolveLowcodeNodeShortcutActionOptions {
+  hasSelectedNode?: boolean;
+  canPaste?: boolean;
+}
+
+export interface CreateLowcodeNodeOperationMessageOptions {
+  nodeTitle?: string;
+  materialTitle?: string;
+}
+
 export interface LowcodeEditorOutlineMaterialInfo {
   componentName: string;
   title: string;
@@ -1687,6 +1740,117 @@ export function groupLowcodeEditorCommands<T extends LowcodeEditorCommandEntry>(
     group.items.push(command);
   });
   return groups;
+}
+
+export function createLowcodeNodeOperationItems(
+  options: CreateLowcodeNodeOperationItemsOptions = {},
+): LowcodeEditorNodeOperationItem[] {
+  const canInsert = options.canInsert ?? true;
+  return [
+    {
+      action: "rename",
+      label: "重命名节点",
+    },
+    {
+      action: "insertBefore",
+      label: "前方插入",
+      disabled: !canInsert,
+    },
+    {
+      action: "insertAfter",
+      label: "后方插入",
+      disabled: !canInsert,
+    },
+    {
+      action: "addInside",
+      label: "加入容器",
+      disabled: !(options.canAddInside ?? false),
+    },
+    {
+      action: "moveUp",
+      label: "上移节点",
+      disabled: !(options.canMoveUp ?? false),
+    },
+    {
+      action: "moveDown",
+      label: "下移节点",
+      disabled: !(options.canMoveDown ?? false),
+    },
+    {
+      action: "copy",
+      label: "复制节点",
+      shortcut: "⌘/Ctrl C",
+    },
+    {
+      action: "paste",
+      label: "粘贴节点",
+      shortcut: "⌘/Ctrl V",
+      disabled: !(options.canPaste ?? false),
+    },
+    {
+      action: "duplicate",
+      label: "创建副本",
+      shortcut: "⌘/Ctrl D",
+    },
+    {
+      action: "delete",
+      label: "删除节点",
+      shortcut: "Delete",
+      danger: true,
+    },
+  ];
+}
+
+export function resolveLowcodeNodeShortcutAction(
+  event: LowcodeEditorKeyboardShortcutLike,
+  options: ResolveLowcodeNodeShortcutActionOptions = {},
+): LowcodeEditorNodeShortcutAction | undefined {
+  const key = event.key.toLowerCase();
+  const hasSelectedNode = options.hasSelectedNode ?? false;
+  const hasCommandModifier = Boolean(event.metaKey || event.ctrlKey);
+
+  if ((event.key === "Delete" || event.key === "Backspace") && hasSelectedNode) return "delete";
+  if (!hasCommandModifier) return undefined;
+  if (key === "c" && hasSelectedNode) return "copy";
+  if (key === "v" && (options.canPaste ?? false)) return "paste";
+  if (key === "d" && hasSelectedNode) return "duplicate";
+  if (key === "z") return event.shiftKey ? "redo" : "undo";
+  if (key === "y" && event.ctrlKey) return "redo";
+  return undefined;
+}
+
+export function createLowcodeNodeOperationMessage(
+  action: LowcodeEditorNodeOperationAction | LowcodeEditorNodeShortcutAction,
+  options: CreateLowcodeNodeOperationMessageOptions = {},
+): string {
+  const nodeTitle = options.nodeTitle ?? "当前节点";
+  const materialTitle = options.materialTitle ?? "选中物料";
+  switch (action) {
+    case "rename":
+      return `已进入重命名：${nodeTitle}`;
+    case "insertBefore":
+      return `已在前方插入物料：${materialTitle}`;
+    case "insertAfter":
+      return `已在后方插入物料：${materialTitle}`;
+    case "addInside":
+      return `已加入容器：${materialTitle}`;
+    case "moveUp":
+      return `已上移节点：${nodeTitle}`;
+    case "moveDown":
+      return `已下移节点：${nodeTitle}`;
+    case "copy":
+      return `已复制节点：${nodeTitle}`;
+    case "paste":
+      return "已粘贴节点";
+    case "duplicate":
+      return `已创建副本：${nodeTitle}`;
+    case "delete":
+      return `已删除节点：${nodeTitle}`;
+    case "undo":
+      return "已撤销上一步操作";
+    case "redo":
+      return "已重做上一步操作";
+  }
 }
 
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {

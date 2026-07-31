@@ -119,6 +119,14 @@ interface LowcodeEditorState {
 
 快捷命令 API 从命令条目的 title、group、description 和 keywords 派生搜索文本，默认最多展示 28 条，并默认保留 disabled 命令，方便 UI 壳展示不可用状态。API 只处理命令目录展示模型，不执行命令、不绑定快捷键、不做权限判断、不修改 Page Schema、Material Manifest 或 renderer 行为。
 
+节点操作模型 API：
+
+- `createLowcodeNodeOperationItems`
+- `resolveLowcodeNodeShortcutAction`
+- `createLowcodeNodeOperationMessage`
+
+节点操作模型 API 从宿主提供的可插入、可加入容器、可移动、可粘贴等状态派生节点右键菜单、画布工具条、节点卡片快捷操作、快捷键动作和反馈文案。快捷键覆盖 Delete/Backspace、`Meta/Ctrl + C`、`Meta/Ctrl + V`、`Meta/Ctrl + D`、`Meta/Ctrl + Z`、`Meta/Ctrl + Shift + Z` 和 `Ctrl + Y`。API 不执行节点命令、不绑定 DOM 事件、不定位菜单、不滚动画布、不弹确认框、不处理权限或审计、不修改 Page Schema、Material Manifest 或 renderer 行为。
+
 结构树 API：
 
 - `createLowcodeOutlineRows`
@@ -274,6 +282,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 物料偏好模型 API 只派生收藏和最近使用列表模型、解析规则和提示文案，不依赖 DOM、localStorage、HTTP、用户体系、权限、审计或多端同步服务。
 - 物料详情模型 API 只派生物料详情展示、可插入节点输入和默认预览 schema，不依赖 DOM、renderer、资源中心、Java API、权限、审计或物料市场上下架状态。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
+- 节点操作模型 API 只派生菜单项、快捷键动作和反馈文案，不执行 `insertNode`、`removeNode`、`copyNode`、`pasteNode`、`duplicateNode`、`moveNodeById`、`undo` 或 `redo`。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
 - 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。

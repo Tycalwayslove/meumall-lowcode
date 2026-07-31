@@ -32,6 +32,8 @@ import {
   createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
+  createLowcodeNodeOperationItems,
+  createLowcodeNodeOperationMessage,
   createLowcodeOutlineRowSearchText,
   createLowcodeOutlineRows,
   createLowcodeOutlineVisibility,
@@ -107,6 +109,7 @@ import {
   removeLowcodeActionRefsFromNodes,
   renameLowcodeActionRefsInNodes,
   renameLowcodeAction,
+  resolveLowcodeNodeShortcutAction,
   setLowcodeActionType,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
@@ -759,6 +762,50 @@ describe("@meumall/lowcode-editor readiness", () => {
       { group: "视图", items: [commands[2]] },
       { group: "物料", items: [commands[3]] },
     ]);
+  });
+
+  it("creates reusable node operation models and shortcuts", () => {
+    const items = createLowcodeNodeOperationItems({
+      canInsert: false,
+      canAddInside: true,
+      canMoveUp: false,
+      canMoveDown: true,
+      canPaste: false,
+    });
+    const itemByAction = new Map(items.map((item) => [item.action, item]));
+
+    assert.deepEqual(items.map((item) => item.action), [
+      "rename",
+      "insertBefore",
+      "insertAfter",
+      "addInside",
+      "moveUp",
+      "moveDown",
+      "copy",
+      "paste",
+      "duplicate",
+      "delete",
+    ]);
+    assert.equal(itemByAction.get("insertBefore")?.disabled, true);
+    assert.equal(itemByAction.get("insertAfter")?.disabled, true);
+    assert.equal(itemByAction.get("addInside")?.disabled, false);
+    assert.equal(itemByAction.get("moveUp")?.disabled, true);
+    assert.equal(itemByAction.get("moveDown")?.disabled, false);
+    assert.equal(itemByAction.get("paste")?.disabled, true);
+    assert.equal(itemByAction.get("delete")?.danger, true);
+    assert.equal(itemByAction.get("copy")?.shortcut, "⌘/Ctrl C");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "Delete" }, { hasSelectedNode: true }), "delete");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "Backspace" }, { hasSelectedNode: false }), undefined);
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "c", metaKey: true }, { hasSelectedNode: true }), "copy");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "v", ctrlKey: true }, { canPaste: true }), "paste");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "d", metaKey: true }, { hasSelectedNode: true }), "duplicate");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "z", metaKey: true }), "undo");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "z", metaKey: true, shiftKey: true }), "redo");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "y", ctrlKey: true }), "redo");
+    assert.equal(resolveLowcodeNodeShortcutAction({ key: "x", ctrlKey: true }, { hasSelectedNode: true }), undefined);
+    assert.equal(createLowcodeNodeOperationMessage("delete", { nodeTitle: "首屏主图" }), "已删除节点：首屏主图");
+    assert.equal(createLowcodeNodeOperationMessage("insertAfter", { materialTitle: "图片 Banner" }), "已在后方插入物料：图片 Banner");
+    assert.equal(createLowcodeNodeOperationMessage("redo"), "已重做上一步操作");
   });
 
   it("creates reusable outline rows and visibility state", () => {

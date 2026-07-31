@@ -434,6 +434,18 @@ The command helpers keep editor-shell command palettes reusable across the Vue3 
 
 These helpers do not execute commands, bind keyboard shortcuts, check permissions, or mutate editor state. Host shells remain responsible for `run` handlers, shortcuts such as `Meta/Ctrl + K`, confirmation dialogs, and user-facing feedback.
 
+## Node Operation API
+
+The node operation helpers keep context menus, canvas toolbars, node-card quick actions, shortcuts, and operation feedback reusable across editor shells.
+
+`createLowcodeNodeOperationItems(options)` returns stable node operation items for rename, insert before, insert after, add inside, move up, move down, copy, paste, duplicate, and delete. Each item contains an action, label, optional shortcut text, disabled state, and danger state.
+
+`resolveLowcodeNodeShortcutAction(event, options)` maps keyboard-like input to node shortcut actions. It covers Delete/Backspace, `Meta/Ctrl + C`, `Meta/Ctrl + V`, `Meta/Ctrl + D`, `Meta/Ctrl + Z`, `Meta/Ctrl + Shift + Z`, and `Ctrl + Y`.
+
+`createLowcodeNodeOperationMessage(action, options)` returns the current Chinese operation feedback text for node actions and undo/redo.
+
+These helpers do not execute node commands, bind DOM listeners, position menus, scroll canvases, show confirmation dialogs, check permissions, or mutate editor state. Host shells remain responsible for input-target guards, UI rendering, actual calls to `insertNode`, `removeNode`, `copyNode`, `pasteNode`, `duplicateNode`, `moveNodeById`, `undo`, `redo`, permissions, audit records, and service persistence.
+
 ## Outline Tree API
 
 The outline helpers keep editor structure trees reusable across the Vue3 playground and future management-console shells.
