@@ -214,6 +214,89 @@ export function MlcText({
   );
 }
 
+export interface MlcCountdownTextItem {
+  label: string;
+  value: string;
+}
+
+export interface MlcCountdownTextProps {
+  items?: MlcCountdownTextItem[];
+  days?: string;
+  hours?: string;
+  minutes?: string;
+  seconds?: string;
+  numberColor?: string;
+  numberBackgroundColor?: string;
+  labelColor?: string;
+  gap?: number;
+  minWidth?: number;
+  radius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcCountdownText({
+  items,
+  days = "00",
+  hours = "00",
+  minutes = "00",
+  seconds = "00",
+  numberColor = h5Tokens.color.danger,
+  numberBackgroundColor = h5Tokens.color.surface,
+  labelColor = "inherit",
+  gap = 5,
+  minWidth = 34,
+  radius = h5Tokens.radius.sm,
+  className,
+  style,
+}: MlcCountdownTextProps): React.ReactElement {
+  const visibleItems = items?.length
+    ? items
+    : [
+        { label: "天", value: days },
+        { label: "时", value: hours },
+        { label: "分", value: minutes },
+        { label: "秒", value: seconds },
+      ];
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: "flex",
+        gap,
+        flex: "0 0 auto",
+        ...style,
+      }}
+    >
+      {visibleItems.map((item) => (
+        <MlcTag
+          key={`${item.label}-${item.value}`}
+          radius={0}
+          style={{ display: "grid", gap: 2, minWidth, padding: 0, color: labelColor, background: "transparent", textAlign: "center" }}
+        >
+          <MlcText
+            as="strong"
+            size={14}
+            weight={800}
+            style={{
+              padding: "5px 6px",
+              borderRadius: radius,
+              color: numberColor,
+              background: numberBackgroundColor,
+            }}
+          >
+            {item.value}
+          </MlcText>
+          <MlcText size={11} style={{ color: labelColor, opacity: 0.78 }}>
+            {item.label}
+          </MlcText>
+        </MlcTag>
+      ))}
+    </div>
+  );
+}
+
 export interface MlcOverlayProps {
   open?: boolean;
   children?: React.ReactNode;

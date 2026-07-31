@@ -2,7 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -1847,12 +1847,6 @@ export const CountdownTimer = defineComponent({
   setup(props) {
     return () => {
       const runtimeProps = props.props ?? {};
-      const boxes = [
-        { label: "天", value: text(runtimeProps.days, "00") },
-        { label: "时", value: text(runtimeProps.hours, "12") },
-        { label: "分", value: text(runtimeProps.minutes, "30") },
-        { label: "秒", value: text(runtimeProps.seconds, "00") },
-      ];
       return h(
         "section",
         {
@@ -1877,28 +1871,14 @@ export const CountdownTimer = defineComponent({
                 ),
               ]),
               h(
-                "div",
-                { style: { display: "flex", gap: "5px", flex: "0 0 auto" } },
-                boxes.map((box) =>
-                  h(MlcTag, { radius: 0, style: { display: "grid", gap: "2px", minWidth: "34px", padding: 0, color: "inherit", background: "transparent", textAlign: "center" } }, () => [
-                    h(
-                      MlcText,
-                      {
-                        as: "strong",
-                        size: 14,
-                        weight: 800,
-                        style: {
-                          padding: "5px 6px",
-                          borderRadius: "6px",
-                          color: text(runtimeProps.numberColor, "#dc2626"),
-                          background: "#ffffff",
-                        },
-                      },
-                      () => box.value,
-                    ),
-                    h(MlcText, { size: 11, style: { color: "inherit", opacity: 0.78 } }, () => box.label),
-                  ]),
-                ),
+                MlcCountdownText,
+                {
+                  days: text(runtimeProps.days, "00"),
+                  hours: text(runtimeProps.hours, "12"),
+                  minutes: text(runtimeProps.minutes, "30"),
+                  seconds: text(runtimeProps.seconds, "00"),
+                  numberColor: text(runtimeProps.numberColor, "#dc2626"),
+                },
               ),
             ],
           ),

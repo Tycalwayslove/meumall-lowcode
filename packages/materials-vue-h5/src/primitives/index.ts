@@ -195,6 +195,90 @@ export const MlcText = defineComponent({
   },
 });
 
+export interface MlcCountdownTextItem {
+  label: string;
+  value: string;
+}
+
+export const MlcCountdownText = defineComponent({
+  name: "MlcCountdownText",
+  props: {
+    items: { type: Array as PropType<MlcCountdownTextItem[]>, default: () => [] },
+    days: { type: String, default: "00" },
+    hours: { type: String, default: "00" },
+    minutes: { type: String, default: "00" },
+    seconds: { type: String, default: "00" },
+    numberColor: { type: String, default: h5Tokens.color.danger },
+    numberBackgroundColor: { type: String, default: h5Tokens.color.surface },
+    labelColor: { type: String, default: "inherit" },
+    gap: { type: Number, default: 5 },
+    minWidth: { type: Number, default: 34 },
+    radius: { type: Number, default: h5Tokens.radius.sm },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () => {
+      const visibleItems = props.items.length
+        ? props.items
+        : [
+            { label: "天", value: props.days },
+            { label: "时", value: props.hours },
+            { label: "分", value: props.minutes },
+            { label: "秒", value: props.seconds },
+          ];
+
+      return h(
+        "div",
+        {
+          class: props.class,
+          style: {
+            display: "flex",
+            gap: `${props.gap}px`,
+            flex: "0 0 auto",
+            ...props.style,
+          } satisfies CSSProperties,
+        },
+        visibleItems.map((item) =>
+          h(
+            MlcTag,
+            {
+              radius: 0,
+              style: {
+                display: "grid",
+                gap: "2px",
+                minWidth: `${props.minWidth}px`,
+                padding: 0,
+                color: props.labelColor,
+                background: "transparent",
+                textAlign: "center",
+              } satisfies CSSProperties,
+            },
+            () => [
+              h(
+                MlcText,
+                {
+                  as: "strong",
+                  size: 14,
+                  weight: 800,
+                  style: {
+                    padding: "5px 6px",
+                    borderRadius: `${props.radius}px`,
+                    color: props.numberColor,
+                    background: props.numberBackgroundColor,
+                  } satisfies CSSProperties,
+                },
+                () => item.value,
+              ),
+              h(MlcText, { size: 11, style: { color: props.labelColor, opacity: 0.78 } }, () => item.label),
+            ],
+          ),
+        ),
+      );
+    };
+  },
+});
+
 export const MlcOverlay = defineComponent({
   name: "MlcOverlay",
   props: {

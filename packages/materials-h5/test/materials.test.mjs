@@ -78,6 +78,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcStepper",
       "MlcOverlay",
       "MlcModal",
+      "MlcCountdownText",
     ];
 
     for (const name of primitiveNames) {
@@ -134,8 +135,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(couponSectionTypes.has("MlcButton"), true);
     assert.equal(couponSectionTypes.has("MlcText"), true);
     functionSourceIncludes(ActivityRuleModal, ["MlcButton", "MlcModal", "MlcText"]);
-    assert.equal(countdownTypes.has("MlcTag"), true);
-    assert.equal(countdownTypes.has("MlcText"), true);
+    assert.equal(countdownTypes.has("MlcCountdownText"), true);
     assert.equal(navGridTypes.has("MlcButton"), true);
     assert.equal(navGridTypes.has("MlcText"), true);
     assert.equal(floorAnchorTypes.has("MlcButton"), true);

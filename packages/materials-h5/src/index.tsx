@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -1322,12 +1322,6 @@ export function SpacerBlock({ props }: MaterialProps) {
 }
 
 export function CountdownTimer({ props }: MaterialProps) {
-  const boxes = [
-    { label: "天", value: text(props.days, "00") },
-    { label: "时", value: text(props.hours, "12") },
-    { label: "分", value: text(props.minutes, "30") },
-    { label: "秒", value: text(props.seconds, "00") },
-  ];
   return (
     <section
       style={{
@@ -1341,26 +1335,13 @@ export function CountdownTimer({ props }: MaterialProps) {
           <MlcText as="strong" size={15} weight={800} style={{ display: "block", color: text(props.textColor, "#ffffff") }}>{text(props.title, "限时秒杀")}</MlcText>
           <MlcText size={12} style={{ display: "block", marginTop: 3, color: text(props.textColor, "#ffffff"), opacity: 0.86 }}>{text(props.subtitle, "距离活动结束")}</MlcText>
         </div>
-        <div style={{ display: "flex", gap: 5, flex: "0 0 auto" }}>
-          {boxes.map((box) => (
-            <MlcTag key={box.label} radius={0} style={{ display: "grid", gap: 2, minWidth: 34, padding: 0, color: "inherit", background: "transparent", textAlign: "center" }}>
-              <MlcText
-                as="strong"
-                size={14}
-                weight={800}
-                style={{
-                  padding: "5px 6px",
-                  borderRadius: 6,
-                  color: text(props.numberColor, "#dc2626"),
-                  background: "#ffffff",
-                }}
-              >
-                {box.value}
-              </MlcText>
-              <MlcText size={11} style={{ color: "inherit", opacity: 0.78 }}>{box.label}</MlcText>
-            </MlcTag>
-          ))}
-        </div>
+        <MlcCountdownText
+          days={text(props.days, "00")}
+          hours={text(props.hours, "12")}
+          minutes={text(props.minutes, "30")}
+          seconds={text(props.seconds, "00")}
+          numberColor={text(props.numberColor, "#dc2626")}
+        />
       </div>
     </section>
   );

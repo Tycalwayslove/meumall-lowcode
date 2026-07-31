@@ -786,6 +786,7 @@ async function main() {
       { label: "默认大促模板包含区块标题", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
       { label: "默认大促模板包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
+      { label: "默认大促模板包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "默认大促模板包含底部转化条", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
@@ -805,6 +806,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含区块标题", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
       { label: "编辑器内置 runtime 包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
+      { label: "编辑器内置 runtime 包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "编辑器内置 runtime 包含底部转化条", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
     ]);
 
@@ -822,6 +824,7 @@ async function main() {
       { label: "React H5 区块标题已渲染", expression: "document.body.innerText.includes('今日主推') && document.body.innerText.includes('先领券，再逛精选好物')" },
       { label: "React H5 图片卡片宫格已渲染", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
+      { label: "React H5 倒计时已渲染", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
       { label: "React H5 底部转化条已渲染", expression: "document.body.innerText.includes('限时福利') && document.body.innerText.includes('立即抢购')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },

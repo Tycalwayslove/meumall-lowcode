@@ -19,6 +19,7 @@ Current internal primitives:
 - `MlcStepper`
 - `MlcOverlay`
 - `MlcModal`
+- `MlcCountdownText`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
 
