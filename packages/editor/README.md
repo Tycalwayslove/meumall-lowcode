@@ -80,6 +80,15 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeBlankPageSchema`
 - `cloneLowcodePageSchema`
 - `createLowcodePageStartState`
+- `getLowcodePropEditorControl`
+- `isLowcodeListPropEditor`
+- `isLowcodeStructuredPropEditor`
+- `createLowcodeListEditorFields`
+- `isLowcodeListImageField`
+- `createLowcodeDefaultListItem`
+- `toLowcodePropInputText`
+- `toLowcodePropInputBoolean`
+- `normalizeLowcodePropInputValue`
 
 ## Readiness API
 
@@ -112,6 +121,18 @@ The workspace summary helper keeps top-bar editor status chips reusable across t
 Each item includes `id`, `label`, `value`, and a tone of `neutral`, `success`, `warning`, or `danger`.
 
 This helper does not render UI, inspect DOM, run server publish checks, enforce permissions, or mutate editor state. Host shells remain responsible for layout, icons, click handlers, live collaboration locks, permissions, and server-side review/approval state.
+
+## Prop Editor Model API
+
+The prop editor model helpers keep inspector field behavior reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`getLowcodePropEditorControl(propSchema)` returns the recommended control model: `text`, `number`, `color`, `switch`, `textarea`, `json`, or `list`. `isLowcodeListPropEditor` and `isLowcodeStructuredPropEditor` expose the common list and JSON editor predicates.
+
+`createLowcodeListEditorFields(propName, options)` derives stable list-item field metadata from the prop name, component name, and current list items. `createLowcodeDefaultListItem(propName, options)` creates common starter rows for rule, coupon, navigation, image card, floor anchor, and store/expert list props.
+
+`toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
+
+These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
 
 ## Preview Link API
 

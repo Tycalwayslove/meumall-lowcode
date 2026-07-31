@@ -117,6 +117,20 @@ interface LowcodeEditorState {
 
 属性分组 API 从物料 `propsSchema` 的字段名、setter 和字段类型派生内容配置、样式配置、数据配置、行为配置和其他配置分组，并提供默认中文分组文案、稳定排序和折叠状态纯 helper。API 不渲染具体 setter 控件、不打开资源选择器、不修改 Page Schema 值、不处理字段权限或审计。
 
+属性字段模型 API：
+
+- `getLowcodePropEditorControl`
+- `isLowcodeListPropEditor`
+- `isLowcodeStructuredPropEditor`
+- `createLowcodeListEditorFields`
+- `isLowcodeListImageField`
+- `createLowcodeDefaultListItem`
+- `toLowcodePropInputText`
+- `toLowcodePropInputBoolean`
+- `normalizeLowcodePropInputValue`
+
+属性字段模型 API 从 `LowcodePropSchema`、字段名、组件名和当前列表项派生属性面板控件类型、列表项字段模型、图片字段标记、默认新增项和输入值转换结果。API 不渲染 Vue/React 控件、不处理 DOM、不打开资源选择器、不执行保存、不处理权限、审计或服务端校验。
+
 草稿持久化 API：
 
 - `createLowcodeEditorDraftPayload`
@@ -163,6 +177,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 属性分组 API 只派生属性面板展示模型，不修改 propsSchema，不依赖 DOM，不依赖宿主权限系统。
+- 属性字段模型 API 只派生属性面板字段控件模型和输入值转换，不修改 propsSchema，不依赖 DOM、资源中心、权限、审计或服务端保存。
 - 草稿持久化 API 只处理 Page Schema 草稿 payload、JSON 文本恢复和自动保存状态展示口径，不依赖 DOM、浏览器存储或 HTTP，不修改 Page Schema v1 契约。
 - 工作区状态摘要 API 只派生编辑器顶部状态展示模型，不依赖 DOM，不执行服务端发布校验，不处理权限、协作锁定或审批。
 - H5 预览链接 API 只处理宿主提供的 URL 展示模型，不依赖 DOM、adapters、renderer、runtime 地址或 Java 配置平台协议。

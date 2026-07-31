@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板、空态演示和 broken 降级演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor/renderer 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、架构边界 check、editor readiness API、editor version summary API、editor template summary API、editor page start API、editor viewport preset API、editor material catalog API、editor command palette API、editor outline tree API、editor prop groups API、editor schema file API、editor draft persistence API、editor preview links API、editor workspace summary API、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、H5 画布视口预设、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、标签内容切换物料、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序和列表项图片素材选择，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单、弹层、倒计时、标签切换、间距和业务物料复用。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板、空态演示和 broken 降级演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor/renderer 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、架构边界 check、editor readiness API、editor version summary API、editor template summary API、editor page start API、editor viewport preset API、editor material catalog API、editor command palette API、editor outline tree API、editor prop groups API、editor prop editor model API、editor schema file API、editor draft persistence API、editor preview links API、editor workspace summary API、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、H5 画布视口预设、当前节点信息卡、属性面板分组折叠、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、标签内容切换物料、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序和列表项图片素材选择，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单、弹层、倒计时、标签切换、间距和业务物料复用。
 
 ## 当前维护范围
 
@@ -44,6 +44,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Editor command palette API：`@meumall/lowcode-editor` 已提供 `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`、`createLowcodeEditorCommandSearchText`、`filterLowcodeEditorCommands` 和 `groupLowcodeEditorCommands`，Vue3 editor playground 的快捷命令搜索和展示数量限制已复用同一套框架无关 API。
 - Editor outline tree API：`@meumall/lowcode-editor` 已提供 `createLowcodeOutlineRows`、`createLowcodeOutlineRowSearchText`、`createLowcodeOutlineVisibility`、`pruneLowcodeOutlineCollapsedNodeIds` 和 `revealLowcodeOutlineNode`，Vue3 editor playground 的结构树节点扁平化、搜索、折叠可见性、选中路径和可见数量摘要已复用同一套框架无关 API。
 - Editor prop groups API：`@meumall/lowcode-editor` 已提供 `LOWCODE_EDITOR_PROP_GROUP_ORDER`、`LOWCODE_EDITOR_PROP_GROUP_META`、`getLowcodePropGroupKey`、`createLowcodePropGroups`、`isLowcodePropGroupCollapsed` 和 `toggleLowcodePropGroupCollapsed`，Vue3 editor playground 的属性面板字段归类、分组文案、分组顺序和折叠状态 helper 已复用同一套框架无关 API。
+- Editor prop editor model API：`@meumall/lowcode-editor` 已提供 `getLowcodePropEditorControl`、`isLowcodeListPropEditor`、`isLowcodeStructuredPropEditor`、`createLowcodeListEditorFields`、`isLowcodeListImageField`、`createLowcodeDefaultListItem`、`toLowcodePropInputText`、`toLowcodePropInputBoolean` 和 `normalizeLowcodePropInputValue`，Vue3 editor playground 的属性字段控件类型、列表字段、图片字段、默认新增项和输入转换已复用同一套框架无关 API。
 - Editor schema file API：`@meumall/lowcode-editor` 已提供 `createLowcodeSchemaFileName`、`createLowcodeSchemaFileExport` 和 `parseLowcodeSchemaFileContent`，Vue3 editor playground 的 Page Schema 文件导出内容、文件名、大小摘要和导入解析校验已复用同一套框架无关 API。
 - Editor draft persistence API：`@meumall/lowcode-editor` 已提供 `createLowcodeEditorDraftPayload`、`parseLowcodeEditorDraftContent`、`formatLowcodeEditorDraftStatusText` 和 `getLowcodeEditorDraftStatusTone`，Vue3 editor playground 的本地自动保存 payload、旧草稿恢复兼容、恢复校验、状态文案和 tone 已复用同一套框架无关 API。
 - Editor preview links API：`@meumall/lowcode-editor` 已提供 `createLowcodePreviewLinkItem`、`createLowcodePreviewLinkItems` 和 `summarizeLowcodePreviewLinks`，Vue3 editor playground 的 H5 预览入口展示模型、ready/disabled 状态、打开/复制能力和交付入口摘要已复用同一套框架无关 API。
@@ -116,7 +117,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 内部 runtime primitives 原型：React/Vue H5 materials 包内已新增 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcTextarea`、`MlcSwitch`、`MlcStepper`、`MlcOverlay`、`MlcModal`、`MlcCountdownText`、`MlcTabs`、`MlcSpacer` 和 `h5Tokens`，并改造 `ActionButton`、`ImageBanner`、`SectionTitle`、`StickyActionBar`、`CouponBundle`、`ProductRankList`、`BrandFeatureSection`、`LiveEntry`、`StoreExpertSection`、`FlashSaleList`、`ActivityRuleModal`、`CouponSection`、`NavGrid`、`FloorAnchorNav`、`CountdownTimer`、`TabsBlock`、`SpacerBlock`，新增 `LeadFormBlock` 复用 primitives；primitives 不进入 material registry，仍不作为公开 npm 包 API。
 - Vue3 编辑器体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，并补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与响应式兜底；顶部工作区状态摘要已复用 editor workspace summary API。
 - Vue3 编辑器物料偏好：左侧物料区已支持星标收藏和最近使用，均以 `componentName` 写入 localStorage；收藏和最近使用物料可通过 editor material catalog API 按顺序恢复并在顶部快捷区一键添加。
-- Vue3 编辑器属性面板分组：右侧 props 已按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，支持折叠/展开，并修复新 profile 首次打开默认选中旧节点导致属性区为空的问题；字段归类、分组文案、顺序和折叠状态 helper 已复用 editor prop groups API。
+- Vue3 编辑器属性面板分组：右侧 props 已按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，支持折叠/展开，并修复新 profile 首次打开默认选中旧节点导致属性区为空的问题；字段归类、分组文案、顺序和折叠状态 helper 已复用 editor prop groups API；属性字段控件类型、列表字段、图片字段、默认新增项和输入转换已复用 editor prop editor model API。
 - Vue3 编辑器快捷命令面板：顶部命令入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索并执行模式切换、草稿保存、预览/发布、打开 H5/React H5、清空画布、添加物料和应用模板；搜索和默认 28 条展示口径已复用 editor command palette API。
 - Vue3 编辑器节点快捷操作：H5 画布节点和结构树节点支持右键打开操作菜单，画布上下文工具条提供更多操作入口，并支持 Delete/Backspace 删除、Ctrl/Meta+C 复制、Ctrl/Meta+V 粘贴、Ctrl/Meta+D 创建副本、Ctrl/Meta+Z 撤销和 Ctrl/Meta+Shift+Z 或 Ctrl+Y 重做。
 - Vue3 编辑器结构树导航：左侧结构树支持搜索节点、折叠/展开容器、搜索命中路径展示和点击节点滚动定位到 H5 画布对应节点；当前选中节点会保持在结构树可见路径内，节点扁平化、搜索、折叠可见性和可见摘要已复用 editor outline tree API。
@@ -127,6 +128,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器快捷命令 API 复用：命令面板的 title、group、description、keywords 搜索、disabled 保留展示和默认展示数量已复用 `@meumall/lowcode-editor` 的 command palette API；命令执行函数仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器结构树 API 复用：结构树行模型、节点标题/副标题、搜索文本、搜索可见节点、折叠可见节点、选中路径、折叠节点裁剪和 reveal 祖先展开已复用 `@meumall/lowcode-editor` 的 outline tree API；点击、拖拽、多选、重命名和滚动画布仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器属性分组 API 复用：属性面板的内容/样式/数据/行为/其他分组归类、默认中文文案、稳定顺序和折叠状态纯 helper 已复用 `@meumall/lowcode-editor` 的 prop groups API；具体 setter 控件、资源选择器、数组编辑和用户反馈仍由 playground 或未来管理台 shell 持有。
+- Vue3 编辑器属性字段模型 API 复用：属性面板字段控件类型、列表项字段模型、列表项图片字段识别、默认新增项、输入文本展示、boolean 兼容和写回 normalize 已复用 `@meumall/lowcode-editor` 的 prop editor model API；具体 Vue 控件、资源选择器、拖拽排序、权限、审计和服务端保存仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器 Schema 文件 API 复用：Page Schema 文件名生成、导出 JSON 内容、mimeType、字节大小、大小文案和导入 JSON 解析校验已复用 `@meumall/lowcode-editor` 的 schema file API；文件选择、Blob 下载、覆盖确认和用户反馈仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器草稿持久化 API 复用：本地自动保存 payload、草稿 JSON 解析恢复、旧版 Page Schema 直存格式兼容、状态文案和状态 tone 已复用 `@meumall/lowcode-editor` 的 draft persistence API；定时器、localStorage 读写、服务端草稿接口、冲突合并和用户反馈仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器 H5 预览链接 API 复用：H5 预览入口列表、ready/disabled 状态、打开/复制能力和交付入口摘要已复用 `@meumall/lowcode-editor` 的 preview links API；具体 URL 构造、schema URL handoff、打开窗口、复制剪贴板和用户反馈仍由 playground 或未来管理台 shell 持有。
@@ -134,7 +136,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 ## 已知缺口
 
-- 尚未实现完整生产级编辑器 UI；当前已具备新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索过滤、物料详情预览、物料收藏与最近使用、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、H5 画布视口预设、工作区状态摘要、属性分组折叠、节点右键菜单、节点键盘快捷键、editor readiness API、editor version summary API、editor template summary API、editor page start API、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
+- 尚未实现完整生产级编辑器 UI；当前已具备新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、本地版本备注/筛选/差异详情、物料搜索过滤、物料详情预览、物料收藏与最近使用、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、发布检查节点定位、H5 预览入口、H5 画布视口预设、工作区状态摘要、属性分组折叠、属性字段模型 API、节点右键菜单、节点键盘快捷键、editor readiness API、editor version summary API、editor template summary API、editor page start API、mock 素材/商品/优惠券/门店/达人选择器、数组属性列表编辑器和列表项拖拽排序，但还不是正式管理台组件。
 - 内部 runtime primitives 原型已覆盖现有主要 React/Vue H5 物料，并补齐 `Input`、`Textarea`、`Switch`、`Stepper` 表单 primitives、`Overlay`、`Modal` 弹层 primitives、`CountdownText` 倒计时文本 primitive、`Tabs` 标签切换 primitive 和 `Spacer` 间距 primitive；`ProductList`、`ActivityHero`、`SectionContainer`、`NoticeBar`、`RichTextBlock` 等历史或简单物料仍可按真实复用收益继续整理；primitives 仍不是公开 npm API。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放、已有节点移动、触屏 Pointer Events 拖拽、吸附线、同父级多选成组拖拽和数组列表项排序；跨父级多选拖拽仍需后续单独设计。
@@ -256,7 +258,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `98abb51` | 沉淀 editor Schema 文件 API。 |
 | 2026-08-01 | `524167f` | 沉淀 editor 草稿持久化 API。 |
 | 2026-08-01 | `a6a8516` | 沉淀 editor H5 预览链接 API。 |
-| 2026-08-01 | 本提交 | 沉淀 editor 工作区状态摘要 API。 |
+| 2026-08-01 | `a73e28d` | 沉淀 editor 工作区状态摘要 API。 |
+| 2026-08-01 | 本提交 | 沉淀 editor 属性字段模型 API。 |
 
 ## 默认验证命令
 

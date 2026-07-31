@@ -260,6 +260,29 @@ export interface CreateLowcodePropGroupsOptions {
   behaviorPropNames?: readonly string[];
 }
 
+export type LowcodeEditorPropControl = "text" | "number" | "color" | "switch" | "textarea" | "json" | "list";
+
+export interface LowcodeEditorListField {
+  name: string;
+  label: string;
+  placeholder: string;
+  multiline?: boolean;
+}
+
+export interface CreateLowcodeListEditorFieldsOptions {
+  componentName?: string;
+  items?: readonly JsonValue[];
+  commonFields?: Record<string, LowcodeEditorListField>;
+  defaultFieldNames?: Record<string, readonly string[]>;
+}
+
+export interface CreateLowcodeDefaultListItemOptions {
+  componentName?: string;
+  targetNodeId?: string;
+  now?: Date;
+  id?: string;
+}
+
 export interface LowcodeEditorActionParamRule {
   actionType: string;
   paramName: string;
@@ -490,6 +513,31 @@ export const LOWCODE_EDITOR_PROP_GROUP_META = {
   behavior: { label: "行为配置", description: "跳转链接、吸顶、平滑滚动等交互行为。" },
   advanced: { label: "其他配置", description: "暂未归类的物料字段。" },
 } as const satisfies Record<LowcodeEditorPropGroupKey, LowcodeEditorPropGroupMeta>;
+export const LOWCODE_EDITOR_COMMON_LIST_FIELDS: Record<string, LowcodeEditorListField> = {
+  id: { name: "id", label: "ID", placeholder: "唯一标识" },
+  typeText: { name: "typeText", label: "类型", placeholder: "门店 / 达人 / 推荐" },
+  title: { name: "title", label: "标题", placeholder: "请输入标题" },
+  subtitle: { name: "subtitle", label: "副标题", placeholder: "请输入副标题" },
+  desc: { name: "desc", label: "说明", placeholder: "请输入说明" },
+  content: { name: "content", label: "内容", placeholder: "请输入内容", multiline: true },
+  imageUrl: { name: "imageUrl", label: "图片", placeholder: "图片 URL" },
+  coverImageUrl: { name: "coverImageUrl", label: "封面图", placeholder: "封面图 URL" },
+  logoImageUrl: { name: "logoImageUrl", label: "Logo", placeholder: "Logo URL" },
+  valueText: { name: "valueText", label: "面值", placeholder: "¥30 / 包邮" },
+  thresholdText: { name: "thresholdText", label: "门槛", placeholder: "满 199 可用" },
+  expireText: { name: "expireText", label: "有效期", placeholder: "领取后 7 天有效" },
+  buttonText: { name: "buttonText", label: "按钮", placeholder: "查看 / 领取" },
+  targetId: { name: "targetId", label: "目标节点", placeholder: "node_id" },
+  metricText: { name: "metricText", label: "指标", placeholder: "4.9 分 / 12.8w 粉丝" },
+  linkUrl: { name: "linkUrl", label: "链接", placeholder: "跳转 URL" },
+  badgeText: { name: "badgeText", label: "角标", placeholder: "热卖 / 精选" },
+  value: { name: "value", label: "值", placeholder: "请输入值", multiline: true },
+};
+export const LOWCODE_EDITOR_DEFAULT_LIST_FIELDS: Record<string, readonly string[]> = {
+  coupons: ["id", "title", "thresholdText", "valueText", "expireText", "buttonText"],
+  rules: ["title", "content"],
+  sellingPoints: ["id", "title", "desc"],
+};
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
@@ -1194,6 +1242,104 @@ export function toggleLowcodePropGroupCollapsed(
     ...collapsedState,
     [key]: !collapsedState[key],
   };
+}
+
+export function getLowcodePropEditorControl(propSchema: LowcodePropSchema): LowcodeEditorPropControl {
+  if (isLowcodeListPropEditor(propSchema)) return "list";
+  if (propSchema.type === "array" || propSchema.type === "object" || propSchema.setter === "dataSourceSelector") return "json";
+  if (propSchema.setter === "textarea" || propSchema.setter === "richText") return "textarea";
+  if (propSchema.setter === "switch" || propSchema.type === "boolean") return "switch";
+  if (propSchema.setter === "color") return "color";
+  if (propSchema.type === "number") return "number";
+  return "text";
+}
+
+export function isLowcodeListPropEditor(propSchema: LowcodePropSchema): boolean {
+  return propSchema.type === "array" && propSchema.setter === "textarea";
+}
+
+export function isLowcodeStructuredPropEditor(propSchema: LowcodePropSchema): boolean {
+  return getLowcodePropEditorControl(propSchema) === "json";
+}
+
+export function createLowcodeListEditorFields(
+  propName: string,
+  options: CreateLowcodeListEditorFieldsOptions = {},
+): LowcodeEditorListField[] {
+  const fields = new Set(getLowcodeDefaultListFieldNames(propName, options.componentName, options.defaultFieldNames));
+  for (const item of options.items ?? []) {
+    if (!isPlainObject(item)) continue;
+    Object.keys(item).forEach((key) => fields.add(key));
+  }
+  const commonFields = {
+    ...LOWCODE_EDITOR_COMMON_LIST_FIELDS,
+    ...(options.commonFields ?? {}),
+  };
+  return [...fields].map((name) => ({ ...(commonFields[name] ?? { name, label: name, placeholder: name }) }));
+}
+
+export function isLowcodeListImageField(field: string | Pick<LowcodeEditorListField, "name">): boolean {
+  const fieldName = typeof field === "string" ? field : field.name;
+  return /(^|[A-Z])imageUrl$/.test(fieldName) || fieldName === "coverImageUrl" || fieldName === "logoImageUrl";
+}
+
+export function createLowcodeDefaultListItem(
+  propName: string,
+  options: CreateLowcodeDefaultListItemOptions = {},
+): JsonObject {
+  const id = options.id ?? `${propName}_${(options.now ?? new Date()).getTime().toString(36)}`;
+  if (propName === "rules") {
+    return { title: "新规则", content: "请输入规则内容" };
+  }
+  if (propName === "coupons") {
+    return { id, title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30", expireText: "领取后 7 天有效" };
+  }
+  if (propName === "items" && options.componentName === "FloorAnchorNav") {
+    return { id, title: "新楼层", targetId: options.targetNodeId ?? "" };
+  }
+  if (propName === "items" && options.componentName === "NavGrid") {
+    return { id, title: "新导航", subtitle: "请输入说明" };
+  }
+  if (propName === "items" && options.componentName === "ImageCardGrid") {
+    return { id, title: "新会场", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" };
+  }
+  if (propName === "items" && options.componentName === "StoreExpertSection") {
+    return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
+  }
+  return { id, title: "新项目", subtitle: "请输入说明" };
+}
+
+export function toLowcodePropInputText(value: JsonValue | undefined): string {
+  return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
+}
+
+export function toLowcodePropInputBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return !["", "0", "false", "off", "no"].includes(normalized);
+  }
+  return Boolean(value);
+}
+
+export function normalizeLowcodePropInputValue(propSchema: LowcodePropSchema, value: unknown): JsonValue {
+  if (propSchema.type === "number") {
+    const nextValue = Number(value);
+    return Number.isFinite(nextValue) ? nextValue : 0;
+  }
+  if (propSchema.type === "boolean") {
+    return toLowcodePropInputBoolean(value);
+  }
+  if (propSchema.type === "array" || propSchema.type === "object") {
+    if (typeof value !== "string") return value as JsonValue;
+    try {
+      return JSON.parse(value) as JsonValue;
+    } catch {
+      return value;
+    }
+  }
+  return String(value);
 }
 
 export function countLowcodeNodes(schema: LowcodePageSchema): number {
@@ -1989,6 +2135,23 @@ function createWorkspacePublishStat(
     value: "可预览",
     tone: "success",
   };
+}
+
+function getLowcodeDefaultListFieldNames(
+  propName: string,
+  componentName: string | undefined,
+  customDefaultFieldNames: Record<string, readonly string[]> | undefined,
+): readonly string[] {
+  if (customDefaultFieldNames?.[propName]) return customDefaultFieldNames[propName] ?? [];
+  if (LOWCODE_EDITOR_DEFAULT_LIST_FIELDS[propName]) return LOWCODE_EDITOR_DEFAULT_LIST_FIELDS[propName] ?? [];
+  if (propName === "items" && componentName === "FloorAnchorNav") return ["id", "title", "targetId"];
+  if (propName === "items" && componentName === "NavGrid") return ["id", "title", "subtitle"];
+  if (propName === "items" && componentName === "ImageCardGrid") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
+  if (propName === "items" && componentName === "StoreExpertSection") {
+    return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
+  }
+  if (propName === "items") return ["id", "title", "subtitle", "desc", "imageUrl"];
+  return ["id", "title", "subtitle"];
 }
 
 function pickFirstTemplateNodeText(nodes: LowcodeNode[], propNames: string[]): string {

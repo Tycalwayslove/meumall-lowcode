@@ -71,6 +71,8 @@ import {
   createLowcodePreviewLinkItems,
   createLowcodePropGroups,
   duplicateNode,
+  createLowcodeDefaultListItem,
+  createLowcodeListEditorFields,
   createLowcodeSchemaFileExport,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
@@ -80,12 +82,16 @@ import {
   formatLowcodeMaterialCatalogSummary,
   getLowcodeEditorViewportPreset,
   formatLowcodeTemplateVersion,
+  getLowcodePropEditorControl,
   getLowcodeNodeDisplayName,
   insertNode,
+  isLowcodeListImageField,
+  isLowcodeListPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
   markSaved,
   moveNodeById,
+  normalizeLowcodePropInputValue,
   pasteNode,
   formatLowcodeEditorDraftStatusText,
   getLowcodeEditorDraftStatusTone,
@@ -104,6 +110,8 @@ import {
   summarizeLowcodePublishChecks,
   summarizeLowcodePreviewLinks,
   toggleLowcodePropGroupCollapsed,
+  toLowcodePropInputBoolean,
+  toLowcodePropInputText,
   undo,
   type LowcodeEditorCommandEntry,
   type LowcodeEditorDraftPersistenceStatus,
@@ -111,6 +119,7 @@ import {
   type LowcodeEditorPreviewLinkItem as PreviewLinkItem,
   type LowcodeEditorPropGroup as PropEditorGroup,
   type LowcodeEditorPropGroupKey as PropGroupKey,
+  type LowcodeEditorListField as ListEditorField,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
@@ -520,13 +529,6 @@ interface CommandPaletteItem extends LowcodeEditorCommandEntry {
   run: () => void | Promise<void>;
 }
 
-interface ListEditorField {
-  name: string;
-  label: string;
-  placeholder: string;
-  multiline?: boolean;
-}
-
 interface ListItemDragState {
   propName: string;
   fromIndex: number;
@@ -557,31 +559,6 @@ const POINTER_DRAG_START_DISTANCE = 8;
 let suppressNextClick = false;
 
 const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
-
-const commonListEditorFields: Record<string, ListEditorField> = {
-  id: { name: "id", label: "ID", placeholder: "唯一标识" },
-  typeText: { name: "typeText", label: "类型", placeholder: "门店 / 达人 / 推荐" },
-  title: { name: "title", label: "标题", placeholder: "请输入标题" },
-  subtitle: { name: "subtitle", label: "副标题", placeholder: "请输入副标题" },
-  desc: { name: "desc", label: "说明", placeholder: "请输入说明" },
-  content: { name: "content", label: "内容", placeholder: "请输入内容", multiline: true },
-  imageUrl: { name: "imageUrl", label: "图片", placeholder: "图片 URL" },
-  valueText: { name: "valueText", label: "面值", placeholder: "¥30 / 包邮" },
-  thresholdText: { name: "thresholdText", label: "门槛", placeholder: "满 199 可用" },
-  expireText: { name: "expireText", label: "有效期", placeholder: "领取后 7 天有效" },
-  buttonText: { name: "buttonText", label: "按钮", placeholder: "查看 / 领取" },
-  targetId: { name: "targetId", label: "目标节点", placeholder: "node_id" },
-  metricText: { name: "metricText", label: "指标", placeholder: "4.9 分 / 12.8w 粉丝" },
-  linkUrl: { name: "linkUrl", label: "链接", placeholder: "跳转 URL" },
-  badgeText: { name: "badgeText", label: "角标", placeholder: "热卖 / 精选" },
-  value: { name: "value", label: "值", placeholder: "请输入值", multiline: true },
-};
-
-const defaultListFields: Record<string, string[]> = {
-  coupons: ["id", "title", "thresholdText", "valueText", "expireText", "buttonText"],
-  rules: ["title", "content"],
-  sellingPoints: ["id", "title", "desc"],
-};
 
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
@@ -2489,32 +2466,18 @@ function togglePropGroup(key: PropGroupKey): void {
 }
 
 function isListPropEditor(propSchema: LowcodePropSchema): boolean {
-  return propSchema.type === "array" && propSchema.setter === "textarea";
-}
-
-function getDefaultFieldNames(propName: string): string[] {
-  if (propName in defaultListFields) return defaultListFields[propName] ?? [];
-  const componentName = selectedNode.value?.componentName;
-  if (propName === "items" && componentName === "FloorAnchorNav") return ["id", "title", "targetId"];
-  if (propName === "items" && componentName === "NavGrid") return ["id", "title", "subtitle"];
-  if (propName === "items" && componentName === "ImageCardGrid") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
-  if (propName === "items" && componentName === "StoreExpertSection") {
-    return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
-  }
-  if (propName === "items") return ["id", "title", "subtitle", "desc", "imageUrl"];
-  return ["id", "title", "subtitle"];
+  return isLowcodeListPropEditor(propSchema);
 }
 
 function listEditorFields(propName: string): ListEditorField[] {
-  const fields = new Set(getDefaultFieldNames(propName));
-  for (const item of getListItems(propName)) {
-    Object.keys(item).forEach((key) => fields.add(key));
-  }
-  return [...fields].map((name) => commonListEditorFields[name] ?? { name, label: name, placeholder: name });
+  return createLowcodeListEditorFields(propName, {
+    componentName: selectedNode.value?.componentName,
+    items: getPropArray(propName),
+  });
 }
 
 function isListImageField(field: ListEditorField): boolean {
-  return /(^|[A-Z])imageUrl$/.test(field.name) || field.name === "coverImageUrl" || field.name === "logoImageUrl";
+  return isLowcodeListImageField(field);
 }
 
 function isActiveListAssetTarget(propName: string, itemIndex: number, fieldName: string): boolean {
@@ -2543,27 +2506,10 @@ function closeListAssetPicker(): void {
 }
 
 function createDefaultListItem(propName: string): JsonObject {
-  const id = `${propName}_${Date.now().toString(36)}`;
-  if (propName === "rules") {
-    return { title: "新规则", content: "请输入规则内容" };
-  }
-  if (propName === "coupons") {
-    return { id, title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30", expireText: "领取后 7 天有效" };
-  }
-  const componentName = selectedNode.value?.componentName;
-  if (propName === "items" && componentName === "FloorAnchorNav") {
-    return { id, title: "新楼层", targetId: selectedNode.value?.id ?? "" };
-  }
-  if (propName === "items" && componentName === "NavGrid") {
-    return { id, title: "新导航", subtitle: "请输入说明" };
-  }
-  if (propName === "items" && componentName === "ImageCardGrid") {
-    return { id, title: "新会场", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" };
-  }
-  if (propName === "items" && componentName === "StoreExpertSection") {
-    return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
-  }
-  return { id, title: "新项目", subtitle: "请输入说明" };
+  return createLowcodeDefaultListItem(propName, {
+    componentName: selectedNode.value?.componentName,
+    targetNodeId: selectedNode.value?.id,
+  });
 }
 
 function updateListProp(propName: string, propSchema: LowcodePropSchema, items: JsonValue[]): void {
@@ -2697,32 +2643,11 @@ function updateProp(propName: string, propSchema: LowcodePropSchema, value: unkn
 }
 
 function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): JsonValue {
-  if (propSchema.type === "number") {
-    const nextValue = Number(value);
-    return Number.isFinite(nextValue) ? nextValue : 0;
-  }
-  if (propSchema.type === "boolean") {
-    return asBoolean(value);
-  }
-  if (propSchema.type === "array" || propSchema.type === "object") {
-    if (typeof value !== "string") return value as JsonValue;
-    try {
-      return JSON.parse(value) as JsonValue;
-    } catch {
-      return value;
-    }
-  }
-  return String(value);
+  return normalizeLowcodePropInputValue(propSchema, value);
 }
 
 function asBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value !== 0;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    return !["", "0", "false", "off", "no"].includes(normalized);
-  }
-  return Boolean(value);
+  return toLowcodePropInputBoolean(value);
 }
 
 function select(nodeId: string): void {
@@ -3424,7 +3349,7 @@ function bindSelectedEvent(eventName: string, actionId: string): void {
 }
 
 function asText(value: JsonValue | undefined): string {
-  return typeof value === "string" ? value : value == null ? "" : JSON.stringify(value, null, 2);
+  return toLowcodePropInputText(value);
 }
 
 function applyAsset(propName: string, url: string): void {
@@ -3458,7 +3383,7 @@ function applySampleProducts(): void {
 }
 
 function isStructured(propSchema: LowcodePropSchema): boolean {
-  return propSchema.type === "array" || propSchema.type === "object" || propSchema.setter === "dataSourceSelector";
+  return getLowcodePropEditorControl(propSchema) === "json";
 }
 
 function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {

@@ -7,9 +7,11 @@ import {
   createEditorState,
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
+  createLowcodeDefaultListItem,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
+  createLowcodeListEditorFields,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
   createLowcodeOutlineRowSearchText,
@@ -40,13 +42,19 @@ import {
   getLowcodeEditorViewportPreset,
   getLowcodeEditorDraftStatusTone,
   getLowcodeNodeDisplayName,
+  getLowcodePropEditorControl,
   groupLowcodeEditorCommands,
   getLowcodePropGroupKey,
+  isLowcodeListImageField,
+  isLowcodeListPropEditor,
+  isLowcodeStructuredPropEditor,
   isLowcodePropGroupCollapsed,
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
+  LOWCODE_EDITOR_COMMON_LIST_FIELDS,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
+  normalizeLowcodePropInputValue,
   parseLowcodeSchemaFileContent,
   parseLowcodeEditorDraftContent,
   pickLowcodeMaterialEntriesByComponentNames,
@@ -57,6 +65,8 @@ import {
   summarizeLowcodePreviewLinks,
   summarizeLowcodePublishChecks,
   toggleLowcodePropGroupCollapsed,
+  toLowcodePropInputBoolean,
+  toLowcodePropInputText,
 } from "../dist/index.js";
 import {
   createLowcodeNode,
@@ -678,6 +688,68 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(isLowcodePropGroupCollapsed(collapsed, "content"), true);
     assert.equal(isLowcodePropGroupCollapsed(collapsed, "advanced"), true);
     assert.equal(isLowcodePropGroupCollapsed(toggleLowcodePropGroupCollapsed(collapsed, "content"), "content"), false);
+  });
+
+  it("creates reusable property editor field models and input values", () => {
+    const textSchema = { label: "标题", type: "string", setter: "input", defaultValue: "" };
+    const numberSchema = { label: "列数", type: "number", setter: "number", defaultValue: 2 };
+    const colorSchema = { label: "颜色", type: "string", setter: "color", defaultValue: "#111827" };
+    const switchSchema = { label: "开启", type: "boolean", setter: "switch", defaultValue: false };
+    const textareaSchema = { label: "说明", type: "string", setter: "textarea", defaultValue: "" };
+    const jsonSchema = { label: "样式", type: "object", setter: "textarea", defaultValue: {} };
+    const listSchema = { label: "列表", type: "array", setter: "textarea", defaultValue: [] };
+
+    assert.equal(getLowcodePropEditorControl(textSchema), "text");
+    assert.equal(getLowcodePropEditorControl(numberSchema), "number");
+    assert.equal(getLowcodePropEditorControl(colorSchema), "color");
+    assert.equal(getLowcodePropEditorControl(switchSchema), "switch");
+    assert.equal(getLowcodePropEditorControl(textareaSchema), "textarea");
+    assert.equal(getLowcodePropEditorControl(jsonSchema), "json");
+    assert.equal(getLowcodePropEditorControl(listSchema), "list");
+    assert.equal(isLowcodeListPropEditor(listSchema), true);
+    assert.equal(isLowcodeStructuredPropEditor(jsonSchema), true);
+
+    assert.equal(LOWCODE_EDITOR_COMMON_LIST_FIELDS.imageUrl.label, "图片");
+    const imageCardFields = createLowcodeListEditorFields("items", {
+      componentName: "ImageCardGrid",
+      items: [{ id: "card_1", title: "会场", coverImageUrl: "https://example.com/cover.jpg", customText: "扩展字段" }],
+    });
+    assert.deepEqual(imageCardFields.map((field) => field.name), [
+      "id",
+      "title",
+      "subtitle",
+      "badgeText",
+      "imageUrl",
+      "linkUrl",
+      "coverImageUrl",
+      "customText",
+    ]);
+    assert.equal(isLowcodeListImageField(imageCardFields.find((field) => field.name === "imageUrl")), true);
+    assert.equal(isLowcodeListImageField("coverImageUrl"), true);
+    assert.equal(isLowcodeListImageField("title"), false);
+
+    assert.deepEqual(createLowcodeDefaultListItem("items", {
+      componentName: "FloorAnchorNav",
+      targetNodeId: "floor_1",
+      id: "items_fixed",
+    }), { id: "items_fixed", title: "新楼层", targetId: "floor_1" });
+    assert.deepEqual(createLowcodeDefaultListItem("coupons", { id: "coupon_fixed" }), {
+      id: "coupon_fixed",
+      title: "满 199 减 30",
+      thresholdText: "全场可用",
+      valueText: "¥30",
+      expireText: "领取后 7 天有效",
+    });
+
+    assert.equal(normalizeLowcodePropInputValue(numberSchema, "3"), 3);
+    assert.equal(normalizeLowcodePropInputValue(numberSchema, "abc"), 0);
+    assert.equal(normalizeLowcodePropInputValue(switchSchema, "false"), false);
+    assert.deepEqual(normalizeLowcodePropInputValue(listSchema, "[{\"id\":\"item_1\"}]"), [{ id: "item_1" }]);
+    assert.equal(normalizeLowcodePropInputValue(jsonSchema, "{bad json"), "{bad json");
+    assert.equal(toLowcodePropInputBoolean("off"), false);
+    assert.equal(toLowcodePropInputBoolean("yes"), true);
+    assert.equal(toLowcodePropInputText({ title: "结构化" }).includes("\n  "), true);
+    assert.equal(toLowcodePropInputText(undefined), "");
   });
 
   it("creates version diff items and schema preview snippets", () => {
