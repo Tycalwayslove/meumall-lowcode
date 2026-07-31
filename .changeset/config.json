@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [],
+  "linked": [
+    [
+      "@meumall/lowcode-schema",
+      "@meumall/lowcode-core",
+      "@meumall/lowcode-renderer-h5",
+      "@meumall/lowcode-materials-h5",
+      "@meumall/lowcode-editor",
+      "@meumall/lowcode-adapters"
+    ]
+  ],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}
+

@@ -1,0 +1,14 @@
+node_modules
+dist
+*.tsbuildinfo
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+coverage
+.turbo
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example

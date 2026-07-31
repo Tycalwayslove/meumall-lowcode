@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@meumall/lowcode-schema": ["packages/schema/src/index.ts"],
+      "@meumall/lowcode-core": ["packages/core/src/index.ts"],
+      "@meumall/lowcode-renderer-h5": ["packages/renderer-h5/src/index.tsx"],
+      "@meumall/lowcode-materials-h5": ["packages/materials-h5/src/index.tsx"],
+      "@meumall/lowcode-editor": ["packages/editor/src/index.ts"],
+      "@meumall/lowcode-adapters": ["packages/adapters/src/index.ts"]
+    }
+  }
+}

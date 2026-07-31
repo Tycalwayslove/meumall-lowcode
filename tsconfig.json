@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/schema" },
+    { "path": "./packages/core" },
+    { "path": "./packages/adapters" },
+    { "path": "./packages/editor" },
+    { "path": "./packages/renderer-h5" },
+    { "path": "./packages/materials-h5" }
+  ]
+}
