@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch, type CSSProperties } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch, type CSSProperties } from "vue";
 import {
   ArrowDown,
   ArrowUp,
@@ -296,6 +296,7 @@ const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
 const phoneFrameRef = ref<HTMLElement>();
+const commandSearchInputRef = ref<HTMLInputElement>();
 const releaseMessage = ref("");
 const configPlatformClient = localConfigPlatformClient;
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
@@ -305,6 +306,8 @@ const templateKeyword = ref("");
 const templateCategory = ref("全部");
 const materialKeyword = ref("");
 const materialCategory = ref("全部");
+const commandPaletteOpen = ref(false);
+const commandKeyword = ref("");
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
 const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
@@ -349,6 +352,7 @@ type CanvasSnapGuideAxis = "x" | "y";
 type PublishCheckStatus = "pass" | "warning" | "error";
 type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
+type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -401,6 +405,16 @@ interface WorkspaceStat {
   label: string;
   value: string;
   tone?: "neutral" | "success" | "warning" | "danger";
+}
+
+interface CommandPaletteItem {
+  id: string;
+  title: string;
+  group: CommandPaletteGroup;
+  description: string;
+  keywords: string[];
+  disabled?: boolean;
+  run: () => void | Promise<void>;
 }
 
 interface PropEditorEntry {
@@ -666,6 +680,117 @@ const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((it
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(pageTemplates.map((template) => template.category)))]);
+const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
+  {
+    id: "mode-design",
+    title: "切换到设计模式",
+    group: "视图",
+    description: "回到可拖拽和可选中节点的画布。",
+    keywords: ["design", "设计", "画布"],
+    run: () => {
+      editorState.value = setEditorMode(editorState.value, "design");
+    },
+  },
+  {
+    id: "mode-preview",
+    title: "切换到预览模式",
+    group: "视图",
+    description: "查看接近用户侧的 H5 页面效果。",
+    keywords: ["preview", "预览", "h5"],
+    run: () => {
+      editorState.value = setEditorMode(editorState.value, "preview");
+    },
+  },
+  {
+    id: "mode-outline",
+    title: "切换到源码模式",
+    group: "视图",
+    description: "查看和编辑当前 Page Schema JSON。",
+    keywords: ["schema", "json", "源码"],
+    run: () => {
+      editorState.value = setEditorMode(editorState.value, "outline");
+    },
+  },
+  {
+    id: "save-draft",
+    title: "保存草稿",
+    group: "常用操作",
+    description: editorState.value.dirty ? "保存当前页面到本地 mock 配置平台。" : "当前页面已保存。",
+    keywords: ["save", "草稿", "保存"],
+    run: saveSchema,
+  },
+  {
+    id: "create-preview",
+    title: "生成预览链接",
+    group: "常用操作",
+    description: "通过发布检查后生成 preview release。",
+    keywords: ["preview", "release", "预览链接"],
+    disabled: hasPublishBlockingErrors.value,
+    run: createPreviewRelease,
+  },
+  {
+    id: "publish-page",
+    title: "发布当前页面",
+    group: "常用操作",
+    description: "通过发布检查后生成 published release。",
+    keywords: ["publish", "发布", "上线"],
+    disabled: hasPublishBlockingErrors.value,
+    run: publishCurrentPage,
+  },
+  {
+    id: "open-runtime",
+    title: "打开已发布 H5",
+    group: "常用操作",
+    description: "用内置 runtime 打开当前 pageId 的页面。",
+    keywords: ["runtime", "h5", "打开"],
+    run: () => openRuntime(),
+  },
+  {
+    id: "open-react-runtime",
+    title: "打开 React H5 预览",
+    group: "常用操作",
+    description: "把当前 schema 交给 React H5 runtime 渲染。",
+    keywords: ["react", "handoff", "h5"],
+    run: () => openReactH5Runtime(),
+  },
+  {
+    id: "clear-canvas",
+    title: "清空画布",
+    group: "常用操作",
+    description: "保留页面配置，移除当前所有节点。",
+    keywords: ["clear", "blank", "清空", "空白"],
+    run: clearCanvas,
+  },
+  ...materials.map((material): CommandPaletteItem => ({
+    id: `material-${material.manifest.componentName}`,
+    title: `添加物料：${material.manifest.title}`,
+    group: "物料",
+    description: `${material.manifest.category} / ${material.manifest.componentName}`,
+    keywords: [material.manifest.title, material.manifest.componentName, material.manifest.category],
+    run: () => addMaterial(material.manifest),
+  })),
+  ...pageTemplates.map((template): CommandPaletteItem => ({
+    id: `template-${template.id}`,
+    title: `应用模板：${template.title}`,
+    group: "模板",
+    description: `${template.category} / ${template.description}`,
+    keywords: [template.title, template.description, template.category, ...(template.tags ?? [])],
+    run: () => applyTemplate({
+      id: template.id,
+      title: template.title,
+      description: template.description,
+      category: template.category,
+    }),
+  })),
+]);
+const visibleCommandPaletteItems = computed(() => {
+  const keyword = commandKeyword.value.trim().toLowerCase();
+  const source = commandPaletteItems.value;
+  if (!keyword) return source.slice(0, 28);
+  return source
+    .filter((item) => [item.title, item.group, item.description, ...item.keywords].join(" ").toLowerCase().includes(keyword))
+    .slice(0, 28);
+});
 
 watch(
   () => editorState.value.schema,
@@ -766,12 +891,14 @@ onMounted(() => {
   window.addEventListener("pointermove", onPointerCanvasDragMove, { passive: false });
   window.addEventListener("pointerup", onPointerCanvasDragEnd);
   window.addEventListener("pointercancel", onPointerCanvasDragCancel);
+  window.addEventListener("keydown", onGlobalKeydown);
 });
 
 onUnmounted(() => {
   window.removeEventListener("pointermove", onPointerCanvasDragMove);
   window.removeEventListener("pointerup", onPointerCanvasDragEnd);
   window.removeEventListener("pointercancel", onPointerCanvasDragCancel);
+  window.removeEventListener("keydown", onGlobalKeydown);
 });
 
 function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefined {
@@ -2226,6 +2353,70 @@ function resetSchema(): void {
   refreshReleases();
 }
 
+function clearCanvas(): void {
+  if (editorState.value.schema.nodes.length && !window.confirm("确认清空当前画布吗？")) return;
+  commitPlaygroundSchemaChange(
+    {
+      ...editorState.value.schema,
+      nodes: [],
+    },
+    "clearCanvas",
+    undefined,
+  );
+  editorState.value = {
+    ...editorState.value,
+    selectedNodeId: undefined,
+  };
+  multiSelectedNodeIds.value = [];
+  releaseMessage.value = "已清空画布";
+}
+
+function openCommandPalette(): void {
+  commandKeyword.value = "";
+  commandPaletteOpen.value = true;
+  void nextTick(() => {
+    commandSearchInputRef.value?.focus();
+  });
+}
+
+function closeCommandPalette(): void {
+  commandPaletteOpen.value = false;
+}
+
+async function executeCommandPaletteItem(item: CommandPaletteItem): Promise<void> {
+  if (item.disabled) return;
+  await Promise.resolve(item.run());
+  closeCommandPalette();
+}
+
+async function executeFirstCommandPaletteItem(): Promise<void> {
+  const first = visibleCommandPaletteItems.value.find((item) => !item.disabled);
+  if (first) await executeCommandPaletteItem(first);
+}
+
+function isEditableKeyboardTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
+}
+
+function onGlobalKeydown(event: KeyboardEvent): void {
+  if (isRuntimeMode) return;
+  if (event.key === "Escape" && commandPaletteOpen.value) {
+    event.preventDefault();
+    closeCommandPalette();
+    return;
+  }
+  if (event.key.toLowerCase() !== "k" || (!event.metaKey && !event.ctrlKey)) return;
+  if (isEditableKeyboardTarget(event.target)) return;
+  event.preventDefault();
+  if (commandPaletteOpen.value) {
+    closeCommandPalette();
+  } else {
+    openCommandPalette();
+  }
+}
+
 async function applyTemplate(template: TemplateListItem): Promise<void> {
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
     return;
@@ -2745,6 +2936,10 @@ function formatReleaseTime(value: string): string {
       </div>
 
       <div class="toolbar" aria-label="编辑器工具栏">
+        <button type="button" title="打开快捷命令" class="command-trigger" @click="openCommandPalette">
+          <Search :size="17" />
+          <span>命令</span>
+        </button>
         <button title="设计" :class="{ active: editorState.mode === 'design' }" @click="editorState = setEditorMode(editorState, 'design')">
           <MonitorSmartphone :size="17" />
           <span>设计</span>
@@ -2788,6 +2983,45 @@ function formatReleaseTime(value: string): string {
         </button>
       </div>
     </header>
+
+    <div
+      v-if="commandPaletteOpen"
+      class="command-palette-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="快捷命令"
+      @click.self="closeCommandPalette"
+    >
+      <section class="command-palette">
+        <label class="command-search">
+          <Search :size="17" />
+          <input
+            ref="commandSearchInputRef"
+            v-model="commandKeyword"
+            placeholder="搜索命令、物料或模板"
+            @keydown.enter.prevent="executeFirstCommandPaletteItem"
+            @keydown.escape.prevent="closeCommandPalette"
+          />
+        </label>
+        <div class="command-list">
+          <button
+            v-for="item in visibleCommandPaletteItems"
+            :key="item.id"
+            type="button"
+            class="command-palette-item"
+            :disabled="item.disabled"
+            @click="executeCommandPaletteItem(item)"
+          >
+            <span class="command-item-main">
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.description }}</small>
+            </span>
+            <span class="command-group">{{ item.disabled ? "不可用" : item.group }}</span>
+          </button>
+          <div v-if="!visibleCommandPaletteItems.length" class="mini-empty">没有匹配命令</div>
+        </div>
+      </section>
+    </div>
 
     <aside class="left-panel">
       <section class="panel-section">

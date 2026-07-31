@@ -260,6 +260,23 @@ class CdpPage {
     if (!clicked) fail(`未找到包含文本 ${text} 的元素：${selector}`);
   }
 
+  async pressShortcut(key, options = {}) {
+    const pressed = await this.evaluate(`(() => {
+      const eventOptions = {
+        key: ${jsString(key)},
+        bubbles: true,
+        cancelable: true,
+        ctrlKey: ${Boolean(options.ctrlKey)},
+        metaKey: ${Boolean(options.metaKey)},
+        shiftKey: ${Boolean(options.shiftKey)},
+        altKey: ${Boolean(options.altKey)}
+      };
+      window.dispatchEvent(new KeyboardEvent('keydown', eventOptions));
+      return true;
+    })()`);
+    if (!pressed) fail(`快捷键触发失败：${key}`);
+  }
+
   async close() {
     if (!this.ws) return;
     this.ws.close();
@@ -276,6 +293,32 @@ async function assertPage(page, url, checks) {
 }
 
 async function assertEditorWorkflow(page) {
+  log("检查快捷命令面板");
+  const nodeCountBeforeCommand = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.waitForExpression("document.querySelector('.command-palette')");
+  await page.fillByPlaceholder("搜索命令、物料或模板", "商品榜单");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：商品榜单')");
+  await page.clickByText(".command-palette-item", "添加物料：商品榜单");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
+  log("通过：快捷命令可搜索并添加商品榜单物料");
+
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "源码");
+  await page.clickByText(".command-palette-item", "切换到源码模式");
+  await page.waitForExpression("document.body.innerText.includes('Schema')");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "设计");
+  await page.clickByText(".command-palette-item", "切换到设计模式");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：快捷命令可切换编辑模式");
+
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "保存草稿");
+  await page.clickByText(".command-palette-item", "保存草稿");
+  await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
+  log("通过：快捷命令可保存草稿");
+
   log("检查编辑器模板应用和模式切换操作流");
   await page.fillByPlaceholder("搜索模板", "商品");
   await page.waitForExpression("Array.from(document.querySelectorAll('.template-item strong')).some((item) => item.innerText.includes('商品专题页'))");
