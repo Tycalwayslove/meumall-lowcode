@@ -168,6 +168,44 @@ export interface CreateStaticResourceLibraryClientInput {
   products?: LowcodeProductResource[];
 }
 
+export type LowcodeTemplateStatus = "draft" | "published" | "archived";
+
+export interface LowcodeTemplateQuery {
+  keyword?: string;
+  category?: string;
+  tags?: string[];
+  ids?: string[];
+  status?: LowcodeTemplateStatus;
+  limit?: number;
+}
+
+export interface LowcodeTemplateResource {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: LowcodeTemplateStatus;
+  schema: LowcodePageSchema;
+  tags?: string[];
+  thumbnailUrl?: string;
+  version?: string;
+  updatedAt?: string;
+}
+
+export interface LowcodeTemplateSearchResult {
+  items: LowcodeTemplateResource[];
+  total: number;
+}
+
+export interface LowcodeTemplateLibraryClient {
+  searchTemplates(query?: LowcodeTemplateQuery): MaybePromise<LowcodeTemplateSearchResult>;
+  getTemplate(id: string): MaybePromise<LowcodeTemplateResource | undefined>;
+}
+
+export interface CreateStaticTemplateLibraryClientInput {
+  templates?: LowcodeTemplateResource[];
+}
+
 export function createDataSourceRegistry(initialHandlers: Record<string, DataSourceHandler> = {}): DataSourceRegistry {
   const handlers = new Map<string, DataSourceHandler>(Object.entries(initialHandlers));
   return {
@@ -213,6 +251,18 @@ function applyResourceLimit<T>(items: T[], limit: number | undefined): T[] {
   return items.slice(0, limit);
 }
 
+function clonePageSchema(schema: LowcodePageSchema): LowcodePageSchema {
+  return JSON.parse(JSON.stringify(schema)) as LowcodePageSchema;
+}
+
+function cloneTemplateResource(template: LowcodeTemplateResource): LowcodeTemplateResource {
+  return {
+    ...template,
+    schema: clonePageSchema(template.schema),
+    tags: template.tags ? [...template.tags] : undefined,
+  };
+}
+
 export function createStaticResourceLibraryClient(input: CreateStaticResourceLibraryClientInput = {}): LowcodeResourceLibraryClient {
   const imageAssets = input.imageAssets ?? [];
   const products = input.products ?? [];
@@ -246,6 +296,35 @@ export function createStaticResourceLibraryClient(input: CreateStaticResourceLib
         items: applyResourceLimit(items, query.limit),
         total: items.length,
       };
+    },
+  };
+}
+
+export function createStaticTemplateLibraryClient(input: CreateStaticTemplateLibraryClientInput = {}): LowcodeTemplateLibraryClient {
+  const templates = input.templates ?? [];
+
+  return {
+    searchTemplates(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const category = query.category && query.category !== "全部" ? query.category : undefined;
+      const items = templates.filter((template) => {
+        if (category && template.category !== category) return false;
+        if (query.status && template.status !== query.status) return false;
+        if (!resourceMatchesIds(template.id, query.ids)) return false;
+        if (!resourceMatchesTags(template.tags, query.tags)) return false;
+        return resourceMatchesKeyword(
+          [template.id, template.title, template.description, template.category, template.version, ...(template.tags ?? [])],
+          keyword,
+        );
+      });
+      return {
+        items: applyResourceLimit(items, query.limit).map(cloneTemplateResource),
+        total: items.length,
+      };
+    },
+    getTemplate(id: string) {
+      const template = templates.find((item) => item.id === id);
+      return template ? cloneTemplateResource(template) : undefined;
     },
   };
 }

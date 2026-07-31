@@ -27,6 +27,7 @@
 - H5 runtime 集成清单已写入 `.ai-workspace/contracts/h5-runtime-integration-v1.md`，`docs/meumall-integration.md` 是面向 `hybird-meumall` 接入的简版说明。
 - `@meumall/lowcode-adapters` 已提供 `loadLowcodeRuntimeSchema`，统一按 `encodedSchema -> releaseId -> pageId -> fallbackSchema` 获取运行时 schema；React H5 runtime playground 已改为使用该 loader。
 - `@meumall/lowcode-adapters` 已提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，Vue3 编辑器 playground 右侧素材库和商品选择器已通过 resource client 查询数据；后续接真实素材中心/商品中心时优先替换 client，不改 UI 内部查询逻辑。
+- `@meumall/lowcode-adapters` 已提供 `LowcodeTemplateLibraryClient` 和 `createStaticTemplateLibraryClient`，Vue3 编辑器 playground 左侧模板列表已通过 template client 查询，支持搜索、分类过滤、加载态和空状态；后续接 Java 模板市场时优先替换 client，不改 UI 内部查询逻辑。
 - Vue3 编辑器 playground 右侧属性区已提供素材库和商品选择器：图片类节点可搜索/分类选择图片，`ProductList`/`FlashSaleList` 可搜索多选商品并写入静态 `props.items`，也可以重新绑定 `products` 数据源。
 - Vue3 编辑器 playground 画布已支持物料拖拽插入线：拖到节点上半区插入前方，下半区插入后方，拖到 `SectionContainer` 中间区域加入容器，拖到空白区域追加页面末尾。
 - Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。

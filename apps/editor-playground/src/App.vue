@@ -26,12 +26,14 @@ import {
   createSafeActionExecutor,
   createSafeActionRegistry,
   createStaticResourceLibraryClient,
+  createStaticTemplateLibraryClient,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
   type DataSourceResolutionRecord,
   type LowcodeImageAssetResource,
   type LowcodeProductResource,
   type LowcodeResourceSearchResult,
+  type LowcodeTemplateResource,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
@@ -171,6 +173,9 @@ const resourceLibraryClient = createStaticResourceLibraryClient({
   imageAssets: sampleAssets,
   products: sampleProducts,
 });
+const templateLibraryClient = createStaticTemplateLibraryClient({
+  templates: pageTemplates,
+});
 const previewDataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
@@ -200,6 +205,10 @@ const configPlatformClient = localConfigPlatformClient;
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
+const templateKeyword = ref("");
+const templateCategory = ref("全部");
+const visiblePageTemplates = ref<TemplateListItem[]>([]);
+const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
 const assetCategory = ref("全部");
 const assetTargetPropName = ref("");
@@ -219,6 +228,7 @@ const isRuntimeDataResolving = ref(false);
 const actionMessage = ref("");
 let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
+let templateSearchSeq = 0;
 let assetSearchSeq = 0;
 let productSearchSeq = 0;
 
@@ -226,6 +236,7 @@ type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
 type CanvasSnapGuideAxis = "x" | "y";
 type PublishCheckStatus = "pass" | "warning" | "error";
+type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -411,6 +422,7 @@ const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
 const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
+const templateCategories = computed(() => ["全部", ...Array.from(new Set(pageTemplates.map((template) => template.category)))]);
 
 watch(
   () => editorState.value.schema,
@@ -445,6 +457,14 @@ watch(
   () => selectedNode.value?.id,
   () => {
     selectedProductIds.value = getProductIdsFromNode(selectedNode.value);
+  },
+  { immediate: true },
+);
+
+watch(
+  [templateKeyword, templateCategory],
+  () => {
+    void refreshTemplates();
   },
   { immediate: true },
 );
@@ -604,6 +624,29 @@ async function toResourceSearchResult<T>(
   result: LowcodeResourceSearchResult<T> | Promise<LowcodeResourceSearchResult<T>>,
 ): Promise<LowcodeResourceSearchResult<T>> {
   return Promise.resolve(result);
+}
+
+async function refreshTemplates(): Promise<void> {
+  const seq = ++templateSearchSeq;
+  isTemplateSearching.value = true;
+  try {
+    const result = await Promise.resolve(templateLibraryClient.searchTemplates({
+      keyword: templateKeyword.value,
+      category: templateCategory.value,
+      status: "published",
+    }));
+    if (seq !== templateSearchSeq) return;
+    visiblePageTemplates.value = result.items.map((template) => ({
+      id: template.id,
+      title: template.title,
+      description: template.description,
+      category: template.category,
+    }));
+  } catch {
+    if (seq === templateSearchSeq) visiblePageTemplates.value = [];
+  } finally {
+    if (seq === templateSearchSeq) isTemplateSearching.value = false;
+  }
 }
 
 async function refreshImageAssets(): Promise<void> {
@@ -1716,11 +1759,16 @@ function resetSchema(): void {
   refreshReleases();
 }
 
-function applyTemplate(template: PageTemplate): void {
+async function applyTemplate(template: TemplateListItem): Promise<void> {
   if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
     return;
   }
-  const schema = cloneTemplateSchema(template);
+  const templateDetail = await Promise.resolve(templateLibraryClient.getTemplate(template.id));
+  if (!templateDetail) {
+    releaseMessage.value = "模板不存在或已下架";
+    return;
+  }
+  const schema = cloneTemplateSchema(templateDetail);
   window.localStorage.removeItem(STORAGE_KEY);
   editorState.value = createEditorState(schema, {
     selectedNodeId: schema.nodes[0]?.id,
@@ -1729,7 +1777,7 @@ function applyTemplate(template: PageTemplate): void {
   });
   schemaDraft.value = JSON.stringify(schema, null, 2);
   jsonError.value = "";
-  releaseMessage.value = `已应用模板：${template.title}`;
+  releaseMessage.value = `已应用模板：${templateDetail.title}`;
   refreshReleases();
 }
 
@@ -2271,8 +2319,19 @@ function formatReleaseTime(value: string): string {
           <Layers :size="16" />
           <span>模板</span>
         </div>
+        <div class="template-filters">
+          <label class="search-field">
+            <Search :size="14" />
+            <input v-model="templateKeyword" placeholder="搜索模板" />
+          </label>
+          <select v-model="templateCategory" aria-label="模板分类">
+            <option v-for="category in templateCategories" :key="category" :value="category">
+              {{ category }}
+            </option>
+          </select>
+        </div>
         <button
-          v-for="template in pageTemplates"
+          v-for="template in visiblePageTemplates"
           :key="template.id"
           class="template-item"
           type="button"
@@ -2280,10 +2339,12 @@ function formatReleaseTime(value: string): string {
         >
           <span>
             <strong>{{ template.title }}</strong>
-            <small>{{ template.description }}</small>
+            <small>{{ template.category }} / {{ template.description }}</small>
           </span>
           <Plus :size="15" />
         </button>
+        <div v-if="isTemplateSearching" class="mini-empty">模板搜索中</div>
+        <div v-else-if="!visiblePageTemplates.length" class="mini-empty">没有匹配模板</div>
       </section>
 
       <section class="panel-section">

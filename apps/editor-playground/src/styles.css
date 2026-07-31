@@ -228,6 +228,24 @@ button:disabled {
   background: #eef2ff;
 }
 
+.template-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.template-filters select {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 8px;
+  color: #111827;
+  background: #fff;
+  font-size: 12px;
+}
+
 .template-item strong,
 .template-item small,
 .material-item strong,

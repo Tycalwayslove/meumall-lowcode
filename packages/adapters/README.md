@@ -12,6 +12,7 @@ Utilities:
 - `createSafeActionExecutor`
 - `createHttpConfigPlatformClient`
 - `createStaticResourceLibraryClient`
+- `createStaticTemplateLibraryClient`
 - `encodePageSchemaToUrlParam`
 - `decodePageSchemaFromUrlParam`
 
@@ -70,3 +71,20 @@ The first integration stage supports:
 - result limiting.
 
 `createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape and keep UI logic unchanged.
+
+## Template Library Client
+
+`LowcodeTemplateLibraryClient` describes editor-facing page template search:
+
+- `searchTemplates(query)`
+- `getTemplate(id)`
+
+The first integration stage supports:
+
+- keyword search by id/title/description/category/tags/version.
+- category filtering.
+- status filtering for `draft`, `published`, and `archived`.
+- tag and id filtering.
+- result limiting.
+
+`createStaticTemplateLibraryClient` is the local implementation used by the Vue editor playground. It clones template schemas before returning them, so applying a template to a page will not mutate the template source. Real Java template-market integration should provide the same client shape and keep editor UI logic unchanged.

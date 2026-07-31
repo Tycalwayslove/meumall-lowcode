@@ -1,11 +1,7 @@
+import type { LowcodeTemplateResource } from "@meumall/lowcode-adapters";
 import { createLowcodePageSchema, type LowcodePageSchema } from "@meumall/lowcode-schema";
 
-export interface PageTemplate {
-  id: string;
-  title: string;
-  description: string;
-  schema: LowcodePageSchema;
-}
+export type PageTemplate = LowcodeTemplateResource;
 
 const productItems = [
   {
@@ -60,6 +56,10 @@ export const pageTemplates: PageTemplate[] = [
     id: "summer-campaign",
     title: "大促活动页",
     description: "适合节日促销、平台大促和主题营销。",
+    category: "活动营销",
+    status: "published",
+    tags: ["大促", "节日", "楼层", "优惠券"],
+    version: "1.0.0",
     schema: createLowcodePageSchema({
       pageId: "summer-campaign-demo",
       title: "夏日好物节",
@@ -303,6 +303,10 @@ export const pageTemplates: PageTemplate[] = [
     id: "new-user-coupon",
     title: "新人券领取页",
     description: "适合投放拉新、注册礼和首单优惠。",
+    category: "拉新转化",
+    status: "published",
+    tags: ["新人", "优惠券", "首单", "转化"],
+    version: "1.0.0",
     schema: createLowcodePageSchema({
       pageId: "new-user-coupon-demo",
       title: "新人专享礼",
@@ -400,6 +404,10 @@ export const pageTemplates: PageTemplate[] = [
     id: "product-topic",
     title: "商品专题页",
     description: "适合品类专题、达人推荐和爆品集合。",
+    category: "商品运营",
+    status: "published",
+    tags: ["商品", "专题", "达人", "品类"],
+    version: "1.0.0",
     schema: createLowcodePageSchema({
       pageId: "product-topic-demo",
       title: "通勤好物专题",

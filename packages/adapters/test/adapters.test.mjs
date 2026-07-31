@@ -6,6 +6,7 @@ import {
   createDataSourceRegistry,
   createHttpConfigPlatformClient,
   createStaticResourceLibraryClient,
+  createStaticTemplateLibraryClient,
   createSafeActionExecutor,
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
@@ -164,6 +165,58 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(productResult.items.length, 1);
     assert.equal(productResult.items[0].id, "sku_001");
     assert.equal(taggedProductResult.items[0].id, "sku_002");
+  });
+
+  it("searches and clones static page templates through a template library client", async () => {
+    const campaignSchema = createLowcodePageSchema({
+      pageId: "tpl_campaign",
+      title: "大促活动页",
+      nodes: [{ id: "hero", componentName: "ActivityHero", props: { title: "大促" } }],
+    });
+    const topicSchema = createLowcodePageSchema({
+      pageId: "tpl_topic",
+      title: "商品专题页",
+      nodes: [{ id: "banner", componentName: "ImageBanner", props: { imageUrl: "https://example.com/banner.png" } }],
+    });
+    const client = createStaticTemplateLibraryClient({
+      templates: [
+        {
+          id: "campaign",
+          title: "大促活动页",
+          description: "适合平台大促",
+          category: "活动营销",
+          status: "published",
+          tags: ["大促", "首屏"],
+          version: "1.0.0",
+          schema: campaignSchema,
+        },
+        {
+          id: "topic",
+          title: "商品专题页",
+          description: "适合单品集合",
+          category: "商品运营",
+          status: "draft",
+          tags: ["商品"],
+          version: "0.1.0",
+          schema: topicSchema,
+        },
+      ],
+    });
+
+    const categoryResult = await client.searchTemplates({ category: "活动营销", status: "published" });
+    const keywordResult = await client.searchTemplates({ keyword: "商品", limit: 1 });
+    const taggedResult = await client.searchTemplates({ tags: ["首屏"] });
+    const template = await client.getTemplate("campaign");
+    assert.equal(categoryResult.total, 1);
+    assert.equal(categoryResult.items[0].id, "campaign");
+    assert.equal(keywordResult.total, 1);
+    assert.equal(keywordResult.items[0].id, "topic");
+    assert.equal(taggedResult.items[0].id, "campaign");
+    assert.equal(template?.schema.pageId, "tpl_campaign");
+
+    categoryResult.items[0].schema.title = "被编辑后的页面";
+    const nextResult = await client.searchTemplates({ ids: ["campaign"] });
+    assert.equal(nextResult.items[0].schema.title, "大促活动页");
   });
 
   it("executes safe action handlers by type", async () => {
