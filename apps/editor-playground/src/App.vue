@@ -250,10 +250,41 @@ interface ReleaseDiffItem {
   changed: boolean;
 }
 
+interface ListEditorField {
+  name: string;
+  label: string;
+  placeholder: string;
+  multiline?: boolean;
+}
+
 const canvasDropHint = ref<CanvasDropHint>();
 
 const MATERIAL_DRAG_TYPE = "application/x-meumall-material";
 const NODE_DRAG_TYPE = "application/x-meumall-node";
+
+const commonListEditorFields: Record<string, ListEditorField> = {
+  id: { name: "id", label: "ID", placeholder: "唯一标识" },
+  typeText: { name: "typeText", label: "类型", placeholder: "门店 / 达人 / 推荐" },
+  title: { name: "title", label: "标题", placeholder: "请输入标题" },
+  subtitle: { name: "subtitle", label: "副标题", placeholder: "请输入副标题" },
+  desc: { name: "desc", label: "说明", placeholder: "请输入说明" },
+  content: { name: "content", label: "内容", placeholder: "请输入内容", multiline: true },
+  imageUrl: { name: "imageUrl", label: "图片", placeholder: "图片 URL" },
+  valueText: { name: "valueText", label: "面值", placeholder: "¥30 / 包邮" },
+  thresholdText: { name: "thresholdText", label: "门槛", placeholder: "满 199 可用" },
+  expireText: { name: "expireText", label: "有效期", placeholder: "领取后 7 天有效" },
+  buttonText: { name: "buttonText", label: "按钮", placeholder: "查看 / 领取" },
+  targetId: { name: "targetId", label: "目标节点", placeholder: "node_id" },
+  metricText: { name: "metricText", label: "指标", placeholder: "4.9 分 / 12.8w 粉丝" },
+  linkUrl: { name: "linkUrl", label: "链接", placeholder: "跳转 URL" },
+  badgeText: { name: "badgeText", label: "角标", placeholder: "热卖 / 精选" },
+  value: { name: "value", label: "值", placeholder: "请输入值", multiline: true },
+};
+
+const defaultListFields: Record<string, string[]> = {
+  coupons: ["id", "title", "thresholdText", "valueText", "expireText", "buttonText"],
+  rules: ["title", "content"],
+};
 
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
@@ -925,6 +956,111 @@ function applySelectedProductsToNode(): void {
 function clearSelectedProducts(): void {
   selectedProductIds.value = [];
   applySelectedProductsToNode();
+}
+
+function isRecord(value: unknown): value is Record<string, JsonValue> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function getPropArray(propName: string): JsonValue[] {
+  const value = selectedNode.value?.props[propName];
+  return Array.isArray(value) ? ([...value] as JsonValue[]) : [];
+}
+
+function toEditableListItem(value: JsonValue): Record<string, JsonValue> {
+  return isRecord(value) ? { ...value } : { value };
+}
+
+function getListItems(propName: string): Record<string, JsonValue>[] {
+  return getPropArray(propName).map((item) => toEditableListItem(item));
+}
+
+function isListPropEditor(propSchema: LowcodePropSchema): boolean {
+  return propSchema.type === "array" && propSchema.setter === "textarea";
+}
+
+function getDefaultFieldNames(propName: string): string[] {
+  if (propName in defaultListFields) return defaultListFields[propName] ?? [];
+  const componentName = selectedNode.value?.componentName;
+  if (propName === "items" && componentName === "FloorAnchorNav") return ["id", "title", "targetId"];
+  if (propName === "items" && componentName === "NavGrid") return ["id", "title", "subtitle"];
+  if (propName === "items" && componentName === "StoreExpertSection") {
+    return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
+  }
+  if (propName === "items") return ["id", "title", "subtitle", "desc", "imageUrl"];
+  return ["id", "title", "subtitle"];
+}
+
+function listEditorFields(propName: string): ListEditorField[] {
+  const fields = new Set(getDefaultFieldNames(propName));
+  for (const item of getListItems(propName)) {
+    Object.keys(item).forEach((key) => fields.add(key));
+  }
+  return [...fields].map((name) => commonListEditorFields[name] ?? { name, label: name, placeholder: name });
+}
+
+function createDefaultListItem(propName: string): JsonObject {
+  const id = `${propName}_${Date.now().toString(36)}`;
+  if (propName === "rules") {
+    return { title: "新规则", content: "请输入规则内容" };
+  }
+  if (propName === "coupons") {
+    return { id, title: "满 199 减 30", thresholdText: "全场可用", valueText: "¥30", expireText: "领取后 7 天有效" };
+  }
+  const componentName = selectedNode.value?.componentName;
+  if (propName === "items" && componentName === "FloorAnchorNav") {
+    return { id, title: "新楼层", targetId: selectedNode.value?.id ?? "" };
+  }
+  if (propName === "items" && componentName === "NavGrid") {
+    return { id, title: "新导航", subtitle: "请输入说明" };
+  }
+  if (propName === "items" && componentName === "StoreExpertSection") {
+    return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
+  }
+  return { id, title: "新项目", subtitle: "请输入说明" };
+}
+
+function updateListProp(propName: string, propSchema: LowcodePropSchema, items: JsonValue[]): void {
+  updateProp(propName, propSchema, items);
+}
+
+function addListItem(propName: string, propSchema: LowcodePropSchema): void {
+  updateListProp(propName, propSchema, [...getPropArray(propName), createDefaultListItem(propName)]);
+}
+
+function duplicateListItem(propName: string, propSchema: LowcodePropSchema, index: number): void {
+  const items = getPropArray(propName);
+  const source = items[index];
+  if (source === undefined) return;
+  const copy = isRecord(source) ? { ...source, id: `${String(source.id ?? propName)}_copy_${Date.now().toString(36)}` } : source;
+  items.splice(index + 1, 0, copy as JsonValue);
+  updateListProp(propName, propSchema, items);
+}
+
+function removeListItem(propName: string, propSchema: LowcodePropSchema, index: number): void {
+  const items = getPropArray(propName);
+  items.splice(index, 1);
+  updateListProp(propName, propSchema, items);
+}
+
+function moveListItem(propName: string, propSchema: LowcodePropSchema, index: number, offset: -1 | 1): void {
+  const items = getPropArray(propName);
+  const targetIndex = index + offset;
+  if (targetIndex < 0 || targetIndex >= items.length) return;
+  const [item] = items.splice(index, 1);
+  if (item === undefined) return;
+  items.splice(targetIndex, 0, item);
+  updateListProp(propName, propSchema, items);
+}
+
+function updateListItemField(propName: string, propSchema: LowcodePropSchema, index: number, fieldName: string, value: string): void {
+  const items = getPropArray(propName);
+  const current = toEditableListItem(items[index] ?? {});
+  items[index] = {
+    ...current,
+    [fieldName]: value,
+  };
+  updateListProp(propName, propSchema, items);
 }
 
 function updateNodeById(nodes: LowcodeNode[], nodeId: string, updater: (node: LowcodeNode) => LowcodeNode): LowcodeNode[] {
@@ -2001,14 +2137,74 @@ function formatReleaseTime(value: string): string {
             </div>
           </div>
 
-          <label
+          <div
             v-for="(propSchema, propName) in selectedManifest.propsSchema"
             :key="String(propName)"
             class="field"
           >
             <span>{{ propSchema.label }}</span>
+            <div v-if="isListPropEditor(propSchema)" class="list-prop-editor">
+              <div class="list-prop-head">
+                <small>已配置 {{ getListItems(String(propName)).length }} 项</small>
+                <button type="button" @click="addListItem(String(propName), propSchema)">新增一项</button>
+              </div>
+              <div v-if="!getListItems(String(propName)).length" class="mini-empty">暂无列表项，点击新增开始配置</div>
+              <article
+                v-for="(item, itemIndex) in getListItems(String(propName))"
+                :key="`${String(propName)}-${itemIndex}`"
+                class="list-item-editor"
+              >
+                <div class="list-item-head">
+                  <strong>第 {{ itemIndex + 1 }} 项</strong>
+                  <div>
+                    <button type="button" :disabled="itemIndex === 0" @click="moveListItem(String(propName), propSchema, itemIndex, -1)">上移</button>
+                    <button
+                      type="button"
+                      :disabled="itemIndex === getListItems(String(propName)).length - 1"
+                      @click="moveListItem(String(propName), propSchema, itemIndex, 1)"
+                    >
+                      下移
+                    </button>
+                    <button type="button" @click="duplicateListItem(String(propName), propSchema, itemIndex)">复制</button>
+                    <button type="button" class="danger" @click="removeListItem(String(propName), propSchema, itemIndex)">删除</button>
+                  </div>
+                </div>
+                <div class="list-field-grid">
+                  <label
+                    v-for="field in listEditorFields(String(propName))"
+                    :key="`${String(propName)}-${itemIndex}-${field.name}`"
+                    class="mini-field"
+                    :class="{ wide: field.multiline || field.name === 'imageUrl' || field.name === 'content' }"
+                  >
+                    <span>{{ field.label }}</span>
+                    <textarea
+                      v-if="field.multiline"
+                      rows="2"
+                      :placeholder="field.placeholder"
+                      :value="asText(item[field.name])"
+                      @input="updateListItemField(String(propName), propSchema, itemIndex, field.name, ($event.target as HTMLTextAreaElement).value)"
+                    />
+                    <input
+                      v-else
+                      type="text"
+                      :placeholder="field.placeholder"
+                      :value="asText(item[field.name])"
+                      @input="updateListItemField(String(propName), propSchema, itemIndex, field.name, ($event.target as HTMLInputElement).value)"
+                    />
+                  </label>
+                </div>
+              </article>
+              <details class="json-fallback">
+                <summary>JSON 高级编辑</summary>
+                <textarea
+                  :value="asText(selectedNode.props[String(propName)])"
+                  rows="5"
+                  @input="updateProp(String(propName), propSchema, ($event.target as HTMLTextAreaElement).value)"
+                />
+              </details>
+            </div>
             <textarea
-              v-if="isStructured(propSchema) || propSchema.setter === 'textarea' || propSchema.setter === 'richText'"
+              v-else-if="isStructured(propSchema) || propSchema.setter === 'textarea' || propSchema.setter === 'richText'"
               :value="asText(selectedNode.props[String(propName)])"
               rows="5"
               @input="updateProp(String(propName), propSchema, ($event.target as HTMLTextAreaElement).value)"
@@ -2043,7 +2239,7 @@ function formatReleaseTime(value: string): string {
               <button type="button" @click="applySampleProducts">使用示例商品</button>
               <button type="button" @click="bindSelectedProductMaterialToDataSource">绑定数据源 products</button>
             </div>
-          </label>
+          </div>
 
           <div v-if="selectedManifest.events?.length" class="event-binding-list">
             <div class="panel-title compact-title">

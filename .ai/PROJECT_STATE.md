@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料和门店/达人推荐物料。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系、data source resolver、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约和 runtime schema loader，并增强 Vue3 编辑器 mock 素材库、商品选择器、画布拖拽物料插入线、已有节点画布拖拽移动、发布前检查清单、本地版本对比/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、组合券包物料、门店/达人推荐物料和数组属性列表编辑器。
 
 ## 当前维护范围
 
@@ -63,10 +63,11 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器布尔属性编辑：属性面板已将 `switch` setter 和 `boolean` 类型字段渲染为开关控件，写入真实 boolean，并兼容旧草稿中的 `"false"`、`"0"`、`"off"` 字符串。
 - 组合券包物料：React/Vue H5 物料包已新增 `CouponBundle`，支持多券展示、一键领取、单券领取和 `onReceive/onReceiveAll` 事件；大促模板和 React H5 runtime 示例已接入。
 - 门店/达人推荐物料：React/Vue H5 物料包已新增 `StoreExpertSection`，支持门店/达人混合推荐、多项展示、静态列表配置、预留 `items` data source slot 和 `onItemClick` 事件；大促模板和 React H5 runtime 示例已接入。
+- Vue3 编辑器数组属性编辑：属性面板已为 `array` + `textarea` 字段提供列表项编辑器，支持新增、删除、复制、上移、下移和常见字段表单输入，并保留 JSON 高级编辑兜底。
 
 ## 已知缺口
 
-- 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器，但还不是正式管理台组件。
+- 尚未实现完整生产级编辑器 UI；当前已具备 mock 素材/商品选择器和数组属性列表编辑器，但还不是正式管理台组件。
 - 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 画布拖拽已支持新物料投放和已有节点移动；尚未支持移动端 Pointer Events 拖拽、吸附线和多选拖拽。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
@@ -75,7 +76,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前 React H5 handoff 使用 URL schema 参数，正式预览仍需 Java 配置平台 previewId/pageId。
 - Action handler 仍是 playground mock，尚未对接真实跳转桥、领券接口、埋点平台、权限和风控。
 - 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐和 mock 商品数据，尚未对接真实活动、库存、价格、规则中心、楼层配置中心、优惠券中心、门店中心和达人中心。
-- 素材库和商品选择器仍使用本地 mock 数据，尚未接入真实素材中心、商品中心、权限、分页和审核。
+- 素材库、商品选择器和列表项编辑器仍使用本地 mock/通用字段模板，尚未接入真实素材中心、商品中心、优惠券中心、门店/达人中心、权限、分页和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token。
 - 组件级 DOM 测试、浏览器交互测试和 visual regression 尚未建立。
@@ -112,7 +113,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `2c8fd6d` | 新增楼层锚点导航并补充 renderer 节点标记。 |
 | 2026-07-31 | `494bfac` | 增强 Vue3 编辑器布尔开关属性编辑。 |
 | 2026-07-31 | `c587e3e` | 新增组合券包物料并接入 H5 示例。 |
-| 2026-07-31 | 本提交 | 新增门店/达人推荐物料并接入 H5 示例。 |
+| 2026-07-31 | `2b6d726` | 新增门店/达人推荐物料并接入 H5 示例。 |
+| 2026-07-31 | 本提交 | 增强 Vue3 编辑器数组属性列表编辑。 |
 
 ## 默认验证命令
 
