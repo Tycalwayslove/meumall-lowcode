@@ -45,6 +45,7 @@
 - Vue3 编辑器 playground 已支持快捷命令面板：顶部“命令”入口和 `Meta/Ctrl + K` 可打开全局命令面板，支持搜索执行模式切换、保存草稿、生成预览、发布页面、打开 H5/React H5、清空画布、添加物料和应用模板。
 - Vue3 编辑器 playground 已支持节点快捷操作：H5 画布节点和左侧结构树节点可右键打开操作菜单，画布上下文工具条有“更多”入口；全局快捷键支持 Delete/Backspace 删除、Ctrl/Meta+C 复制、Ctrl/Meta+V 粘贴、Ctrl/Meta+D 创建副本、Ctrl/Meta+Z 撤销、Ctrl/Meta+Shift+Z 或 Ctrl+Y 重做，并会避开输入框、textarea、select、contenteditable 和命令面板输入。
 - Vue3 编辑器 playground 已支持结构树导航增强：左侧结构树可按物料标题、组件名、节点 id 和 meta name 搜索，容器节点可折叠/展开；搜索会展示命中节点及其祖先路径，点击结构树节点会选中并滚动 H5 画布到对应节点。
+- Vue3 编辑器 playground 已支持节点命名：结构树主标题展示 `node.meta.name` 或物料标题，右侧当前节点信息卡可编辑节点名称，节点右键菜单可进入结构树内联重命名；重命名复用已有 `meta.name`，可被结构树搜索命中。
 - React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `ProductRankList` 商品榜单，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。

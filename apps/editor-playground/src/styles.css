@@ -552,8 +552,14 @@ button:focus-visible {
 }
 
 .outline-item {
+  cursor: pointer;
   justify-content: flex-start;
   min-height: 42px;
+}
+
+.outline-item:focus-visible {
+  outline: 2px solid rgba(20, 184, 166, 0.24);
+  outline-offset: 2px;
 }
 
 .outline-search {
@@ -669,6 +675,43 @@ button:focus-visible {
 .outline-main small {
   color: #64748b;
   font-size: 11px;
+}
+
+.outline-rename {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 28px;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  width: 100%;
+}
+
+.outline-rename input {
+  min-width: 0;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 8px;
+  color: #111827;
+  background: #fff;
+  font-size: 12px;
+}
+
+.outline-rename button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #1f2937;
+  background: #fff;
+}
+
+.outline-rename button:first-of-type {
+  border-color: #99f6e4;
+  color: #0f766e;
+  background: #f0fdfa;
 }
 
 .container-target {
@@ -1448,8 +1491,12 @@ button:focus-visible {
 }
 
 .selected-card-head strong {
+  min-width: 0;
+  overflow: hidden;
   color: #111827;
   font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .selected-card-head small {
@@ -1460,6 +1507,29 @@ button:focus-visible {
   background: #ccfbf1;
   font-size: 11px;
   font-weight: 700;
+}
+
+.node-name-field {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.node-name-field span {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.node-name-field input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 9px;
+  color: #111827;
+  background: #fff;
+  font-size: 12px;
 }
 
 .selected-meta {

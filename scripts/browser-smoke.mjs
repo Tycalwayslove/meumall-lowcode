@@ -431,7 +431,15 @@ async function assertOutlineNavigator(page) {
   await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('行动按钮')); })()");
   await page.fillByPlaceholder("搜索节点", "");
   await page.waitForExpression("document.querySelectorAll('.outline-item').length >= 3");
-  log("通过：结构树可搜索命中折叠容器内节点并定位选中");
+  await page.contextMenuFirst(".outline-item.selected");
+  await page.clickByText(".node-context-menu button", "重命名节点");
+  await page.fillByPlaceholder("节点名称", "精选专区 CTA");
+  await page.clickFirst(".outline-rename button[title='确认重命名']");
+  await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('精选专区 CTA') && selected.innerText.includes('行动按钮')); })()");
+  await page.fillByPlaceholder("搜索节点", "精选专区");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.outline-item')).some((item) => item.innerText.includes('精选专区 CTA'))");
+  await page.fillByPlaceholder("搜索节点", "");
+  log("通过：结构树可搜索命中折叠容器内节点、定位选中并重命名");
 }
 
 async function cleanup() {

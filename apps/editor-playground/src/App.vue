@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
+  Check,
   Code2,
   Copy,
   Database,
@@ -13,6 +14,7 @@ import {
   Layers,
   MoreHorizontal,
   MonitorSmartphone,
+  Pencil,
   PanelRight,
   Plus,
   Redo2,
@@ -22,6 +24,7 @@ import {
   Smartphone,
   Trash2,
   Undo2,
+  X,
 } from "@lucide/vue";
 import {
   createDataSourceRegistry,
@@ -309,6 +312,8 @@ const materialKeyword = ref("");
 const materialCategory = ref("全部");
 const outlineKeyword = ref("");
 const collapsedOutlineNodeIds = ref<string[]>([]);
+const renamingOutlineNodeId = ref<string>();
+const outlineRenameDraft = ref("");
 const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
 const nodeContextMenu = ref<NodeContextMenuState | undefined>();
@@ -357,7 +362,7 @@ type PublishCheckStatus = "pass" | "warning" | "error";
 type TemplateListItem = Pick<LowcodeTemplateResource, "id" | "title" | "description" | "category">;
 type PropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
 type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
-type NodeContextAction = "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
+type NodeContextAction = "rename" | "insertBefore" | "insertAfter" | "addInside" | "moveUp" | "moveDown" | "copy" | "paste" | "duplicate" | "delete";
 
 interface CanvasSnapGuide {
   axis: CanvasSnapGuideAxis;
@@ -564,6 +569,7 @@ const selectedNode = computed(() => findNode(editorState.value.schema.nodes, edi
 const selectedManifest = computed(() =>
   selectedNode.value ? registry.get(selectedNode.value.componentName)?.manifest : undefined,
 );
+const selectedNodeDisplayName = computed(() => selectedNode.value ? getNodeDisplayName(selectedNode.value) : "");
 const selectedPropGroups = computed<PropEditorGroup[]>(() => {
   const manifest = selectedManifest.value;
   if (!manifest) return [];
@@ -673,6 +679,10 @@ const nodeContextMenuStyle = computed<CSSProperties>(() => {
   };
 });
 const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => [
+  {
+    action: "rename",
+    label: "重命名节点",
+  },
   {
     action: "insertBefore",
     label: "前方插入",
@@ -1054,6 +1064,19 @@ function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string, ancest
     },
     ...flattenNodes(node.children ?? [], depth + 1, node.id, [...ancestorIds, node.id]),
   ]);
+}
+
+function getNodeManifestTitle(node: LowcodeNode): string {
+  return registry.get(node.componentName)?.manifest.title ?? node.componentName;
+}
+
+function getNodeDisplayName(node: LowcodeNode): string {
+  const name = node.meta?.name?.trim();
+  return name || getNodeManifestTitle(node);
+}
+
+function getNodeSubtitle(row: OutlineRow): string {
+  return `${getNodeManifestTitle(row.node)} / ${row.node.id}`;
 }
 
 function outlineRowMatchesKeyword(row: OutlineRow, keyword: string): boolean {
@@ -1664,6 +1687,27 @@ function toggleOutlineCollapse(nodeId: string): void {
     collapsed.add(nodeId);
   }
   collapsedOutlineNodeIds.value = [...collapsed];
+}
+
+function startOutlineRename(nodeId: string): void {
+  const row = findOutlineRowByNodeId(nodeId);
+  if (!row) return;
+  select(nodeId);
+  outlineRenameDraft.value = getNodeDisplayName(row.node);
+  renamingOutlineNodeId.value = nodeId;
+  closeNodeContextMenu();
+}
+
+function cancelOutlineRename(): void {
+  renamingOutlineNodeId.value = undefined;
+  outlineRenameDraft.value = "";
+}
+
+function commitOutlineRename(): void {
+  const nodeId = renamingOutlineNodeId.value;
+  if (!nodeId) return;
+  renameNode(nodeId, outlineRenameDraft.value);
+  cancelOutlineRename();
 }
 
 function pruneCollapsedOutlineNodes(): void {
@@ -2449,6 +2493,30 @@ function updateNodeById(nodes: LowcodeNode[], nodeId: string, updater: (node: Lo
   });
 }
 
+function renameNode(nodeId: string, name: string): void {
+  const trimmedName = name.trim();
+  commitPlaygroundSchemaChange(
+    {
+      ...editorState.value.schema,
+      nodes: updateNodeById(editorState.value.schema.nodes, nodeId, (node) => ({
+        ...node,
+        meta: {
+          ...(node.meta ?? {}),
+          name: trimmedName || undefined,
+          updatedAt: new Date().toISOString(),
+        },
+      })),
+    },
+    "renameNode",
+    nodeId,
+  );
+}
+
+function renameSelectedNode(name: string): void {
+  if (!selectedNode.value) return;
+  renameNode(selectedNode.value.id, name);
+}
+
 function updateProp(propName: string, propSchema: LowcodePropSchema, value: unknown): void {
   if (!selectedNode.value) return;
   editorState.value = replaceNodeProps(editorState.value, selectedNode.value.id, {
@@ -2552,6 +2620,9 @@ function openSelectedNodeContextMenu(event: MouseEvent): void {
 function runNodeContextMenuAction(item: NodeContextMenuItem): void {
   if (item.disabled) return;
   switch (item.action) {
+    case "rename":
+      if (selectedNode.value) startOutlineRename(selectedNode.value.id);
+      return;
     case "insertBefore":
       insertMaterialAroundSelected("before");
       break;
@@ -3351,8 +3422,8 @@ function formatReleaseTime(value: string): string {
       @contextmenu.prevent.stop
     >
       <div class="node-context-head">
-        <strong>{{ selectedManifest?.title ?? selectedNode.componentName }}</strong>
-        <span>{{ selectedNode.id }}</span>
+        <strong>{{ selectedNodeDisplayName }}</strong>
+        <span>{{ selectedManifest?.title ?? selectedNode.componentName }} / {{ selectedNode.id }}</span>
       </div>
       <button
         v-for="item in nodeContextMenuItems"
@@ -3363,6 +3434,7 @@ function formatReleaseTime(value: string): string {
         :class="{ danger: item.danger }"
         @click="runNodeContextMenuAction(item)"
       >
+        <Pencil v-if="item.action === 'rename'" :size="15" />
         <ArrowUp v-if="item.action === 'insertBefore' || item.action === 'moveUp'" :size="15" />
         <ArrowDown v-else-if="item.action === 'insertAfter' || item.action === 'moveDown'" :size="15" />
         <Plus v-else-if="item.action === 'addInside' || item.action === 'paste'" :size="15" />
@@ -3470,10 +3542,12 @@ function formatReleaseTime(value: string): string {
         <div v-if="multiSelectSummary" class="outline-selection-summary">
           {{ multiSelectSummary }}
         </div>
-        <button
+        <div
           v-for="row in visibleOutlineRows"
           :key="row.node.id"
           class="outline-item"
+          role="button"
+          tabindex="0"
           :class="{
             selected: editorState.selectedNodeId === row.node.id,
             'multi-selected': isNodeMultiSelected(row.node.id),
@@ -3513,11 +3587,26 @@ function formatReleaseTime(value: string): string {
             {{ isNodeMultiSelected(row.node.id) ? "✓" : "" }}
           </span>
           <span class="outline-index">{{ row.index + 1 }}</span>
-          <span class="outline-main">
-            <strong>{{ registry.get(row.node.componentName)?.manifest.title ?? row.node.componentName }}</strong>
-            <small>{{ row.node.meta?.name ?? row.node.id }}</small>
+          <span v-if="renamingOutlineNodeId === row.node.id" class="outline-rename" @click.stop>
+            <input
+              v-model="outlineRenameDraft"
+              autofocus
+              placeholder="节点名称"
+              @keydown.enter.prevent="commitOutlineRename"
+              @keydown.escape.prevent="cancelOutlineRename"
+            />
+            <button type="button" title="确认重命名" @click="commitOutlineRename">
+              <Check :size="14" />
+            </button>
+            <button type="button" title="取消重命名" @click="cancelOutlineRename">
+              <X :size="14" />
+            </button>
           </span>
-        </button>
+          <span v-else class="outline-main">
+            <strong>{{ getNodeDisplayName(row.node) }}</strong>
+            <small>{{ getNodeSubtitle(row) }}</small>
+          </span>
+        </div>
         <div v-if="!visibleOutlineRows.length" class="mini-empty">没有匹配节点</div>
       </section>
     </aside>
@@ -3807,9 +3896,17 @@ function formatReleaseTime(value: string): string {
         <div v-if="selectedNode && selectedManifest" class="inspector">
           <div class="selected-card">
             <div class="selected-card-head">
-              <strong>{{ selectedManifest.title }}</strong>
-              <small>{{ selectedManifest.category }}</small>
+              <strong>{{ selectedNodeDisplayName }}</strong>
+              <small>{{ selectedManifest.title }} / {{ selectedManifest.category }}</small>
             </div>
+            <label class="node-name-field">
+              <span>节点名称</span>
+              <input
+                :value="selectedNode.meta?.name ?? ''"
+                placeholder="例如：首屏主会场"
+                @change="renameSelectedNode(($event.target as HTMLInputElement).value)"
+              />
+            </label>
             <dl class="selected-meta">
               <div>
                 <dt>节点</dt>
