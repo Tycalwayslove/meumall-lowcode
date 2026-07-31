@@ -11,6 +11,9 @@ import {
   createLowcodeEditorCommandSearchText,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
+  createLowcodeOutlineRowSearchText,
+  createLowcodeOutlineRows,
+  createLowcodeOutlineVisibility,
   createLowcodePageStartState,
   createLowcodePublishChecks,
   createLowcodeSchemaPreviewItems,
@@ -32,6 +35,8 @@ import {
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT,
   pickLowcodeMaterialEntriesByComponentNames,
+  pruneLowcodeOutlineCollapsedNodeIds,
+  revealLowcodeOutlineNode,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
   summarizeLowcodePublishChecks,
@@ -306,6 +311,86 @@ describe("@meumall/lowcode-editor readiness", () => {
       { group: "视图", items: [commands[2]] },
       { group: "物料", items: [commands[3]] },
     ]);
+  });
+
+  it("creates reusable outline rows and visibility state", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "outline_page",
+      title: "结构树页面",
+      nodes: [
+        createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [
+            createLowcodeNode({
+              id: "banner_1",
+              componentName: "ImageBanner",
+              materialVersion: "1.0.0",
+              props: { imageUrl: "https://example.com/banner.jpg" },
+              meta: { name: "首屏主图" },
+            }),
+            createLowcodeNode({
+              id: "products_1",
+              componentName: "ProductList",
+              materialVersion: "1.0.0",
+              props: { items: [] },
+            }),
+          ],
+        }),
+        createLowcodeNode({
+          id: "button_1",
+          componentName: "ActionButton",
+          materialVersion: "1.0.0",
+          props: { text: "立即查看" },
+        }),
+      ],
+    });
+    const rows = createLowcodeOutlineRows(schema.nodes, {
+      materialManifests: [
+        ...manifests,
+        createMaterialManifest({
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          title: "内容容器",
+          category: "layout",
+          platforms: ["h5"],
+          propsSchema: {},
+          defaultProps: {},
+        }),
+      ],
+    });
+
+    assert.equal(rows.length, 4);
+    assert.equal(rows[0].node.id, "container_1");
+    assert.equal(rows[0].depth, 0);
+    assert.equal(rows[0].hasChildren, true);
+    assert.equal(rows[1].node.id, "banner_1");
+    assert.equal(rows[1].depth, 1);
+    assert.equal(rows[1].parentId, "container_1");
+    assert.deepEqual(rows[1].ancestorIds, ["container_1"]);
+    assert.equal(rows[1].title, "首屏主图");
+    assert.equal(rows[1].subtitle, "图片 Banner / banner_1");
+    assert.ok(createLowcodeOutlineRowSearchText(rows[1]).includes("imagebanner"));
+
+    const searchVisibility = createLowcodeOutlineVisibility(rows, { keyword: "marketing" });
+    assert.deepEqual(searchVisibility.matchedNodeIds, ["banner_1"]);
+    assert.deepEqual(searchVisibility.visibleNodeIds, ["banner_1", "container_1"]);
+    assert.deepEqual(searchVisibility.rows.map((row) => row.node.id), ["container_1", "banner_1"]);
+    assert.equal(searchVisibility.summary, "2 / 4");
+
+    const collapsedVisibility = createLowcodeOutlineVisibility(rows, {
+      collapsedNodeIds: ["container_1"],
+      selectedNodeId: "products_1",
+    });
+    assert.deepEqual(collapsedVisibility.selectedPathNodeIds, ["container_1", "products_1"]);
+    assert.deepEqual(collapsedVisibility.rows.map((row) => row.node.id), ["container_1", "products_1", "button_1"]);
+    assert.equal(collapsedVisibility.summary, "3 / 4");
+
+    assert.deepEqual(pruneLowcodeOutlineCollapsedNodeIds(["container_1", "banner_1", "missing"], rows), ["container_1"]);
+    assert.deepEqual(revealLowcodeOutlineNode("products_1", ["container_1"], rows), []);
+    assert.deepEqual(revealLowcodeOutlineNode("button_1", ["container_1"], rows), ["container_1"]);
   });
 
   it("creates version diff items and schema preview snippets", () => {

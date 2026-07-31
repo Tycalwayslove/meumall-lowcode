@@ -25,6 +25,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeEditorCommandSearchText`
 - `filterLowcodeEditorCommands`
 - `groupLowcodeEditorCommands`
+- `createLowcodeOutlineRows`
+- `createLowcodeOutlineRowSearchText`
+- `createLowcodeOutlineVisibility`
+- `pruneLowcodeOutlineCollapsedNodeIds`
+- `revealLowcodeOutlineNode`
 - `insertNode`
 - `appendNode`
 - `updateNodeProps`
@@ -179,6 +184,22 @@ The command helpers keep editor-shell command palettes reusable across the Vue3 
 `groupLowcodeEditorCommands(commands)` groups filtered commands by their `group` value while preserving first-seen group order and item order.
 
 These helpers do not execute commands, bind keyboard shortcuts, check permissions, or mutate editor state. Host shells remain responsible for `run` handlers, shortcuts such as `Meta/Ctrl + K`, confirmation dialogs, and user-facing feedback.
+
+## Outline Tree API
+
+The outline helpers keep editor structure trees reusable across the Vue3 playground and future management-console shells.
+
+`createLowcodeOutlineRows(nodes, options)` flattens nested Page Schema nodes into rows with depth, parent id, ancestor ids, sibling index, child state, display title, subtitle, and search text. Optional material manifests enrich titles, subtitles, categories, and keyword matching.
+
+`createLowcodeOutlineRowSearchText(row)` returns searchable text derived from the row or its node.
+
+`createLowcodeOutlineVisibility(rows, options)` calculates visible rows, matched node ids, visible node ids, selected-path node ids, and summary text from keyword, collapsed node ids, and selected node id.
+
+`pruneLowcodeOutlineCollapsedNodeIds(collapsedNodeIds, rows)` removes collapsed ids that no longer point to nodes with children.
+
+`revealLowcodeOutlineNode(nodeId, collapsedNodeIds, rows)` returns collapsed ids with the selected node ancestors expanded.
+
+These helpers do not select nodes, scroll canvases, rename nodes, handle drag-and-drop, or check permissions. Host shells remain responsible for UI state, DOM behavior, and user-facing interactions.
 
 ## Contract
 

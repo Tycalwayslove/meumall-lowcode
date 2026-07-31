@@ -65,6 +65,8 @@ import {
   createLowcodeVersionDiffItems,
   createEditorState,
   createLowcodeEditorViewportFromPreset,
+  createLowcodeOutlineRows,
+  createLowcodeOutlineVisibility,
   duplicateNode,
   formatLowcodeTemplateSummary,
   findLowcodeEditorViewportPreset,
@@ -81,7 +83,9 @@ import {
   moveNodeById,
   pasteNode,
   pickLowcodeMaterialEntriesByComponentNames,
+  pruneLowcodeOutlineCollapsedNodeIds,
   redo,
+  revealLowcodeOutlineNode,
   removeNode,
   replaceNodeProps,
   selectNode,
@@ -91,6 +95,7 @@ import {
   summarizeLowcodePublishChecks,
   undo,
   type LowcodeEditorCommandEntry,
+  type LowcodeEditorOutlineRow as OutlineRow,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
@@ -673,39 +678,23 @@ const selectedPropGroups = computed<PropEditorGroup[]>(() => {
     .filter((group) => group.entries.length > 0);
 });
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
-const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
+const outlineRows = computed(() =>
+  createLowcodeOutlineRows(editorState.value.schema.nodes, {
+    materialManifests: materials.map((material) => material.manifest),
+  }),
+);
 const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
-const outlineKeywordNormalized = computed(() => outlineKeyword.value.trim().toLowerCase());
 const collapsedOutlineNodeIdSet = computed(() => new Set(collapsedOutlineNodeIds.value));
-const outlineMatchedNodeIdSet = computed(() => {
-  const keyword = outlineKeywordNormalized.value;
-  if (!keyword) return new Set<string>();
-  return new Set(outlineRows.value.filter((row) => outlineRowMatchesKeyword(row, keyword)).map((row) => row.node.id));
-});
-const outlineSearchVisibleNodeIdSet = computed(() => {
-  const keyword = outlineKeywordNormalized.value;
-  if (!keyword) return new Set<string>();
-  const visible = new Set<string>();
-  outlineRows.value.forEach((row) => {
-    if (!outlineMatchedNodeIdSet.value.has(row.node.id)) return;
-    visible.add(row.node.id);
-    row.ancestorIds.forEach((nodeId) => visible.add(nodeId));
-  });
-  return visible;
-});
-const selectedOutlinePathNodeIdSet = computed(() => {
-  const row = selectedOutlineRow.value;
-  return new Set(row ? [...row.ancestorIds, row.node.id] : []);
-});
-const visibleOutlineRows = computed(() => {
-  const hasKeyword = Boolean(outlineKeywordNormalized.value);
-  return outlineRows.value.filter((row) => {
-    if (hasKeyword) return outlineSearchVisibleNodeIdSet.value.has(row.node.id);
-    const hasCollapsedAncestor = row.ancestorIds.some((nodeId) => collapsedOutlineNodeIdSet.value.has(nodeId));
-    return !hasCollapsedAncestor || selectedOutlinePathNodeIdSet.value.has(row.node.id);
-  });
-});
-const outlineVisibleSummary = computed(() => `${visibleOutlineRows.value.length} / ${outlineRows.value.length}`);
+const outlineVisibility = computed(() =>
+  createLowcodeOutlineVisibility(outlineRows.value, {
+    keyword: outlineKeyword.value,
+    collapsedNodeIds: collapsedOutlineNodeIds.value,
+    selectedNodeId: editorState.value.selectedNodeId,
+  }),
+);
+const outlineMatchedNodeIdSet = computed(() => new Set(outlineVisibility.value.matchedNodeIds));
+const visibleOutlineRows = computed(() => outlineVisibility.value.rows);
+const outlineVisibleSummary = computed(() => outlineVisibility.value.summary);
 const multiSelectedNodeIdSet = computed(() => new Set(multiSelectedNodeIds.value));
 const multiSelectedRows = computed(() => outlineRows.value.filter((row) => multiSelectedNodeIdSet.value.has(row.node.id)));
 const multiSelectSameParent = computed(() => {
@@ -1260,54 +1249,12 @@ function nodeContains(node: LowcodeNode | undefined, nodeId: string): boolean {
   return Boolean(findNode(node.children ?? [], nodeId));
 }
 
-interface OutlineRow {
-  node: LowcodeNode;
-  index: number;
-  depth: number;
-  parentId?: string;
-  ancestorIds: string[];
-  hasChildren: boolean;
-}
-
-function flattenNodes(nodes: LowcodeNode[], depth = 0, parentId?: string, ancestorIds: string[] = []): OutlineRow[] {
-  return nodes.flatMap((node, index) => [
-    {
-      node,
-      index,
-      depth,
-      parentId,
-      ancestorIds,
-      hasChildren: Boolean(node.children?.length),
-    },
-    ...flattenNodes(node.children ?? [], depth + 1, node.id, [...ancestorIds, node.id]),
-  ]);
-}
-
-function getNodeManifestTitle(node: LowcodeNode): string {
-  return registry.get(node.componentName)?.manifest.title ?? node.componentName;
-}
-
 function getNodeDisplayName(node: LowcodeNode): string {
   return getLowcodeNodeDisplayName(node, registry.get(node.componentName)?.manifest);
 }
 
 function getNodeSubtitle(row: OutlineRow): string {
-  return `${getNodeManifestTitle(row.node)} / ${row.node.id}`;
-}
-
-function outlineRowMatchesKeyword(row: OutlineRow, keyword: string): boolean {
-  const manifest = registry.get(row.node.componentName)?.manifest;
-  return [
-    row.node.id,
-    row.node.componentName,
-    row.node.meta?.name,
-    manifest?.title,
-    manifest?.category,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-    .includes(keyword);
+  return row.subtitle;
 }
 
 function getSiblingNodes(nodes: LowcodeNode[], parentId?: string): LowcodeNode[] | undefined {
@@ -1988,20 +1935,17 @@ function commitOutlineRename(): void {
 }
 
 function pruneCollapsedOutlineNodes(): void {
-  const available = new Set(outlineRows.value.filter((row) => row.hasChildren).map((row) => row.node.id));
-  const nextCollapsed = collapsedOutlineNodeIds.value.filter((nodeId) => available.has(nodeId));
+  const nextCollapsed = pruneLowcodeOutlineCollapsedNodeIds(collapsedOutlineNodeIds.value, outlineRows.value);
   if (nextCollapsed.join("|") !== collapsedOutlineNodeIds.value.join("|")) {
     collapsedOutlineNodeIds.value = nextCollapsed;
   }
 }
 
 function revealOutlineNode(nodeId?: string): void {
-  if (!nodeId) return;
-  const row = findOutlineRowByNodeId(nodeId);
-  if (!row?.ancestorIds.length) return;
-  const collapsed = new Set(collapsedOutlineNodeIds.value);
-  row.ancestorIds.forEach((ancestorId) => collapsed.delete(ancestorId));
-  collapsedOutlineNodeIds.value = [...collapsed];
+  const nextCollapsed = revealLowcodeOutlineNode(nodeId, collapsedOutlineNodeIds.value, outlineRows.value);
+  if (nextCollapsed.join("|") !== collapsedOutlineNodeIds.value.join("|")) {
+    collapsedOutlineNodeIds.value = nextCollapsed;
+  }
 }
 
 function scrollCanvasNodeIntoView(nodeId: string): void {

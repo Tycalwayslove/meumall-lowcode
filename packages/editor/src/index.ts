@@ -143,6 +143,42 @@ export interface FilterLowcodeEditorCommandsOptions {
   includeDisabled?: boolean;
 }
 
+export interface LowcodeEditorOutlineMaterialInfo {
+  componentName: string;
+  title: string;
+  category?: string;
+}
+
+export interface LowcodeEditorOutlineRow {
+  node: LowcodeNode;
+  index: number;
+  depth: number;
+  parentId?: string;
+  ancestorIds: string[];
+  hasChildren: boolean;
+  title: string;
+  subtitle: string;
+  searchText: string;
+}
+
+export interface CreateLowcodeOutlineRowsOptions {
+  materialManifests?: Iterable<LowcodeEditorOutlineMaterialInfo>;
+}
+
+export interface CreateLowcodeOutlineVisibilityOptions {
+  keyword?: string;
+  collapsedNodeIds?: readonly string[];
+  selectedNodeId?: string;
+}
+
+export interface LowcodeEditorOutlineVisibility<T extends LowcodeEditorOutlineRow = LowcodeEditorOutlineRow> {
+  rows: T[];
+  matchedNodeIds: string[];
+  visibleNodeIds: string[];
+  selectedPathNodeIds: string[];
+  summary: string;
+}
+
 export interface LowcodeEditorActionParamRule {
   actionType: string;
   paramName: string;
@@ -724,6 +760,93 @@ export function flattenLowcodeNodes(nodes: LowcodeNode[]): LowcodeNode[] {
   return nodes.flatMap((node) => [node, ...flattenLowcodeNodes(node.children ?? [])]);
 }
 
+export function createLowcodeOutlineRows(
+  nodes: LowcodeNode[],
+  options: CreateLowcodeOutlineRowsOptions = {},
+): LowcodeEditorOutlineRow[] {
+  const manifests = createOutlineMaterialMap(options.materialManifests);
+  return flattenLowcodeOutlineRows(nodes, manifests);
+}
+
+export function createLowcodeOutlineRowSearchText(
+  row: Pick<LowcodeEditorOutlineRow, "node" | "title" | "subtitle"> & Partial<Pick<LowcodeEditorOutlineRow, "searchText">>,
+): string {
+  if (row.searchText) return row.searchText;
+  return [
+    row.node.id,
+    row.node.componentName,
+    row.node.meta?.name,
+    row.title,
+    row.subtitle,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+export function createLowcodeOutlineVisibility<T extends LowcodeEditorOutlineRow>(
+  rows: readonly T[],
+  options: CreateLowcodeOutlineVisibilityOptions = {},
+): LowcodeEditorOutlineVisibility<T> {
+  const keyword = options.keyword?.trim().toLowerCase() ?? "";
+  const collapsedNodeIds = new Set(options.collapsedNodeIds ?? []);
+  const selectedRow = rows.find((row) => row.node.id === options.selectedNodeId);
+  const selectedPathNodeIds = selectedRow ? [...selectedRow.ancestorIds, selectedRow.node.id] : [];
+  const selectedPathNodeIdSet = new Set(selectedPathNodeIds);
+  const matchedNodeIds = keyword
+    ? rows.filter((row) => row.searchText.includes(keyword)).map((row) => row.node.id)
+    : [];
+  const visibleNodeIdSet = new Set<string>();
+
+  if (keyword) {
+    const matchedNodeIdSet = new Set(matchedNodeIds);
+    rows.forEach((row) => {
+      if (!matchedNodeIdSet.has(row.node.id)) return;
+      visibleNodeIdSet.add(row.node.id);
+      row.ancestorIds.forEach((nodeId) => visibleNodeIdSet.add(nodeId));
+    });
+  }
+
+  const visibleRows = rows.filter((row) => {
+    if (keyword) return visibleNodeIdSet.has(row.node.id);
+    const hasCollapsedAncestor = row.ancestorIds.some((nodeId) => collapsedNodeIds.has(nodeId));
+    return !hasCollapsedAncestor || selectedPathNodeIdSet.has(row.node.id);
+  });
+
+  if (!keyword) {
+    visibleRows.forEach((row) => visibleNodeIdSet.add(row.node.id));
+  }
+
+  return {
+    rows: visibleRows,
+    matchedNodeIds,
+    visibleNodeIds: [...visibleNodeIdSet],
+    selectedPathNodeIds,
+    summary: `${visibleRows.length} / ${rows.length}`,
+  };
+}
+
+export function pruneLowcodeOutlineCollapsedNodeIds(
+  collapsedNodeIds: readonly string[],
+  rows: readonly LowcodeEditorOutlineRow[],
+): string[] {
+  const collapsibleNodeIds = new Set(rows.filter((row) => row.hasChildren).map((row) => row.node.id));
+  return collapsedNodeIds.filter((nodeId) => collapsibleNodeIds.has(nodeId));
+}
+
+export function revealLowcodeOutlineNode(
+  nodeId: string | undefined,
+  collapsedNodeIds: readonly string[],
+  rows: readonly LowcodeEditorOutlineRow[],
+): string[] {
+  if (!nodeId) return [...collapsedNodeIds];
+  const row = rows.find((item) => item.node.id === nodeId);
+  if (!row?.ancestorIds.length) return [...collapsedNodeIds];
+  const collapsed = new Set(collapsedNodeIds);
+  row.ancestorIds.forEach((ancestorId) => collapsed.delete(ancestorId));
+  return [...collapsed];
+}
+
 export function countLowcodeNodes(schema: LowcodePageSchema): number {
   return flattenLowcodeNodes(schema.nodes).length;
 }
@@ -1278,6 +1401,55 @@ function createMaterialManifestMap(
     map.set(manifest.componentName, manifest);
   }
   return map;
+}
+
+function createOutlineMaterialMap(
+  manifests: Iterable<LowcodeEditorOutlineMaterialInfo> | undefined,
+): Map<string, LowcodeEditorOutlineMaterialInfo> {
+  const map = new Map<string, LowcodeEditorOutlineMaterialInfo>();
+  for (const manifest of manifests ?? []) {
+    map.set(manifest.componentName, manifest);
+  }
+  return map;
+}
+
+function flattenLowcodeOutlineRows(
+  nodes: LowcodeNode[],
+  manifests: Map<string, LowcodeEditorOutlineMaterialInfo>,
+  depth = 0,
+  parentId?: string,
+  ancestorIds: string[] = [],
+): LowcodeEditorOutlineRow[] {
+  return nodes.flatMap((node, index) => {
+    const manifest = manifests.get(node.componentName);
+    const manifestTitle = manifest?.title ?? node.componentName;
+    const title = getLowcodeNodeDisplayName(node, manifest);
+    const subtitle = `${manifestTitle} / ${node.id}`;
+    const row: LowcodeEditorOutlineRow = {
+      node,
+      index,
+      depth,
+      parentId,
+      ancestorIds,
+      hasChildren: Boolean(node.children?.length),
+      title,
+      subtitle,
+      searchText: [
+        node.id,
+        node.componentName,
+        node.meta?.name,
+        manifest?.title,
+        manifest?.category,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+    };
+    return [
+      row,
+      ...flattenLowcodeOutlineRows(node.children ?? [], manifests, depth + 1, node.id, [...ancestorIds, node.id]),
+    ];
+  });
 }
 
 function getJsonParamString(params: JsonObject | undefined, key: string, fallback: string): string {

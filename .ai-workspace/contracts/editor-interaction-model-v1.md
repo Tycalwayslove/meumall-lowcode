@@ -96,6 +96,16 @@ interface LowcodeEditorState {
 
 快捷命令 API 从命令条目的 title、group、description 和 keywords 派生搜索文本，默认最多展示 28 条，并默认保留 disabled 命令，方便 UI 壳展示不可用状态。API 只处理命令目录展示模型，不执行命令、不绑定快捷键、不做权限判断、不修改 Page Schema、Material Manifest 或 renderer 行为。
 
+结构树 API：
+
+- `createLowcodeOutlineRows`
+- `createLowcodeOutlineRowSearchText`
+- `createLowcodeOutlineVisibility`
+- `pruneLowcodeOutlineCollapsedNodeIds`
+- `revealLowcodeOutlineNode`
+
+结构树 API 从 Page Schema nodes 和可选物料 manifest 派生结构树行模型、搜索文本、搜索命中、折叠可见性、选中路径和可见数量摘要。关键词匹配覆盖节点 id、componentName、`meta.name`、物料标题和物料分类；折叠祖先会隐藏子节点，但当前选中路径保持可见。API 不执行节点选择、不处理 DOM 滚动、不处理拖拽、多选、重命名或权限。
+
 ## 错误格式
 
 当前 command 不抛业务错误。无法执行时返回原状态，例如目标节点不存在、移动到自身子节点、粘贴板为空。
@@ -109,6 +119,7 @@ interface LowcodeEditorState {
 - 视口预设只改变 `LowcodeEditorState.viewport`，不改变 `schema.layout.maxWidth`、物料 manifest 或 renderer 协议。
 - 物料目录 API 只派生编辑器展示模型，不新增或改写物料 manifest 字段。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
+- 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 移动节点时禁止将节点移动到自身或自身后代。
 
 ## 测试方式
