@@ -8,6 +8,7 @@ import {
   createLowcodeEditorViewportFromPreset,
   createLowcodeBlankPageSchema,
   createLowcodeDeliverySummary,
+  createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCategories,
@@ -29,10 +30,12 @@ import {
   filterLowcodeMaterialCatalog,
   flattenLowcodeNodes,
   formatLowcodeEditorViewportTitle,
+  formatLowcodeEditorDraftStatusText,
   formatLowcodeMaterialCatalogSummary,
   formatLowcodeTemplateSummary,
   formatLowcodeTemplateVersion,
   getLowcodeEditorViewportPreset,
+  getLowcodeEditorDraftStatusTone,
   getLowcodeNodeDisplayName,
   groupLowcodeEditorCommands,
   getLowcodePropGroupKey,
@@ -42,6 +45,7 @@ import {
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
   parseLowcodeSchemaFileContent,
+  parseLowcodeEditorDraftContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
@@ -265,6 +269,81 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(invalidSchema.ok, false);
     assert.match(invalidSchema.error, /Page Schema 校验失败/);
     assert.equal(Array.isArray(invalidSchema.validationErrors), true);
+  });
+
+  it("creates reusable draft persistence payloads and restore results", () => {
+    const fallbackSchema = createLowcodePageSchema({
+      pageId: "fallback_page",
+      title: "兜底页面",
+    });
+    const schema = createLowcodePageSchema({
+      pageId: "draft_page",
+      title: "草稿页面",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/banner.jpg" },
+        }),
+      ],
+    });
+    const payload = createLowcodeEditorDraftPayload(schema, {
+      now: new Date("2026-08-01T01:02:03.000Z"),
+    });
+
+    assert.equal(payload.version, 1);
+    assert.equal(payload.updatedAt, "2026-08-01T01:02:03.000Z");
+    assert.equal(payload.schema.pageId, "draft_page");
+    assert.equal(payload.schemaJson.includes("draft_page"), true);
+    assert.equal(payload.schemaSizeBytes > 0, true);
+    assert.match(payload.schemaSizeText, /B|KB/);
+    payload.schema.title = "修改草稿副本";
+    assert.equal(schema.title, "草稿页面");
+
+    const restored = parseLowcodeEditorDraftContent(JSON.stringify(payload), { fallbackSchema });
+    assert.equal(restored.restored, true);
+    assert.equal(restored.schema.pageId, "draft_page");
+    assert.equal(restored.legacy, false);
+    assert.equal(restored.payload?.updatedAt, "2026-08-01T01:02:03.000Z");
+    restored.schema.title = "恢复后修改";
+    assert.equal(payload.schema.title, "修改草稿副本");
+
+    const legacyRestored = parseLowcodeEditorDraftContent(JSON.stringify(schema), { fallbackSchema });
+    assert.equal(legacyRestored.restored, true);
+    assert.equal(legacyRestored.legacy, true);
+    assert.equal(legacyRestored.schema.pageId, "draft_page");
+
+    const empty = parseLowcodeEditorDraftContent(null, { fallbackSchema });
+    assert.equal(empty.restored, false);
+    assert.equal(empty.schema?.pageId, "fallback_page");
+
+    const invalidJson = parseLowcodeEditorDraftContent("{", { fallbackSchema });
+    assert.equal(invalidJson.restored, false);
+    assert.equal(invalidJson.schema?.pageId, "fallback_page");
+    assert.match(invalidJson.error ?? "", /草稿 JSON 格式不正确/);
+
+    const invalidSchema = parseLowcodeEditorDraftContent(JSON.stringify({ schema: { pageId: "missing" }, version: 1, updatedAt: "now" }), {
+      fallbackSchema,
+    });
+    assert.equal(invalidSchema.restored, false);
+    assert.equal(invalidSchema.schema?.pageId, "fallback_page");
+    assert.match(invalidSchema.error ?? "", /草稿 Page Schema 校验失败/);
+    assert.equal(Array.isArray(invalidSchema.validationErrors), true);
+
+    assert.equal(formatLowcodeEditorDraftStatusText("restored"), "已恢复本地草稿");
+    assert.equal(formatLowcodeEditorDraftStatusText("pending"), "自动保存中");
+    assert.equal(formatLowcodeEditorDraftStatusText("saved", {
+      lastSavedAt: "2026-08-01T01:02:03.000Z",
+      formatSavedAt: () => "01:02:03",
+    }), "已自动保存 01:02:03");
+    assert.equal(formatLowcodeEditorDraftStatusText("error"), "自动保存失败");
+    assert.equal(formatLowcodeEditorDraftStatusText("idle"), "自动保存待命");
+    assert.equal(getLowcodeEditorDraftStatusTone("idle"), "neutral");
+    assert.equal(getLowcodeEditorDraftStatusTone("pending"), "warning");
+    assert.equal(getLowcodeEditorDraftStatusTone("restored"), "success");
+    assert.equal(getLowcodeEditorDraftStatusTone("saved"), "success");
+    assert.equal(getLowcodeEditorDraftStatusTone("error"), "danger");
   });
 
   it("creates reusable material catalog items, categories and filters", () => {

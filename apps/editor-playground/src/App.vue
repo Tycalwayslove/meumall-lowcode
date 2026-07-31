@@ -56,6 +56,7 @@ import {
   createLowcodeBlankPageSchema,
   copyNode,
   createLowcodeDeliverySummary,
+  createLowcodeEditorDraftPayload,
   createLowcodeMaterialCategories,
   createLowcodeMaterialCatalogItem,
   createLowcodePageStartState,
@@ -85,6 +86,9 @@ import {
   markSaved,
   moveNodeById,
   pasteNode,
+  formatLowcodeEditorDraftStatusText,
+  getLowcodeEditorDraftStatusTone,
+  parseLowcodeEditorDraftContent,
   parseLowcodeSchemaFileContent,
   pickLowcodeMaterialEntriesByComponentNames,
   pruneLowcodeOutlineCollapsedNodeIds,
@@ -100,6 +104,7 @@ import {
   toggleLowcodePropGroupCollapsed,
   undo,
   type LowcodeEditorCommandEntry,
+  type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorOutlineRow as OutlineRow,
   type LowcodeEditorPropGroup as PropEditorGroup,
   type LowcodeEditorPropGroupKey as PropGroupKey,
@@ -353,24 +358,21 @@ const previewDataSourceRegistry = createDataSourceRegistry({
 
 const initialSchema = cloneLowcodePageSchema((pageTemplates[0] as PageTemplate).schema);
 
-type AutoSaveStatus = "idle" | "restored" | "pending" | "saved" | "error";
-
 interface LoadedSchemaResult {
   schema: LowcodePageSchema;
   restored: boolean;
+  updatedAt?: string;
 }
 
 function loadSchema(): LoadedSchemaResult {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return { schema: initialSchema, restored: false };
-  try {
-    const parsed = JSON.parse(raw) as LowcodePageSchema;
-    return validateLowcodePageSchema(parsed).valid
-      ? { schema: parsed, restored: true }
-      : { schema: initialSchema, restored: false };
-  } catch {
-    return { schema: initialSchema, restored: false };
-  }
+  const result = parseLowcodeEditorDraftContent(window.localStorage.getItem(STORAGE_KEY), {
+    fallbackSchema: initialSchema,
+  });
+  return {
+    schema: result.schema ?? initialSchema,
+    restored: result.restored,
+    updatedAt: result.restored ? result.payload?.updatedAt : undefined,
+  };
 }
 
 const loadedSchemaResult = loadSchema();
@@ -389,8 +391,8 @@ const commandSearchInputRef = ref<HTMLInputElement>();
 const schemaFileInputRef = ref<HTMLInputElement>();
 const releaseMessage = ref("");
 const schemaTransferMessage = ref("");
-const autoSaveStatus = ref<AutoSaveStatus>(loadedSchemaResult.restored ? "restored" : "idle");
-const lastAutoSavedAt = ref<string>();
+const autoSaveStatus = ref<LowcodeEditorDraftPersistenceStatus>(loadedSchemaResult.restored ? "restored" : "idle");
+const lastAutoSavedAt = ref<string | undefined>(loadedSchemaResult.updatedAt);
 const configPlatformClient = localConfigPlatformClient;
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
@@ -842,19 +844,12 @@ const workspaceStats = computed<WorkspaceStat[]>(() => [
   },
 ]);
 const autoSaveStatusText = computed(() => {
-  if (autoSaveStatus.value === "restored") return "已恢复本地草稿";
-  if (autoSaveStatus.value === "pending") return "自动保存中";
-  if (autoSaveStatus.value === "saved") {
-    return lastAutoSavedAt.value ? `已自动保存 ${formatAutoSaveTime(lastAutoSavedAt.value)}` : "已自动保存";
-  }
-  if (autoSaveStatus.value === "error") return "自动保存失败";
-  return "自动保存待命";
+  return formatLowcodeEditorDraftStatusText(autoSaveStatus.value, {
+    lastSavedAt: lastAutoSavedAt.value,
+  });
 });
 const autoSaveStatusTone = computed(() => {
-  if (autoSaveStatus.value === "error") return "danger";
-  if (autoSaveStatus.value === "pending") return "warning";
-  if (autoSaveStatus.value === "saved" || autoSaveStatus.value === "restored") return "success";
-  return "neutral";
+  return getLowcodeEditorDraftStatusTone(autoSaveStatus.value);
 });
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
@@ -1265,8 +1260,9 @@ function scheduleAutoSave(schema: LowcodePageSchema): void {
 
 function persistLocalDraft(schema: LowcodePageSchema): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(schema));
-    lastAutoSavedAt.value = new Date().toISOString();
+    const payload = createLowcodeEditorDraftPayload(schema);
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    lastAutoSavedAt.value = payload.updatedAt;
     autoSaveStatus.value = "saved";
   } catch {
     autoSaveStatus.value = "error";
@@ -3755,13 +3751,6 @@ function formatReleaseTime(value: string): string {
   }).format(new Date(value));
 }
 
-function formatAutoSaveTime(value: string): string {
-  return new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).format(new Date(value));
-}
 </script>
 
 <template>

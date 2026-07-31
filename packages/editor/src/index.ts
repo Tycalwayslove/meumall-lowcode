@@ -232,6 +232,48 @@ export interface CreateLowcodeDeliverySummaryOptions {
   checks?: LowcodeEditorPublishCheck[];
 }
 
+export type LowcodeEditorDraftPersistenceStatus = "idle" | "restored" | "pending" | "saved" | "error";
+export type LowcodeEditorDraftStatusTone = "neutral" | "success" | "warning" | "danger";
+
+export interface LowcodeEditorDraftPayload {
+  version: 1;
+  updatedAt: string;
+  schema: LowcodePageSchema;
+  schemaJson: string;
+  schemaSizeBytes: number;
+  schemaSizeText: string;
+}
+
+export interface CreateLowcodeEditorDraftPayloadOptions {
+  now?: Date;
+  pretty?: boolean;
+  cloneSchema?: boolean;
+}
+
+export interface ParseLowcodeEditorDraftContentOptions {
+  fallbackSchema?: LowcodePageSchema;
+  cloneSchema?: boolean;
+}
+
+export type LowcodeEditorDraftRestoreResult =
+  | {
+    restored: true;
+    schema: LowcodePageSchema;
+    payload?: LowcodeEditorDraftPayload;
+    legacy: boolean;
+  }
+  | {
+    restored: false;
+    schema?: LowcodePageSchema;
+    error?: string;
+    validationErrors?: string[];
+  };
+
+export interface FormatLowcodeEditorDraftStatusTextOptions {
+  lastSavedAt?: string;
+  formatSavedAt?: (value: string) => string;
+}
+
 export interface CreateLowcodeSchemaFileNameOptions {
   filename?: string;
   filenamePrefix?: string;
@@ -1227,6 +1269,91 @@ export function formatLowcodeSchemaSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+export function createLowcodeEditorDraftPayload(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeEditorDraftPayloadOptions = {},
+): LowcodeEditorDraftPayload {
+  const schemaJson = options.pretty === false ? JSON.stringify(schema) : JSON.stringify(schema, null, 2);
+  const schemaSizeBytes = encodedByteSize(schemaJson);
+  return {
+    version: 1,
+    updatedAt: (options.now ?? new Date()).toISOString(),
+    schema: options.cloneSchema === false ? schema : cloneLowcodePageSchema(schema),
+    schemaJson,
+    schemaSizeBytes,
+    schemaSizeText: formatLowcodeSchemaSize(schemaSizeBytes),
+  };
+}
+
+export function parseLowcodeEditorDraftContent(
+  content: string | null | undefined,
+  options: ParseLowcodeEditorDraftContentOptions = {},
+): LowcodeEditorDraftRestoreResult {
+  const fallbackSchema = options.fallbackSchema
+    ? options.cloneSchema === false
+      ? options.fallbackSchema
+      : cloneLowcodePageSchema(options.fallbackSchema)
+    : undefined;
+  if (!content) {
+    return { restored: false, schema: fallbackSchema };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    return {
+      restored: false,
+      schema: fallbackSchema,
+      error: `草稿 JSON 格式不正确：${error instanceof Error ? error.message : "解析失败"}`,
+    };
+  }
+
+  const payload = getLowcodeEditorDraftPayloadCandidate(parsed);
+  const schemaCandidate = payload?.schema ?? parsed;
+  const validation = validateLowcodePageSchema(schemaCandidate);
+  if (!validation.valid) {
+    return {
+      restored: false,
+      schema: fallbackSchema,
+      error: `草稿 Page Schema 校验失败：${validation.errors.join("；")}`,
+      validationErrors: validation.errors,
+    };
+  }
+
+  const schema = schemaCandidate as LowcodePageSchema;
+  return {
+    restored: true,
+    schema: options.cloneSchema === false ? schema : cloneLowcodePageSchema(schema),
+    payload,
+    legacy: !payload,
+  };
+}
+
+export function formatLowcodeEditorDraftStatusText(
+  status: LowcodeEditorDraftPersistenceStatus,
+  options: FormatLowcodeEditorDraftStatusTextOptions = {},
+): string {
+  if (status === "restored") return "已恢复本地草稿";
+  if (status === "pending") return "自动保存中";
+  if (status === "saved") {
+    return options.lastSavedAt
+      ? `已自动保存 ${(options.formatSavedAt ?? formatDraftSavedAt)(options.lastSavedAt)}`
+      : "已自动保存";
+  }
+  if (status === "error") return "自动保存失败";
+  return "自动保存待命";
+}
+
+export function getLowcodeEditorDraftStatusTone(
+  status: LowcodeEditorDraftPersistenceStatus,
+): LowcodeEditorDraftStatusTone {
+  if (status === "error") return "danger";
+  if (status === "pending") return "warning";
+  if (status === "saved" || status === "restored") return "success";
+  return "neutral";
+}
+
 export function createLowcodeSchemaFileName(
   schema: LowcodePageSchema,
   options: CreateLowcodeSchemaFileNameOptions = {},
@@ -1726,6 +1853,24 @@ function cloneJsonObject(value: unknown): JsonObject {
 
 function encodedByteSize(value: string): number {
   return new TextEncoder().encode(value).length;
+}
+
+function getLowcodeEditorDraftPayloadCandidate(value: unknown): LowcodeEditorDraftPayload | undefined {
+  if (!isPlainObject(value)) return undefined;
+  if (value.version !== 1 || !("schema" in value) || typeof value.updatedAt !== "string") return undefined;
+  return value as unknown as LowcodeEditorDraftPayload;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatDraftSavedAt(value: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(value));
 }
 
 function sanitizeFileName(value: string): string {

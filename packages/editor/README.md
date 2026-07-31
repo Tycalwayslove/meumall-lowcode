@@ -58,6 +58,10 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `summarizeLowcodePublishChecks`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
+- `createLowcodeEditorDraftPayload`
+- `parseLowcodeEditorDraftContent`
+- `formatLowcodeEditorDraftStatusText`
+- `getLowcodeEditorDraftStatusTone`
 - `createLowcodeSchemaFileName`
 - `createLowcodeSchemaFileExport`
 - `parseLowcodeSchemaFileContent`
@@ -88,6 +92,18 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+## Draft Persistence API
+
+The draft persistence helpers keep editor auto-save and draft recovery state reusable across the Vue3 playground, future Java management-console shells, and optional server-side draft preflight tooling.
+
+`createLowcodeEditorDraftPayload(schema, options)` returns a JSON-safe payload with version, updated time, cloned schema, formatted schema JSON, byte size, and size text. It does not write to localStorage, IndexedDB, HTTP, or any other host storage.
+
+`parseLowcodeEditorDraftContent(content, options)` parses stored draft text and validates it with Page Schema v1 rules. It supports both the current draft payload shape and the older legacy shape where localStorage contained Page Schema directly. Invalid JSON or invalid schema returns `{ restored: false, schema: fallbackSchema, error }`.
+
+`formatLowcodeEditorDraftStatusText(status, options)` and `getLowcodeEditorDraftStatusTone(status)` provide the shared status copy and tone currently used by editor shells for `idle`, `restored`, `pending`, `saved`, and `error`.
+
+Host shells remain responsible for timers, debounce strategy, actual storage reads/writes, conflict handling, overwrite confirmation, permissions, audit records, and user-facing placement.
 
 ## Schema File API
 
