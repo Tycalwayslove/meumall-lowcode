@@ -42,7 +42,6 @@ import {
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
 import {
-  createLowcodePageSchema,
   validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
@@ -53,6 +52,7 @@ import {
   type LowcodePageStatus,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import { cloneTemplateSchema, pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   createPreview,
   getDraft,
@@ -111,130 +111,7 @@ const sampleProducts = [
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
 
-const initialSchema = createLowcodePageSchema({
-  pageId: "summer-campaign-demo",
-  title: "夏日好物节",
-  pageType: "activity",
-  targetPlatforms: ["h5"],
-  layout: {
-    safeArea: true,
-    backgroundColor: "#f3f4f6",
-    maxWidth: 430,
-  },
-  nodes: [
-    {
-      id: "node_hero",
-      componentName: "ActivityHero",
-      materialVersion: "0.1.0",
-      props: {
-        title: "夏日好物节",
-        subtitle: "精选爆品限时补贴，运营可直接组合物料生成页面。",
-        imageUrl: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
-        backgroundColor: "#ffffff",
-        titleColor: "#111827",
-        titleSize: 24,
-      },
-    },
-    {
-      id: "node_notice",
-      componentName: "NoticeBar",
-      materialVersion: "0.1.0",
-      props: {
-        label: "公告",
-        content: "活动期间下单即享限时补贴，库存有限先到先得。",
-        backgroundColor: "#fffbeb",
-        textColor: "#92400e",
-      },
-    },
-    {
-      id: "node_coupon",
-      componentName: "CouponSection",
-      materialVersion: "0.1.0",
-      props: {
-        title: "新人专享券",
-        buttonText: "立即领取",
-        backgroundColor: "#fff7ed",
-        buttonColor: "#111827",
-      },
-    },
-    {
-      id: "node_container",
-      componentName: "SectionContainer",
-      materialVersion: "0.1.0",
-      props: {
-        title: "精选专区",
-        subtitle: "容器中可以继续添加物料。",
-        backgroundColor: "#ffffff",
-        padding: 12,
-        radius: 10,
-      },
-      children: [
-        {
-          id: "node_action_nested",
-          componentName: "ActionButton",
-          materialVersion: "0.1.0",
-          props: {
-            text: "立即逛精选",
-            linkUrl: "",
-            backgroundColor: "#111827",
-            textColor: "#ffffff",
-            wrapperBackgroundColor: "#ffffff",
-            radius: 8,
-            paddingY: 8,
-          },
-        },
-        {
-          id: "node_banner_nested",
-          componentName: "ImageBanner",
-          materialVersion: "0.1.0",
-          props: {
-            imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
-            alt: "",
-            radius: 8,
-          },
-        },
-      ],
-    },
-    {
-      id: "node_products",
-      componentName: "ProductList",
-      materialVersion: "0.1.0",
-      props: {
-        items: sampleProducts.slice(0, 2),
-      },
-      dataBinding: {
-        items: "products",
-      },
-    },
-    {
-      id: "node_spacer",
-      componentName: "SpacerBlock",
-      materialVersion: "0.1.0",
-      props: {
-        height: 16,
-        backgroundColor: "#f3f4f6",
-      },
-    },
-  ],
-  dataSources: [
-    {
-      id: "ds_products",
-      type: "product.byActivity",
-      bindTo: "products",
-      params: {
-        activityId: "summer-campaign-demo",
-        limit: 20,
-      },
-      cache: {
-        ttlSeconds: 60,
-        scope: "public",
-      },
-    },
-  ],
-  publishMeta: {
-    environment: "test",
-  },
-});
+const initialSchema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
 
 function loadSchema(): LowcodePageSchema {
   const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -504,9 +381,27 @@ function insertMaterialInsideSelectedContainer(): void {
 
 function resetSchema(): void {
   window.localStorage.removeItem(STORAGE_KEY);
-  editorState.value = createEditorState(initialSchema, { selectedNodeId: "node_hero" });
-  schemaDraft.value = JSON.stringify(initialSchema, null, 2);
+  const schema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
+  editorState.value = createEditorState(schema, { selectedNodeId: schema.nodes[0]?.id });
+  schemaDraft.value = JSON.stringify(schema, null, 2);
   releaseMessage.value = "已重置为示例页面";
+  refreshReleases();
+}
+
+function applyTemplate(template: PageTemplate): void {
+  if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认应用模板并替换当前页面吗？")) {
+    return;
+  }
+  const schema = cloneTemplateSchema(template);
+  window.localStorage.removeItem(STORAGE_KEY);
+  editorState.value = createEditorState(schema, {
+    selectedNodeId: schema.nodes[0]?.id,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  });
+  schemaDraft.value = JSON.stringify(schema, null, 2);
+  jsonError.value = "";
+  releaseMessage.value = `已应用模板：${template.title}`;
   refreshReleases();
 }
 
@@ -839,6 +734,26 @@ function formatReleaseTime(value: string): string {
     </header>
 
     <aside class="left-panel">
+      <section class="panel-section">
+        <div class="panel-title">
+          <Layers :size="16" />
+          <span>模板</span>
+        </div>
+        <button
+          v-for="template in pageTemplates"
+          :key="template.id"
+          class="template-item"
+          type="button"
+          @click="applyTemplate(template)"
+        >
+          <span>
+            <strong>{{ template.title }}</strong>
+            <small>{{ template.description }}</small>
+          </span>
+          <Plus :size="15" />
+        </button>
+      </section>
+
       <section class="panel-section">
         <div class="panel-title">
           <Plus :size="16" />

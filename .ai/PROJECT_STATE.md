@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff，并扩展了基础电商物料库。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展，并新增编辑器页面模板库。
 
 ## 当前维护范围
 
@@ -43,6 +43,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - React H5 runtime playground：独立消费 React H5 renderer/materials/core/schema，验证基础物料、容器嵌套和 dataBinding。
 - 编辑器到 React H5 runtime handoff：通过 URL schema 参数打开当前编辑 schema 的 React H5 渲染结果。
 - 基础电商物料扩展：新增 `ActionButton`、`NoticeBar`、`SpacerBlock`，并同步 Vue/React H5 物料包。
+- 页面模板库：编辑器左侧可一键应用大促活动页、新人券领取页和商品专题页模板。
 
 ## 已知缺口
 
@@ -72,7 +73,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `8d4cf89` | 对齐 React H5 容器物料并增强画布上下文操作。 |
 | 2026-07-31 | `54b2ccf` | 新增独立 React H5 runtime playground。 |
 | 2026-07-31 | `03cca93` | 打通编辑器到 React H5 runtime 的 schema handoff。 |
-| 2026-07-31 | 待提交 | 扩展行动按钮、公告条和间距块基础物料。 |
+| 2026-07-31 | `915c9ef` | 扩展行动按钮、公告条和间距块基础物料。 |
+| 2026-07-31 | 待提交 | 新增编辑器页面模板库。 |
 
 ## 默认验证命令
 

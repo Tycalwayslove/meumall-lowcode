@@ -65,6 +65,7 @@ Java config platform
 
 apps/editor-playground
   -> runnable Vue3 editor playground
+  -> includes local page templates for common activity pages
 
 apps/h5-runtime-playground
   -> runnable React H5 runtime playground
