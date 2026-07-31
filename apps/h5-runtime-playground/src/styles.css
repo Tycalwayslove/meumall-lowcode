@@ -91,6 +91,51 @@ button {
   line-height: 1.5;
 }
 
+.runtime-data-records {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.runtime-data-records p {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 9px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.runtime-data-records strong {
+  color: #0f172a;
+}
+
+.runtime-data-records span {
+  overflow-wrap: anywhere;
+}
+
+.runtime-data-records .is-resolved {
+  border-color: #bbf7d0;
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.runtime-data-records .is-error {
+  border-color: #fecaca;
+  color: #991b1b;
+  background: #fff5f5;
+}
+
+.runtime-data-records .is-skipped {
+  border-color: #fed7aa;
+  color: #9a3412;
+  background: #fff7ed;
+}
+
 .phone-frame {
   overflow: hidden;
   width: min(430px, 100%);

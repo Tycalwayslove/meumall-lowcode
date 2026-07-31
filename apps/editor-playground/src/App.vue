@@ -19,7 +19,12 @@ import {
   Trash2,
   Undo2,
 } from "@lucide/vue";
-import { encodePageSchemaToUrlParam } from "@meumall/lowcode-adapters";
+import {
+  createDataSourceRegistry,
+  encodePageSchemaToUrlParam,
+  resolveLowcodeDataSources,
+  type DataSourceResolutionRecord,
+} from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
   appendNode,
@@ -110,6 +115,11 @@ const sampleProducts = [
 
 const registry = createMaterialRegistry(h5VueMaterials);
 const materials = registry.list();
+const previewDataSourceRegistry = createDataSourceRegistry({
+  "product.byActivity": resolveSampleProductDataSource,
+  "product.byIds": resolveSampleProductDataSource,
+  "custom.http": (dataSource) => dataSource.params ?? {},
+});
 
 const initialSchema = cloneTemplateSchema(pageTemplates[0] as PageTemplate);
 
@@ -131,6 +141,14 @@ const draggedNodeId = ref<string>();
 const releaseMessage = ref("");
 const releases = ref<LocalPageRelease[]>(listReleases(editorState.value.schema.pageId));
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
+const previewData = ref<JsonObject>({});
+const runtimePreviewData = ref<JsonObject>({});
+const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
+const runtimeDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
+const isPreviewDataResolving = ref(false);
+const isRuntimeDataResolving = ref(false);
+let previewResolutionSeq = 0;
+let runtimeResolutionSeq = 0;
 
 const validation = computed(() => validateLowcodePageSchema(editorState.value.schema));
 const selectedNode = computed(() => findNode(editorState.value.schema.nodes, editorState.value.selectedNodeId));
@@ -149,9 +167,7 @@ const canMoveSelectedDown = computed(() => {
   if (!row) return false;
   return row.index < getSiblingCount(row.parentId) - 1;
 });
-const previewData = computed<JsonObject>(() => resolvePreviewData(editorState.value.schema.dataSources ?? []));
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
-const runtimePreviewData = computed<JsonObject>(() => resolvePreviewData(runtimeSchema.value.dataSources ?? []));
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 
 watch(
@@ -159,6 +175,22 @@ watch(
   (schema) => {
     schemaDraft.value = JSON.stringify(schema, null, 2);
   },
+);
+
+watch(
+  () => editorState.value.schema.dataSources,
+  () => {
+    void refreshPreviewData(editorState.value.schema);
+  },
+  { deep: true, immediate: true },
+);
+
+watch(
+  runtimeSchema,
+  (schema) => {
+    void refreshRuntimePreviewData(schema);
+  },
+  { immediate: true },
 );
 
 function findNode(nodes: LowcodeNode[], nodeId?: string): LowcodeNode | undefined {
@@ -190,17 +222,48 @@ function getSiblingCount(parentId?: string): number {
   return findNode(editorState.value.schema.nodes, parentId)?.children?.length ?? 0;
 }
 
-function resolvePreviewData(dataSources: LowcodeDataSourceConfig[]): JsonObject {
-  return dataSources.reduce<JsonObject>((data, dataSource) => {
-    if (!dataSource.bindTo) return data;
-    if (dataSource.type === "product.byActivity" || dataSource.type === "product.byIds") {
-      const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
-      data[dataSource.bindTo] = sampleProducts.slice(0, limit);
-      return data;
-    }
-    data[dataSource.bindTo] = dataSource.params ?? {};
-    return data;
-  }, {});
+function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
+  const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
+  return sampleProducts.slice(0, limit) as JsonValue;
+}
+
+async function refreshPreviewData(schema: LowcodePageSchema): Promise<void> {
+  const seq = ++previewResolutionSeq;
+  isPreviewDataResolving.value = true;
+  const result = await resolveLowcodeDataSources(schema.dataSources ?? [], previewDataSourceRegistry);
+  if (seq !== previewResolutionSeq) return;
+  previewData.value = result.data;
+  previewDataSourceRecords.value = result.records;
+  isPreviewDataResolving.value = false;
+}
+
+async function refreshRuntimePreviewData(schema: LowcodePageSchema): Promise<void> {
+  const seq = ++runtimeResolutionSeq;
+  isRuntimeDataResolving.value = true;
+  const result = await resolveLowcodeDataSources(schema.dataSources ?? [], previewDataSourceRegistry);
+  if (seq !== runtimeResolutionSeq) return;
+  runtimePreviewData.value = result.data;
+  runtimeDataSourceRecords.value = result.records;
+  isRuntimeDataResolving.value = false;
+}
+
+function dataSourceRecordFor(dataSourceId: string): DataSourceResolutionRecord | undefined {
+  return previewDataSourceRecords.value.find((record) => record.id === dataSourceId);
+}
+
+function dataSourceRecordLabel(record: DataSourceResolutionRecord | undefined): string {
+  if (isPreviewDataResolving.value) return "解析中";
+  if (!record) return "待解析";
+  if (record.status === "resolved") return `已绑定到 ${record.bindTo}`;
+  if (record.status === "skipped") return "已跳过";
+  return "解析失败";
+}
+
+function runtimeDataStatusText(): string {
+  if (isRuntimeDataResolving.value) return "数据解析中";
+  const errors = runtimeDataSourceRecords.value.filter((record) => record.status === "error").length;
+  if (errors > 0) return `数据源异常 ${errors} 个`;
+  return `数据源已解析 ${runtimeDataSourceRecords.value.length} 个`;
 }
 
 function createNodeInput(manifest: LowcodeMaterialManifest) {
@@ -667,7 +730,7 @@ function formatReleaseTime(value: string): string {
     <div class="runtime-phone">
       <div class="phone-status">
         <span>{{ runtimeTitle }}</span>
-        <span>H5</span>
+        <span>{{ runtimeDataStatusText() }}</span>
       </div>
       <LowcodeVueRenderer
         :schema="runtimeSchema"
@@ -1087,6 +1150,14 @@ function formatReleaseTime(value: string): string {
                 @change="updateDataSourceParams(index, ($event.target as HTMLTextAreaElement).value)"
               />
             </label>
+            <div
+              class="data-source-status"
+              :class="`is-${dataSourceRecordFor(dataSource.id)?.status ?? 'pending'}`"
+            >
+              <strong>{{ dataSourceRecordLabel(dataSourceRecordFor(dataSource.id)) }}</strong>
+              <span v-if="dataSourceRecordFor(dataSource.id)?.error">{{ dataSourceRecordFor(dataSource.id)?.error }}</span>
+              <span v-else>{{ dataSource.type }} / {{ dataSource.bindTo || "未绑定" }}</span>
+            </div>
             <button class="text-danger" @click="removeDataSource(index)">删除数据源</button>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   createSafeActionRegistry,
   decodePageSchemaFromUrlParam,
   encodePageSchemaToUrlParam,
+  resolveLowcodeDataSources,
 } from "../dist/index.js";
 
 describe("@meumall/lowcode-adapters", () => {
@@ -28,6 +29,85 @@ describe("@meumall/lowcode-adapters", () => {
       bindTo: "products",
       items: [{ limit: 3 }],
     });
+  });
+
+  it("resolves schema data sources into runtime data with records", async () => {
+    const registry = createDataSourceRegistry({
+      "product.byIds"(config) {
+        const limit = Number(config.params?.limit ?? 2);
+        return [
+          { id: "sku_001", title: "商品 1" },
+          { id: "sku_002", title: "商品 2" },
+          { id: "sku_003", title: "商品 3" },
+        ].slice(0, limit);
+      },
+      passthrough(config) {
+        return config.params ?? {};
+      },
+    });
+
+    const result = await resolveLowcodeDataSources(
+      [
+        { id: "ds_products", type: "product.byIds", bindTo: "products", params: { limit: 2 } },
+        { id: "ds_context", type: "passthrough", bindTo: "context", params: { channel: "h5" } },
+      ],
+      registry,
+      { initialData: { staticText: "保留" } },
+    );
+
+    assert.deepEqual(result.data, {
+      staticText: "保留",
+      products: [
+        { id: "sku_001", title: "商品 1" },
+        { id: "sku_002", title: "商品 2" },
+      ],
+      context: { channel: "h5" },
+    });
+    assert.deepEqual(result.records, [
+      { id: "ds_products", type: "product.byIds", bindTo: "products", status: "resolved" },
+      { id: "ds_context", type: "passthrough", bindTo: "context", status: "resolved" },
+    ]);
+  });
+
+  it("keeps rendering data stable when data source resolution fails", async () => {
+    const errors = [];
+    const registry = createDataSourceRegistry({
+      broken() {
+        throw new Error("接口异常");
+      },
+    });
+
+    const result = await resolveLowcodeDataSources(
+      [
+        { id: "ds_skip", type: "broken", params: { limit: 1 } },
+        { id: "ds_error", type: "missing", bindTo: "missingData" },
+        { id: "ds_broken", type: "broken", bindTo: "brokenData" },
+      ],
+      registry,
+      {
+        initialData: { products: [] },
+        onError(error, config) {
+          errors.push(`${config.id}:${error.message}`);
+        },
+      },
+    );
+
+    assert.deepEqual(result.data, { products: [] });
+    assert.deepEqual(errors, [
+      "ds_error:Lowcode data source handler not found: missing",
+      "ds_broken:接口异常",
+    ]);
+    assert.deepEqual(result.records, [
+      { id: "ds_skip", type: "broken", status: "skipped", error: "bindTo is empty" },
+      {
+        id: "ds_error",
+        type: "missing",
+        bindTo: "missingData",
+        status: "error",
+        error: "Lowcode data source handler not found: missing",
+      },
+      { id: "ds_broken", type: "broken", bindTo: "brokenData", status: "error", error: "接口异常" },
+    ]);
   });
 
   it("executes safe action handlers by type", async () => {

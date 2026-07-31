@@ -1,5 +1,10 @@
-import { useMemo, useState } from "react";
-import { decodePageSchemaFromUrlParam } from "@meumall/lowcode-adapters";
+import { useEffect, useMemo, useState } from "react";
+import {
+  createDataSourceRegistry,
+  decodePageSchemaFromUrlParam,
+  resolveLowcodeDataSources,
+  type DataSourceResolutionRecord,
+} from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import { h5Materials } from "@meumall/lowcode-materials-h5";
 import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
@@ -7,6 +12,8 @@ import {
   createLowcodePageSchema,
   validateLowcodePageSchema,
   type JsonObject,
+  type JsonValue,
+  type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
 
@@ -34,9 +41,10 @@ const sampleProducts = [
   },
 ];
 
-const runtimeData: JsonObject = {
-  products: sampleProducts,
-};
+function resolveSampleProductDataSource(dataSource: LowcodeDataSourceConfig): JsonValue {
+  const limit = typeof dataSource.params?.limit === "number" ? dataSource.params.limit : sampleProducts.length;
+  return sampleProducts.slice(0, limit) as JsonValue;
+}
 
 const sampleSchema = createLowcodePageSchema({
   pageId: "summer-campaign-demo",
@@ -176,6 +184,11 @@ const sampleSchema = createLowcodePageSchema({
 });
 
 const registry = createMaterialRegistry(h5Materials);
+const dataSourceRegistry = createDataSourceRegistry({
+  "product.byActivity": resolveSampleProductDataSource,
+  "product.byIds": resolveSampleProductDataSource,
+  "custom.http": (dataSource) => dataSource.params ?? {},
+});
 
 interface RuntimeSchemaSource {
   schema: LowcodePageSchema;
@@ -216,9 +229,31 @@ function countNodes(schema: LowcodePageSchema): number {
 
 export function App() {
   const [renderErrors, setRenderErrors] = useState<string[]>([]);
+  const [runtimeData, setRuntimeData] = useState<JsonObject>({});
+  const [dataSourceRecords, setDataSourceRecords] = useState<DataSourceResolutionRecord[]>([]);
+  const [dataResolving, setDataResolving] = useState(true);
   const runtimeSchema = useMemo(() => resolveRuntimeSchema(), []);
   const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
   const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
+  const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
+  const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
+
+  useEffect(() => {
+    let cancelled = false;
+    setDataResolving(true);
+    resolveLowcodeDataSources(runtimeSchema.schema.dataSources ?? [], dataSourceRegistry)
+      .then((result) => {
+        if (cancelled) return;
+        setRuntimeData(result.data);
+        setDataSourceRecords(result.records);
+      })
+      .finally(() => {
+        if (!cancelled) setDataResolving(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [runtimeSchema.schema]);
 
   return (
     <main className="runtime-shell">
@@ -245,8 +280,28 @@ export function App() {
             <dt>Nodes</dt>
             <dd>{nodeCount}</dd>
           </div>
+          <div>
+            <dt>Data</dt>
+            <dd>
+              {dataResolving
+                ? "resolving"
+                : dataSourceErrors.length
+                  ? `${dataSourceErrors.length} error`
+                  : `${dataSourceResolvedCount} resolved`}
+            </dd>
+          </div>
         </dl>
         {runtimeSchema.error ? <p className="runtime-warning">{runtimeSchema.error}</p> : null}
+        {dataSourceRecords.length ? (
+          <div className="runtime-data-records" aria-label="数据源状态">
+            {dataSourceRecords.map((record) => (
+              <p key={record.id} className={`is-${record.status}`}>
+                <strong>{record.id}</strong>
+                <span>{record.status === "resolved" ? `绑定到 ${record.bindTo}` : record.error}</span>
+              </p>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className="phone-frame" aria-label="H5 页面">

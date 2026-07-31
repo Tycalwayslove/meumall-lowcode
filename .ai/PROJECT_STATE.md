@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库，并建立 schema/core/adapters 基础单元测试体系。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters 基础单元测试体系，并打通 data source resolver 到编辑器预览和 React H5 runtime。
 
 ## 当前维护范围
 
@@ -45,11 +45,12 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 基础电商物料扩展：新增 `ActionButton`、`NoticeBar`、`SpacerBlock`，并同步 Vue/React H5 物料包。
 - 页面模板库：编辑器左侧可一键应用大促活动页、新人券领取页和商品专题页模板。
 - 基础单元测试：根目录提供 `pnpm test`，覆盖 schema、core 和 adapters 公开 API 基础回归。
+- Data source resolver：`@meumall/lowcode-adapters` 提供通用数据源解析，编辑器预览和 React H5 runtime 可按 schema.dataSources 生成 renderer data，并展示逐数据源诊断状态。
 
 ## 已知缺口
 
 - 尚未实现完整生产级编辑器 UI。
-- 数据源面板尚未执行真实请求。
+- 数据源面板和 React H5 runtime 已执行 mock resolver，尚未接入真实 HTTP 请求、鉴权、缓存和 Java 代理。
 - 容器内自由拖拽布局尚未完成；当前支持结构面板拖拽和画布上下文插入/移动。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
 - 尚未定义 Java 配置平台 API 契约。
@@ -76,7 +77,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `03cca93` | 打通编辑器到 React H5 runtime 的 schema handoff。 |
 | 2026-07-31 | `915c9ef` | 扩展行动按钮、公告条和间距块基础物料。 |
 | 2026-07-31 | `32cc2aa` | 新增编辑器页面模板库。 |
-| 2026-07-31 | 待提交 | 建立 schema/core/adapters 基础单元测试体系。 |
+| 2026-07-31 | `bc68738` | 建立 schema/core/adapters 基础单元测试体系。 |
+| 2026-07-31 | 待提交 | 打通 data source resolver 到编辑器预览和 React H5 runtime。 |
 
 ## 默认验证命令
 
