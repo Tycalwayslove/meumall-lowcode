@@ -110,6 +110,26 @@ export const pageTemplates: PageTemplate[] = [
           },
         },
         {
+          id: "summer_floor_anchor",
+          componentName: "FloorAnchorNav",
+          materialVersion: "0.1.0",
+          props: {
+            title: "",
+            sticky: true,
+            smooth: true,
+            offsetTop: 0,
+            radius: 999,
+            backgroundColor: "#ffffff",
+            itemBackgroundColor: "#f3f4f6",
+            textColor: "#111827",
+            items: [
+              { id: "anchor_coupon", title: "领券", targetId: "summer_coupon" },
+              { id: "anchor_pick", title: "精选专区", targetId: "summer_container" },
+              { id: "anchor_flash", title: "限时秒杀", targetId: "summer_flash_sale" },
+            ],
+          },
+        },
+        {
           id: "summer_nav",
           componentName: "NavGrid",
           materialVersion: "0.1.0",

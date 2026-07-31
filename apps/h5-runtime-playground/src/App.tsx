@@ -128,6 +128,29 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_floor_anchor",
+      componentName: "FloorAnchorNav",
+      materialVersion: "0.1.0",
+      props: {
+        title: "",
+        sticky: true,
+        smooth: true,
+        offsetTop: 0,
+        radius: 999,
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#f3f4f6",
+        textColor: "#111827",
+        items: [
+          { id: "anchor_coupon", title: "领券", targetId: "node_coupon" },
+          { id: "anchor_flash", title: "限时秒杀", targetId: "node_flash_sale" },
+          { id: "anchor_pick", title: "精选专区", targetId: "node_container" },
+        ],
+      },
+      events: {
+        onAnchorClick: { actionId: "track_anchor_click" },
+      },
+    },
+    {
       id: "node_nav",
       componentName: "NavGrid",
       materialVersion: "0.1.0",
@@ -289,6 +312,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "activity_rule_open",
+      },
+    },
+    {
+      id: "track_anchor_click",
+      type: "tracking.click",
+      params: {
+        eventName: "floor_anchor_click",
       },
     },
   ],

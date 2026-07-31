@@ -88,11 +88,13 @@ function renderNode({
   ));
 
   return (
-    <MaterialErrorBoundary key={node.id} node={node} onRenderError={onRenderError}>
-      <Component props={{ ...props, ...events }} node={node}>
-        {children}
-      </Component>
-    </MaterialErrorBoundary>
+    <div key={node.id} className="mlc-runtime-node" data-lowcode-node-id={node.id}>
+      <MaterialErrorBoundary node={node} onRenderError={onRenderError}>
+        <Component props={{ ...props, ...events }} node={node}>
+          {children}
+        </Component>
+      </MaterialErrorBoundary>
+    </div>
   );
 }
 

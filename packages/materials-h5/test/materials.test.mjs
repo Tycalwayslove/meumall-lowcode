@@ -21,4 +21,14 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.buttonText, "查看规则");
     assert.equal(material.manifest.events?.[0]?.name, "onOpen");
   });
+
+  it("registers the floor anchor navigation material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "FloorAnchorNav");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "楼层锚点");
+    assert.equal(material.manifest.defaultProps.sticky, true);
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onAnchorClick");
+  });
 });

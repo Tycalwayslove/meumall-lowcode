@@ -32,6 +32,15 @@ function ruleList(value: unknown): Array<Record<string, unknown> | string> {
   return Array.isArray(value) ? (value as Array<Record<string, unknown> | string>) : [];
 }
 
+function findAnchorTarget(targetId: string): Element | null {
+  if (!targetId || typeof document === "undefined") return null;
+  const idTarget = document.getElementById(targetId);
+  if (idTarget) return idTarget;
+  return Array.from(document.querySelectorAll("[data-lowcode-node-id]")).find(
+    (element) => element.getAttribute("data-lowcode-node-id") === targetId,
+  ) ?? null;
+}
+
 export const ActivityHero = defineComponent({
   name: "ActivityHero",
   props: materialPropOptions,
@@ -654,6 +663,93 @@ export const NavGrid = defineComponent({
   },
 });
 
+export const FloorAnchorNav = defineComponent({
+  name: "FloorAnchorNav",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items);
+      const visibleItems = items.length ? items : [{ id: "anchor_1", title: "楼层", targetId: "" }];
+      const sticky = runtimeProps.sticky !== false;
+      const offsetTop = number(runtimeProps.offsetTop, 0);
+
+      const scrollToTarget = (item: Record<string, unknown>) => {
+        const targetId = text(item.targetId, text(item.id));
+        const handler = runtimeProps.onAnchorClick;
+        if (typeof handler === "function") handler(item);
+        const target = findAnchorTarget(targetId);
+        if (target) {
+          target.scrollIntoView({
+            behavior: runtimeProps.smooth === false ? "auto" : "smooth",
+            block: "start",
+          });
+          return;
+        }
+        const linkUrl = text(item.linkUrl);
+        if (linkUrl) window.location.href = linkUrl;
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-floor-anchor-nav",
+          style: {
+            position: sticky ? "sticky" : "relative",
+            top: sticky ? `${offsetTop}px` : "auto",
+            zIndex: sticky ? 20 : "auto",
+            padding: "10px 12px",
+            background: text(runtimeProps.backgroundColor, "#ffffff"),
+            boxShadow: sticky ? "0 8px 18px rgba(15, 23, 42, 0.06)" : "none",
+          },
+        },
+        [
+          text(runtimeProps.title)
+            ? h(
+                "strong",
+                { style: { display: "block", marginBottom: "8px", color: text(runtimeProps.textColor, "#111827"), fontSize: "14px" } },
+                text(runtimeProps.title),
+              )
+            : null,
+          h(
+            "div",
+            {
+              style: {
+                display: "flex",
+                gap: "8px",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch",
+              } satisfies CSSProperties,
+            },
+            visibleItems.map((item, index) =>
+              h(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => scrollToTarget(item),
+                  style: {
+                    flex: "0 0 auto",
+                    minHeight: "34px",
+                    border: 0,
+                    borderRadius: `${number(runtimeProps.radius, 999)}px`,
+                    padding: "0 14px",
+                    color: text(runtimeProps.textColor, "#111827"),
+                    background: text(item.backgroundColor, text(runtimeProps.itemBackgroundColor, "#f3f4f6")),
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    whiteSpace: "nowrap",
+                  } satisfies CSSProperties,
+                },
+                String(item.title ?? `楼层 ${index + 1}`),
+              ),
+            ),
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const FlashSaleList = defineComponent({
   name: "FlashSaleList",
   props: materialPropOptions,
@@ -1019,6 +1115,43 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         items: { label: "导航项", type: "array", setter: "textarea", defaultValue: [] },
       },
       events: [{ name: "onNavigate", title: "点击导航" }],
+    }),
+  },
+  {
+    component: FloorAnchorNav,
+    manifest: createMaterialManifest({
+      componentName: "FloorAnchorNav",
+      materialVersion: "0.1.0",
+      title: "楼层锚点",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "",
+        sticky: true,
+        smooth: true,
+        offsetTop: 0,
+        radius: 999,
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#f3f4f6",
+        textColor: "#111827",
+        items: [
+          { id: "anchor_coupon", title: "领券", targetId: "summer_coupon" },
+          { id: "anchor_flash", title: "秒杀", targetId: "summer_flash_sale" },
+          { id: "anchor_pick", title: "精选", targetId: "summer_container" },
+        ],
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "" },
+        sticky: { label: "吸顶", type: "boolean", setter: "switch", defaultValue: true },
+        smooth: { label: "平滑滚动", type: "boolean", setter: "switch", defaultValue: true },
+        offsetTop: { label: "顶部偏移", type: "number", setter: "number", defaultValue: 0 },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 999 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        itemBackgroundColor: { label: "项背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        items: { label: "锚点项", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      events: [{ name: "onAnchorClick", title: "点击锚点" }],
     }),
   },
   {

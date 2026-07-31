@@ -17,6 +17,7 @@ Current materials:
 - `SpacerBlock`
 - `CountdownTimer`
 - `NavGrid`
+- `FloorAnchorNav`
 - `FlashSaleList`
 - `RichTextBlock`
 

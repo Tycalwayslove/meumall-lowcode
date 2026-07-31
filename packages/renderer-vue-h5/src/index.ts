@@ -100,27 +100,28 @@ export const LowcodeVueRenderer = defineComponent({
         () => children,
       );
 
-      if (!props.editable) return renderedNode;
-
       return h(
         "div",
         {
           key: node.id,
           class: {
             "mlc-runtime-node": true,
-            "is-selected": props.selectedNodeId === node.id,
+            "is-selected": props.editable && props.selectedNodeId === node.id,
           },
           "data-lowcode-node-id": node.id,
-          draggable: props.nodeDraggable,
+          draggable: props.editable && props.nodeDraggable,
           onClick: (event: MouseEvent) => {
+            if (!props.editable) return;
             event.stopPropagation();
             props.onNodeSelect?.(node);
           },
           onDragstart: (event: DragEvent) => {
+            if (!props.editable) return;
             event.stopPropagation();
             props.onNodeDragStart?.(node, event);
           },
           onDragend: (event: DragEvent) => {
+            if (!props.editable) return;
             event.stopPropagation();
             props.onNodeDragEnd?.(node, event);
           },
