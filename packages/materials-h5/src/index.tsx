@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -1285,11 +1285,10 @@ export function NoticeBar({ props }: MaterialProps) {
 
 export function SpacerBlock({ props }: MaterialProps) {
   return (
-    <div
-      style={{
-        height: number(props.height, 12),
-        background: text(props.backgroundColor, "#f3f4f6"),
-      }}
+    <MlcSpacer
+      className="mlc-material mlc-spacer-block"
+      height={number(props.height, 12)}
+      backgroundColor={text(props.backgroundColor, "#f3f4f6")}
     />
   );
 }

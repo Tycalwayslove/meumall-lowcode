@@ -373,6 +373,30 @@ export const MlcTabs = defineComponent({
   },
 });
 
+export const MlcSpacer = defineComponent({
+  name: "MlcSpacer",
+  props: {
+    height: { type: [String, Number] as PropType<string | number>, default: 12 },
+    backgroundColor: { type: String, default: "transparent" },
+    radius: { type: [String, Number] as PropType<string | number>, default: 0 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    const toSize = (value: string | number) => (typeof value === "number" ? `${value}px` : value);
+    return () =>
+      h("div", {
+        class: props.class,
+        style: {
+          height: toSize(props.height),
+          background: props.backgroundColor,
+          borderRadius: toSize(props.radius),
+          ...props.style,
+        } satisfies CSSProperties,
+      });
+  },
+});
+
 export const MlcOverlay = defineComponent({
   name: "MlcOverlay",
   props: {

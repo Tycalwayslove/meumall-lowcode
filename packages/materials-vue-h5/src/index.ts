@@ -2,7 +2,7 @@ import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue"
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -1803,12 +1803,10 @@ export const SpacerBlock = defineComponent({
   setup(props) {
     return () => {
       const runtimeProps = props.props ?? {};
-      return h("div", {
+      return h(MlcSpacer, {
         class: "mlc-material mlc-spacer-block",
-        style: {
-          height: `${number(runtimeProps.height, 12)}px`,
-          background: text(runtimeProps.backgroundColor, "transparent"),
-        },
+        height: number(runtimeProps.height, 12),
+        backgroundColor: text(runtimeProps.backgroundColor, "transparent"),
       });
     };
   },

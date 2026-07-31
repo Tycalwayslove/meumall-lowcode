@@ -14,6 +14,7 @@ import {
   LiveEntry,
   NavGrid,
   ProductRankList,
+  SpacerBlock,
   StickyActionBar,
   StoreExpertSection,
   TabsBlock,
@@ -80,6 +81,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcModal",
       "MlcCountdownText",
       "MlcTabs",
+      "MlcSpacer",
     ];
 
     for (const name of primitiveNames) {
@@ -142,6 +144,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(floorAnchorTypes.has("MlcButton"), true);
     assert.equal(floorAnchorTypes.has("MlcText"), true);
     functionSourceIncludes(TabsBlock, ["MlcTabs", "MlcTag", "MlcText"]);
+    functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);

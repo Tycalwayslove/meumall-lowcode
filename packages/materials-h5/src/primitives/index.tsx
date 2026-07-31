@@ -404,6 +404,35 @@ export function MlcTabs<TItem extends MlcTabsItem = MlcTabsItem>({
   );
 }
 
+export interface MlcSpacerProps {
+  height?: number | string;
+  backgroundColor?: string;
+  radius?: number | string;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcSpacer({
+  height = 12,
+  backgroundColor = "transparent",
+  radius = 0,
+  className,
+  style,
+}: MlcSpacerProps): React.ReactElement {
+  const toSize = (value: number | string) => (typeof value === "number" ? `${value}px` : value);
+  return (
+    <div
+      className={className}
+      style={{
+        height: toSize(height),
+        background: backgroundColor,
+        borderRadius: toSize(radius),
+        ...style,
+      }}
+    />
+  );
+}
+
 export interface MlcOverlayProps {
   open?: boolean;
   children?: React.ReactNode;

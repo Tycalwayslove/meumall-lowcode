@@ -234,6 +234,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `Modal`
 - `CountdownText`
 - `Tabs`
+- `Spacer`
 
 ### 后续按场景补齐
 
@@ -356,4 +357,4 @@ H5 物料不得默认宣称支持小程序，必须通过 manifest `platforms` �
 
 ## 当前结论
 
-不要继续无限新增业务物料。下一步应先按 Phase 1 在现有材料包内部实现最小 primitives 原型，并只改造 2 到 3 个通用物料验证边界。等 API 稳定后再抽成独立 npm 包。
+不要继续无限新增业务物料。当前应继续按 Phase 1 在现有 materials 包内部收口 primitives 原型，并优先改造已有通用物料和重复 UI 明显的业务物料。等 API 稳定后再抽成独立 npm 包。
