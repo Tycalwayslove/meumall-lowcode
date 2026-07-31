@@ -159,7 +159,6 @@ import {
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
   recordLowcodeRecentMaterial,
-  type LowcodeEditorCommandEntry,
   type LowcodeEditorCanvasDragSource as CanvasDragSource,
   type LowcodeEditorCanvasDropHint as CanvasDropHint,
   type LowcodeEditorCanvasFrameMetrics as CanvasFrameMetrics,
@@ -200,6 +199,7 @@ import {
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
 import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
+import EditorCommandPalette, { type EditorCommandPaletteItem } from "./components/EditorCommandPalette.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
@@ -450,7 +450,7 @@ const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
 const phoneFrameRef = ref<HTMLElement>();
-const commandSearchInputRef = ref<HTMLInputElement>();
+const commandPaletteRef = ref<InstanceType<typeof EditorCommandPalette>>();
 const schemaFileInputRef = ref<HTMLInputElement>();
 const releaseMessage = ref("");
 const schemaTransferMessage = ref("");
@@ -519,8 +519,6 @@ let storeExpertSearchSeq = 0;
 let autoSaveTimer: number | undefined;
 let suppressNextAutoSave = false;
 
-type CommandPaletteGroup = "常用操作" | "视图" | "物料" | "模板";
-
 interface CanvasDragPoint extends CanvasPoint {
   target?: EventTarget | null;
 }
@@ -543,12 +541,8 @@ interface NodeContextMenuState {
   y: number;
 }
 
-interface CommandPaletteItem extends LowcodeEditorCommandEntry {
-  group: CommandPaletteGroup;
-  description: string;
+interface CommandPaletteItem extends EditorCommandPaletteItem {
   keywords: string[];
-  disabled?: boolean;
-  run: () => void | Promise<void>;
 }
 
 interface ListItemDragState {
@@ -2564,7 +2558,7 @@ function openCommandPalette(): void {
   commandKeyword.value = "";
   commandPaletteOpen.value = true;
   void nextTick(() => {
-    commandSearchInputRef.value?.focus();
+    commandPaletteRef.value?.focusSearchInput();
   });
 }
 
@@ -2572,7 +2566,7 @@ function closeCommandPalette(): void {
   commandPaletteOpen.value = false;
 }
 
-async function executeCommandPaletteItem(item: CommandPaletteItem): Promise<void> {
+async function executeCommandPaletteItem(item: EditorCommandPaletteItem): Promise<void> {
   if (item.disabled) return;
   await Promise.resolve(item.run());
   closeCommandPalette();
@@ -3232,44 +3226,16 @@ function rollbackPublishSelectedRelease(): void {
       />
     </header>
 
-    <div
-      v-if="commandPaletteOpen"
-      class="command-palette-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="快捷命令"
-      @click.self="closeCommandPalette"
-    >
-      <section class="command-palette">
-        <label class="command-search">
-          <Search :size="17" />
-          <input
-            ref="commandSearchInputRef"
-            v-model="commandKeyword"
-            placeholder="搜索命令、物料或模板"
-            @keydown.enter.prevent="executeFirstCommandPaletteItem"
-            @keydown.escape.prevent="closeCommandPalette"
-          />
-        </label>
-        <div class="command-list">
-          <button
-            v-for="item in visibleCommandPaletteItems"
-            :key="item.id"
-            type="button"
-            class="command-palette-item"
-            :disabled="item.disabled"
-            @click="executeCommandPaletteItem(item)"
-          >
-            <span class="command-item-main">
-              <strong>{{ item.title }}</strong>
-              <small>{{ item.description }}</small>
-            </span>
-            <span class="command-group">{{ item.disabled ? "不可用" : item.group }}</span>
-          </button>
-          <div v-if="!visibleCommandPaletteItems.length" class="mini-empty">没有匹配命令</div>
-        </div>
-      </section>
-    </div>
+    <EditorCommandPalette
+      ref="commandPaletteRef"
+      :open="commandPaletteOpen"
+      :keyword="commandKeyword"
+      :items="visibleCommandPaletteItems"
+      @close="closeCommandPalette"
+      @update-keyword="(value) => { commandKeyword = value; }"
+      @execute-first="executeFirstCommandPaletteItem"
+      @execute="executeCommandPaletteItem"
+    />
 
     <div
       v-if="pageStartWizardOpen"

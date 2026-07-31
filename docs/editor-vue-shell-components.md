@@ -30,6 +30,25 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取 `LowcodeEditorState` 或 Page Schema。
 - 不处理点击、跳转、权限、协作锁定、审计或服务端保存。
 
+### `EditorCommandPalette`
+
+路径：`apps/editor-playground/src/components/EditorCommandPalette.vue`
+
+职责：
+
+- 展示全局快捷命令弹窗、搜索输入、命令列表、禁用状态、分组标签和空状态。
+- 接收弹窗打开状态、搜索关键词和 command palette API 过滤后的命令项。
+- 通过 emits 抛出关闭、关键词更新、执行首个可用命令和执行指定命令。
+- 复用 command palette API 产出的命令展示模型，以及现有 `.command-*` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生命令列表或搜索结果。
+- 不执行命令函数。
+- 不处理全局快捷键、焦点互斥、弹窗互斥、权限、协作锁定、审计或服务端保存。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+
 ### `EditorMaterialCatalog`
 
 路径：`apps/editor-playground/src/components/EditorMaterialCatalog.vue`
@@ -216,7 +235,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-1. 快捷命令、右键菜单和顶部工具栏：优先消费 command palette、node operation 和 workspace summary API。
+1. 右键菜单和顶部工具栏：优先消费 node operation、workspace summary、schema file 和 draft persistence API。
 2. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
 
 ## 抽 npm 包判断
