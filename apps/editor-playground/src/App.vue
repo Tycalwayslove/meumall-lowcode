@@ -576,6 +576,7 @@ const contentPropNames = new Set([
 ]);
 const dataPropNames = new Set(["items", "coupons", "rules", "sellingPoints"]);
 const behaviorPropNames = new Set(["linkUrl", "primaryLinkUrl", "secondaryLinkUrl", "sticky", "smooth", "offsetTop", "safeArea", "showSecondary"]);
+const canvasStarterComponentNames = ["ActivityHero", "ImageBanner", "ProductList", "CouponSection"];
 
 const commonListEditorFields: Record<string, ListEditorField> = {
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
@@ -815,6 +816,12 @@ const visibleMaterials = computed(() => {
       .toLowerCase()
       .includes(keyword);
   });
+});
+const canvasStarterMaterials = computed(() => {
+  const order = new Map(canvasStarterComponentNames.map((componentName, index) => [componentName, index]));
+  return materials
+    .filter((item) => order.has(item.manifest.componentName))
+    .sort((a, b) => (order.get(a.manifest.componentName) ?? 0) - (order.get(b.manifest.componentName) ?? 0));
 });
 const materialDetailPropEntries = computed(() => {
   const manifest = selectedMaterialDetailManifest.value;
@@ -1781,6 +1788,11 @@ function recordRecentMaterial(manifest: LowcodeMaterialManifest): void {
 function addMaterial(manifest: LowcodeMaterialManifest): void {
   editorState.value = appendNode(editorState.value, createNodeInput(manifest));
   recordRecentMaterial(manifest);
+}
+
+function addStarterMaterial(manifest: LowcodeMaterialManifest): void {
+  addMaterial(manifest);
+  releaseMessage.value = `已添加起步物料：${manifest.title}`;
 }
 
 function openMaterialDetail(manifest: LowcodeMaterialManifest): void {
@@ -4540,6 +4552,7 @@ function formatAutoSaveTime(value: string): string {
             <span>{{ canvasDropHint.source === "node" ? "移动到页面末尾" : "追加到页面末尾" }}</span>
           </div>
           <LowcodeVueRenderer
+            v-if="editorState.schema.nodes.length"
             :schema="editorState.schema"
             :registry="registry"
             :data="previewData"
@@ -4552,6 +4565,37 @@ function formatAutoSaveTime(value: string): string {
             :on-node-drag-start="onCanvasNodeDragStart"
             :on-node-drag-end="onCanvasNodeDragEnd"
           />
+          <div v-else class="canvas-starter" role="status">
+            <span class="canvas-starter-kicker">从这里开始</span>
+            <strong>空白 H5 页面</strong>
+            <p>
+              {{
+                editorState.mode === "design"
+                  ? "选择一个基础物料开始搭建，后续可以继续拖拽、排序和配置属性。"
+                  : "当前页面暂无物料，请切回设计模式添加内容。"
+              }}
+            </p>
+            <div v-if="editorState.mode === 'design'" class="canvas-starter-actions" aria-label="空白画布起步物料">
+              <button
+                v-for="material in canvasStarterMaterials"
+                :key="`canvas-starter-${material.manifest.componentName}`"
+                type="button"
+                class="canvas-starter-button"
+                @click="addStarterMaterial(material.manifest)"
+              >
+                <Plus :size="14" />
+                <span>{{ material.manifest.title }}</span>
+              </button>
+            </div>
+            <button
+              v-if="editorState.mode === 'design'"
+              type="button"
+              class="canvas-starter-template"
+              @click="openPageStartWizard"
+            >
+              从模板开始
+            </button>
+          </div>
         </div>
       </div>
 

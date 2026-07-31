@@ -534,6 +534,13 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === 0");
   log("通过：新建页面向导可创建空白 H5 页面");
 
+  await page.waitForExpression("document.querySelector('.canvas-starter') && document.body.innerText.includes('选择一个基础物料开始搭建')");
+  await page.clickByText(".canvas-starter-button", "活动头图");
+  await page.waitForExpression("document.body.innerText.includes('已添加起步物料：活动头图')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === 1");
+  await page.waitForExpression("!document.querySelector('.canvas-starter')");
+  log("通过：空白画布可通过快捷物料开始搭建");
+
   await page.clickByText(".toolbar button", "保存草稿");
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
   await page.clickByText(".toolbar button", "新建");

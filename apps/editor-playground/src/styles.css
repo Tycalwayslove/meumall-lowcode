@@ -1745,6 +1745,90 @@ button:focus-visible {
   font-size: 12px;
 }
 
+.canvas-starter {
+  display: flex;
+  min-height: 684px;
+  padding: 28px 22px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #111827;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.96)),
+    repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.14) 0 1px, transparent 1px 12px);
+  text-align: center;
+}
+
+.canvas-starter-kicker {
+  margin-bottom: 10px;
+  padding: 4px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #475569;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.canvas-starter strong {
+  display: block;
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1.25;
+}
+
+.canvas-starter p {
+  max-width: 282px;
+  margin: 10px 0 18px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.canvas-starter-actions {
+  display: grid;
+  width: min(100%, 286px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.canvas-starter-button,
+.canvas-starter-template {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #1f2937;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.canvas-starter-button {
+  width: 100%;
+  padding: 0 9px;
+}
+
+.canvas-starter-button:hover,
+.canvas-starter-button:focus-visible,
+.canvas-starter-template:hover,
+.canvas-starter-template:focus-visible {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.canvas-starter-template {
+  width: min(100%, 286px);
+  margin-top: 10px;
+  padding: 0 12px;
+}
+
 .runtime-action-message {
   margin: 0;
   padding: 10px 12px;
