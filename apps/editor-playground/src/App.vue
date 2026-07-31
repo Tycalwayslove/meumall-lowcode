@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from "vue";
+import { computed, ref, shallowRef, watch, type CSSProperties } from "vue";
 import {
   ArrowDown,
   ArrowUp,
@@ -203,6 +203,7 @@ const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadSchema(
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
+const phoneFrameRef = ref<HTMLElement>();
 const releaseMessage = ref("");
 const configPlatformClient = localConfigPlatformClient;
 const releases = ref<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
@@ -221,6 +222,17 @@ const isRuntimeDataResolving = ref(false);
 const actionMessage = ref("");
 let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
+
+type CanvasDropPlacement = "before" | "after" | "inside" | "append";
+
+interface CanvasDropHint {
+  placement: CanvasDropPlacement;
+  targetNodeId?: string;
+  targetTitle: string;
+  style: CSSProperties;
+}
+
+const canvasDropHint = ref<CanvasDropHint>();
 
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
@@ -478,10 +490,126 @@ function onDragStart(event: DragEvent, manifest: LowcodeMaterialManifest): void 
   if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
 }
 
+function isMaterialDrag(event: DragEvent): boolean {
+  return Array.from(event.dataTransfer?.types ?? []).includes("application/x-meumall-material");
+}
+
+function findOutlineRowByNodeId(nodeId: string): OutlineRow | undefined {
+  return outlineRows.value.find((row) => row.node.id === nodeId);
+}
+
+function getRuntimeNodeElement(event: DragEvent): HTMLElement | undefined {
+  const target = event.target;
+  if (!(target instanceof Element)) return undefined;
+  return target.closest<HTMLElement>(".mlc-runtime-node[data-lowcode-node-id]") ?? undefined;
+}
+
+function getDropPlacement(event: DragEvent, node: LowcodeNode, nodeElement: HTMLElement): CanvasDropPlacement {
+  const rect = nodeElement.getBoundingClientRect();
+  const ratio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5;
+  if (node.componentName === "SectionContainer" && ratio > 0.28 && ratio < 0.72) return "inside";
+  return ratio < 0.5 ? "before" : "after";
+}
+
+function createDropHintStyle(nodeElement: HTMLElement, placement: CanvasDropPlacement): CSSProperties {
+  const frame = phoneFrameRef.value;
+  if (!frame) return {};
+  const frameRect = frame.getBoundingClientRect();
+  const nodeRect = nodeElement.getBoundingClientRect();
+  const top = nodeRect.top - frameRect.top + frame.scrollTop;
+  const left = nodeRect.left - frameRect.left + frame.scrollLeft;
+  if (placement === "inside") {
+    return {
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${nodeRect.width}px`,
+      height: `${nodeRect.height}px`,
+    };
+  }
+  return {
+    top: `${top + (placement === "after" ? nodeRect.height : 0)}px`,
+    left: `${left}px`,
+    width: `${nodeRect.width}px`,
+  };
+}
+
+function updateCanvasDropHint(event: DragEvent): CanvasDropHint | undefined {
+  if (!isMaterialDrag(event)) {
+    canvasDropHint.value = undefined;
+    return undefined;
+  }
+  const nodeElement = getRuntimeNodeElement(event);
+  const nodeId = nodeElement?.dataset.lowcodeNodeId;
+  const node = nodeId ? findNode(editorState.value.schema.nodes, nodeId) : undefined;
+  if (!node || !nodeElement) {
+    canvasDropHint.value = {
+      placement: "append",
+      targetTitle: "页面末尾",
+      style: {},
+    };
+    return canvasDropHint.value;
+  }
+  const placement = getDropPlacement(event, node, nodeElement);
+  const manifest = registry.get(node.componentName)?.manifest;
+  canvasDropHint.value = {
+    placement,
+    targetNodeId: node.id,
+    targetTitle: manifest?.title ?? node.componentName,
+    style: createDropHintStyle(nodeElement, placement),
+  };
+  return canvasDropHint.value;
+}
+
+function onCanvasDragOver(event: DragEvent): void {
+  if (!isMaterialDrag(event)) return;
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  updateCanvasDropHint(event);
+}
+
+function onCanvasDragLeave(event: DragEvent): void {
+  const current = event.currentTarget;
+  const related = event.relatedTarget;
+  if (current instanceof Node && related instanceof Node && current.contains(related)) return;
+  canvasDropHint.value = undefined;
+}
+
+function onMaterialDragEnd(): void {
+  canvasDropHint.value = undefined;
+}
+
 function onCanvasDrop(event: DragEvent): void {
   const componentName = event.dataTransfer?.getData("application/x-meumall-material");
   const material = materials.find((item) => item.manifest.componentName === componentName);
-  if (material) addMaterialToSelectedContainer(material.manifest);
+  if (!material) {
+    canvasDropHint.value = undefined;
+    return;
+  }
+  const hint = canvasDropHint.value ?? updateCanvasDropHint(event);
+  if (!hint?.targetNodeId || hint.placement === "append") {
+    addMaterial(material.manifest);
+    canvasDropHint.value = undefined;
+    return;
+  }
+  const row = findOutlineRowByNodeId(hint.targetNodeId);
+  if (!row) {
+    addMaterial(material.manifest);
+    canvasDropHint.value = undefined;
+    return;
+  }
+  if (hint.placement === "inside") {
+    editorState.value = insertNode(editorState.value, createNodeInput(material.manifest), {
+      parentId: row.node.id,
+      index: row.node.children?.length ?? 0,
+      select: true,
+    });
+  } else {
+    editorState.value = insertNode(editorState.value, createNodeInput(material.manifest), {
+      parentId: row.parentId,
+      index: hint.placement === "before" ? row.index : row.index + 1,
+      select: true,
+    });
+  }
+  canvasDropHint.value = undefined;
 }
 
 function onNodeDragStart(event: DragEvent, nodeId: string): void {
@@ -1199,6 +1327,7 @@ function formatReleaseTime(value: string): string {
           class="material-item"
           draggable="true"
           @dragstart="onDragStart($event, material.manifest)"
+          @dragend="onMaterialDragEnd"
           @click="addMaterial(material.manifest)"
         >
           <span>
@@ -1245,7 +1374,12 @@ function formatReleaseTime(value: string): string {
       </section>
     </aside>
 
-    <section class="canvas-panel" @dragover.prevent @drop.prevent="onCanvasDrop">
+    <section
+      class="canvas-panel"
+      @dragover.prevent="onCanvasDragOver"
+      @dragleave="onCanvasDragLeave"
+      @drop.prevent="onCanvasDrop"
+    >
       <div class="canvas-top">
         <div>
           <strong>{{ editorState.mode === "outline" ? "Schema" : "H5 画布" }}</strong>
@@ -1325,10 +1459,30 @@ function formatReleaseTime(value: string): string {
             </button>
           </div>
         </div>
-        <div class="phone-frame" :style="{ width: `${editorState.viewport.width}px` }">
+        <div ref="phoneFrameRef" class="phone-frame" :style="{ width: `${editorState.viewport.width}px` }">
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
             <span>H5</span>
+          </div>
+          <div
+            v-if="canvasDropHint && canvasDropHint.placement !== 'append'"
+            class="canvas-drop-indicator"
+            :class="`is-${canvasDropHint.placement}`"
+            :style="canvasDropHint.style"
+            aria-hidden="true"
+          >
+            <span>
+              {{
+                canvasDropHint.placement === "inside"
+                  ? `加入容器：${canvasDropHint.targetTitle}`
+                  : canvasDropHint.placement === "before"
+                    ? `插入到 ${canvasDropHint.targetTitle} 前方`
+                    : `插入到 ${canvasDropHint.targetTitle} 后方`
+              }}
+            </span>
+          </div>
+          <div v-if="canvasDropHint?.placement === 'append'" class="canvas-drop-append" aria-hidden="true">
+            <span>追加到页面末尾</span>
           </div>
           <LowcodeVueRenderer
             :schema="editorState.schema"
