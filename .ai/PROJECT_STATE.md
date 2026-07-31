@@ -225,7 +225,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `49010d1` | 新增标签内容切换通用物料。 |
 | 2026-08-01 | `828bd74` | 补齐 Overlay 和 Modal 内部弹层 primitives。 |
 | 2026-08-01 | `c1b64e4` | 补齐 CountdownText 内部倒计时 primitive。 |
-| 2026-08-01 | `本提交` | 补齐 Tabs 内部标签切换 primitive。 |
+| 2026-08-01 | `26c591e` | 补齐 Tabs 内部标签切换 primitive。 |
 
 ## 默认验证命令
 
