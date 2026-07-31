@@ -11,7 +11,6 @@ import {
   Layers,
   MoreHorizontal,
   MonitorSmartphone,
-  Pencil,
   PanelRight,
   Plus,
   Redo2,
@@ -202,6 +201,7 @@ import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorCommandPalette, { type EditorCommandPaletteItem } from "./components/EditorCommandPalette.vue";
 import EditorMaterialCatalog from "./components/EditorMaterialCatalog.vue";
 import EditorMaterialDetail from "./components/EditorMaterialDetail.vue";
+import EditorNodeContextMenu from "./components/EditorNodeContextMenu.vue";
 import EditorOutlineTree from "./components/EditorOutlineTree.vue";
 import EditorPageSettingsPanel from "./components/EditorPageSettingsPanel.vue";
 import EditorPropGroupsPanel from "./components/EditorPropGroupsPanel.vue";
@@ -3320,45 +3320,15 @@ function rollbackPublishSelectedRelease(): void {
       @add="addMaterialFromDetail"
     />
 
-    <div
-      v-if="nodeContextMenu"
-      class="node-context-backdrop"
-      aria-hidden="true"
-      @click="closeNodeContextMenu"
-      @contextmenu.prevent="closeNodeContextMenu"
-    ></div>
-    <div
-      v-if="nodeContextMenu && selectedNode"
-      class="node-context-menu"
-      :style="nodeContextMenuStyle"
-      role="menu"
-      aria-label="节点操作"
-      @click.stop
-      @contextmenu.prevent.stop
-    >
-      <div class="node-context-head">
-        <strong>{{ selectedNodeDisplayName }}</strong>
-        <span>{{ selectedManifest?.title ?? selectedNode.componentName }} / {{ selectedNode.id }}</span>
-      </div>
-      <button
-        v-for="item in nodeContextMenuItems"
-        :key="item.action"
-        type="button"
-        role="menuitem"
-        :disabled="item.disabled"
-        :class="{ danger: item.danger }"
-        @click="runNodeContextMenuAction(item)"
-      >
-        <Pencil v-if="item.action === 'rename'" :size="15" />
-        <ArrowUp v-if="item.action === 'insertBefore' || item.action === 'moveUp'" :size="15" />
-        <ArrowDown v-else-if="item.action === 'insertAfter' || item.action === 'moveDown'" :size="15" />
-        <Plus v-else-if="item.action === 'addInside' || item.action === 'paste'" :size="15" />
-        <Copy v-else-if="item.action === 'copy' || item.action === 'duplicate'" :size="15" />
-        <Trash2 v-else-if="item.action === 'delete'" :size="15" />
-        <span>{{ item.label }}</span>
-        <small v-if="item.shortcut">{{ item.shortcut }}</small>
-      </button>
-    </div>
+    <EditorNodeContextMenu
+      :open="Boolean(nodeContextMenu && selectedNode)"
+      :menu-style="nodeContextMenuStyle"
+      :node-title="selectedNodeDisplayName"
+      :node-subtitle="selectedNode ? `${selectedManifest?.title ?? selectedNode.componentName} / ${selectedNode.id}` : ''"
+      :items="nodeContextMenuItems"
+      @close="closeNodeContextMenu"
+      @execute="runNodeContextMenuAction"
+    />
 
     <aside class="left-panel">
       <section class="panel-section">

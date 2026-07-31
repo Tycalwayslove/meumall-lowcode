@@ -103,6 +103,24 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行真实节点选择、节点移动、重命名、右键菜单定位、画布滚动、权限、协作锁定、审计或服务端保存。
 
+### `EditorNodeContextMenu`
+
+路径：`apps/editor-playground/src/components/EditorNodeContextMenu.vue`
+
+职责：
+
+- 展示节点右键菜单遮罩、菜单头、菜单项、快捷键文案、禁用状态、危险操作样式和操作图标。
+- 接收打开状态、菜单位置 style、节点展示名、节点副标题和 node operation API 派生后的菜单项。
+- 通过 emits 抛出关闭菜单和执行指定菜单项。
+- 复用 node operation API 产出的菜单项展示模型，以及现有 `.node-context-*` 样式，保持当前视觉与 smoke check DOM 语义。
+
+不负责：
+
+- 不派生菜单项、禁用状态、节点标题或菜单位置。
+- 不执行真实节点操作、确认弹窗、快捷键识别、菜单定位、权限、协作锁定、审计或服务端保存。
+- 不写入 Page Schema。
+- 不读取或写入 localStorage。
+
 ### `EditorCanvasToolbar`
 
 路径：`apps/editor-playground/src/components/EditorCanvasToolbar.vue`
@@ -235,7 +253,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-1. 右键菜单和顶部工具栏：优先消费 node operation、workspace summary、schema file 和 draft persistence API。
+1. 顶部工具栏：优先消费 workspace summary、schema file、draft persistence、preview links 和 release history API。
 2. 状态面板和源码辅助操作：优先消费 schema file、draft persistence 和 workspace summary API。
 
 ## 抽 npm 包判断
