@@ -65,6 +65,17 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_notice",
+      componentName: "NoticeBar",
+      materialVersion: "0.1.0",
+      props: {
+        label: "公告",
+        content: "活动期间下单即享限时补贴，库存有限先到先得。",
+        backgroundColor: "#fffbeb",
+        textColor: "#92400e",
+      },
+    },
+    {
       id: "node_coupon",
       componentName: "CouponSection",
       materialVersion: "0.1.0",
@@ -88,6 +99,20 @@ const sampleSchema = createLowcodePageSchema({
       },
       children: [
         {
+          id: "node_action_nested",
+          componentName: "ActionButton",
+          materialVersion: "0.1.0",
+          props: {
+            text: "立即逛精选",
+            linkUrl: "",
+            backgroundColor: "#111827",
+            textColor: "#ffffff",
+            wrapperBackgroundColor: "#ffffff",
+            radius: 8,
+            paddingY: 8,
+          },
+        },
+        {
           id: "node_banner_nested",
           componentName: "ImageBanner",
           materialVersion: "0.1.0",
@@ -109,6 +134,15 @@ const sampleSchema = createLowcodePageSchema({
           },
         },
       ],
+    },
+    {
+      id: "node_spacer",
+      componentName: "SpacerBlock",
+      materialVersion: "0.1.0",
+      props: {
+        height: 16,
+        backgroundColor: "#f3f4f6",
+      },
     },
     {
       id: "node_rich_text",

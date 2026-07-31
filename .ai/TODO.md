@@ -10,6 +10,7 @@
 ## P1
 
 - 继续完善 Vue3 编辑器 UI：精确拖拽插入线、真实素材选择器、真实商品选择器、发布审批和回滚流程。
+- 继续补充电商活动页高阶物料：倒计时、导航宫格、秒杀商品组和门店/达人推荐。
 - 设计 Java 配置平台 API 契约。
 - 设计 `hybird-meumall` 接入方式。
 - 将 React H5 runtime playground 的接入方式沉淀为 `hybird-meumall` 路由集成清单。

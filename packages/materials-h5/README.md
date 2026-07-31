@@ -7,10 +7,13 @@ The first version is intentionally small and business-oriented. Avoid exposing t
 Current materials:
 
 - `SectionContainer`
+- `NoticeBar`
 - `ActivityHero`
 - `ImageBanner`
+- `ActionButton`
 - `ProductList`
 - `CouponSection`
+- `SpacerBlock`
 - `RichTextBlock`
 
 These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-vue-h5` so the editor preview schema can be rendered by the H5 runtime package.

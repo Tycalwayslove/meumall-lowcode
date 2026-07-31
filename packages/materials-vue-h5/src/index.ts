@@ -283,6 +283,99 @@ export const SectionContainer = defineComponent({
   },
 });
 
+export const ActionButton = defineComponent({
+  name: "ActionButton",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const linkUrl = text(runtimeProps.linkUrl);
+      const button = h(
+        "button",
+        {
+          type: "button",
+          class: "mlc-material mlc-action-button__button",
+          style: {
+            width: "100%",
+            minHeight: "44px",
+            border: 0,
+            borderRadius: `${number(runtimeProps.radius, 8)}px`,
+            color: text(runtimeProps.textColor, "#ffffff"),
+            background: text(runtimeProps.backgroundColor, "#111827"),
+            fontWeight: 700,
+            fontSize: "15px",
+          },
+          onClick: () => {
+            const handler = runtimeProps.onClick;
+            if (typeof handler === "function") handler();
+            if (linkUrl) window.location.href = linkUrl;
+          },
+        },
+        text(runtimeProps.text, "立即参与"),
+      );
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-action-button",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          },
+        },
+        [button],
+      );
+    };
+  },
+});
+
+export const NoticeBar = defineComponent({
+  name: "NoticeBar",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-notice-bar",
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "10px 14px",
+            color: text(runtimeProps.textColor, "#92400e"),
+            background: text(runtimeProps.backgroundColor, "#fffbeb"),
+            fontSize: "13px",
+            lineHeight: 1.5,
+          },
+        },
+        [
+          h("strong", { style: { flex: "0 0 auto", fontSize: "12px" } }, text(runtimeProps.label, "公告")),
+          h("span", { style: { minWidth: 0, flex: 1 } }, text(runtimeProps.content, "活动期间下单即享限时优惠。")),
+        ],
+      );
+    };
+  },
+});
+
+export const SpacerBlock = defineComponent({
+  name: "SpacerBlock",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      return h("div", {
+        class: "mlc-material mlc-spacer-block",
+        style: {
+          height: `${number(runtimeProps.height, 12)}px`,
+          background: text(runtimeProps.backgroundColor, "transparent"),
+        },
+      });
+    };
+  },
+});
+
 export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
   {
     component: SectionContainer,
@@ -305,6 +398,28 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
         padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12 },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+      },
+    }),
+  },
+  {
+    component: NoticeBar,
+    manifest: createMaterialManifest({
+      componentName: "NoticeBar",
+      materialVersion: "0.1.0",
+      title: "公告条",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "公告",
+        content: "活动期间下单即享限时优惠，库存有限先到先得。",
+        backgroundColor: "#fffbeb",
+        textColor: "#92400e",
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "公告" },
+        content: { label: "内容", type: "string", setter: "textarea", defaultValue: "活动期间下单即享限时优惠，库存有限先到先得。" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e" },
       },
     }),
   },
@@ -352,6 +467,35 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "" },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
       },
+    }),
+  },
+  {
+    component: ActionButton,
+    manifest: createMaterialManifest({
+      componentName: "ActionButton",
+      materialVersion: "0.1.0",
+      title: "行动按钮",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "立即参与",
+        linkUrl: "",
+        backgroundColor: "#111827",
+        textColor: "#ffffff",
+        wrapperBackgroundColor: "#f3f4f6",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        text: { label: "按钮文案", type: "string", setter: "input", defaultValue: "立即参与" },
+        linkUrl: { label: "跳转链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
     }),
   },
   {
@@ -408,6 +552,24 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: SpacerBlock,
+    manifest: createMaterialManifest({
+      componentName: "SpacerBlock",
+      materialVersion: "0.1.0",
+      title: "间距块",
+      category: "layout",
+      platforms: ["h5"],
+      defaultProps: {
+        height: 12,
+        backgroundColor: "#f3f4f6",
+      },
+      propsSchema: {
+        height: { label: "高度", type: "number", setter: "number", defaultValue: 12 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+      },
     }),
   },
   {

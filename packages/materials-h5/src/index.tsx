@@ -149,6 +149,70 @@ export function SectionContainer({ props, children }: MaterialProps) {
   );
 }
 
+export function ActionButton({ props }: MaterialProps) {
+  const linkUrl = text(props.linkUrl);
+  return (
+    <section
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        background: text(props.wrapperBackgroundColor, "#f3f4f6"),
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => {
+          const handler = props.onClick;
+          if (typeof handler === "function") handler();
+          if (linkUrl) window.location.href = linkUrl;
+        }}
+        style={{
+          width: "100%",
+          minHeight: 44,
+          border: 0,
+          borderRadius: number(props.radius, 8),
+          color: text(props.textColor, "#ffffff"),
+          background: text(props.backgroundColor, "#111827"),
+          fontWeight: 700,
+          fontSize: 15,
+        }}
+      >
+        {text(props.text, "立即参与")}
+      </button>
+    </section>
+  );
+}
+
+export function NoticeBar({ props }: MaterialProps) {
+  return (
+    <section
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "10px 14px",
+        color: text(props.textColor, "#92400e"),
+        background: text(props.backgroundColor, "#fffbeb"),
+        fontSize: 13,
+        lineHeight: 1.5,
+      }}
+    >
+      <strong style={{ flex: "0 0 auto", fontSize: 12 }}>{text(props.label, "公告")}</strong>
+      <span style={{ minWidth: 0, flex: 1 }}>{text(props.content, "活动期间下单即享限时优惠。")}</span>
+    </section>
+  );
+}
+
+export function SpacerBlock({ props }: MaterialProps) {
+  return (
+    <div
+      style={{
+        height: number(props.height, 12),
+        background: text(props.backgroundColor, "#f3f4f6"),
+      }}
+    />
+  );
+}
+
 export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] = [
   {
     component: SectionContainer,
@@ -171,6 +235,28 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
         padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12 },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+      },
+    }),
+  },
+  {
+    component: NoticeBar,
+    manifest: createMaterialManifest({
+      componentName: "NoticeBar",
+      materialVersion: "0.1.0",
+      title: "公告条",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "公告",
+        content: "活动期间下单即享限时优惠，库存有限先到先得。",
+        backgroundColor: "#fffbeb",
+        textColor: "#92400e",
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "公告" },
+        content: { label: "内容", type: "string", setter: "textarea", defaultValue: "活动期间下单即享限时优惠，库存有限先到先得。" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e" },
       },
     }),
   },
@@ -221,6 +307,35 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
     }),
   },
   {
+    component: ActionButton,
+    manifest: createMaterialManifest({
+      componentName: "ActionButton",
+      materialVersion: "0.1.0",
+      title: "行动按钮",
+      category: "marketing",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "立即参与",
+        linkUrl: "",
+        backgroundColor: "#111827",
+        textColor: "#ffffff",
+        wrapperBackgroundColor: "#f3f4f6",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        text: { label: "按钮文案", type: "string", setter: "input", defaultValue: "立即参与" },
+        linkUrl: { label: "跳转链接", type: "string", setter: "input", defaultValue: "" },
+        backgroundColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
     component: ProductList,
     manifest: createMaterialManifest({
       componentName: "ProductList",
@@ -257,6 +372,24 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
       },
       events: [{ name: "onReceive", title: "点击领取" }],
+    }),
+  },
+  {
+    component: SpacerBlock,
+    manifest: createMaterialManifest({
+      componentName: "SpacerBlock",
+      materialVersion: "0.1.0",
+      title: "间距块",
+      category: "layout",
+      platforms: ["h5"],
+      defaultProps: {
+        height: 12,
+        backgroundColor: "#f3f4f6",
+      },
+      propsSchema: {
+        height: { label: "高度", type: "number", setter: "number", defaultValue: 12 },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
+      },
     }),
   },
   {

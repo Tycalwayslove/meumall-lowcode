@@ -15,3 +15,4 @@
 - `TASK-2026-0731-007-h5-material-parity-canvas-actions.md`
 - `TASK-2026-0731-008-react-h5-runtime-playground.md`
 - `TASK-2026-0731-009-editor-react-h5-schema-handoff.md`
+- `TASK-2026-0731-010-basic-commerce-materials.md`

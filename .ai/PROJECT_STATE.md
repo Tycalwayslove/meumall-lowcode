@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground，以及编辑器到 React H5 runtime 的 schema URL handoff。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、编辑器到 React H5 runtime 的 schema URL handoff，并扩展了基础电商物料库。
 
 ## 当前维护范围
 
@@ -28,13 +28,13 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Changesets 基础配置。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
-- H5 materials 初始实现，已包含容器、活动头图、图片 Banner、商品列表、优惠券区块和富文本。
+- H5 materials 初始实现，已包含容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
 - Page Schema v1 基础类型、标准化、递归校验和 manifest 校验。
 - Editor headless command：模式、视口、选择、插入、更新、复制、移动、删除、undo/redo。
 - Vue H5 renderer 初始实现。
-- Vue H5 基础物料：活动头图、图片 Banner、商品列表、优惠券区块、富文本。
+- Vue H5 基础物料：容器、公告条、活动头图、图片 Banner、行动按钮、商品列表、优惠券区块、间距块、富文本。
 - Vue3 编辑器 playground：物料添加、拖到画布、节点选择、属性编辑、JSON 查看/应用、本地保存、撤销/重做和 H5 预览。
 - Vue3 编辑器交互增强：画布节点点击选中、高亮、根节点拖拽排序、页面状态/环境配置和数据源面板。
 - Vue3 编辑器实操增强：容器物料、嵌套结构展示、向容器添加子物料、素材/商品快捷选择和 mock 数据源预览绑定。
@@ -42,6 +42,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器画布上下文操作：选中节点后可前后插入物料、向容器加入物料、同级上移/下移、复制和删除。
 - React H5 runtime playground：独立消费 React H5 renderer/materials/core/schema，验证基础物料、容器嵌套和 dataBinding。
 - 编辑器到 React H5 runtime handoff：通过 URL schema 参数打开当前编辑 schema 的 React H5 渲染结果。
+- 基础电商物料扩展：新增 `ActionButton`、`NoticeBar`、`SpacerBlock`，并同步 Vue/React H5 物料包。
 
 ## 已知缺口
 
@@ -70,7 +71,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `c3035f7` | 补充本地 mock 发布预览链路和独立 H5 runtime 入口。 |
 | 2026-07-31 | `8d4cf89` | 对齐 React H5 容器物料并增强画布上下文操作。 |
 | 2026-07-31 | `54b2ccf` | 新增独立 React H5 runtime playground。 |
-| 2026-07-31 | 待提交 | 打通编辑器到 React H5 runtime 的 schema handoff。 |
+| 2026-07-31 | `03cca93` | 打通编辑器到 React H5 runtime 的 schema handoff。 |
+| 2026-07-31 | 待提交 | 扩展行动按钮、公告条和间距块基础物料。 |
 
 ## 默认验证命令
 
