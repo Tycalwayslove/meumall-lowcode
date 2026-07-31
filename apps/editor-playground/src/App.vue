@@ -9,9 +9,11 @@ import {
   Copy,
   Database,
   Eye,
+  ExternalLink,
   GripVertical,
   Image,
   Layers,
+  Link2,
   LocateFixed,
   MoreHorizontal,
   MonitorSmartphone,
@@ -429,6 +431,13 @@ interface ReleaseDiffItem {
   changed: boolean;
 }
 
+interface PreviewLinkItem {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+}
+
 interface WorkspaceStat {
   label: string;
   value: string;
@@ -824,12 +833,40 @@ const autoSaveStatusTone = computed(() => {
 const selectedRelease = computed<LocalPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
+const latestPublishedRelease = computed<LocalPageRelease | undefined>(() =>
+  releases.value.find((release) => release.kind === "published"),
+);
 const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
   selectedRelease.value ? createReleaseDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
 );
 const releaseDiffChangedCount = computed(() => releaseDiffItems.value.filter((item) => item.changed).length);
 const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
+const previewLinkItems = computed<PreviewLinkItem[]>(() => {
+  const items: PreviewLinkItem[] = [
+    {
+      id: "react-current",
+      title: "当前草稿 React H5",
+      description: "携带当前 schema，适合即时验收。",
+      url: createReactH5RuntimeUrl(editorState.value.schema),
+    },
+    {
+      id: "page-runtime",
+      title: "页面草稿/最新版本 H5",
+      description: "按 pageId 读取本地 mock 配置平台。",
+      url: createRuntimeUrl({ pageId: editorState.value.schema.pageId }),
+    },
+  ];
+  if (latestPublishedRelease.value) {
+    items.push({
+      id: "published-runtime",
+      title: "最近发布版本 H5",
+      description: `${latestPublishedRelease.value.pageVersion} / ${formatReleaseTime(latestPublishedRelease.value.createdAt)}`,
+      url: createRuntimeUrl({ releaseId: latestPublishedRelease.value.id }),
+    });
+  }
+  return items;
+});
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(pageTemplates.map((template) => template.category)))]);
 const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
   {
@@ -3320,6 +3357,43 @@ function openReactH5Runtime(schema: LowcodePageSchema = editorState.value.schema
   window.open(createReactH5RuntimeUrl(schema), "_blank", "noopener,noreferrer");
 }
 
+function openPreviewLink(item: PreviewLinkItem): void {
+  window.open(item.url, "_blank", "noopener,noreferrer");
+}
+
+async function copyPreviewLink(item: PreviewLinkItem): Promise<void> {
+  try {
+    await copyTextToClipboard(item.url);
+    releaseMessage.value = `已复制预览链接：${item.title}`;
+  } catch {
+    releaseMessage.value = `复制失败：请手动复制 ${item.title}`;
+  }
+}
+
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // 本地非安全上下文下退回 textarea 复制。
+    }
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!copied) {
+    throw new Error("copy failed");
+  }
+}
+
 function setReleaseMessage(release: LocalPageRelease, action: string): void {
   releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}`;
 }
@@ -3970,6 +4044,36 @@ function formatAutoSaveTime(value: string): string {
           </select>
         </label>
         <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
+      </section>
+
+      <section class="panel-section preview-link-panel">
+        <div class="panel-title">
+          <Link2 :size="16" />
+          <span>H5 预览入口</span>
+        </div>
+        <div class="preview-link-list">
+          <article
+            v-for="item in previewLinkItems"
+            :key="item.id"
+            class="preview-link-card"
+          >
+            <div class="preview-link-head">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.description }}</span>
+            </div>
+            <input :value="item.url" readonly />
+            <div class="preview-link-actions">
+              <button type="button" class="preview-open-button" @click="openPreviewLink(item)">
+                <ExternalLink :size="13" />
+                打开
+              </button>
+              <button type="button" class="preview-copy-button" @click="copyPreviewLink(item)">
+                <Copy :size="13" />
+                复制
+              </button>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="panel-section">

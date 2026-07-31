@@ -2098,6 +2098,76 @@ button:focus-visible {
   line-height: 1.5;
 }
 
+.preview-link-list {
+  display: grid;
+  gap: 9px;
+}
+
+.preview-link-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.preview-link-head {
+  display: grid;
+  gap: 3px;
+}
+
+.preview-link-head strong {
+  color: #111827;
+  font-size: 13px;
+}
+
+.preview-link-head span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.preview-link-card input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  padding: 0 9px;
+  color: #334155;
+  background: #f8fafc;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.preview-link-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preview-link-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 30px;
+  border: 1px solid #d7dbe3;
+  border-radius: 8px;
+  color: #1f2937;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.preview-link-actions button:hover,
+.preview-link-actions button:focus-visible {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
 .publish-summary {
   display: grid;
   gap: 4px;

@@ -334,6 +334,16 @@ async function assertPage(page, url, checks) {
 }
 
 async function assertEditorWorkflow(page) {
+  log("检查 H5 预览入口");
+  await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
+  await page.waitForExpression("document.body.innerText.includes('当前草稿 React H5')");
+  await page.waitForExpression("document.body.innerText.includes('页面草稿/最新版本 H5')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.preview-link-card input')).some((item) => item.value.includes('schema=') && item.value.includes('source=editor'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.preview-link-card input')).some((item) => item.value.includes('runtime=1') && item.value.includes('pageId='))");
+  await page.clickChildByText(".preview-link-card", "当前草稿 React H5", ".preview-copy-button");
+  await page.waitForExpression("document.body.innerText.includes('已复制预览链接：当前草稿 React H5') || document.body.innerText.includes('复制失败：请手动复制 当前草稿 React H5')");
+  log("通过：H5 预览入口展示链接并提供复制反馈");
+
   log("检查快捷命令面板");
   const nodeCountBeforeCommand = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });

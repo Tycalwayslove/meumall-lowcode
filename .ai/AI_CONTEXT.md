@@ -48,6 +48,7 @@
 - Vue3 编辑器 playground 已支持节点命名：结构树主标题展示 `node.meta.name` 或物料标题，右侧当前节点信息卡可编辑节点名称，节点右键菜单可进入结构树内联重命名；重命名复用已有 `meta.name`，可被结构树搜索命中。
 - Vue3 编辑器 playground 已支持本地自动保存和恢复提示：schema 变更后延迟 700ms 写入 localStorage 草稿，顶栏展示自动保存状态；从 localStorage 恢复草稿时显示“已恢复本地草稿”。这仍是本地 mock，后续接 Java 配置平台时应替换为服务端草稿自动保存。
 - Vue3 编辑器 playground 已支持发布检查节点定位：节点级图片、商品、数据源和动作配置问题会在右侧发布检查中展示“定位”入口，点击后自动切回设计模式、选中节点、展开结构树路径并滚动画布到目标节点。
+- Vue3 编辑器 playground 已支持 H5 预览入口：右侧发布区域集中展示当前草稿 React H5 链接、页面草稿/最新版本内置 H5 链接和最近发布版本 H5 链接，并支持打开和复制反馈。
 - React/Vue H5 物料包已新增 `LiveEntry` 直播入口，支持封面图、状态、标题、说明、观看人数、按钮、链接和 `onEnter` 事件；Vue3 编辑器大促模板、mock 直播素材、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `ProductRankList` 商品榜单，支持榜单标题、说明、角标、排名样式、展示数量、`items` 商品数据槽和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
 - React/Vue H5 物料包已新增 `BrandFeatureSection` 品牌专题，支持品牌名、标题、说明、角标、封面图、Logo、行动按钮、卖点列表、`items` 商品数据槽、`onEnter` 和 `onProductClick` 事件；Vue3 编辑器大促模板、商品选择器、React H5 runtime 示例和 browser smoke check 已接入。
