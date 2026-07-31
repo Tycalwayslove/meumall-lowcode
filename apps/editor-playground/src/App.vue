@@ -226,7 +226,14 @@ let runtimeResolutionSeq = 0;
 
 type CanvasDropPlacement = "before" | "after" | "inside" | "append";
 type CanvasDragSource = "material" | "node";
+type CanvasSnapGuideAxis = "x" | "y";
 type PublishCheckStatus = "pass" | "warning" | "error";
+
+interface CanvasSnapGuide {
+  axis: CanvasSnapGuideAxis;
+  label: string;
+  style: CSSProperties;
+}
 
 interface CanvasDropHint {
   source: CanvasDragSource;
@@ -234,6 +241,7 @@ interface CanvasDropHint {
   targetNodeId?: string;
   targetTitle: string;
   style: CSSProperties;
+  guides: CanvasSnapGuide[];
 }
 
 interface CanvasDragPoint {
@@ -899,6 +907,66 @@ function createDropHintStyle(nodeElement: HTMLElement, placement: CanvasDropPlac
   };
 }
 
+function createSnapGuides(nodeElement: HTMLElement, placement: CanvasDropPlacement): CanvasSnapGuide[] {
+  const frame = phoneFrameRef.value;
+  if (!frame) return [];
+  const frameRect = frame.getBoundingClientRect();
+  const nodeRect = nodeElement.getBoundingClientRect();
+  const top = nodeRect.top - frameRect.top + frame.scrollTop;
+  const left = nodeRect.left - frameRect.left + frame.scrollLeft;
+  const width = nodeRect.width;
+  const height = nodeRect.height;
+  const frameWidth = frame.clientWidth;
+  const frameHeight = Math.max(frame.scrollHeight, frame.clientHeight);
+  const targetCenterX = left + width / 2;
+  const targetCenterY = top + height / 2;
+
+  if (placement === "inside") {
+    return [
+      {
+        axis: "y",
+        label: "容器中心",
+        style: {
+          top: `${targetCenterY}px`,
+          left: "0px",
+          width: `${frameWidth}px`,
+        },
+      },
+      {
+        axis: "x",
+        label: "容器中心",
+        style: {
+          top: "0px",
+          left: `${targetCenterX}px`,
+          height: `${frameHeight}px`,
+        },
+      },
+    ];
+  }
+
+  const edgeTop = top + (placement === "after" ? height : 0);
+  return [
+    {
+      axis: "y",
+      label: placement === "before" ? "吸附到上边缘" : "吸附到下边缘",
+      style: {
+        top: `${edgeTop}px`,
+        left: "0px",
+        width: `${frameWidth}px`,
+      },
+    },
+    {
+      axis: "x",
+      label: "目标中心",
+      style: {
+        top: "0px",
+        left: `${targetCenterX}px`,
+        height: `${frameHeight}px`,
+      },
+    },
+  ];
+}
+
 function updateCanvasDropHintAtPoint(
   point: CanvasDragPoint,
   source: CanvasDragSource | undefined,
@@ -928,6 +996,7 @@ function updateCanvasDropHintAtPoint(
       placement: "append",
       targetTitle: "页面末尾",
       style: {},
+      guides: [],
     };
     return canvasDropHint.value;
   }
@@ -939,6 +1008,7 @@ function updateCanvasDropHintAtPoint(
     targetNodeId: node.id,
     targetTitle: manifest?.title ?? node.componentName,
     style: createDropHintStyle(nodeElement, placement),
+    guides: createSnapGuides(nodeElement, placement),
   };
   return canvasDropHint.value;
 }
@@ -2124,6 +2194,16 @@ function formatReleaseTime(value: string): string {
           <div class="phone-status">
             <span>{{ editorState.schema.title }}</span>
             <span>H5</span>
+          </div>
+          <div
+            v-for="guide in canvasDropHint?.guides ?? []"
+            :key="`${guide.axis}-${guide.label}-${guide.style.top ?? guide.style.left}`"
+            class="canvas-snap-guide"
+            :class="`is-${guide.axis}`"
+            :style="guide.style"
+            aria-hidden="true"
+          >
+            <span>{{ guide.label }}</span>
           </div>
           <div
             v-if="canvasDropHint && canvasDropHint.placement !== 'append'"

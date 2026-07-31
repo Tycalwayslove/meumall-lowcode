@@ -30,6 +30,7 @@
 - Vue3 编辑器 playground 画布已支持物料拖拽插入线：拖到节点上半区插入前方，下半区插入后方，拖到 `SectionContainer` 中间区域加入容器，拖到空白区域追加页面末尾。
 - Vue3 编辑器 playground 画布已支持已有节点拖拽移动：设计模式下节点 wrapper 可拖动，支持移动到目标前后、移入 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - Vue3 编辑器 playground 已补充触屏/手写笔 Pointer Events 拖拽：物料面板、结构树节点和 H5 画布节点都可通过 pointer 移动超过阈值后复用现有 drop hint 完成投放或移动；拖拽完成后会抑制紧随其后的 click，避免额外追加物料。
+- Vue3 编辑器 playground 已补充画布吸附线：`canvasDropHint.guides` 会在节点前/后投放时显示跨画布横向吸附线和目标中心纵向线，在容器内投放时显示容器中心横向/纵向辅助线。
 - `@meumall/lowcode-renderer-vue-h5` 的 editable wrapper 已提供可选 `nodeDraggable`、`onNodeDragStart`、`onNodeDragEnd`，供编辑器 shell 编排拖拽，不影响默认生产渲染。
 - Vue3 编辑器 playground 右侧面板已提供发布检查清单，覆盖 schema、节点、图片、商品、数据源和动作；生成预览和发布会拦截 error 检查项，保存草稿不拦截。
 - Vue3 编辑器 playground 本地版本列表已支持选择版本对比，摘要展示标题、状态、环境、页面版本、节点数、数据源数和动作数差异，并可将选中版本作为新的 published release 回滚发布。
