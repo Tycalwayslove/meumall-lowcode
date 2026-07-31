@@ -103,6 +103,10 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function jsString(value) {
+  return JSON.stringify(value);
+}
+
 async function startViteServer(name, cwd, port, env = {}) {
   log(`启动 ${name} dev server: ${port}`);
   const proc = spawnProcess("pnpm", ["exec", "vite", "--host", host, "--port", String(port), "--strictPort"], {
@@ -226,6 +230,36 @@ class CdpPage {
     fail(`等待页面条件超时：${expression}`);
   }
 
+  async wait(ms) {
+    await delay(ms);
+  }
+
+  async fillByPlaceholder(placeholder, value) {
+    const expression = `(() => {
+      const input = Array.from(document.querySelectorAll('input, textarea')).find((item) => item.getAttribute('placeholder') === ${jsString(placeholder)});
+      if (!input) return false;
+      input.focus();
+      input.value = ${jsString(value)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    })()`;
+    const filled = await this.evaluate(expression);
+    if (!filled) fail(`未找到 placeholder 为 ${placeholder} 的输入框`);
+  }
+
+  async clickByText(selector, text) {
+    const expression = `(() => {
+      const elements = Array.from(document.querySelectorAll(${jsString(selector)}));
+      const target = elements.find((item) => (item.innerText || item.textContent || '').includes(${jsString(text)}));
+      if (!target) return false;
+      target.click();
+      return true;
+    })()`;
+    const clicked = await this.evaluate(expression);
+    if (!clicked) fail(`未找到包含文本 ${text} 的元素：${selector}`);
+  }
+
   async close() {
     if (!this.ws) return;
     this.ws.close();
@@ -239,6 +273,34 @@ async function assertPage(page, url, checks) {
     await page.waitForExpression(check.expression, check.timeoutMs ?? timeoutMs);
     log(`通过：${check.label}`);
   }
+}
+
+async function assertEditorWorkflow(page) {
+  log("检查编辑器模板应用和模式切换操作流");
+  await page.fillByPlaceholder("搜索模板", "商品");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.template-item strong')).some((item) => item.innerText.includes('商品专题页'))");
+  await page.waitForExpression("!Array.from(document.querySelectorAll('.template-item strong')).some((item) => item.innerText.includes('大促活动页'))");
+  log("通过：模板搜索可筛选商品专题页");
+
+  await page.clickByText(".template-item", "商品专题页");
+  await page.waitForExpression("document.body.innerText.includes('通勤好物专题')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
+  log("通过：商品专题页模板可应用到画布");
+
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("document.body.innerText.includes('Schema')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('product-topic-demo'))");
+  log("通过：源码模式展示已应用模板 schema");
+
+  await page.clickByText(".toolbar button", "预览");
+  await page.waitForExpression("document.body.innerText.includes('H5 画布')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
+  log("通过：预览模式仍渲染 H5 节点");
+
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.editor-shell')");
+  await page.waitForExpression("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3");
+  log("通过：可切回设计模式");
 }
 
 async function cleanup() {
@@ -276,6 +338,7 @@ async function main() {
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertEditorWorkflow(page);
 
     await assertPage(page, editorRuntimeUrl, [
       { label: "编辑器内置 runtime shell 已挂载", expression: "document.querySelector('.runtime-shell')" },

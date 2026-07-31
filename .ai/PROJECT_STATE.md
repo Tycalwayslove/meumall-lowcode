@@ -47,7 +47,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 页面模板库：编辑器左侧可一键应用大促活动页、新人券领取页和商品专题页模板。
 - Template Library Client：`@meumall/lowcode-adapters` 提供 `LowcodeTemplateLibraryClient` 和 `createStaticTemplateLibraryClient`，Vue3 编辑器模板列表已改为通过 client 查询，支持模板搜索、分类过滤、加载态和空状态，为后续替换 Java 模板市场 HTTP client 预留边界。
 - 基础单元测试：根目录提供 `pnpm test`，覆盖 schema、core 和 adapters 公开 API 基础回归。
-- Browser smoke check：根目录提供 `pnpm smoke:browser`，脚本会启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染。
+- Browser smoke check：根目录提供 `pnpm smoke:browser`，脚本会启动 editor playground、H5 runtime playground 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时覆盖模板搜索、应用 `商品专题页`、源码/预览/设计模式切换和 schema 草稿同步。
 - Data source resolver：`@meumall/lowcode-adapters` 提供通用数据源解析，编辑器预览和 React H5 runtime 可按 schema.dataSources 生成 renderer data，并展示逐数据源诊断状态。
 - Safe action executor：`@meumall/lowcode-adapters` 提供安全 action registry/executor，编辑器可维护 actions 并绑定物料事件，Vue 预览和 React H5 runtime 可执行白名单动作。
 - 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`，大促模板和 React H5 runtime 示例已使用新增物料。
@@ -89,7 +89,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，但仍使用静态 mock client；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token。
-- 已建立基础浏览器级 smoke check，但组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E 和 visual regression 尚未建立。
+- 已建立浏览器级 smoke check，并覆盖基础挂载、模板应用和模式切换；但组件级 DOM 测试、拖拽/属性编辑/发布等更完整浏览器交互 E2E 和 visual regression 尚未建立。
 
 ## 最近变更
 
@@ -134,7 +134,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `7dc2d69` | 抽象编辑器 Resource Library Client 并接入 Vue3 编辑器资源选择器。 |
 | 2026-07-31 | `dca1bbd` | 抽象编辑器 Template Library Client 并接入 Vue3 编辑器模板筛选。 |
 | 2026-07-31 | `f0d1015` | 增强 Vue3 编辑器优惠券和门店/达人资源选择器。 |
-| 2026-07-31 | 本提交 | 新增浏览器级 smoke check 覆盖编辑器和 H5 runtime。 |
+| 2026-07-31 | `7188aec` | 新增浏览器级 smoke check 覆盖编辑器和 H5 runtime。 |
+| 2026-07-31 | 本提交 | 增强 browser smoke 覆盖模板应用和模式切换。 |
 
 ## 默认验证命令
 
