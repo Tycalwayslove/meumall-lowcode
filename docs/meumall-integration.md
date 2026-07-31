@@ -68,11 +68,12 @@ POST /api/lowcode/pages/{pageId}/track
 /?runtime=1&releaseId=preview_xxx
 http://localhost:5174/?schema=encoded_schema
 http://localhost:5174/?pageId=summer-campaign-demo
-http://localhost:5174/?releaseId=preview_xxx
+http://localhost:5174/?releaseId=preview_demo
+http://localhost:5174/?pageId=missing-page
 http://localhost:5174/?demo=empty
 ```
 
-`apps/h5-runtime-playground` 左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
+`apps/h5-runtime-playground` 内置一个本地 `LowcodeConfigPlatformClient` mock：`?pageId=summer-campaign-demo` 会加载本地 published schema，`?releaseId=preview_demo` 会加载本地 preview release schema；未知 `pageId` 或 `releaseId` 会回落到 sample schema 并展示 fallback 原因。左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
 
 后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage 实现替换为 HTTP adapter。
 

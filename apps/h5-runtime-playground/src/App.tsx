@@ -5,7 +5,9 @@ import {
   createSafeActionRegistry,
   loadLowcodeRuntimeSchema,
   resolveLowcodeDataSources,
+  type ConfigPlatformPageRelease,
   type DataSourceResolutionRecord,
+  type LowcodeConfigPlatformClient,
   type RuntimeSchemaSourceType,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
@@ -647,6 +649,89 @@ const emptyDemoSchema = createLowcodePageSchema({
   },
 });
 
+function cloneSchema(schema: LowcodePageSchema): LowcodePageSchema {
+  return JSON.parse(JSON.stringify(schema)) as LowcodePageSchema;
+}
+
+function createPreviewDemoSchema(): LowcodePageSchema {
+  const schema = cloneSchema(sampleSchema);
+  schema.status = "preview";
+  schema.pageVersion = "preview-20260801-demo";
+  schema.title = "夏日好物节预览";
+  schema.publishMeta = {
+    ...schema.publishMeta,
+    environment: "pre",
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    operator: "runtime-preview",
+  };
+  const heroNode = schema.nodes.find((node) => node.id === "node_hero");
+  if (heroNode) {
+    heroNode.props = {
+      ...heroNode.props,
+      subtitle: "React H5 runtime 正在通过 releaseId 加载预览版本。",
+    };
+  }
+  return schema;
+}
+
+const previewDemoSchema = createPreviewDemoSchema();
+
+const previewDemoRelease: ConfigPlatformPageRelease = {
+  id: "preview_demo",
+  kind: "preview",
+  pageId: previewDemoSchema.pageId,
+  pageVersion: previewDemoSchema.pageVersion,
+  title: previewDemoSchema.title,
+  createdAt: "2026-08-01T00:00:00.000Z",
+  schema: previewDemoSchema,
+};
+
+const publishedDemoRelease: ConfigPlatformPageRelease = {
+  id: "published_demo",
+  kind: "published",
+  pageId: sampleSchema.pageId,
+  pageVersion: sampleSchema.pageVersion,
+  title: sampleSchema.title,
+  createdAt: sampleSchema.publishMeta.publishedAt ?? "2026-07-31T00:00:00.000Z",
+  schema: sampleSchema,
+};
+
+const localRuntimeConfigPlatformClient: LowcodeConfigPlatformClient = {
+  saveDraft(schema) {
+    return {
+      id: "draft_demo",
+      kind: "draft",
+      pageId: schema.pageId,
+      pageVersion: schema.pageVersion,
+      title: schema.title,
+      createdAt: new Date().toISOString(),
+      schema,
+    };
+  },
+  createPreview() {
+    return previewDemoRelease;
+  },
+  publishPage() {
+    return publishedDemoRelease;
+  },
+  listReleases(pageId) {
+    const releases = [previewDemoRelease, publishedDemoRelease];
+    return pageId ? releases.filter((release) => release.pageId === pageId) : releases;
+  },
+  getRelease(releaseId) {
+    if (releaseId === previewDemoRelease.id || releaseId === publishedDemoRelease.id) {
+      return releaseId === previewDemoRelease.id ? previewDemoRelease : publishedDemoRelease;
+    }
+    return undefined;
+  },
+  getDraft() {
+    return undefined;
+  },
+  getPublished(pageId) {
+    return pageId === sampleSchema.pageId ? sampleSchema : undefined;
+  },
+};
+
 const registry = createMaterialRegistry(h5Materials);
 const dataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveSampleProductDataSource,
@@ -809,7 +894,10 @@ export function App() {
   useEffect(() => {
     let cancelled = false;
     setSchemaLoading(true);
-    loadLowcodeRuntimeSchema(runtimeInput)
+    loadLowcodeRuntimeSchema({
+      ...runtimeInput,
+      configPlatformClient: localRuntimeConfigPlatformClient,
+    })
       .then((result) => {
         if (cancelled) return;
         setRuntimeSchema({

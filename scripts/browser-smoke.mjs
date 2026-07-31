@@ -18,6 +18,8 @@ const editorUrl = `http://${host}:${editorPort}/`;
 const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
 const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
+const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
+const h5RuntimeMissingPageUrl = `${h5RuntimeUrl}?pageId=missing-page`;
 const h5RuntimeEmptyUrl = `${h5RuntimeUrl}?demo=empty`;
 
 const children = [];
@@ -803,8 +805,20 @@ async function main() {
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },
-      { label: "React H5 pageId 缺少配置平台时展示 fallback 原因", expression: "document.body.innerText.includes('Config platform client is required for pageId') && document.body.innerText.includes('已启用 fallback')" },
-      { label: "React H5 pageId fallback 后页面仍非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
+      { label: "React H5 pageId 命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('summer-campaign-demo')" },
+      { label: "React H5 pageId 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
+    ]);
+
+    await assertPage(page, h5RuntimeReleaseIdUrl, [
+      { label: "React H5 releaseId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('releaseId')" },
+      { label: "React H5 releaseId 命中 release schema", expression: "document.body.innerText.includes('release schema') && document.body.innerText.includes('preview_demo')" },
+      { label: "React H5 releaseId 渲染预览版本", expression: "document.body.innerText.includes('夏日好物节预览') && document.body.innerText.includes('preview-20260801-demo')" },
+    ]);
+
+    await assertPage(page, h5RuntimeMissingPageUrl, [
+      { label: "React H5 missing pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('missing-page')" },
+      { label: "React H5 missing pageId 展示 fallback 原因", expression: "document.body.innerText.includes('Lowcode published schema not found: missing-page') && document.body.innerText.includes('已启用 fallback')" },
+      { label: "React H5 missing pageId fallback 后页面仍非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
     ]);
 
     await assertPage(page, h5RuntimeEmptyUrl, [
