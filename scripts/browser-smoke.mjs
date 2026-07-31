@@ -347,8 +347,10 @@ async function main() {
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },
+      { label: "商品榜单物料存在", expression: "document.body.innerText.includes('商品榜单')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
+      { label: "默认大促模板包含商品榜单", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
@@ -360,6 +362,7 @@ async function main() {
       { label: "编辑器内置 runtime 有 H5 页面", expression: "document.querySelector('[data-lowcode-page]')" },
       { label: "编辑器内置 runtime 标题存在", expression: "document.body.innerText.includes('夏日好物节')" },
       { label: "编辑器内置 runtime 包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
+      { label: "编辑器内置 runtime 包含商品榜单", expression: "document.body.innerText.includes('夏日热卖榜')" },
     ]);
 
     await assertPage(page, h5RuntimeUrl, [
@@ -368,6 +371,7 @@ async function main() {
       { label: "React H5 页面容器已渲染", expression: "document.querySelector('[data-lowcode-page]')" },
       { label: "React H5 标识存在", expression: "document.body.innerText.includes('React H5')" },
       { label: "React H5 直播入口已渲染", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
+      { label: "React H5 商品榜单已渲染", expression: "document.body.innerText.includes('夏日热卖榜')" },
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);
   } finally {

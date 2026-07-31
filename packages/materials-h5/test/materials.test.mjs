@@ -64,6 +64,18 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
   });
 
+  it("registers the product rank list material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "ProductRankList");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "商品榜单");
+    assert.equal(material.manifest.category, "commerce");
+    assert.equal(material.manifest.defaultProps.badgeText, "热卖榜");
+    assert.equal(material.manifest.propsSchema.items.setter, "dataSourceSelector");
+    assert.deepEqual(material.manifest.dataSourceSlots?.[0]?.acceptedTypes, ["product.byIds", "product.byActivity"]);
+    assert.equal(material.manifest.events?.[0]?.name, "onProductClick");
+  });
+
   it("registers the live entry material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "LiveEntry");
 

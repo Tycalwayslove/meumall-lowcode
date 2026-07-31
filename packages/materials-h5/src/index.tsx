@@ -116,6 +116,116 @@ export function ProductList({ props }: MaterialProps) {
   );
 }
 
+export function ProductRankList({ props }: MaterialProps) {
+  const items = list(props.items);
+  const visibleItems = items.length
+    ? items
+    : [
+        {
+          id: "rank_1",
+          title: "轻盈通勤手提包",
+          priceText: "¥199",
+          desc: "活动热度 98",
+          imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+        },
+        {
+          id: "rank_2",
+          title: "夏季舒适凉鞋",
+          priceText: "¥129",
+          desc: "近 24 小时热卖",
+          imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+        },
+        {
+          id: "rank_3",
+          title: "防晒轻薄外套",
+          priceText: "¥259",
+          desc: "达人推荐",
+          imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=300&q=80",
+        },
+      ];
+  const onProductClick = props.onProductClick;
+
+  return (
+    <section style={{ padding: "14px 12px", background: text(props.backgroundColor, "#ffffff") }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <strong style={{ display: "block", color: text(props.titleColor, "#111827"), fontSize: 17 }}>
+            {text(props.title, "商品榜单")}
+          </strong>
+          <span style={{ display: "block", marginTop: 3, color: "#64748b", fontSize: 12 }}>
+            {text(props.subtitle, "按活动热度整理，帮助用户快速选爆品。")}
+          </span>
+        </div>
+        <span style={{ flex: "0 0 auto", color: text(props.accentColor, "#ef4444"), fontSize: 12, fontWeight: 800 }}>
+          {text(props.badgeText, "热卖榜")}
+        </span>
+      </div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {visibleItems.slice(0, number(props.limit, 5)).map((item, index) => (
+          <button
+            key={String(item.id ?? index)}
+            type="button"
+            onClick={() => {
+              if (typeof onProductClick === "function") onProductClick(item);
+            }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "34px 64px minmax(0, 1fr) auto",
+              alignItems: "center",
+              gap: 10,
+              width: "100%",
+              minHeight: 84,
+              border: "1px solid #eef0f3",
+              borderRadius: 10,
+              padding: 9,
+              color: "#111827",
+              background: "#ffffff",
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                display: "grid",
+                placeItems: "center",
+                width: 30,
+                height: 30,
+                borderRadius: 9,
+                color: text(props.accentColor, "#ef4444"),
+                background: text(props.rankBackgroundColor, "#fff1f2"),
+                fontSize: 14,
+                fontWeight: 900,
+              }}
+            >
+              {index + 1}
+            </span>
+            {typeof item.imageUrl === "string" ? (
+              <img
+                src={item.imageUrl}
+                alt=""
+                style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, background: "#f3f4f6" }}
+              />
+            ) : (
+              <span style={{ width: 64, height: 64, borderRadius: 8, background: "#f3f4f6" }} />
+            )}
+            <span style={{ minWidth: 0 }}>
+              <strong style={{ display: "block", overflow: "hidden", color: "#111827", fontSize: 14, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {String(item.title ?? `榜单商品 ${index + 1}`)}
+              </strong>
+              <span style={{ display: "block", marginTop: 6, color: text(props.accentColor, "#ef4444"), fontWeight: 800 }}>
+                {String(item.priceText ?? "")}
+              </span>
+              <small style={{ display: "block", marginTop: 4, color: "#94a3b8", fontSize: 11 }}>
+                {String(item.rankText ?? item.desc ?? "活动热卖")}
+              </small>
+            </span>
+            <span style={{ color: "#9ca3af", fontSize: 12, fontWeight: 700 }}>{String(item.buttonText ?? text(props.buttonText, "去看看"))}</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function StoreExpertSection({ props }: MaterialProps) {
   const items = list(props.items);
   const visibleItems = items.length
@@ -995,6 +1105,64 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
       },
       events: [{ name: "onProductClick", title: "点击商品" }],
+    }),
+  },
+  {
+    component: ProductRankList,
+    manifest: createMaterialManifest({
+      componentName: "ProductRankList",
+      materialVersion: "0.1.0",
+      title: "商品榜单",
+      category: "commerce",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "夏日热卖榜",
+        subtitle: "按活动热度整理，帮助用户快速选爆品。",
+        badgeText: "热卖榜",
+        buttonText: "去看看",
+        backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        accentColor: "#ef4444",
+        rankBackgroundColor: "#fff1f2",
+        limit: 5,
+        items: [
+          {
+            id: "rank_1",
+            title: "轻盈通勤手提包",
+            priceText: "¥199",
+            desc: "活动热度 98",
+            imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+          },
+          {
+            id: "rank_2",
+            title: "夏季舒适凉鞋",
+            priceText: "¥129",
+            desc: "近 24 小时热卖",
+            imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+          },
+          {
+            id: "rank_3",
+            title: "防晒轻薄外套",
+            priceText: "¥259",
+            desc: "达人推荐",
+            imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=300&q=80",
+          },
+        ],
+      },
+      dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "夏日热卖榜" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "按活动热度整理，帮助用户快速选爆品。" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "热卖榜" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "去看看" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#ef4444" },
+        rankBackgroundColor: { label: "排名底色", type: "string", setter: "color", defaultValue: "#fff1f2" },
+        limit: { label: "展示数量", type: "number", setter: "number", defaultValue: 5 },
+        items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+      },
+      events: [{ name: "onProductClick", title: "点击榜单商品" }],
     }),
   },
   {

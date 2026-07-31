@@ -185,6 +185,7 @@ const sampleSchema = createLowcodePageSchema({
         items: [
           { id: "anchor_coupon", title: "领券", targetId: "node_coupon" },
           { id: "anchor_live", title: "直播", targetId: "node_live" },
+          { id: "anchor_rank", title: "榜单", targetId: "node_rank" },
           { id: "anchor_recommend", title: "推荐", targetId: "node_store_expert" },
           { id: "anchor_flash", title: "限时秒杀", targetId: "node_flash_sale" },
           { id: "anchor_pick", title: "精选专区", targetId: "node_container" },
@@ -248,6 +249,29 @@ const sampleSchema = createLowcodePageSchema({
       events: {
         onReceive: { actionId: "receive_coupon" },
         onReceiveAll: { actionId: "receive_coupon_bundle" },
+      },
+    },
+    {
+      id: "node_rank",
+      componentName: "ProductRankList",
+      materialVersion: "0.1.0",
+      props: {
+        title: "夏日热卖榜",
+        subtitle: "按活动热度整理，帮助用户快速选爆品。",
+        badgeText: "热卖榜",
+        buttonText: "去看看",
+        backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        accentColor: "#ef4444",
+        rankBackgroundColor: "#fff1f2",
+        limit: 3,
+        items: [],
+      },
+      dataBinding: {
+        items: "products",
+      },
+      events: {
+        onProductClick: { actionId: "track_rank_product" },
       },
     },
     {
@@ -399,6 +423,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "flash_sale_product_click",
+      },
+    },
+    {
+      id: "track_rank_product",
+      type: "tracking.click",
+      params: {
+        eventName: "rank_product_click",
       },
     },
     {

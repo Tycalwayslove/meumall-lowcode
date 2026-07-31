@@ -164,6 +164,7 @@ export const pageTemplates: PageTemplate[] = [
             items: [
               { id: "anchor_coupon", title: "领券", targetId: "summer_coupon" },
               { id: "anchor_live", title: "直播", targetId: "summer_live" },
+              { id: "anchor_rank", title: "榜单", targetId: "summer_rank" },
               { id: "anchor_recommend", title: "推荐", targetId: "summer_store_expert" },
               { id: "anchor_pick", title: "精选专区", targetId: "summer_container" },
               { id: "anchor_flash", title: "限时秒杀", targetId: "summer_flash_sale" },
@@ -217,6 +218,26 @@ export const pageTemplates: PageTemplate[] = [
               { id: "coupon_category_80", title: "满 399 减 80", thresholdText: "包袋鞋履可用", valueText: "¥80", expireText: "每日限量" },
               { id: "coupon_shipping", title: "满 99 包邮", thresholdText: "指定区域可用", valueText: "包邮", expireText: "活动期内有效" },
             ],
+          },
+        },
+        {
+          id: "summer_rank",
+          componentName: "ProductRankList",
+          materialVersion: "0.1.0",
+          props: {
+            title: "夏日热卖榜",
+            subtitle: "按活动热度整理，帮助用户快速选爆品。",
+            badgeText: "热卖榜",
+            buttonText: "去看看",
+            backgroundColor: "#ffffff",
+            titleColor: "#111827",
+            accentColor: "#ef4444",
+            rankBackgroundColor: "#fff1f2",
+            limit: 3,
+            items: productItems,
+          },
+          dataBinding: {
+            items: "products",
           },
         },
         {
