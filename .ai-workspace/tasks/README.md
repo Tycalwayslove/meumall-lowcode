@@ -11,3 +11,4 @@
 - `TASK-2026-0731-003-vue-editor-playground.md`
 - `TASK-2026-0731-004-editor-interaction-upgrade.md`
 - `TASK-2026-0731-005-container-assets-data-preview.md`
+- `TASK-2026-0731-006-local-platform-publish-flow.md`

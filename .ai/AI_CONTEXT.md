@@ -13,6 +13,8 @@
 - Java 配置平台负责存储和发布 schema。
 - H5 通过 npm 引入 renderer/materials/schema。
 - 管理端编辑器优先使用 Vue3，便于后续迁移到 Java 管理系统或管理后台中。
+- 编辑器发布链路先在 `apps/editor-playground/src/mockPlatform.ts` 用 localStorage mock Java 配置平台，后续替换为 HTTP adapter。
+- 独立 H5 runtime 入口先通过 `apps/editor-playground` 的 `?runtime=1&pageId=...` 或 `?runtime=1&releaseId=...` 验证 renderer 消费发布 schema。
 - 未来小程序复用 schema/core，新增小程序 renderer/materials。
 
 ## 当前协作约定

@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码，以及 Vue3 编辑器 playground 初版。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版，以及本地 mock 发布预览链路。
 
 ## 当前维护范围
 
@@ -37,6 +37,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器 playground：物料添加、拖到画布、节点选择、属性编辑、JSON 查看/应用、本地保存、撤销/重做和 H5 预览。
 - Vue3 编辑器交互增强：画布节点点击选中、高亮、根节点拖拽排序、页面状态/环境配置和数据源面板。
 - Vue3 编辑器实操增强：容器物料、嵌套结构展示、向容器添加子物料、素材/商品快捷选择和 mock 数据源预览绑定。
+- Vue3 编辑器发布链路 mock：保存草稿、生成预览、发布页面、本地版本列表和独立 H5 runtime 入口。
 
 ## 已知缺口
 
@@ -45,6 +46,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 容器内自由拖拽布局尚未完成。
 - Page Schema v1 契约仍为 draft，需要在 Java 配置平台对接前继续细化。
 - 尚未定义 Java 配置平台 API 契约。
+- 当前发布链路仍是 localStorage mock，尚未对接真实 Java 配置平台。
 - 尚未接入 `hybird-meumall`。
 - 尚未配置 npm registry/token。
 - 尚未建立单元测试体系。
@@ -59,7 +61,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-07-31 | `c61c19f` | 推送 GitHub 远端并实现 schema/editor 第一批基础代码。 |
 | 2026-07-31 | `4f1870d` | 新增 Vue3 编辑器 playground 和 Vue H5 renderer/materials。 |
 | 2026-07-31 | `b1861d4` | 增强 Vue3 编辑器交互。 |
-| 2026-07-31 | 待提交 | 增强容器、素材/商品选择和数据源预览。 |
+| 2026-07-31 | `edda161` | 增强容器、素材/商品选择和数据源预览。 |
+| 2026-07-31 | 待提交 | 补充本地 mock 发布预览链路和独立 H5 runtime 入口。 |
 
 ## 默认验证命令
 

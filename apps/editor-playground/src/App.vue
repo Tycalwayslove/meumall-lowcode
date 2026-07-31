@@ -51,8 +51,20 @@ import {
   type LowcodePageStatus,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import {
+  createPreview,
+  getDraft,
+  getPublished,
+  getRelease,
+  listReleases,
+  publishPage,
+  saveDraft,
+  type LocalPageRelease,
+} from "./mockPlatform";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
+const runtimeQuery = new URLSearchParams(window.location.search);
+const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 
 const sampleAssets = [
   {
@@ -202,6 +214,8 @@ const editorState = shallowRef<LowcodeEditorState>(createEditorState(loadSchema(
 const schemaDraft = ref(JSON.stringify(editorState.value.schema, null, 2));
 const jsonError = ref("");
 const draggedNodeId = ref<string>();
+const releaseMessage = ref("");
+const releases = ref<LocalPageRelease[]>(listReleases(editorState.value.schema.pageId));
 
 const validation = computed(() => validateLowcodePageSchema(editorState.value.schema));
 const selectedNode = computed(() => findNode(editorState.value.schema.nodes, editorState.value.selectedNodeId));
@@ -211,6 +225,9 @@ const selectedManifest = computed(() =>
 const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
 const outlineRows = computed(() => flattenNodes(editorState.value.schema.nodes));
 const previewData = computed<JsonObject>(() => resolvePreviewData(editorState.value.schema.dataSources ?? []));
+const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
+const runtimePreviewData = computed<JsonObject>(() => resolvePreviewData(runtimeSchema.value.dataSources ?? []));
+const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 
 watch(
   () => editorState.value.schema,
@@ -406,14 +423,12 @@ function pasteCopied(): void {
   editorState.value = pasteNode(editorState.value);
 }
 
-function saveSchema(): void {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(editorState.value.schema));
-  editorState.value = markSaved(editorState.value);
-}
-
 function resetSchema(): void {
   window.localStorage.removeItem(STORAGE_KEY);
   editorState.value = createEditorState(initialSchema, { selectedNodeId: "node_hero" });
+  schemaDraft.value = JSON.stringify(initialSchema, null, 2);
+  releaseMessage.value = "已重置为示例页面";
+  refreshReleases();
 }
 
 function applyJson(): void {
@@ -563,10 +578,122 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
 function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
   return JSON.stringify(dataSource.params ?? {}, null, 2);
 }
+
+function refreshReleases(): void {
+  releases.value = listReleases(editorState.value.schema.pageId);
+}
+
+function resolveRuntimeSchema(): LowcodePageSchema | undefined {
+  const releaseId = runtimeQuery.get("releaseId");
+  if (releaseId) return getRelease(releaseId)?.schema;
+  const pageId = runtimeQuery.get("pageId") || editorState.value.schema.pageId;
+  return getPublished(pageId) ?? getDraft(pageId);
+}
+
+function createRuntimeUrl(params: { pageId?: string; releaseId?: string }): string {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.search = "";
+  url.searchParams.set("runtime", "1");
+  if (params.releaseId) url.searchParams.set("releaseId", params.releaseId);
+  if (params.pageId) url.searchParams.set("pageId", params.pageId);
+  return url.toString();
+}
+
+function openRuntime(params: { pageId?: string; releaseId?: string } = { pageId: editorState.value.schema.pageId }): void {
+  window.open(createRuntimeUrl(params), "_blank", "noopener,noreferrer");
+}
+
+function setReleaseMessage(release: LocalPageRelease, action: string): void {
+  releaseMessage.value = `${action}：${release.title} / ${release.pageVersion}`;
+}
+
+function saveSchema(): void {
+  const release = saveDraft(editorState.value.schema);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
+  editorState.value = markSaved(createEditorState(release.schema, {
+    selectedNodeId: editorState.value.selectedNodeId,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  }));
+  schemaDraft.value = JSON.stringify(release.schema, null, 2);
+  refreshReleases();
+  setReleaseMessage(release, "已保存草稿");
+}
+
+function createPreviewRelease(): void {
+  const release = createPreview(editorState.value.schema);
+  refreshReleases();
+  setReleaseMessage(release, "已生成预览");
+  openRuntime({ releaseId: release.id });
+}
+
+function publishCurrentPage(): void {
+  const release = publishPage(editorState.value.schema);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(release.schema));
+  editorState.value = markSaved(createEditorState(release.schema, {
+    selectedNodeId: editorState.value.selectedNodeId,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  }));
+  schemaDraft.value = JSON.stringify(release.schema, null, 2);
+  refreshReleases();
+  setReleaseMessage(release, "已发布");
+}
+
+function loadRelease(release: LocalPageRelease): void {
+  editorState.value = createEditorState(release.schema, {
+    selectedNodeId: release.schema.nodes[0]?.id,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  });
+  schemaDraft.value = JSON.stringify(release.schema, null, 2);
+  refreshReleases();
+  setReleaseMessage(release, "已载入版本");
+}
+
+function loadReleaseById(releaseId: string): void {
+  const release = getRelease(releaseId);
+  if (release) loadRelease(release);
+}
+
+function openReleaseRuntime(releaseId: string): void {
+  openRuntime({ releaseId });
+}
+
+function releaseKindLabel(kind: LocalPageRelease["kind"]): string {
+  if (kind === "published") return "已发布";
+  if (kind === "preview") return "预览";
+  return "草稿";
+}
+
+function formatReleaseTime(value: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
 </script>
 
 <template>
-  <main class="editor-shell">
+  <main v-if="isRuntimeMode" class="runtime-shell">
+    <div class="runtime-phone">
+      <div class="phone-status">
+        <span>{{ runtimeTitle }}</span>
+        <span>H5</span>
+      </div>
+      <LowcodeVueRenderer
+        :schema="runtimeSchema"
+        :registry="registry"
+        :data="runtimePreviewData"
+        :fallback="'页面未发布'"
+      />
+    </div>
+  </main>
+
+  <main v-else class="editor-shell">
     <header class="topbar">
       <div class="brand">
         <span class="brand-mark">M</span>
@@ -598,9 +725,21 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
         <button title="重做" :disabled="!editorState.history.future.length" @click="editorState = redo(editorState)">
           <Redo2 :size="17" />
         </button>
-        <button title="保存到本地" @click="saveSchema">
+        <button title="保存草稿" @click="saveSchema">
           <Save :size="17" />
-          <span>{{ editorState.dirty ? "保存" : "已保存" }}</span>
+          <span>{{ editorState.dirty ? "保存草稿" : "已保存" }}</span>
+        </button>
+        <button title="生成预览版本" @click="createPreviewRelease">
+          <Eye :size="17" />
+          <span>预览链接</span>
+        </button>
+        <button title="发布当前页面" @click="publishCurrentPage">
+          <PanelRight :size="17" />
+          <span>发布</span>
+        </button>
+        <button title="打开已发布 H5" @click="openRuntime()">
+          <MonitorSmartphone :size="17" />
+          <span>打开 H5</span>
         </button>
       </div>
     </header>
@@ -747,6 +886,28 @@ function dataSourceParamsText(dataSource: LowcodeDataSourceConfig): string {
             <option value="prod">prod</option>
           </select>
         </label>
+        <p v-if="releaseMessage" class="publish-message">{{ releaseMessage }}</p>
+      </section>
+
+      <section class="panel-section">
+        <div class="panel-title">
+          <Save :size="16" />
+          <span>本地版本</span>
+        </div>
+        <div v-if="releases.length" class="release-list">
+          <article v-for="release in releases" :key="release.id" class="release-card">
+            <div>
+              <strong>{{ releaseKindLabel(release.kind) }}</strong>
+              <span>{{ release.pageVersion }}</span>
+            </div>
+            <small>{{ formatReleaseTime(release.createdAt) }}</small>
+            <div class="release-actions">
+              <button type="button" @click="loadReleaseById(release.id)">载入</button>
+              <button type="button" @click="openReleaseRuntime(release.id)">打开</button>
+            </div>
+          </article>
+        </div>
+        <div v-else class="empty-state">暂无本地版本</div>
       </section>
 
       <section class="panel-section">
