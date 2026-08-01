@@ -32,6 +32,7 @@ import {
   createLowcodeEditorCollaborationState,
   createLowcodeEditorApprovalPermissionOptions,
   createLowcodeEditorApprovalState,
+  createLowcodeEditorCapabilityState,
   createLowcodeEditorPermissionState,
   createLowcodeActionOptions,
   createLowcodeColorSwatches,
@@ -111,6 +112,7 @@ import {
   LOWCODE_H5_VIEWPORT_PRESETS,
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
+  LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS,
   LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES,
   LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
   LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
@@ -135,6 +137,7 @@ import {
   pruneLowcodeNodeSelection,
   pruneLowcodeOutlineCollapsedNodeIds,
   revealLowcodeOutlineNode,
+  mergeLowcodeEditorPermissionStates,
   removeLowcodeAction,
   removeLowcodeDataSource,
   removeLowcodeActionRefsFromNodes,
@@ -969,6 +972,73 @@ describe("@meumall/lowcode-editor readiness", () => {
     const publishedState = createLowcodeEditorApprovalState({ status: "published" });
     assert.equal(publishedState.publishable, false);
     assert.equal(publishedState.title, "已发布");
+  });
+
+  it("creates reusable editor capability state", () => {
+    assert.deepEqual([...LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS], [
+      "approval.submit",
+      "approval.cancel",
+      "approval.review",
+      "page.create",
+      "draft.save",
+      "schema.import",
+      "schema.export",
+      "preview.create",
+      "publish.submit",
+      "runtime.open",
+    ]);
+
+    const accountPermissionState = createLowcodeEditorPermissionState({
+      decisions: {
+        "schema.import": { allowed: false, reason: "当前账号没有导入权限。" },
+      },
+    });
+    const mergedPermissionState = mergeLowcodeEditorPermissionStates(
+      createLowcodeEditorPermissionState(),
+      accountPermissionState,
+    );
+    assert.equal(isLowcodeEditorActionAllowed(mergedPermissionState, "schema.import"), false);
+    assert.equal(getLowcodeEditorActionDisabledReason(mergedPermissionState, "schema.import"), "当前账号没有导入权限。");
+    assert.equal(isLowcodeEditorActionAllowed(mergedPermissionState, "schema.export"), true);
+
+    const capabilityState = createLowcodeEditorCapabilityState({
+      collaboration: createLowcodeEditorCollaborationState({
+        currentUserId: "user_1",
+        holder: { id: "user_1", name: "运营 A" },
+      }),
+      approval: createLowcodeEditorApprovalState({ status: "draft" }),
+      permissionState: accountPermissionState,
+      publishCheckSummary: { pass: 5, warning: 1, error: 2 },
+      actions: ["preview.create", "approval.submit", "publish.submit", "schema.import", "schema.export"],
+    });
+
+    assert.equal(capabilityState.editable, true);
+    assert.equal(capabilityState.readonly, false);
+    assert.equal(capabilityState.submittable, false);
+    assert.equal(capabilityState.publishable, false);
+    assert.equal(capabilityState.disabledActions["preview.create"], "存在 2 个发布检查错误，修复后再继续。");
+    assert.equal(capabilityState.disabledActions["approval.submit"], "存在 2 个发布检查错误，修复后再继续。");
+    assert.equal(capabilityState.disabledActions["publish.submit"], "页面需要先提交审批，通过后才能发布。");
+    assert.equal(capabilityState.disabledActions["schema.import"], "当前账号没有导入权限。");
+    assert.equal(capabilityState.disabledActions["schema.export"], undefined);
+    assert.deepEqual(capabilityState.statusItems.map((item) => item.id), ["collaboration", "approval", "publish-check"]);
+    assert.equal(capabilityState.statusItems[2].tone, "danger");
+    assert.equal(capabilityState.blockingReasons.includes("当前账号没有导入权限。"), true);
+    assert.equal(capabilityState.blockingReasons.includes("存在 2 个发布检查错误，修复后再继续。"), true);
+
+    const lockedCapabilityState = createLowcodeEditorCapabilityState({
+      collaboration: createLowcodeEditorCollaborationState({
+        currentUserId: "user_1",
+        holder: { id: "user_2", name: "运营 B" },
+      }),
+      approval: createLowcodeEditorApprovalState({ status: "approved" }),
+      publishCheckSummary: { pass: 6, warning: 0, error: 0 },
+    });
+    assert.equal(lockedCapabilityState.editable, false);
+    assert.equal(lockedCapabilityState.readonly, true);
+    assert.equal(lockedCapabilityState.publishable, false);
+    assert.equal(lockedCapabilityState.disabledActions["draft.save"], "运营 B 正在编辑，当前仅可查看。");
+    assert.equal(lockedCapabilityState.statusItems[2].title, "发布检查通过");
   });
 
   it("creates reusable node operation models and shortcuts", () => {

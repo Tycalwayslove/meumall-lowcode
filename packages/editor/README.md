@@ -34,8 +34,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `LOWCODE_EDITOR_PERMISSION_ACTIONS`
 - `LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS`
 - `createLowcodeEditorPermissionState`
+- `mergeLowcodeEditorPermissionStates`
 - `isLowcodeEditorActionAllowed`
 - `getLowcodeEditorActionDisabledReason`
+- `LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS`
+- `createLowcodeEditorCapabilityState`
 - `createLowcodeEditorApprovalState`
 - `createLowcodeEditorApprovalPermissionOptions`
 - `createLowcodeEditorCollaborationState`
@@ -221,9 +224,13 @@ The permission helpers keep editor operation availability reusable across the Vu
 
 `createLowcodeEditorPermissionState(options)` returns stable decisions for editor actions such as draft saving, schema import/export, preview, publish, template operations, canvas clearing, material insertion, and node operations. The default state allows every action. `readonly` disables mutating actions while keeping view/export style actions available.
 
+`mergeLowcodeEditorPermissionStates(...states)` combines multiple permission sources, such as account permissions, collaboration locks, and approval workflow permissions. A denied decision wins and keeps the first disabled reason.
+
 `createLowcodeEditorApprovalState(options)` turns host-provided approval workflow data into a display model for `none`, `draft`, `pending`, `approved`, `rejected`, and `published` states. `createLowcodeEditorApprovalPermissionOptions(state)` bridges approval state into publish and approval action decisions, while keeping the default `none` state compatible with direct publishing.
 
 `createLowcodeEditorCollaborationState(options)` turns host-provided collaboration lock data into a display model for `unlocked`, `locked-by-me`, `locked-by-other`, `readonly`, and `expired` states. `createLowcodeEditorCollaborationPermissionOptions(state)` bridges that state into the permission helper's readonly baseline.
+
+`createLowcodeEditorCapabilityState(options)` combines collaboration state, approval state, optional account permission state, and publish-check summary into one shell-facing model. It returns the merged `permissionState`, `editable`, `readonly`, `submittable`, `publishable`, `disabledActions`, status items, and blocking reasons. Publish-check errors automatically block preview creation, approval submission, and publishing.
 
 These helpers do not read users, create approval instances, call Java approval or lock APIs, renew locks, release locks, render UI, or mutate Page Schema. Host shells remain responsible for real approval flows, lock services, audit logs, and persistence.
 

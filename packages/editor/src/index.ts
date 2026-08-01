@@ -482,6 +482,37 @@ export interface CreateLowcodeEditorApprovalStateOptions {
   reason?: string;
 }
 
+export type LowcodeEditorCapabilityStatusId = "collaboration" | "approval" | "publish-check";
+
+export interface LowcodeEditorCapabilityStatusItem {
+  id: LowcodeEditorCapabilityStatusId;
+  title: string;
+  description: string;
+  tone: LowcodeEditorWorkspaceStatTone;
+}
+
+export interface LowcodeEditorCapabilityState {
+  collaboration: LowcodeEditorCollaborationState;
+  approval: LowcodeEditorApprovalState;
+  permissionState: LowcodeEditorPermissionState;
+  editable: boolean;
+  readonly: boolean;
+  submittable: boolean;
+  publishable: boolean;
+  disabledActions: Partial<Record<LowcodeEditorPermissionAction, string>>;
+  statusItems: readonly LowcodeEditorCapabilityStatusItem[];
+  blockingReasons: readonly string[];
+}
+
+export interface CreateLowcodeEditorCapabilityStateOptions {
+  collaboration?: LowcodeEditorCollaborationState;
+  approval?: LowcodeEditorApprovalState;
+  permissionState?: Partial<LowcodeEditorPermissionState>;
+  publishCheckSummary?: LowcodeEditorPublishCheckSummary;
+  actions?: readonly LowcodeEditorPermissionAction[];
+  publishBlockedReason?: string;
+}
+
 export type LowcodeEditorNodeOperationAction =
   | "rename"
   | "insertBefore"
@@ -1062,6 +1093,19 @@ export const LOWCODE_EDITOR_PERMISSION_ACTIONS = [
   "node.duplicate",
   "node.delete",
   "node.rename",
+] as const satisfies readonly LowcodeEditorPermissionAction[];
+
+export const LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS = [
+  "approval.submit",
+  "approval.cancel",
+  "approval.review",
+  "page.create",
+  "draft.save",
+  "schema.import",
+  "schema.export",
+  "preview.create",
+  "publish.submit",
+  "runtime.open",
 ] as const satisfies readonly LowcodeEditorPermissionAction[];
 
 export const LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS = [
@@ -2065,6 +2109,20 @@ export function getLowcodeEditorActionDisabledReason(
   return decision.reason ?? "当前操作不可用。";
 }
 
+export function mergeLowcodeEditorPermissionStates(
+  ...states: Array<Partial<LowcodeEditorPermissionState> | undefined>
+): LowcodeEditorPermissionState {
+  return LOWCODE_EDITOR_PERMISSION_ACTIONS.reduce((merged, action) => {
+    const denied = states
+      .map((state) => state?.[action])
+      .find((decision) => decision && !decision.allowed);
+    merged[action] = denied
+      ? { action, allowed: false, reason: denied.reason }
+      : { action, allowed: true };
+    return merged;
+  }, {} as LowcodeEditorPermissionState);
+}
+
 function parseLowcodeEditorDate(value: Date | string | undefined): Date | undefined {
   if (!value) return undefined;
   const date = value instanceof Date ? value : new Date(value);
@@ -2309,6 +2367,123 @@ export function createLowcodeEditorApprovalPermissionOptions(
     readonly: state.readonly,
     readonlyReason: state.readonlyReason ?? state.description,
     decisions,
+  };
+}
+
+function createLowcodeEditorPublishCheckStatusItem(
+  summary: LowcodeEditorPublishCheckSummary | undefined,
+): LowcodeEditorCapabilityStatusItem | undefined {
+  if (!summary) return undefined;
+  const description = `通过 ${summary.pass} / 警告 ${summary.warning} / 错误 ${summary.error}`;
+  if (summary.error > 0) {
+    return {
+      id: "publish-check",
+      title: "发布检查阻塞",
+      description,
+      tone: "danger",
+    };
+  }
+  if (summary.warning > 0) {
+    return {
+      id: "publish-check",
+      title: "发布检查有提醒",
+      description,
+      tone: "warning",
+    };
+  }
+  return {
+    id: "publish-check",
+    title: "发布检查通过",
+    description,
+    tone: "success",
+  };
+}
+
+function getLowcodeEditorPublishBlockedReason(
+  summary: LowcodeEditorPublishCheckSummary | undefined,
+  fallbackReason: string | undefined,
+): string | undefined {
+  if (!summary || summary.error <= 0) return undefined;
+  return fallbackReason ?? `存在 ${summary.error} 个发布检查错误，修复后再继续。`;
+}
+
+function uniqueLowcodeEditorReasons(reasons: readonly (string | undefined)[]): string[] {
+  return [...new Set(reasons.filter((reason): reason is string => Boolean(reason)))];
+}
+
+export function createLowcodeEditorCapabilityState(
+  options: CreateLowcodeEditorCapabilityStateOptions = {},
+): LowcodeEditorCapabilityState {
+  const collaboration = options.collaboration ?? createLowcodeEditorCollaborationState();
+  const approval = options.approval ?? createLowcodeEditorApprovalState();
+  const collaborationOptions = createLowcodeEditorCollaborationPermissionOptions(collaboration);
+  const approvalOptions = createLowcodeEditorApprovalPermissionOptions(approval);
+  const workflowPermissionState = createLowcodeEditorPermissionState({
+    readonly: Boolean(collaborationOptions.readonly || approvalOptions.readonly),
+    readonlyReason: collaborationOptions.readonlyReason ?? approvalOptions.readonlyReason,
+    decisions: {
+      ...(approvalOptions.decisions ?? {}),
+    },
+  });
+  const permissionState = mergeLowcodeEditorPermissionStates(workflowPermissionState, options.permissionState);
+  const publishBlockedReason = getLowcodeEditorPublishBlockedReason(options.publishCheckSummary, options.publishBlockedReason);
+  const actions = options.actions ?? LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS;
+  const publishBlockedActions = new Set<LowcodeEditorPermissionAction>([
+    "approval.submit",
+    "preview.create",
+    "publish.submit",
+  ]);
+  const disabledActions = actions.reduce<Partial<Record<LowcodeEditorPermissionAction, string>>>((result, action) => {
+    const permissionReason = getLowcodeEditorActionDisabledReason(permissionState, action);
+    const reason = permissionReason ?? (publishBlockedReason && publishBlockedActions.has(action) ? publishBlockedReason : undefined);
+    if (reason) result[action] = reason;
+    return result;
+  }, {});
+  const hasMutationPermission = LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS.some((action) =>
+    isLowcodeEditorActionAllowed(permissionState, action),
+  );
+  const statusItems: LowcodeEditorCapabilityStatusItem[] = [
+    {
+      id: "collaboration",
+      title: collaboration.title,
+      description: collaboration.description,
+      tone: collaboration.tone,
+    },
+    {
+      id: "approval",
+      title: approval.title,
+      description: approval.description,
+      tone: approval.tone,
+    },
+  ];
+  const publishCheckStatusItem = createLowcodeEditorPublishCheckStatusItem(options.publishCheckSummary);
+  if (publishCheckStatusItem) statusItems.push(publishCheckStatusItem);
+  const editable = collaboration.editable && approval.editable && hasMutationPermission;
+  const submittable = approval.submittable
+    && !publishBlockedReason
+    && isLowcodeEditorActionAllowed(permissionState, "approval.submit");
+  const publishable = approval.publishable
+    && !publishBlockedReason
+    && isLowcodeEditorActionAllowed(permissionState, "publish.submit");
+
+  return {
+    collaboration,
+    approval,
+    permissionState,
+    editable,
+    readonly: !editable,
+    submittable,
+    publishable,
+    disabledActions,
+    statusItems,
+    blockingReasons: uniqueLowcodeEditorReasons([
+      collaboration.readonlyReason,
+      approval.readonlyReason,
+      approval.submitDisabledReason,
+      approval.publishDisabledReason,
+      publishBlockedReason,
+      ...Object.values(disabledActions),
+    ]),
   };
 }
 

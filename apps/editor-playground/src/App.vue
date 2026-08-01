@@ -46,12 +46,10 @@ import {
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
-  createLowcodeEditorApprovalPermissionOptions,
   createLowcodeEditorApprovalState,
+  createLowcodeEditorCapabilityState,
   createLowcodeEditorDraftPayload,
-  createLowcodeEditorCollaborationPermissionOptions,
   createLowcodeEditorCollaborationState,
-  createLowcodeEditorPermissionState,
   createLowcodeEventBindingItems,
   createLowcodeMaterialDetailDataSourceSlotItems,
   createLowcodeMaterialDetailEventItems,
@@ -857,17 +855,32 @@ function createApprovalStateOptionsFromWorkflow(): Parameters<typeof createLowco
 
 const editorCollaborationState = computed(() => createLowcodeEditorCollaborationState(createCollaborationStateOptionsFromWorkflow()));
 const editorApprovalState = computed(() => createLowcodeEditorApprovalState(createApprovalStateOptionsFromWorkflow()));
-const editorPermissionState = computed(() => {
-  const collaborationOptions = createLowcodeEditorCollaborationPermissionOptions(editorCollaborationState.value);
-  const approvalOptions = createLowcodeEditorApprovalPermissionOptions(editorApprovalState.value);
-  return createLowcodeEditorPermissionState({
-    readonly: Boolean(collaborationOptions.readonly || approvalOptions.readonly),
-    readonlyReason: collaborationOptions.readonlyReason ?? approvalOptions.readonlyReason,
-    decisions: {
-      ...(approvalOptions.decisions ?? {}),
-    },
-  });
-});
+const topToolbarCapabilityActions: LowcodeEditorPermissionAction[] = [
+  "page.create",
+  "draft.save",
+  "schema.export",
+  "schema.import",
+  "preview.create",
+  "publish.submit",
+  "runtime.open",
+];
+const editorCapabilityActions: LowcodeEditorPermissionAction[] = [
+  ...topToolbarCapabilityActions,
+  "approval.submit",
+  "approval.cancel",
+  "approval.review",
+];
+const publishChecks = computed(() => createPublishChecks());
+const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
+const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
+const editorCapabilityState = computed(() => createLowcodeEditorCapabilityState({
+  collaboration: editorCollaborationState.value,
+  approval: editorApprovalState.value,
+  publishCheckSummary: publishCheckSummary.value,
+  actions: editorCapabilityActions,
+  publishBlockedReason: "存在发布检查错误，修复后再继续。",
+}));
+const editorPermissionState = computed(() => editorCapabilityState.value.permissionState);
 const nodeContextMenuStyle = computed<CSSProperties>(() => {
   const menu = nodeContextMenu.value;
   if (!menu) return {};
@@ -897,17 +910,8 @@ function isCommandActionDisabled(action: LowcodeEditorPermissionAction, disabled
 }
 
 const topToolbarDisabledActions = computed<Partial<Record<LowcodeEditorPermissionAction, string>>>(() => {
-  const actions: LowcodeEditorPermissionAction[] = [
-    "page.create",
-    "draft.save",
-    "schema.export",
-    "schema.import",
-    "preview.create",
-    "publish.submit",
-    "runtime.open",
-  ];
-  return actions.reduce<Partial<Record<LowcodeEditorPermissionAction, string>>>((disabledActions, action) => {
-    const reason = getEditorActionDisabledReason(action);
+  return topToolbarCapabilityActions.reduce<Partial<Record<LowcodeEditorPermissionAction, string>>>((disabledActions, action) => {
+    const reason = editorCapabilityState.value.disabledActions[action];
     if (reason) disabledActions[action] = reason;
     return disabledActions;
   }, {});
@@ -927,19 +931,12 @@ const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => createLowcode
 const nodeOperationItemMap = computed(() => new Map(
   nodeContextMenuItems.value.map((item) => [item.action, item]),
 ));
-const publishChecks = computed(() => createPublishChecks());
-const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
-const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
-const approvalSubmitDisabledReason = computed(() =>
-  hasPublishBlockingErrors.value
-    ? "存在发布检查错误，修复后再提交审批。"
-    : getEditorActionDisabledReason("approval.submit"),
-);
-const approvalCancelDisabledReason = computed(() => getEditorActionDisabledReason("approval.cancel"));
-const approvalReviewDisabledReason = computed(() => getEditorActionDisabledReason("approval.review"));
-const canSubmitApproval = computed(() => !hasPublishBlockingErrors.value && canUseEditorAction("approval.submit"));
-const canCancelApproval = computed(() => canUseEditorAction("approval.cancel"));
-const canReviewApproval = computed(() => canUseEditorAction("approval.review"));
+const approvalSubmitDisabledReason = computed(() => editorCapabilityState.value.disabledActions["approval.submit"]);
+const approvalCancelDisabledReason = computed(() => editorCapabilityState.value.disabledActions["approval.cancel"]);
+const approvalReviewDisabledReason = computed(() => editorCapabilityState.value.disabledActions["approval.review"]);
+const canSubmitApproval = computed(() => editorCapabilityState.value.submittable);
+const canCancelApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.cancel"]);
+const canReviewApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.review"]);
 const materialCategories = computed(() => createLowcodeMaterialCategories(materials.map((item) => item.manifest)));
 const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
 const recentMaterials = computed(() => materialItemsFromComponentNames(recentMaterialComponentNames.value));
