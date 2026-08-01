@@ -117,6 +117,7 @@ import {
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
   insertLowcodeMaterialByTarget,
+  insertLowcodeMaterialPresetByTarget,
   isLowcodeHexColor,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeEditorContainerComponentName,
@@ -890,6 +891,50 @@ describe("@meumall/lowcode-editor readiness", () => {
       borderColor: "#111827",
       radius: 10,
     });
+
+    const schema = createLowcodePageSchema({
+      pageId: "preset_target_page",
+      title: "预设目标页面",
+      nodes: [
+        createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [],
+        }),
+      ],
+    });
+    const containerRow = createLowcodeOutlineRows(schema.nodes).find((row) => row.node.id === "container_1");
+    assert.ok(containerRow);
+    const insideTarget = createLowcodeMaterialInsertTarget({
+      placement: "inside",
+      selectedRow: containerRow,
+      selectedNodeIsContainer: true,
+      hasMaterial: true,
+      materialTitle: button.title,
+    });
+    const insertedPreset = insertLowcodeMaterialPresetByTarget(
+      createEditorState(schema, { selectedNodeId: "container_1" }),
+      button,
+      presets[0],
+      insideTarget,
+      { id: "button_inside" },
+    );
+    const insertedChild = insertedPreset.schema.nodes[0]?.children?.[0];
+    assert.equal(insertedChild?.id, "button_inside");
+    assert.equal(insertedChild?.componentName, "BasicButton");
+    assert.equal(insertedChild?.meta?.name, "主按钮");
+    assert.equal(insertedChild?.props?.text, "立即参与");
+    assert.equal(insertedPreset.selectedNodeId, "button_inside");
+
+    const disabledInsert = insertLowcodeMaterialPresetByTarget(
+      insertedPreset,
+      button,
+      presets[0],
+      { ...insideTarget, disabled: true, disabledReason: "当前仅可查看。", parentId: undefined },
+    );
+    assert.equal(disabledInsert, insertedPreset);
   });
 
   it("creates reusable material detail models and preview schemas", () => {

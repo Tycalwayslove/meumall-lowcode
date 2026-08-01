@@ -35,6 +35,7 @@ const emit = defineEmits<{
   add: [manifest: LowcodeMaterialManifest];
   "add-preset": [manifest: LowcodeMaterialManifest, preset: LowcodeEditorMaterialInsertPreset];
   "add-to-container": [manifest: LowcodeMaterialManifest];
+  "add-preset-to-container": [manifest: LowcodeMaterialManifest, preset: LowcodeEditorMaterialInsertPreset];
   "toggle-favorite": [manifest: LowcodeMaterialManifest];
   "open-detail": [manifest: LowcodeMaterialManifest];
   "material-click": [event: MouseEvent, manifest: LowcodeMaterialManifest];
@@ -53,6 +54,13 @@ const categoryOptions = computed(() => props.categoryOverview?.categories ?? pro
   active: category === props.category,
   summaryText: "",
 })));
+const containerPresetItems = computed(() =>
+  props.materials.flatMap((material) =>
+    materialInsertPresets(material.manifest)
+      .slice(0, 2)
+      .map((preset) => ({ material, preset })),
+  ).slice(0, 12),
+);
 
 function isFavoriteMaterial(componentName: string): boolean {
   return favoriteComponentNameSet.value.has(componentName);
@@ -243,6 +251,21 @@ function materialInsertPresets(manifest: LowcodeMaterialManifest): LowcodeEditor
         <Plus :size="14" />
         <span>{{ material.manifest.title }}</span>
       </button>
+      <div v-if="containerPresetItems.length" class="container-target-presets">
+        <small>常用预设</small>
+        <button
+          v-for="item in containerPresetItems"
+          :key="`child-preset-${item.material.manifest.componentName}-${item.preset.id}`"
+          type="button"
+          class="container-target-preset"
+          :title="insertDisabledReason ?? `加入容器：${item.material.manifest.title} / ${item.preset.description}`"
+          :disabled="Boolean(insertDisabledReason)"
+          @click="emit('add-preset-to-container', item.material.manifest, item.preset)"
+        >
+          <Plus :size="14" />
+          <span>{{ item.material.manifest.title }} · {{ item.preset.title }}</span>
+        </button>
+      </div>
     </div>
   </section>
 </template>

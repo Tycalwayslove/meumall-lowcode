@@ -3882,6 +3882,20 @@ export function insertLowcodeMaterialByTarget(
   });
 }
 
+export function insertLowcodeMaterialPresetByTarget(
+  state: LowcodeEditorState,
+  manifest: LowcodeMaterialManifest,
+  preset: LowcodeEditorMaterialInsertPresetInput | LowcodeEditorMaterialInsertPreset,
+  target: LowcodeEditorMaterialInsertTarget,
+  options: CreateLowcodeMaterialNodeInputFromPresetOptions = {},
+): LowcodeEditorState {
+  return insertLowcodeMaterialByTarget(
+    state,
+    createLowcodeMaterialNodeInputFromPreset(manifest, preset, options),
+    target,
+  );
+}
+
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {
   return insertNode(state, node, { select: true });
 }

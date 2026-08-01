@@ -123,6 +123,7 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeMaterialInsertTargets`
 - `createLowcodeMaterialInsertTarget`
 - `insertLowcodeMaterialByTarget`
+- `insertLowcodeMaterialPresetByTarget`
 - `createLowcodePreviewLinkItem`
 - `createLowcodePreviewLinkItems`
 - `summarizeLowcodePreviewLinks`
@@ -300,7 +301,9 @@ The material insert target helpers keep material insertion affordances reusable 
 
 `createLowcodeMaterialInsertTarget(options)` derives one target, while `insertLowcodeMaterialByTarget(state, node, target)` applies an enabled target through the same immutable command style as `insertNode`.
 
-These helpers do not render toolbars, inspect DOM, decide whether a material is a container, create material nodes from manifests, handle drag-and-drop, or persist schema. Host shells remain responsible for UI, material registry lookup, permission state, drag/drop hints, audit, and server-side saving.
+`insertLowcodeMaterialPresetByTarget(state, manifest, preset, target, options)` first derives node input from `manifest + preset`, then applies the same insert target command. Hosts can use it for one-click preset insertion into selected containers, before/after selected nodes, or the page end without duplicating preset prop merge logic.
+
+These helpers do not render toolbars, inspect DOM, decide whether a material is a container, handle drag-and-drop, or persist schema. Except for the explicit `manifest + preset` node-input derivation in `insertLowcodeMaterialPresetByTarget`, host shells remain responsible for UI, material registry lookup, permission state, drag/drop hints, audit, and server-side saving.
 
 ## Prop Editor Model API
 

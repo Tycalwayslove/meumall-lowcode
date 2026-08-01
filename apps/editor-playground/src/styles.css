@@ -1838,6 +1838,25 @@ button:focus-visible {
   background: #fff;
 }
 
+.container-target-presets {
+  display: grid;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #bfdbfe;
+}
+
+.container-target-presets small {
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.container-target button.container-target-preset {
+  border-color: #99f6e4;
+  color: #0f766e;
+  background: #f8fffd;
+}
+
 .canvas-panel {
   grid-area: canvas;
   display: grid;

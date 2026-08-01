@@ -58,6 +58,7 @@ import {
   createLowcodeMaterialDetailEventItems,
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialInsertTarget,
   createLowcodeMaterialInsertTargets,
   createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialInsertPresets,
@@ -103,8 +104,8 @@ import {
   formatLowcodeTemplateVersion,
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
-  insertNode,
   insertLowcodeMaterialByTarget,
+  insertLowcodeMaterialPresetByTarget,
   insertLowcodeCanvasNodeByHint,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeEditorContainerComponentName,
@@ -2053,6 +2054,19 @@ function addMaterialPreset(manifest: LowcodeMaterialManifest, preset: LowcodeEdi
   materialPreferenceMessage.value = `已添加预设：${preset.title}`;
 }
 
+function createSelectedContainerInsertTarget(manifest: LowcodeMaterialManifest): MaterialInsertTarget | undefined {
+  if (!selectedNode.value || !selectedNodeIsContainer.value) return undefined;
+  return createLowcodeMaterialInsertTarget({
+    placement: "inside",
+    selectedRow: selectedOutlineRow.value,
+    selectedNodeIsContainer: true,
+    hasMaterial: true,
+    canInsert: canInsertMaterial(),
+    materialTitle: manifest.title,
+    disabledReason: materialInsertDisabledReason.value,
+  });
+}
+
 function addStarterMaterial(manifest: LowcodeMaterialManifest): void {
   if (!addMaterial(manifest)) return;
   releaseMessage.value = `已添加起步物料：${manifest.title}`;
@@ -2079,16 +2093,56 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
     showMaterialInsertDisabledMessage();
     return;
   }
-  if (!selectedNode.value || !selectedNodeIsContainer.value) {
+  const target = createSelectedContainerInsertTarget(manifest);
+  if (!target) {
     addMaterial(manifest);
     return;
   }
-  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-    parentId: selectedNode.value.id,
-    select: true,
-  });
+  if (target.disabled) {
+    materialPreferenceMessage.value = target.disabledReason ?? "当前不可加入容器。";
+    return;
+  }
+  editorState.value = insertLowcodeMaterialByTarget(editorState.value, createNodeInput(manifest), target);
   recordRecentMaterial(manifest);
   showNodeOperationMessage("addInside", { materialTitle: manifest.title });
+}
+
+function addMaterialPresetToSelectedContainer(
+  manifest: LowcodeMaterialManifest,
+  preset: LowcodeEditorMaterialInsertPreset,
+): void {
+  if (!canInsertMaterial()) {
+    showMaterialInsertDisabledMessage();
+    return;
+  }
+  const target = createSelectedContainerInsertTarget(manifest);
+  if (!target) {
+    addMaterialPreset(manifest, preset);
+    return;
+  }
+  if (target.disabled) {
+    materialPreferenceMessage.value = target.disabledReason ?? "当前不可加入容器。";
+    return;
+  }
+  editorState.value = insertLowcodeMaterialPresetByTarget(editorState.value, manifest, preset, target, {
+    dataBindingByComponentName: materialPreviewDataBindings,
+  });
+  recordRecentMaterial(manifest);
+  const message = `已加入容器预设：${manifest.title} · ${preset.title}`;
+  materialPreferenceMessage.value = message;
+  releaseMessage.value = message;
+  recordAuditEvent({
+    type: "material.insert",
+    title: "加入容器预设",
+    description: message,
+    target: { id: manifest.componentName, type: "material", title: manifest.title },
+    metadata: {
+      componentName: manifest.componentName,
+      presetId: preset.id,
+      placement: target.placement,
+      ...(target.parentId ? { parentId: target.parentId } : {}),
+    },
+  });
 }
 
 function onMaterialClick(event: MouseEvent, manifest: LowcodeMaterialManifest): void {
@@ -4277,6 +4331,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         @add="addMaterial"
         @add-preset="addMaterialPreset"
         @add-to-container="addMaterialToSelectedContainer"
+        @add-preset-to-container="addMaterialPresetToSelectedContainer"
         @toggle-favorite="toggleFavoriteMaterial"
         @open-detail="openMaterialDetail"
         @material-click="onMaterialClick"

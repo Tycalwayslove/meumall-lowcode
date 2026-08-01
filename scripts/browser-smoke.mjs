@@ -1036,13 +1036,21 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：网格容器");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeGridContainer)}`);
   await page.waitForExpression("document.querySelector('.phone-frame .mlc-grid-container') && document.body.innerText.includes('当前容器：网格容器')");
+  await page.clickByText(".container-target-presets button", "基础按钮 · 主按钮");
+  await page.waitForExpression("(() => { const bodies = Array.from(document.querySelectorAll('.phone-frame .mlc-grid-container__body')); const latest = bodies.at(-1); return Boolean(latest && latest.querySelector('.mlc-basic-button') && latest.innerText.includes('立即参与')); })()");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("(() => { const source = Array.from(document.querySelectorAll('textarea')).find((item) => item.value.includes('\"schemaVersion\"'))?.value; if (!source) return false; const schema = JSON.parse(source); const grid = schema.nodes.filter((node) => node.componentName === 'GridContainer').at(-1); return Boolean(grid?.children?.some((node) => node.componentName === 'BasicButton' && node.meta?.name === '主按钮' && node.props?.text === '立即参与')); })()");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  await page.evaluate("(() => { const grid = Array.from(document.querySelectorAll('.phone-frame .mlc-grid-container')).at(-1)?.closest('[data-lowcode-node-id]'); grid?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return Boolean(grid); })()");
+  await page.waitForExpression("document.body.innerText.includes('当前容器：网格容器')");
   await page.clickByText(".container-target button", "基础文本");
   await page.waitForExpression("(() => { const bodies = Array.from(document.querySelectorAll('.phone-frame .mlc-grid-container__body')); const latest = bodies.at(-1); return Boolean(latest && latest.querySelector('.mlc-basic-text') && latest.innerText.includes('这是一段基础文本')); })()");
   await page.clickByText(".toolbar button", "源码");
-  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"GridContainer\"') && item.value.includes('\"columns\": 2') && item.value.includes('\"componentName\": \"BasicText\"'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"GridContainer\"') && item.value.includes('\"columns\": 2') && item.value.includes('\"componentName\": \"BasicButton\"') && item.value.includes('\"componentName\": \"BasicText\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：网格容器可从快捷命令添加、识别为容器并加入基础文本");
+  log("通过：网格容器可从快捷命令添加、识别为容器并加入预设按钮与基础文本");
 
   log("检查基础表单容器物料");
   const nodeCountBeforeBasicForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
