@@ -875,6 +875,82 @@ export function MlcSwitch({
   );
 }
 
+export interface MlcCheckboxProps {
+  checked?: boolean;
+  disabled?: boolean;
+  label?: React.ReactNode;
+  checkedColor?: string;
+  borderColor?: string;
+  markColor?: string;
+  radius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  onChange?: (checked: boolean) => void;
+}
+
+export function MlcCheckbox({
+  checked = false,
+  disabled = false,
+  label,
+  checkedColor = h5Tokens.color.accent,
+  borderColor = h5Tokens.color.border,
+  markColor = h5Tokens.color.inverseText,
+  radius = h5Tokens.radius.sm,
+  className,
+  style,
+  onChange,
+}: MlcCheckboxProps): React.ReactElement {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      className={className}
+      disabled={disabled}
+      onClick={() => onChange?.(!checked)}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        width: "100%",
+        minHeight: h5Tokens.touch.minHeight,
+        border: 0,
+        padding: 0,
+        color: h5Tokens.color.text,
+        background: "transparent",
+        fontSize: h5Tokens.fontSize.body,
+        textAlign: "left",
+        opacity: disabled ? 0.56 : 1,
+        ...style,
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: "0 0 auto",
+          width: 22,
+          height: 22,
+          marginTop: 1,
+          border: `1px solid ${checked ? checkedColor : borderColor}`,
+          borderRadius: radius,
+          color: markColor,
+          background: checked ? checkedColor : h5Tokens.color.surface,
+          fontSize: 15,
+          fontWeight: 900,
+          lineHeight: 1,
+          transition: "background 0.16s ease, border-color 0.16s ease",
+        }}
+      >
+        {checked ? "✓" : null}
+      </span>
+      {label ? <span style={{ flex: "1 1 auto", lineHeight: 1.45 }}>{label}</span> : null}
+    </button>
+  );
+}
+
 export interface MlcStepperProps {
   value?: number;
   min?: number;

@@ -234,6 +234,27 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_checkbox",
+      componentName: "BasicCheckbox",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础复选框示例",
+        helperText: "复选框适合协议确认、偏好勾选和多选列表的基础单元。",
+        defaultChecked: true,
+        wrapperBackgroundColor: "#f3f4f6",
+        labelColor: "#111827",
+        helperColor: "#64748b",
+        checkedColor: "#0f766e",
+        borderColor: "#cbd5e1",
+        markColor: "#ffffff",
+        radius: 6,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_checkbox_change" },
+      },
+    },
+    {
       id: "node_basic_text",
       componentName: "BasicText",
       materialVersion: "0.1.0",
@@ -933,6 +954,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_switch_change",
+      },
+    },
+    {
+      id: "track_basic_checkbox_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_checkbox_change",
       },
     },
     {

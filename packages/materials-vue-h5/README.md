@@ -17,6 +17,7 @@ Current internal primitives:
 - `MlcSelect`
 - `MlcTextarea`
 - `MlcSwitch`
+- `MlcCheckbox`
 - `MlcStepper`
 - `MlcOverlay`
 - `MlcModal`
@@ -34,6 +35,7 @@ Currently migrated materials:
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicSwitch`
+- `BasicCheckbox`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
@@ -70,6 +72,7 @@ Current materials:
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicSwitch`
+- `BasicCheckbox`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`

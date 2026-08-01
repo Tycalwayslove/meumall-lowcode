@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -424,6 +424,51 @@ export function BasicSwitch({ props }: MaterialProps) {
       />
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", marginTop: 6, color: text(props.helperColor, "#64748b") }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </section>
+  );
+}
+
+export function BasicCheckbox({ props }: MaterialProps) {
+  const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
+  const label = text(props.label, "基础复选框");
+  const helperText = text(props.helperText);
+  const handler = props.onChange;
+
+  React.useEffect(() => {
+    setChecked(boolean(props.defaultChecked));
+  }, [props.defaultChecked]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-checkbox"
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.labelColor, "#111827"),
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      <MlcCheckbox
+        checked={checked}
+        disabled={boolean(props.disabled)}
+        checkedColor={text(props.checkedColor, "#0f766e")}
+        borderColor={text(props.borderColor, "#cbd5e1")}
+        markColor={text(props.markColor, "#ffffff")}
+        radius={number(props.radius, 6)}
+        onChange={(nextChecked) => {
+          setChecked(nextChecked);
+          if (typeof handler === "function") handler(nextChecked);
+        }}
+        label={
+          <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
+            {label}
+          </MlcText>
+        }
+      />
+      {helperText ? (
+        <MlcText as="p" size={12} tone="muted" style={{ display: "block", margin: "6px 0 0 32px", color: text(props.helperColor, "#64748b") }}>
           {helperText}
         </MlcText>
       ) : null}
@@ -2583,6 +2628,45 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onChange", title: "开关变化" }],
+    }),
+  },
+  {
+    component: BasicCheckbox,
+    manifest: createMaterialManifest({
+      componentName: "BasicCheckbox",
+      materialVersion: "0.1.0",
+      title: "基础复选框",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础复选框",
+        helperText: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。",
+        defaultChecked: false,
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        labelColor: "#111827",
+        helperColor: "#64748b",
+        checkedColor: "#0f766e",
+        borderColor: "#cbd5e1",
+        markColor: "#ffffff",
+        radius: 6,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础复选框" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。" },
+        defaultChecked: { label: "默认勾选", type: "boolean", setter: "switch", defaultValue: false },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        checkedColor: { label: "勾选色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#cbd5e1", ...COLOR_SWATCHES_META },
+        markColor: { label: "勾选标记色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 6, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onChange", title: "勾选变化" }],
     }),
   },
   {

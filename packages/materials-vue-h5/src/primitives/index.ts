@@ -809,6 +809,77 @@ export const MlcSwitch = defineComponent({
   },
 });
 
+export const MlcCheckbox = defineComponent({
+  name: "MlcCheckbox",
+  props: {
+    checked: { type: Boolean, default: false },
+    disabled: { type: Boolean, default: false },
+    checkedColor: { type: String, default: h5Tokens.color.accent },
+    borderColor: { type: String, default: h5Tokens.color.border },
+    markColor: { type: String, default: h5Tokens.color.inverseText },
+    radius: { type: Number, default: h5Tokens.radius.sm },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onChange: { type: Function as PropType<(checked: boolean) => void>, default: undefined },
+  },
+  setup(props, { slots }) {
+    return () =>
+      h(
+        "button",
+        {
+          type: "button",
+          role: "checkbox",
+          "aria-checked": props.checked,
+          class: props.class,
+          disabled: props.disabled,
+          style: {
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "10px",
+            width: "100%",
+            minHeight: `${h5Tokens.touch.minHeight}px`,
+            border: 0,
+            padding: 0,
+            color: h5Tokens.color.text,
+            background: "transparent",
+            fontSize: `${h5Tokens.fontSize.body}px`,
+            textAlign: "left",
+            opacity: props.disabled ? 0.56 : 1,
+            ...props.style,
+          } satisfies CSSProperties,
+          onClick: () => props.onChange?.(!props.checked),
+        },
+        [
+          h(
+            "span",
+            {
+              "aria-hidden": "true",
+              style: {
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: "0 0 auto",
+                width: "22px",
+                height: "22px",
+                marginTop: "1px",
+                border: `1px solid ${props.checked ? props.checkedColor : props.borderColor}`,
+                borderRadius: `${props.radius}px`,
+                color: props.markColor,
+                background: props.checked ? props.checkedColor : h5Tokens.color.surface,
+                fontSize: "15px",
+                fontWeight: 900,
+                lineHeight: 1,
+                transition: "background 0.16s ease, border-color 0.16s ease",
+              } satisfies CSSProperties,
+            },
+            props.checked ? "✓" : "",
+          ),
+          slots.default ? h("span", { style: { flex: "1 1 auto", lineHeight: 1.45 } }, slots.default()) : null,
+        ],
+      );
+  },
+});
+
 export const MlcStepper = defineComponent({
   name: "MlcStepper",
   props: {

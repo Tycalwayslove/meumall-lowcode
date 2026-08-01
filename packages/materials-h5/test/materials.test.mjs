@@ -6,6 +6,7 @@ import {
   BasicButton,
   BasicCard,
   BasicCarousel,
+  BasicCheckbox,
   BasicImage,
   BasicInput,
   BasicSelect,
@@ -136,6 +137,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicSelect", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicCheckbox", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicTag", "fontWeight", { min: 100, max: 900, step: 100, unit: undefined }],
@@ -168,6 +170,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTextarea", "borderColor"],
       ["BasicSelect", "borderColor"],
       ["BasicSwitch", "activeColor"],
+      ["BasicCheckbox", "checkedColor"],
       ["BasicText", "backgroundColor"],
       ["DividerBlock", "color"],
       ["BasicTag", "backgroundColor"],
@@ -231,6 +234,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcSelect",
       "MlcTextarea",
       "MlcSwitch",
+      "MlcCheckbox",
       "MlcStepper",
       "MlcOverlay",
       "MlcModal",
@@ -306,6 +310,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
     functionSourceIncludes(BasicSwitch, ["MlcSwitch", "MlcText"]);
+    functionSourceIncludes(BasicCheckbox, ["MlcCheckbox", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     functionSourceIncludes(BasicImage, ["MlcImage"]);
@@ -474,6 +479,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.defaultChecked.setter, "switch");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.propsSchema.activeColor.setter, "color");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic checkbox material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicCheckbox");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础复选框");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.defaultChecked, false);
+    assert.equal(material.manifest.defaultProps.label, "基础复选框");
+    assert.equal(material.manifest.propsSchema.defaultChecked.setter, "switch");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.propsSchema.checkedColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 

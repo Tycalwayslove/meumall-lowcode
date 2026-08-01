@@ -116,6 +116,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicSwitch`
+- `BasicCheckbox`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
@@ -144,6 +145,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicSelect` 是通用静态单选物料，负责标签、占位、静态选项、默认值、禁用态、样式和选择变化事件；它不承载远程业务字典、商品类目、会员标签、级联选择、多选搜索或表单提交语义，这些能力应通过后续数据源契约、业务物料或编辑器专用控件扩展。
 
 `BasicSwitch` 是通用布尔开关物料，负责标签、状态文案、默认状态、禁用态、开关色、滑块色和开关变化事件；它不承载真实配置保存、权限审批、活动状态、规则联动或用户偏好持久化语义，这些能力应由后续业务物料、action 或宿主服务扩展。
+
+`BasicCheckbox` 是通用复选物料，负责标签、辅助说明、默认勾选、禁用态、勾选色、边框色、标记色、圆角和勾选变化事件；它不承载真实协议确认、表单校验、多选数组、权限审批、活动状态或用户偏好持久化语义，这些能力应由后续表单协议、业务物料、action 或宿主服务扩展。
 
 通用物料允许处理：
 
@@ -286,6 +289,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicSwitch`
+- `BasicCheckbox`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
