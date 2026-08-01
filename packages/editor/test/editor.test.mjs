@@ -28,6 +28,8 @@ import {
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
+  createLowcodeEditorCollaborationPermissionOptions,
+  createLowcodeEditorCollaborationState,
   createLowcodeEditorPermissionState,
   createLowcodeActionOptions,
   createLowcodeEventBindingItems,
@@ -825,6 +827,62 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(isLowcodeEditorActionAllowed(readonlyState, "schema.export"), true);
     assert.equal(isLowcodeEditorActionAllowed(readonlyState, "runtime.open"), true);
     assert.equal(isLowcodeEditorActionAllowed(readonlyState, "node.copy"), true);
+  });
+
+  it("creates reusable editor collaboration state", () => {
+    const defaultState = createLowcodeEditorCollaborationState();
+    assert.equal(defaultState.status, "unlocked");
+    assert.equal(defaultState.editable, true);
+    assert.equal(defaultState.readonly, false);
+    assert.equal(defaultState.title, "可编辑");
+
+    const lockedByMeState = createLowcodeEditorCollaborationState({
+      currentUserId: "user_1",
+      holder: { id: "user_1", name: "运营 A" },
+      now: "2026-08-01T10:00:00.000Z",
+      expiresAt: "2026-08-01T10:20:00.000Z",
+    });
+    assert.equal(lockedByMeState.status, "locked-by-me");
+    assert.equal(lockedByMeState.editable, true);
+    assert.equal(lockedByMeState.expiresInText, "约 20 分钟后到期");
+
+    const lockedByOtherState = createLowcodeEditorCollaborationState({
+      currentUserId: "user_1",
+      holder: { id: "user_2", name: "运营 B" },
+      now: "2026-08-01T10:00:00.000Z",
+      expiresAt: "2026-08-01T10:10:00.000Z",
+    });
+    assert.equal(lockedByOtherState.status, "locked-by-other");
+    assert.equal(lockedByOtherState.editable, false);
+    assert.equal(lockedByOtherState.readonly, true);
+    assert.equal(lockedByOtherState.readonlyReason, "运营 B 正在编辑，当前仅可查看。");
+
+    const lockedPermissionState = createLowcodeEditorPermissionState(
+      createLowcodeEditorCollaborationPermissionOptions(lockedByOtherState),
+    );
+    assert.equal(isLowcodeEditorActionAllowed(lockedPermissionState, "draft.save"), false);
+    assert.equal(getLowcodeEditorActionDisabledReason(lockedPermissionState, "draft.save"), "运营 B 正在编辑，当前仅可查看。");
+    assert.equal(isLowcodeEditorActionAllowed(lockedPermissionState, "schema.export"), true);
+
+    const readonlyState = createLowcodeEditorCollaborationState({
+      status: "readonly",
+      readonlyReason: "审批中页面暂不可编辑。",
+    });
+    assert.equal(readonlyState.status, "readonly");
+    assert.equal(readonlyState.tone, "neutral");
+    assert.equal(readonlyState.readonlyReason, "审批中页面暂不可编辑。");
+
+    const expiredState = createLowcodeEditorCollaborationState({
+      status: "locked-by-me",
+      currentUserId: "user_1",
+      holder: { id: "user_1", name: "运营 A" },
+      now: "2026-08-01T10:20:00.000Z",
+      expiresAt: "2026-08-01T10:10:00.000Z",
+    });
+    assert.equal(expiredState.status, "expired");
+    assert.equal(expiredState.editable, false);
+    assert.equal(expiredState.tone, "danger");
+    assert.equal(createLowcodeEditorCollaborationPermissionOptions(expiredState).readonly, true);
   });
 
   it("creates reusable node operation models and shortcuts", () => {

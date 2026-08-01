@@ -394,6 +394,46 @@ export interface CreateLowcodeEditorPermissionStateOptions {
   readonlyReason?: string;
 }
 
+export type LowcodeEditorCollaborationLockStatus =
+  | "unlocked"
+  | "locked-by-me"
+  | "locked-by-other"
+  | "readonly"
+  | "expired";
+
+export type LowcodeEditorCollaborationTone = "neutral" | "success" | "warning" | "danger";
+
+export interface LowcodeEditorCollaborator {
+  id?: string;
+  name?: string;
+  avatarUrl?: string;
+}
+
+export interface LowcodeEditorCollaborationState {
+  status: LowcodeEditorCollaborationLockStatus;
+  editable: boolean;
+  readonly: boolean;
+  tone: LowcodeEditorCollaborationTone;
+  title: string;
+  description: string;
+  readonlyReason?: string;
+  holder?: LowcodeEditorCollaborator;
+  lockedAt?: string;
+  expiresAt?: string;
+  expiresInText?: string;
+}
+
+export interface CreateLowcodeEditorCollaborationStateOptions {
+  status?: LowcodeEditorCollaborationLockStatus;
+  currentUserId?: string;
+  holder?: LowcodeEditorCollaborator;
+  lockedAt?: string;
+  expiresAt?: string;
+  now?: Date | string;
+  readonlyReason?: string;
+  lockReason?: string;
+}
+
 export type LowcodeEditorNodeOperationAction =
   | "rename"
   | "insertBefore"
@@ -1957,6 +1997,131 @@ export function getLowcodeEditorActionDisabledReason(
   const decision = state?.[action];
   if (!decision || decision.allowed) return undefined;
   return decision.reason ?? "当前操作不可用。";
+}
+
+function parseLowcodeEditorDate(value: Date | string | undefined): Date | undefined {
+  if (!value) return undefined;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function formatLowcodeEditorCollaborationExpiresIn(expiresAt: Date | undefined, now: Date): string | undefined {
+  if (!expiresAt) return undefined;
+  const remainingMs = expiresAt.getTime() - now.getTime();
+  if (remainingMs <= 0) return "已过期";
+  const remainingMinutes = Math.ceil(remainingMs / 60000);
+  if (remainingMinutes <= 1) return "1 分钟内到期";
+  if (remainingMinutes < 60) return `约 ${remainingMinutes} 分钟后到期`;
+  const remainingHours = Math.ceil(remainingMinutes / 60);
+  return `约 ${remainingHours} 小时后到期`;
+}
+
+function getLowcodeEditorCollaboratorName(holder: LowcodeEditorCollaborator | undefined): string {
+  return holder?.name || holder?.id || "其他协作者";
+}
+
+export function createLowcodeEditorCollaborationState(
+  options: CreateLowcodeEditorCollaborationStateOptions = {},
+): LowcodeEditorCollaborationState {
+  const now = parseLowcodeEditorDate(options.now) ?? new Date();
+  const expiresAtDate = parseLowcodeEditorDate(options.expiresAt);
+  const expiresInText = formatLowcodeEditorCollaborationExpiresIn(expiresAtDate, now);
+  const lockedAt = options.lockedAt;
+  const expiresAt = options.expiresAt;
+  const holder = options.holder;
+  const holderName = getLowcodeEditorCollaboratorName(holder);
+  const status = options.status
+    ?? (holder?.id && holder.id === options.currentUserId ? "locked-by-me" : holder ? "locked-by-other" : "unlocked");
+  const resolvedStatus: LowcodeEditorCollaborationLockStatus =
+    status !== "unlocked" && status !== "readonly" && expiresInText === "已过期" ? "expired" : status;
+
+  if (resolvedStatus === "locked-by-me") {
+    return {
+      status: resolvedStatus,
+      editable: true,
+      readonly: false,
+      tone: "success",
+      title: "我正在编辑",
+      description: options.lockReason ?? (expiresInText ? `编辑锁${expiresInText}。` : "当前页面已锁定给你编辑。"),
+      holder,
+      lockedAt,
+      expiresAt,
+      expiresInText,
+    };
+  }
+
+  if (resolvedStatus === "locked-by-other") {
+    const readonlyReason = options.readonlyReason ?? `${holderName} 正在编辑，当前仅可查看。`;
+    return {
+      status: resolvedStatus,
+      editable: false,
+      readonly: true,
+      tone: "warning",
+      title: "他人正在编辑",
+      description: options.lockReason ?? (expiresInText ? `${readonlyReason}${expiresInText}。` : readonlyReason),
+      readonlyReason,
+      holder,
+      lockedAt,
+      expiresAt,
+      expiresInText,
+    };
+  }
+
+  if (resolvedStatus === "readonly") {
+    const readonlyReason = options.readonlyReason ?? "当前页面为只读状态，暂不可编辑。";
+    return {
+      status: resolvedStatus,
+      editable: false,
+      readonly: true,
+      tone: "neutral",
+      title: "只读查看",
+      description: readonlyReason,
+      readonlyReason,
+      holder,
+      lockedAt,
+      expiresAt,
+      expiresInText,
+    };
+  }
+
+  if (resolvedStatus === "expired") {
+    const readonlyReason = options.readonlyReason ?? "编辑锁已过期，请刷新或重新获取编辑权限。";
+    return {
+      status: resolvedStatus,
+      editable: false,
+      readonly: true,
+      tone: "danger",
+      title: "锁已过期",
+      description: readonlyReason,
+      readonlyReason,
+      holder,
+      lockedAt,
+      expiresAt,
+      expiresInText,
+    };
+  }
+
+  return {
+    status: "unlocked",
+    editable: true,
+    readonly: false,
+    tone: "success",
+    title: "可编辑",
+    description: "当前页面未被其他人锁定。",
+    holder,
+    lockedAt,
+    expiresAt,
+    expiresInText,
+  };
+}
+
+export function createLowcodeEditorCollaborationPermissionOptions(
+  state: LowcodeEditorCollaborationState,
+): Pick<CreateLowcodeEditorPermissionStateOptions, "readonly" | "readonlyReason"> {
+  return {
+    readonly: state.readonly,
+    readonlyReason: state.readonlyReason ?? state.description,
+  };
 }
 
 export function createLowcodeNodeOperationItems(

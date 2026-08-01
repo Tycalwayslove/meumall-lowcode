@@ -12,7 +12,11 @@ import {
   Undo2,
   Upload,
 } from "@lucide/vue";
-import type { LowcodeEditorMode, LowcodeEditorPermissionAction } from "@meumall/lowcode-editor";
+import type {
+  LowcodeEditorCollaborationTone,
+  LowcodeEditorMode,
+  LowcodeEditorPermissionAction,
+} from "@meumall/lowcode-editor";
 
 const props = defineProps<{
   title: string;
@@ -23,6 +27,9 @@ const props = defineProps<{
   canUndo: boolean;
   canRedo: boolean;
   disabledActions?: Partial<Record<LowcodeEditorPermissionAction, string>>;
+  collaborationStatusText?: string;
+  collaborationStatusTone?: LowcodeEditorCollaborationTone;
+  collaborationStatusDescription?: string;
 }>();
 
 const emit = defineEmits<{
@@ -54,6 +61,14 @@ const emit = defineEmits<{
       </span>
       <span class="auto-save-pill" :class="`is-${props.autoSaveStatusTone}`">
         {{ props.autoSaveStatusText }}
+      </span>
+      <span
+        v-if="props.collaborationStatusText"
+        class="collaboration-pill"
+        :class="`is-${props.collaborationStatusTone ?? 'neutral'}`"
+        :title="props.collaborationStatusDescription"
+      >
+        {{ props.collaborationStatusText }}
       </span>
     </div>
 

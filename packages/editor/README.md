@@ -31,6 +31,13 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeEditorCommandSearchText`
 - `filterLowcodeEditorCommands`
 - `groupLowcodeEditorCommands`
+- `LOWCODE_EDITOR_PERMISSION_ACTIONS`
+- `LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS`
+- `createLowcodeEditorPermissionState`
+- `isLowcodeEditorActionAllowed`
+- `getLowcodeEditorActionDisabledReason`
+- `createLowcodeEditorCollaborationState`
+- `createLowcodeEditorCollaborationPermissionOptions`
 - `createLowcodeOutlineRows`
 - `createLowcodeOutlineRowSearchText`
 - `createLowcodeOutlineVisibility`
@@ -199,6 +206,16 @@ The workspace summary helper keeps top-bar editor status chips reusable across t
 Each item includes `id`, `label`, `value`, and a tone of `neutral`, `success`, `warning`, or `danger`.
 
 This helper does not render UI, inspect DOM, run server publish checks, enforce permissions, or mutate editor state. Host shells remain responsible for layout, icons, click handlers, live collaboration locks, permissions, and server-side review/approval state.
+
+## Permission And Collaboration API
+
+The permission helpers keep editor operation availability reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeEditorPermissionState(options)` returns stable decisions for editor actions such as draft saving, schema import/export, preview, publish, template operations, canvas clearing, material insertion, and node operations. The default state allows every action. `readonly` disables mutating actions while keeping view/export style actions available.
+
+`createLowcodeEditorCollaborationState(options)` turns host-provided collaboration lock data into a display model for `unlocked`, `locked-by-me`, `locked-by-other`, `readonly`, and `expired` states. `createLowcodeEditorCollaborationPermissionOptions(state)` bridges that state into the permission helper's readonly baseline.
+
+These helpers do not read users, call Java lock APIs, renew locks, release locks, run approval flows, render UI, or mutate Page Schema. Host shells remain responsible for real lock services, approval state, audit logs, and persistence.
 
 ## Prop Editor Model API
 

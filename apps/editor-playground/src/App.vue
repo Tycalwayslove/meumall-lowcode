@@ -44,6 +44,8 @@ import {
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
   createLowcodeEditorDraftPayload,
+  createLowcodeEditorCollaborationPermissionOptions,
+  createLowcodeEditorCollaborationState,
   createLowcodeEditorPermissionState,
   createLowcodeEventBindingItems,
   createLowcodeMaterialDetailDataSourceSlotItems,
@@ -222,6 +224,8 @@ const AUTO_SAVE_DELAY_MS = 700;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
+const collaborationDemoMode = runtimeQuery.get("collaboration");
+const collaborationDemoExpiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
 const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
 const pageTypeOptions = LOWCODE_EDITOR_PAGE_TYPE_OPTIONS;
@@ -684,7 +688,43 @@ const canMoveSelectedDown = computed(() => {
   if (!row) return false;
   return row.index < getSiblingCount(row.parentId) - 1;
 });
-const editorPermissionState = computed(() => createLowcodeEditorPermissionState());
+
+function createDemoCollaborationStateOptions(): Parameters<typeof createLowcodeEditorCollaborationState>[0] {
+  if (collaborationDemoMode === "locked-me") {
+    return {
+      currentUserId: "operator-me",
+      holder: { id: "operator-me", name: "当前运营" },
+      expiresAt: collaborationDemoExpiresAt,
+    };
+  }
+  if (collaborationDemoMode === "locked-other") {
+    return {
+      currentUserId: "operator-me",
+      holder: { id: "operator-other", name: "运营同事" },
+      expiresAt: collaborationDemoExpiresAt,
+    };
+  }
+  if (collaborationDemoMode === "readonly") {
+    return {
+      status: "readonly",
+      readonlyReason: "当前页面处于审批中，仅允许查看和导出。",
+    };
+  }
+  if (collaborationDemoMode === "expired") {
+    return {
+      status: "locked-by-me",
+      currentUserId: "operator-me",
+      holder: { id: "operator-me", name: "当前运营" },
+      expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
+    };
+  }
+  return {};
+}
+
+const editorCollaborationState = computed(() => createLowcodeEditorCollaborationState(createDemoCollaborationStateOptions()));
+const editorPermissionState = computed(() =>
+  createLowcodeEditorPermissionState(createLowcodeEditorCollaborationPermissionOptions(editorCollaborationState.value)),
+);
 const nodeContextMenuStyle = computed<CSSProperties>(() => {
   const menu = nodeContextMenu.value;
   if (!menu) return {};
@@ -3215,6 +3255,9 @@ function rollbackPublishSelectedRelease(): void {
       :can-undo="Boolean(editorState.history.past.length)"
       :can-redo="Boolean(editorState.history.future.length)"
       :disabled-actions="topToolbarDisabledActions"
+      :collaboration-status-text="editorCollaborationState.title"
+      :collaboration-status-tone="editorCollaborationState.tone"
+      :collaboration-status-description="editorCollaborationState.description"
       @open-command="openCommandPalette"
       @open-page-start="openPageStartWizard"
       @set-mode="applyEditorMode"

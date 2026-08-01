@@ -791,6 +791,7 @@ async function main() {
     await assertPage(page, editorUrl, [
       { label: "Vue3 编辑器 shell 已挂载", expression: "document.querySelector('.editor-shell')" },
       { label: "编辑器品牌文案存在", expression: "document.body.innerText.includes('MeuMall Lowcode')" },
+      { label: "编辑器协作状态存在", expression: "document.querySelector('.collaboration-pill')?.textContent?.includes('可编辑')" },
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },

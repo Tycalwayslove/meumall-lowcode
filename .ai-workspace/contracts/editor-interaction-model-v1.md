@@ -129,6 +129,13 @@ interface LowcodeEditorState {
 
 编辑器权限能力 API 从宿主提供的 action 决策和 readonly 基线派生稳定权限状态，覆盖页面新建、草稿保存、Schema 导入导出、预览发布、runtime 打开、模板、画布和节点操作。默认所有 action 允许，readonly 基线会禁用写操作，并保留 `schema.export`、`runtime.open` 和 `node.copy` 等查看/复制类操作。API 不读取用户角色、不调用 Java 菜单权限或审批接口、不执行锁续期、不做审计、不执行真实命令、不修改 Page Schema、Material Manifest 或 renderer 行为；宿主 shell 负责把业务权限、审批状态、协作锁定和只读状态映射成 action 决策。
 
+编辑器协作锁定状态 API：
+
+- `createLowcodeEditorCollaborationState`
+- `createLowcodeEditorCollaborationPermissionOptions`
+
+编辑器协作锁定状态 API 从宿主提供的锁状态、当前用户、锁持有人、锁定时间、到期时间、只读说明和当前时间派生协作状态展示模型，覆盖 `unlocked`、`locked-by-me`、`locked-by-other`、`readonly` 和 `expired`。模型会输出是否可编辑、是否 readonly、状态标题、描述、tone、到期文案和权限 readonly options，供宿主统一接入 permission/capability API。API 不调用 Java 锁接口、不执行抢锁/续期/释放锁、不建立 WebSocket/SSE、不做实时协同编辑、不处理冲突合并、不写入 Page Schema、Material Manifest 或 renderer 行为；宿主 shell 负责真实锁状态查询、刷新、释放、审批态映射、审计和用户反馈。
+
 节点操作模型 API：
 
 - `createLowcodeNodeOperationItems`
@@ -336,6 +343,7 @@ Schema 文件 API 从 Page Schema 派生 JSON 文件名、导出内容、mimeTyp
 - 物料详情模型 API 只派生物料详情展示、可插入节点输入和默认预览 schema，不依赖 DOM、renderer、资源中心、Java API、权限、审计或物料市场上下架状态。
 - 快捷命令 API 只派生命令展示和搜索模型，不持有命令执行函数，不依赖宿主权限系统。
 - 编辑器权限能力 API 只表达宿主已决策的 action 可用态和禁用原因，不读取角色、不调用 Java 接口、不执行审批或协作锁定，不修改 Page Schema、Material Manifest 或 renderer 行为。
+- 编辑器协作锁定状态 API 只表达宿主已提供的锁状态展示模型和 permission readonly options，不调用 Java 锁接口、不执行抢锁/续期/释放锁、不处理实时协同或冲突合并。
 - 节点操作模型 API 只派生菜单项、快捷键动作和反馈文案，不执行 `insertNode`、`removeNode`、`copyNode`、`pasteNode`、`duplicateNode`、`moveNodeById`、`undo` 或 `redo`。
 - 结构树 API 只派生节点导航展示模型，不修改节点，不依赖 DOM，不依赖宿主权限系统。
 - 节点选择模型 API 只派生多选状态、同父级判断、多选摘要和成组拖拽候选，不执行 DOM 拖拽或节点移动，不修改 Page Schema、Material Manifest 或 renderer 行为。
