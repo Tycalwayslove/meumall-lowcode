@@ -27,6 +27,7 @@ import {
   DividerBlock,
   FlashSaleList,
   FloorAnchorNav,
+  GridContainer,
   h5Materials,
   LeadFormBlock,
   LiveEntry,
@@ -143,6 +144,8 @@ describe("MeuMall H5 material manifests", () => {
     const numberProps = [
       ["SectionContainer", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["SectionContainer", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["GridContainer", "columns", { min: 2, max: 3, step: 1, unit: undefined }],
+      ["GridContainer", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -199,6 +202,10 @@ describe("MeuMall H5 material manifests", () => {
       ["SectionContainer", "borderColor"],
       ["SectionContainer", "titleColor"],
       ["SectionContainer", "subtitleColor"],
+      ["GridContainer", "backgroundColor"],
+      ["GridContainer", "borderColor"],
+      ["GridContainer", "titleColor"],
+      ["GridContainer", "subtitleColor"],
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
@@ -393,6 +400,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(NoticeBar, ["MlcNoticeBar"]);
     functionSourceIncludes(RichTextBlock, ["MlcRichText"]);
     functionSourceIncludes(SectionContainer, ["MlcText"]);
+    functionSourceIncludes(GridContainer, ["MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -546,6 +554,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.emptyText.setter, "input");
   });
 
+  it("registers the grid container material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "GridContainer");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "网格容器");
+    assert.equal(material.manifest.category, "layout");
+    assert.equal(material.manifest.defaultProps.columns, 2);
+    assert.equal(material.manifest.defaultProps.gap, 10);
+    assert.equal(material.manifest.propsSchema.columns.setter, "number");
+    assert.equal(material.manifest.propsSchema.gap.setter, "number");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.shadow.setter, "switch");
+    assert.equal(material.manifest.propsSchema.emptyText.setter, "input");
+  });
+
   it("renders section container layout props in React H5", () => {
     const element = SectionContainer({
       node: { id: "container_1", componentName: "SectionContainer", props: {} },
@@ -584,6 +607,29 @@ describe("MeuMall H5 material manifests", () => {
     assert.ok(subtitle);
     assert.equal(title.type.name, "MlcText");
     assert.equal(subtitle.type.name, "MlcText");
+  });
+
+  it("renders grid container children in React H5", () => {
+    const element = GridContainer({
+      node: { id: "grid_1", componentName: "GridContainer", props: {} },
+      props: {
+        title: "网格测试",
+        columns: 3,
+        gap: 12,
+        borderWidth: 1,
+        borderColor: "#d1d5db",
+      },
+      children: ["A", "B", "C"],
+    });
+
+    assert.equal(element.props.className, "mlc-material mlc-grid-container");
+    assert.equal(element.props.style.border, "1px solid #d1d5db");
+
+    const body = element.props.children.find((child) => child?.props?.className === "mlc-grid-container__body");
+    assert.ok(body);
+    assert.equal(body.props.style.gridTemplateColumns, "repeat(3, minmax(0, 1fr))");
+    assert.equal(body.props.style.gap, 12);
+    assert.equal(body.props.children.length, 3);
   });
 
   it("renders section container empty state through React H5 primitives", () => {

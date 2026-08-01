@@ -190,6 +190,7 @@ const NUMBER_TEXTAREA_ROWS_META = { min: 2, max: 8, step: 1 };
 const NUMBER_STEPPER_VALUE_META = { min: 0, max: 999, step: 1 };
 const NUMBER_STEPPER_STEP_META = { min: 1, max: 20, step: 1 };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
+const NUMBER_GRID_COLUMNS_META = { min: 2, max: 3, step: 1 };
 const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
 const COLOR_SWATCHES_META = {
   swatches: [
@@ -2394,6 +2395,86 @@ export function SectionContainer({ props, children }: MaterialProps) {
   );
 }
 
+export function GridContainer({ props, children }: MaterialProps) {
+  const title = text(props.title);
+  const subtitle = text(props.subtitle);
+  const columns = Math.min(3, Math.max(2, Math.round(number(props.columns, 2))));
+  const gap = number(props.gap, 10);
+  const marginY = number(props.marginY, 10);
+  const borderWidth = number(props.borderWidth, 0);
+  const radius = number(props.radius, 10);
+  const hasChildren = React.Children.count(children) > 0;
+
+  return (
+    <section
+      className="mlc-material mlc-grid-container"
+      style={{
+        margin: `${marginY}px 0`,
+        padding: number(props.padding, 12),
+        background: text(props.backgroundColor, "#ffffff"),
+        border: borderWidth > 0 ? `${borderWidth}px solid ${text(props.borderColor, "#e5e7eb")}` : undefined,
+        borderRadius: radius,
+        boxShadow: boolean(props.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+      }}
+    >
+      {title ? (
+        <MlcText
+          as="h2"
+          size={18}
+          weight={800}
+          lineHeight={1.35}
+          className="mlc-grid-container__title"
+          style={{ margin: "0 0 6px", color: text(props.titleColor, "#111827") }}
+        >
+          {title}
+        </MlcText>
+      ) : null}
+      {subtitle ? (
+        <MlcText
+          as="p"
+          size={13}
+          lineHeight={1.6}
+          className="mlc-grid-container__subtitle"
+          style={{ margin: "0 0 12px", color: text(props.subtitleColor, "#64748b") }}
+        >
+          {subtitle}
+        </MlcText>
+      ) : null}
+      {hasChildren ? (
+        <div
+          className="mlc-grid-container__body"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            gap,
+          }}
+        >
+          {React.Children.map(children, (child) => (
+            <div className="mlc-grid-container__cell" style={{ minWidth: 0 }}>{child}</div>
+          ))}
+        </div>
+      ) : (
+        <MlcText
+          as="p"
+          size={13}
+          tone="muted"
+          lineHeight={1.5}
+          className="mlc-grid-container__empty"
+          style={{
+            padding: 14,
+            border: "1px dashed #cbd5e1",
+            borderRadius: 8,
+            background: "#f8fafc",
+            textAlign: "center",
+          }}
+        >
+          {text(props.emptyText, "向网格容器中添加物料")}
+        </MlcText>
+      )}
+    </section>
+  );
+}
+
 export function ActionButton({ props }: MaterialProps) {
   const linkUrl = text(props.linkUrl);
   return (
@@ -2743,6 +2824,48 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
         subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
         emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向容器中添加物料" },
+      },
+    }),
+  },
+  {
+    component: GridContainer,
+    manifest: createMaterialManifest({
+      componentName: "GridContainer",
+      materialVersion: "0.1.0",
+      title: "网格容器",
+      category: "layout",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "双列专区",
+        subtitle: "可在网格中继续添加图片、按钮或卡片。",
+        columns: 2,
+        backgroundColor: "#ffffff",
+        padding: 12,
+        marginY: 10,
+        gap: 10,
+        radius: 10,
+        borderColor: "#e5e7eb",
+        borderWidth: 0,
+        shadow: false,
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        emptyText: "向网格容器中添加物料",
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "双列专区" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "可在网格中继续添加图片、按钮或卡片。" },
+        columns: { label: "列数", type: "number", setter: "number", defaultValue: 2, ...NUMBER_GRID_COLUMNS_META },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        marginY: { label: "上下外边距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "网格间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 0, ...NUMBER_BORDER_WIDTH_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向网格容器中添加物料" },
       },
     }),
   },

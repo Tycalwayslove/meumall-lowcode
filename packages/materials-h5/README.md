@@ -52,6 +52,7 @@ Currently migrated materials:
 - `BasicCarousel`
 - `BasicVideo`
 - `SectionContainer`
+- `GridContainer`
 - `ActionButton`
 - `ImageBanner`
 - `SectionTitle`
@@ -78,6 +79,7 @@ See `docs/material-layering-architecture.md` for the layering plan.
 Current materials:
 
 - `SectionContainer`
+- `GridContainer`
 - `NoticeBar`
 - `BasicButton`
 - `BasicInput`

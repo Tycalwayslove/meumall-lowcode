@@ -178,6 +178,8 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `updateLowcodeDataSource`
 - `removeLowcodeDataSource`
 - `LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS`
+- `LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES`
+- `isLowcodeEditorContainerComponentName`
 - `createLowcodeDefaultActionParams`
 - `createLowcodeActionConfig`
 - `formatLowcodeActionParamsText`
@@ -588,7 +590,9 @@ These helpers do not bind DOM events, handle Pointer Events, calculate drop posi
 
 The canvas drop hint helpers keep drag placement, visual drop line, snap guide, append hint, and invalid node target rules reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
 
-`resolveLowcodeCanvasDropPlacement(point, targetNode, targetRect, options)` derives `before`, `after`, or `inside` from the pointer Y position and target node rectangle. By default only `SectionContainer` can resolve to `inside`, using the middle 28%-72% vertical range.
+`LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES` lists the built-in components that can accept inside drops. `isLowcodeEditorContainerComponentName(componentName, insideComponentNames)` lets host shells reuse the same container predicate for buttons, context menus, and drag/drop UI.
+
+`resolveLowcodeCanvasDropPlacement(point, targetNode, targetRect, options)` derives `before`, `after`, or `inside` from the pointer Y position and target node rectangle. By default `SectionContainer` and `GridContainer` can resolve to `inside`, using the middle 28%-72% vertical range.
 
 `createLowcodeCanvasDropHintStyle(frame, targetRect, placement)` and `createLowcodeCanvasSnapGuides(frame, targetRect, placement)` derive DOM-free style maps from host-provided frame metrics and target rects. The host owns how those style maps are rendered.
 

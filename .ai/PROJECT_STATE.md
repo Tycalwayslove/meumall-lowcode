@@ -34,7 +34,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Changesets 基础配置；`createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-adapters` runtime health summary API、`@meumall/lowcode-runtime-react-h5`、`@meumall/lowcode-editor` demo checklist API 和 `@meumall/lowcode-editor` publish risk summary API 已有 pending minor changeset，真实发布前仍需统一确认 linked group 版本结果。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
-- H5 materials 初始实现，已包含容器、公告条、区块标题、图片卡片宫格、标签内容切换、基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关、基础复选框、基础文本、基础价格、分割线、基础图片、基础标签、基础图文卡片、基础图片轮播、基础视频、基础弹窗、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
+- H5 materials 初始实现，已包含容器、网格容器、公告条、区块标题、图片卡片宫格、标签内容切换、基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关、基础复选框、基础文本、基础价格、分割线、基础图片、基础标签、基础图文卡片、基础图片轮播、基础视频、基础弹窗、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
 - Page Schema v1 ready 契约：`.ai-workspace/contracts/page-schema-v1.md` 已定义字段语义、生命周期、校验规则、兼容性、安全要求、变更流程和回滚方式。
@@ -106,9 +106,9 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Renderer fallback：React/Vue H5 renderer 已统一未知物料和组件异常局部兜底 DOM 标记；未知物料输出 `mlc-runtime-missing`、`data-lowcode-node-id`、`data-lowcode-missing`，组件异常输出 `mlc-runtime-error`、`data-lowcode-node-id`、`data-lowcode-error`，并支持宿主通过 `onRenderError` 记录异常。
 - Resource Library Client：`@meumall/lowcode-adapters` 提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，覆盖图片素材、视频素材、商品、优惠券、门店/达人资源查询，为后续替换真实资源中心 HTTP client 预留边界。
 - Vue3 编辑器资源选择器：右侧属性区已提供 mock 图片素材库、视频素材库、商品选择器、优惠券选择器和门店/达人选择器，支持搜索、分类、多选、静态 props 写回，并支持视频素材同步写回 `videoUrl`/`posterUrl`、商品恢复绑定 `products` 数据源、门店/达人恢复绑定 `stores` 数据源；资源选择器主面板已通过 `EditorResourcePanels.vue` 独立组件渲染，真实 Resource Library Client 查询、选择状态维护、props/dataBinding 写回、权限和审计仍由 playground 或未来管理台 shell 持有。
-- Vue3 编辑器画布拖拽：从物料区拖到画布节点时可显示前/后插入线，拖到 `SectionContainer` 中间区域可显示容器投放高亮，拖到空白区域可追加到页面末尾。
-- Vue3 编辑器已有节点拖拽：设计模式下画布节点可直接拖动，支持移动到目标节点前/后、移动进 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
-- 基础容器布局能力：React/Vue H5 `SectionContainer` 已支持 `marginY`、`gap`、`borderColor`、`borderWidth`、`shadow`、`titleColor`、`subtitleColor` 和 `emptyText`，标题、说明和空态文案已从 primitives 包复用 `MlcText`，并保持 Page Schema v1 节点结构和编辑器容器判断逻辑不变；默认模板、编辑器内置 runtime、React H5 runtime 示例和 browser smoke check 已接入。
+- Vue3 编辑器画布拖拽：从物料区拖到画布节点时可显示前/后插入线，拖到 `SectionContainer` 或 `GridContainer` 中间区域可显示容器投放高亮，拖到空白区域可追加到页面末尾。
+- Vue3 编辑器已有节点拖拽：设计模式下画布节点可直接拖动，支持移动到目标节点前/后、移动进 `SectionContainer` 或 `GridContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
+- 基础容器布局能力：React/Vue H5 `SectionContainer` 已支持单列分组、留白、边框、阴影和空态，`GridContainer` 已支持 2/3 列网格布局、子节点间距、边框、阴影和空态；二者都保持 Page Schema v1 `children` 节点结构，不引入 slot 协议。`@meumall/lowcode-editor` 已公开 `LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES` 和 `isLowcodeEditorContainerComponentName`，Vue3 编辑器默认模板、快捷命令加入容器、编辑器内置 runtime、React H5 runtime 示例和 browser smoke check 已接入。
 - 基础图文卡片物料：React/Vue H5 物料包已新增 `BasicCard`，支持图片、角标、标题、说明、行动按钮、边框和阴影配置，并从 primitives 包复用 `MlcImage`、`MlcTag`、`MlcText`、`MlcButton`；默认模板、快捷命令添加链路、React H5 runtime 示例和 browser smoke check 已接入。
 - 基础图片轮播物料：React/Vue H5 物料包已新增 `BasicCarousel`，支持静态轮播项、图片、标题、说明、角标、圆角、比例、自动播放、指示器和 `onItemClick` 安全 action，并从 primitives 包复用 `MlcImage`、`MlcTag`、`MlcText`；默认模板、快捷命令添加链路、React H5 runtime 示例、editor 列表项字段模型、browser smoke check 和 pending minor changeset 已接入。
 - 基础视频物料：React/Vue H5 物料包已新增 `BasicVideo`，支持视频地址、封面、标题、说明、角标、圆角、比例、播放控件、静音、循环、自动播放、行内播放和 `onPlay` 安全 action，并从 primitives 包复用 `MlcImage`、`MlcTag`、`MlcText`；`videoUrl` 已使用 manifest `video` setter，Vue3 编辑器可从视频素材库选择视频并同步写回封面；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。
@@ -150,7 +150,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器数组列表排序：属性面板列表项已支持同一数组属性内 HTML5 拖拽排序，拖拽后写回当前节点 props 数组，并提供拖拽中和目标项视觉状态。
 - Vue3 编辑器列表项图片素材选择：数组列表项中的 `imageUrl`、`coverImageUrl` 和 `logoImageUrl` 类字段会展示缩略图、保留 URL 输入，并可展开内联素材库选择图片后写回当前列表项字段；`ImageCardGrid.items` 和 `BasicCarousel.items` 已有稳定列表项字段模型，browser smoke 已覆盖 `ImageCardGrid.items[].imageUrl` 选择素材和缩略图写回。
 - 基础组件与物料分层架构：`docs/material-layering-architecture.md` 已定义 Design Tokens、Runtime Primitives、Generic Materials、Business Materials 的边界、依赖方向、首批组件清单、分阶段演进计划和新增物料检查清单；当前已落地 `@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 和 `@meumall/lowcode-primitives-vue-h5` 公开包。
-- Runtime primitives 公开包：`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已承载 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcSelect`、`MlcRadioGroup`、`MlcTextarea`、`MlcSwitch`、`MlcCheckbox`、`MlcStepper`、`MlcOverlay`、`MlcModal`、`MlcCountdownText`、`MlcTabs`、`MlcSpacer`、`MlcDivider`、`MlcNoticeBar` 和 `MlcRichText`，并由 React/Vue H5 materials 包组合成 `BasicButton`、`BasicInput`、`BasicTextarea`、`BasicSelect`、`BasicRadioGroup`、`BasicStepper`、`BasicSwitch`、`BasicCheckbox`、`BasicText`、`BasicPrice`、`DividerBlock`、`BasicImage`、`BasicTag`、`BasicCard`、`BasicCarousel`、`BasicVideo`、`BasicModal`、`LeadFormBlock`、`SectionContainer`、`ActivityHero`、`NoticeBar`、`RichTextBlock`、`ProductList`、`SpacerBlock`、`TabsBlock`、`ActivityRuleModal` 和 `CountdownTimer` 等物料；primitives 仍不进入 material registry。
+- Runtime primitives 公开包：`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已承载 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcSelect`、`MlcRadioGroup`、`MlcTextarea`、`MlcSwitch`、`MlcCheckbox`、`MlcStepper`、`MlcOverlay`、`MlcModal`、`MlcCountdownText`、`MlcTabs`、`MlcSpacer`、`MlcDivider`、`MlcNoticeBar` 和 `MlcRichText`，并由 React/Vue H5 materials 包组合成 `BasicButton`、`BasicInput`、`BasicTextarea`、`BasicSelect`、`BasicRadioGroup`、`BasicStepper`、`BasicSwitch`、`BasicCheckbox`、`BasicText`、`BasicPrice`、`DividerBlock`、`BasicImage`、`BasicTag`、`BasicCard`、`BasicCarousel`、`BasicVideo`、`BasicModal`、`LeadFormBlock`、`SectionContainer`、`GridContainer`、`ActivityHero`、`NoticeBar`、`RichTextBlock`、`ProductList`、`SpacerBlock`、`TabsBlock`、`ActivityRuleModal` 和 `CountdownTimer` 等物料；primitives 仍不进入 material registry。
 - Vue3 编辑器体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，并补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与响应式兜底；顶部工作区状态摘要已复用 editor workspace summary API。
 - Vue3 编辑器物料偏好：左侧物料区已支持星标收藏和最近使用，均以 `componentName` 写入 localStorage；偏好内容解析、去重、未知物料过滤、最近使用数量限制、收藏切换和收藏提示文案已复用 editor material preference API，收藏和最近使用物料仍通过 editor material catalog API 按顺序恢复并在顶部快捷区一键添加。
 - Vue3 编辑器属性面板分组：右侧 props 已按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，支持折叠/展开，并修复新 profile 首次打开默认选中旧节点导致属性区为空的问题；字段归类、分组文案、顺序和折叠状态 helper 已复用 editor prop groups API；属性字段控件类型、列表字段、图片字段、默认新增项和输入转换已复用 editor prop editor model API；物料事件绑定展示、节点事件写回和 action 引用同步已复用 editor event binding API；属性字段分组、数组列表编辑器、列表项图片素材选择 UI 和事件绑定列表已通过 `EditorPropGroupsPanel.vue` 独立组件渲染，真实 props/events 写回、素材查询、商品 dataSource 绑定、权限和审计仍由 playground 或未来管理台 shell 持有。
@@ -205,6 +205,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
+| 2026-08-01 | 待提交 | 新增 GridContainer 网格容器通用物料，并公开 editor 默认容器名单和容器判断函数。 |
 | 2026-08-01 | `661bf25` | 新增 BasicPrice 基础价格通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
 | 2026-08-01 | `f69de27` | 新增 `@meumall/lowcode-runtime-react-h5` React H5 runtime host 包，并让 React H5 runtime playground 消费该包。 |
 | 2026-08-01 | `2414898` | 新增 adapters runtime health summary API，并在 React H5 runtime playground 展示运行态健康摘要和检查项。 |

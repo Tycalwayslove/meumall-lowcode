@@ -109,6 +109,7 @@ import {
   insertLowcodeMaterialByTarget,
   isLowcodeHexColor,
   isLowcodeInvalidNodeDropTarget,
+  isLowcodeEditorContainerComponentName,
   isLowcodeListImageField,
   isLowcodeEditorActionAllowed,
   isLowcodeListPropEditor,
@@ -121,6 +122,7 @@ import {
   LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_ACTION_TYPE_OPTIONS,
   LOWCODE_EDITOR_DEFAULT_CAPABILITY_ACTIONS,
+  LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES,
   LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES,
   LOWCODE_EDITOR_PAGE_STATUS_OPTIONS,
   LOWCODE_EDITOR_PAGE_TYPE_OPTIONS,
@@ -1471,6 +1473,13 @@ describe("@meumall/lowcode-editor readiness", () => {
         }),
       ],
     });
+    const gridContainerNode = createLowcodeNode({
+      id: "grid_container_1",
+      componentName: "GridContainer",
+      materialVersion: "1.0.0",
+      props: {},
+      children: [],
+    });
     const buttonNode = createLowcodeNode({
       id: "button_1",
       componentName: "ActionButton",
@@ -1480,7 +1489,12 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 160 }, buttonNode, targetRect), "before");
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 230 }, buttonNode, targetRect), "after");
+    assert.deepEqual([...LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES], ["SectionContainer", "GridContainer"]);
+    assert.equal(isLowcodeEditorContainerComponentName("SectionContainer"), true);
+    assert.equal(isLowcodeEditorContainerComponentName("GridContainer"), true);
+    assert.equal(isLowcodeEditorContainerComponentName("ActionButton"), false);
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect), "inside");
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, gridContainerNode, targetRect), "inside");
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect, {
       insideComponentNames: ["CustomContainer"],
     }), "after");

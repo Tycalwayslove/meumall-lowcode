@@ -1327,7 +1327,7 @@ export const LOWCODE_EDITOR_DEFAULT_LIST_FIELDS: Record<string, readonly string[
 };
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
-const DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES = ["SectionContainer"];
+export const LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES = ["SectionContainer", "GridContainer"] as const;
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "navigate", paramName: "url", label: "跳转 URL" },
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },
@@ -3643,6 +3643,13 @@ export function getLowcodeSelectedGroupNodeIdsForDrag<
     .map((row) => row.node.id);
 }
 
+export function isLowcodeEditorContainerComponentName(
+  componentName: string,
+  insideComponentNames: Iterable<string> = LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES,
+): boolean {
+  return new Set(insideComponentNames).has(componentName);
+}
+
 export function resolveLowcodeCanvasDropPlacement(
   point: Pick<LowcodeEditorCanvasPoint, "clientY">,
   targetNode: Pick<LowcodeNode, "componentName">,
@@ -3650,12 +3657,12 @@ export function resolveLowcodeCanvasDropPlacement(
   options: ResolveLowcodeCanvasDropPlacementOptions = {},
 ): Exclude<LowcodeEditorCanvasDropPlacement, "append"> {
   const ratio = targetRect.height > 0 ? (point.clientY - targetRect.top) / targetRect.height : 0.5;
-  const insideComponentNames = new Set(options.insideComponentNames ?? DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES);
+  const insideComponentNames = options.insideComponentNames ?? LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES;
   const insideMinRatio = options.insideMinRatio ?? 0.28;
   const insideMaxRatio = options.insideMaxRatio ?? 0.72;
 
   if (
-    insideComponentNames.has(targetNode.componentName) &&
+    isLowcodeEditorContainerComponentName(targetNode.componentName, insideComponentNames) &&
     ratio > insideMinRatio &&
     ratio < insideMaxRatio
   ) {

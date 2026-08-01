@@ -104,6 +104,7 @@ import {
   insertLowcodeMaterialByTarget,
   insertLowcodeCanvasNodeByHint,
   isLowcodeInvalidNodeDropTarget,
+  isLowcodeEditorContainerComponentName,
   isLowcodeFavoriteMaterial,
   isLowcodeEditorActionAllowed,
   isLowcodeNodeSelected,
@@ -695,7 +696,7 @@ const selectedPropGroups = computed<PropEditorGroup[]>(() => {
   if (!manifest) return [];
   return createLowcodePropGroups(manifest.propsSchema);
 });
-const selectedNodeIsContainer = computed(() => selectedNode.value?.componentName === "SectionContainer");
+const selectedNodeIsContainer = computed(() => selectedNode.value ? isLowcodeEditorContainerComponentName(selectedNode.value.componentName) : false);
 const outlineRows = computed(() =>
   createLowcodeOutlineRows(editorState.value.schema.nodes, {
     materialManifests: materials.map((material) => material.manifest),

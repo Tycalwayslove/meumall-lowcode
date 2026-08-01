@@ -978,6 +978,22 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame .mlc-divider-block').length > ${Number(dividerCountBefore)}`);
   log("通过：基础文本、基础价格和分割线可从快捷命令添加并在 Vue H5 画布渲染");
 
+  log("检查网格容器布局物料");
+  const nodeCountBeforeGridContainer = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "网格容器");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：网格容器')");
+  await page.clickByText(".command-palette-item", "添加物料：网格容器");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeGridContainer)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-grid-container') && document.body.innerText.includes('当前容器：网格容器')");
+  await page.clickByText(".container-target button", "基础文本");
+  await page.waitForExpression("(() => { const bodies = Array.from(document.querySelectorAll('.phone-frame .mlc-grid-container__body')); const latest = bodies.at(-1); return Boolean(latest && latest.querySelector('.mlc-basic-text') && latest.innerText.includes('这是一段基础文本')); })()");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"GridContainer\"') && item.value.includes('\"columns\": 2') && item.value.includes('\"componentName\": \"BasicText\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：网格容器可从快捷命令添加、识别为容器并加入基础文本");
+
   log("检查基础图片和基础标签通用物料");
   const nodeCountBeforeBasicImage = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1507,6 +1523,7 @@ async function main() {
       { label: "区块标题物料存在", expression: "document.body.innerText.includes('区块标题')" },
       { label: "图片卡片宫格物料存在", expression: "document.body.innerText.includes('图片卡片宫格')" },
       { label: "标签内容切换物料存在", expression: "document.body.innerText.includes('标签内容切换')" },
+      { label: "网格容器物料存在", expression: "document.body.innerText.includes('网格容器')" },
       { label: "留资表单物料存在", expression: "document.body.innerText.includes('留资表单')" },
       { label: "公告条物料存在", expression: "document.body.innerText.includes('公告条')" },
       { label: "富文本物料存在", expression: "document.body.innerText.includes('富文本')" },
@@ -1552,6 +1569,7 @@ async function main() {
       { label: "默认大促模板包含基础图片", expression: "document.querySelector('.phone-frame .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "默认大促模板包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "默认大促模板包含基础图文卡片", expression: "document.querySelector('.phone-frame .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "默认大促模板包含网格容器", expression: "(() => { const body = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_grid_container\"] .mlc-grid-container__body'); return Boolean(body && getComputedStyle(body).display === 'grid' && body.children.length === 2 && document.body.innerText.includes('网格容器示例') && document.body.innerText.includes('¥299封顶')); })()" },
       { label: "默认大促模板包含基础视频", expression: "document.querySelector('.phone-frame .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
       { label: "默认大促模板包含基础弹窗", expression: "document.querySelector('.phone-frame .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
@@ -1609,6 +1627,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础图片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "编辑器内置 runtime 包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "编辑器内置 runtime 包含基础图文卡片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "编辑器内置 runtime 包含网格容器", expression: "(() => { const body = document.querySelector('[data-lowcode-node-id=\"summer_grid_container\"] .mlc-grid-container__body'); return Boolean(body && getComputedStyle(body).display === 'grid' && body.children.length === 2 && document.body.innerText.includes('网格容器示例') && document.body.innerText.includes('¥299封顶')); })()" },
       { label: "编辑器内置 runtime 包含基础视频", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
       { label: "编辑器内置 runtime 包含基础弹窗", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
@@ -1650,6 +1669,7 @@ async function main() {
       { label: "React H5 基础图片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "React H5 基础标签已渲染", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "React H5 基础图文卡片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "React H5 网格容器已渲染", expression: "(() => { const body = document.querySelector('[data-lowcode-node-id=\"node_grid_container\"] .mlc-grid-container__body'); return Boolean(body && getComputedStyle(body).display === 'grid' && body.children.length === 2 && document.body.innerText.includes('React H5 网格容器示例') && document.body.innerText.includes('¥299封顶')); })()" },
       { label: "React H5 基础视频已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
       { label: "React H5 基础弹窗已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看 React H5 基础弹窗')" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
