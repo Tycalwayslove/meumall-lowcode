@@ -81,6 +81,7 @@ Runtime Primitives 是运行时基础组件，不是低代码物料，不声明 
 - 文本截断、基础排版。
 - H5 touch target。
 - 可访问性属性。
+- 业务无关的表单字段描述和值归一化 helper，例如字段类型、隐藏字段 data attributes、空值判断和基础必填提示。
 
 基础组件不允许处理：
 
@@ -89,6 +90,7 @@ Runtime Primitives 是运行时基础组件，不是低代码物料，不声明 
 - data source。
 - action binding。
 - Java 配置平台 API。
+- 远程提交、服务端校验、登录、权限、风控或持久化。
 - 业务字段，例如 `couponId`、`skuId`、`liveId`。
 
 当前公开包名：
@@ -161,7 +163,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 
 `BasicModal` 是通用基础弹窗物料，负责入口按钮、静态标题、说明、内容、确认按钮、弹出位置、关闭行为、色彩、圆角和留白配置；它不承载远程内容、表单提交、登录、领券、交易、权限、审核、个性化投放或弹窗内低代码子节点编排，这些能力应由后续业务物料、宿主服务或单独 slot/layout 协议扩展。
 
-`BasicForm` 是通用基础表单容器物料，负责标题、说明、子节点字段区、提交按钮、提交成功态和 `onSubmit` 安全事件；它复用 Page Schema `children` 组合现有基础输入物料，不自动采集子字段值，不承载校验规则、验证码、登录、风控、远程提交、服务端保存或表单布局 DSL。这些能力应由后续表单协议、action、业务物料或宿主服务扩展。
+`BasicForm` 是通用基础表单容器物料，负责标题、说明、子节点字段区、提交按钮、提交成功态和 `onSubmit` 安全事件；它复用 Page Schema `children` 组合现有基础输入物料，并通过 primitives 包的业务无关字段 helper 采集子级基础控件值、做本地 required 必填校验和字段级错误提示；它不承载复杂校验规则、验证码、登录、风控、远程提交、服务端保存或表单布局 DSL。这些能力应由后续表单协议、action、业务物料或宿主服务扩展。
 
 `BasicList` 是通用静态内容列表物料，负责标题、说明、列表项标题、说明、标记、右侧辅助信息、间距、边框、圆角、颜色和 `onItemClick` 安全事件；它不承载远程数据源、分页、搜索、排序、FAQ 展开折叠、时间线协议、商品/优惠券/门店达人等业务模型或个性化推荐语义。这些能力应由后续数据源协议、专项内容物料、业务物料或宿主服务扩展。
 
@@ -358,7 +360,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `RichTextBlock`
 - `NavGrid`
 
-新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`BasicForm`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；它们仍是可拖拽物料，不是 primitives API 本身。
+新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`BasicForm`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；其中基础表单字段的 DOM 描述、值格式化、值解析、空值判断和必填提示推导已沉淀为 React/Vue primitives 同名 helper。它们仍是可拖拽物料，不是 primitives API 本身。
 
 ## Business Materials 首批规划
 

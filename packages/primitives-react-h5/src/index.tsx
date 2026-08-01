@@ -8,10 +8,66 @@ type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
 
+export type MlcFormFieldType = "string" | "number" | "boolean";
+export type MlcFormRequiredVerb = "填写" | "选择" | "确认";
+
 export interface MlcSelectOption {
   label?: string;
   value?: string;
   disabled?: boolean;
+}
+
+export interface MlcFormFieldDataAttributesOptions {
+  label: string;
+  type: MlcFormFieldType;
+  required?: boolean;
+  requiredMessage?: string;
+}
+
+export interface MlcFormFieldDataAttributes {
+  "data-mlc-form-field": "true";
+  "data-mlc-form-field-label": string;
+  "data-mlc-form-field-type": MlcFormFieldType;
+  "data-mlc-form-field-required": "true" | "false";
+  "data-mlc-form-field-required-message": string;
+}
+
+export function formatMlcFormFieldValue(value: string | number | boolean): string {
+  return typeof value === "boolean" ? String(value) : String(value ?? "");
+}
+
+export function parseMlcFormFieldValue(value: string, type: MlcFormFieldType): string | number | boolean | null {
+  if (type === "boolean") return value === "true";
+  if (type === "number") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return value;
+}
+
+export function isMlcFormFieldEmpty(value: string, type: MlcFormFieldType): boolean {
+  if (type === "boolean") return value !== "true";
+  if (type === "number") return value.trim() === "" || !Number.isFinite(Number(value));
+  return value.trim() === "";
+}
+
+export function createMlcFormRequiredMessage(requiredMessage: unknown, label: string, verb: MlcFormRequiredVerb): string {
+  return typeof requiredMessage === "string" ? requiredMessage : `请${verb}${label || "该字段"}`;
+}
+
+export function createMlcFormFieldDataAttributes({
+  label,
+  type,
+  required = false,
+  requiredMessage = "",
+}: MlcFormFieldDataAttributesOptions): MlcFormFieldDataAttributes {
+  return {
+    "data-mlc-form-field": "true",
+    "data-mlc-form-field-label": label,
+    "data-mlc-form-field-type": type,
+    "data-mlc-form-field-required": required ? "true" : "false",
+    "data-mlc-form-field-required-message": requiredMessage,
+  };
 }
 
 export interface MlcButtonProps {

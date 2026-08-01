@@ -26,10 +26,17 @@ This package contains business-agnostic UI building blocks used by `@meumall/low
 - `MlcDivider`
 - `MlcNoticeBar`
 - `MlcRichText`
+- Form field helpers:
+  - `MlcFormFieldType`
+  - `createMlcFormFieldDataAttributes`
+  - `formatMlcFormFieldValue`
+  - `parseMlcFormFieldValue`
+  - `isMlcFormFieldEmpty`
+  - `createMlcFormRequiredMessage`
 
 ## Boundary
 
 - Depends on `@meumall/lowcode-design-tokens` and React.
 - Does not depend on schema, core, renderer, editor, materials, Java config platform, or business projects.
 - Materials compose these primitives and provide low-code manifest semantics.
-
+- Form field helpers only describe business-agnostic H5 field metadata and value normalization. Low-code schema, material manifests, submit actions, server validation, login, permission, and persistence remain outside this package.

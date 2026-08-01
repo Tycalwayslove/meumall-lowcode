@@ -8,6 +8,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 - `LowcodeRuntimeContext` 新增 runtime-only `event` 字段，React/Vue renderer 会把物料事件 payload 透传到 action context，adapters 安全 action handler 和默认 HTTP action payload 均可读取该字段；Page Schema v1 和 Material Manifest v1 结构不变。
 - React/Vue `BasicForm` 提交时会采集子级基础控件当前值，payload 保留 `formId`、`childCount`，并新增 `fieldCount`、`valid`、`errorCount`、`errors`、`values`、`fieldLabels`、`fieldTypes`；基础控件支持 `required/requiredMessage` 本地必填校验，校验失败时展示表单级错误、字段级 invalid/error 文案并阻断 action，复杂校验、远程提交、登录、权限和风控仍由宿主 action handler 或后续 Java/BFF 协议承担。
+- React/Vue H5 primitives 新增业务无关表单字段 helper：`MlcFormFieldType`、字段 data attributes、值格式化、值解析、空值判断和必填提示推导；React/Vue materials 的 `BasicForm` 字段采集已复用该基础层 API，Page Schema v1、Material Manifest v1、renderer 和提交 payload 字段保持兼容。
 - `@meumall/lowcode-editor` 属性分组 API 新增 `validation` 分组，`required`、`requiredMessage` 等校验类 props 会进入“表单校验”分组；Vue3 `EditorPropGroupsPanel` 会展示 BasicForm 提交前校验提示，帮助运营理解必填配置与 H5 runtime 字段错误态的关系。Page Schema v1、Material Manifest v1、renderer 和 materials runtime 协议不变。
 
 ## 当前维护范围

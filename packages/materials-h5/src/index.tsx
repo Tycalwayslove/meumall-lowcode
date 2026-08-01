@@ -1,7 +1,33 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
-import { createMaterialManifest, type JsonObject, type JsonValue, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcRichText, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "@meumall/lowcode-primitives-react-h5";
+import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
+import {
+  createMlcFormFieldDataAttributes,
+  createMlcFormRequiredMessage,
+  formatMlcFormFieldValue,
+  isMlcFormFieldEmpty,
+  MlcButton,
+  MlcCheckbox,
+  MlcCountdownText,
+  MlcDivider,
+  MlcImage,
+  MlcInput,
+  MlcModal,
+  MlcNoticeBar,
+  MlcPrice,
+  MlcRadioGroup,
+  MlcRichText,
+  MlcSelect,
+  MlcSpacer,
+  MlcStepper,
+  MlcSwitch,
+  MlcTabs,
+  MlcTag,
+  MlcText,
+  MlcTextarea,
+  parseMlcFormFieldValue,
+  type MlcFormFieldType,
+} from "@meumall/lowcode-primitives-react-h5";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -57,26 +83,11 @@ function basicStepperRange(props: Record<string, unknown>) {
   return { min, max, step, defaultValue };
 }
 
-type BasicFormFieldType = "string" | "number" | "boolean";
-
-function formatBasicFormFieldValue(value: string | number | boolean): string {
-  return typeof value === "boolean" ? String(value) : String(value ?? "");
-}
-
-function parseBasicFormFieldValue(value: string, type: BasicFormFieldType): JsonValue {
-  if (type === "boolean") return value === "true";
-  if (type === "number") {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return value;
-}
-
 function createBasicFormHiddenField(
   node: LowcodeNode,
   label: string,
   value: string | number | boolean,
-  type: BasicFormFieldType,
+  type: MlcFormFieldType,
   disabled: boolean,
   required = false,
   requiredMessage = "",
@@ -85,21 +96,11 @@ function createBasicFormHiddenField(
     <input
       type="hidden"
       name={node.id}
-      value={formatBasicFormFieldValue(value)}
+      value={formatMlcFormFieldValue(value)}
       disabled={disabled}
-      data-mlc-form-field="true"
-      data-mlc-form-field-label={label}
-      data-mlc-form-field-type={type}
-      data-mlc-form-field-required={required ? "true" : "false"}
-      data-mlc-form-field-required-message={requiredMessage}
+      {...createMlcFormFieldDataAttributes({ label, type, required, requiredMessage })}
     />
   );
-}
-
-function isBasicFormFieldEmpty(value: string, type: BasicFormFieldType): boolean {
-  if (type === "boolean") return value !== "true";
-  if (type === "number") return value.trim() === "" || !Number.isFinite(Number(value));
-  return value.trim() === "";
 }
 
 function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode, childCount: number): JsonObject {
@@ -111,12 +112,12 @@ function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode, 
 
   for (const field of fields) {
     if (field.disabled || !field.name) continue;
-    const fieldType = option<BasicFormFieldType>(field.dataset.mlcFormFieldType, ["string", "number", "boolean"], "string");
+    const fieldType = option<MlcFormFieldType>(field.dataset.mlcFormFieldType, ["string", "number", "boolean"], "string");
     const fieldLabel = field.dataset.mlcFormFieldLabel ?? field.name;
-    values[field.name] = parseBasicFormFieldValue(field.value, fieldType);
+    values[field.name] = parseMlcFormFieldValue(field.value, fieldType);
     fieldLabels[field.name] = fieldLabel;
     fieldTypes[field.name] = fieldType;
-    if (field.dataset.mlcFormFieldRequired === "true" && isBasicFormFieldEmpty(field.value, fieldType)) {
+    if (field.dataset.mlcFormFieldRequired === "true" && isMlcFormFieldEmpty(field.value, fieldType)) {
       errors[field.name] = field.dataset.mlcFormFieldRequiredMessage || `请填写${fieldLabel}`;
     }
   }
@@ -149,7 +150,7 @@ function getBasicFormErrorMap(payload: JsonObject): Record<string, string> {
 }
 
 function getBasicFormRequiredMessage(props: Record<string, unknown>, label: string, verb: "填写" | "选择" | "确认"): string {
-  return text(props.requiredMessage, `请${verb}${label || "该字段"}`);
+  return createMlcFormRequiredMessage(props.requiredMessage, label, verb);
 }
 
 function createBasicFormFieldClassName(baseClassName: string, errorMessage: string): string {
