@@ -245,6 +245,25 @@ const COLOR_SWATCHES_META = {
   ],
 };
 
+const PRODUCT_LIST_DEFAULT_ITEMS = [
+  {
+    id: "sku_001",
+    title: "轻盈通勤手提包",
+    priceText: "¥199",
+    originPriceText: "¥269",
+    desc: "活动价",
+    imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_002",
+    title: "夏季舒适凉鞋",
+    priceText: "¥129",
+    originPriceText: "¥189",
+    desc: "限时补贴",
+    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+  },
+];
+
 export const BasicButton = defineComponent({
   name: "BasicButton",
   props: materialPropOptions,
@@ -1952,67 +1971,135 @@ export const ProductList = defineComponent({
   setup(props) {
     return () => {
       const runtimeProps = props.props ?? {};
-      const items = Array.isArray(runtimeProps.items) ? runtimeProps.items : [];
+      const items = list(runtimeProps.items);
+      const backgroundColor = text(runtimeProps.backgroundColor, "#ffffff");
+      const cardBackgroundColor = text(runtimeProps.cardBackgroundColor, "#ffffff");
+      const titleColor = text(runtimeProps.titleColor, "#111827");
+      const textColor = text(runtimeProps.textColor, "#64748b");
+      const priceColor = text(runtimeProps.priceColor, "#dc2626");
+      const borderColor = text(runtimeProps.borderColor, "#eef0f3");
+      const radius = number(runtimeProps.radius, 10);
+      const imageRadius = number(runtimeProps.imageRadius, 8);
+      const paddingY = number(runtimeProps.paddingY, 12);
       if (!items.length) {
-        return h("section", { class: "mlc-material mlc-empty-products" }, "请配置商品数据");
+        return h(
+          "section",
+          {
+            class: "mlc-material mlc-product-list mlc-product-list--empty",
+            style: { padding: `${paddingY}px 12px`, background: backgroundColor } satisfies CSSProperties,
+          },
+          [
+            h(
+              MlcText,
+              { as: "p", tone: "muted", size: 13, style: { textAlign: "center", color: textColor } satisfies CSSProperties },
+              () => text(runtimeProps.emptyText, "请配置商品数据"),
+            ),
+          ],
+        );
       }
       return h(
         "section",
         {
           class: "mlc-material mlc-product-list",
-          style: { padding: "10px 12px", background: "#ffffff" },
+          style: { display: "grid", gap: "8px", padding: `${paddingY}px 12px`, background: backgroundColor } satisfies CSSProperties,
         },
         items.map((item, index) => {
           const product = item as Record<string, unknown>;
+          const imageUrl = text(product.imageUrl);
+          const originPriceText = text(product.originPriceText);
           return h(
-            "button",
+            MlcButton,
             {
+              class: "mlc-product-list__item",
               type: "button",
+              variant: "ghost",
+              block: true,
+              radius,
               onClick: () => {
                 const handler = runtimeProps.onProductClick;
                 if (typeof handler === "function") handler(product);
               },
               style: {
                 width: "100%",
-                border: 0,
-                borderBottom: "1px solid #eef0f3",
-                background: "transparent",
-                padding: "12px 0",
+                minHeight: 0,
+                border: `1px solid ${borderColor}`,
+                background: cardBackgroundColor,
+                padding: "10px",
                 display: "flex",
+                alignItems: "stretch",
+                justifyContent: "flex-start",
                 gap: "12px",
+                color: titleColor,
                 textAlign: "left",
               } satisfies CSSProperties,
             },
-            [
-              typeof product.imageUrl === "string"
-                ? h("img", {
-                    src: product.imageUrl,
-                    alt: "",
+            () => [
+              h("span", { style: { display: "block", flex: "0 0 88px", width: "88px" } satisfies CSSProperties }, [
+                imageUrl
+                  ? h(MlcImage, {
+                      src: imageUrl,
+                      alt: text(product.title),
+                      ratio: "1 / 1",
+                      radius: imageRadius,
+                      style: { height: "88px", background: "#f3f4f6" } satisfies CSSProperties,
+                    })
+                  : h(
+                      "span",
+                      {
+                        style: {
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "88px",
+                          height: "88px",
+                          borderRadius: `${imageRadius}px`,
+                          color: "#94a3b8",
+                          background: "#f3f4f6",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                        } satisfies CSSProperties,
+                      },
+                      "商品图",
+                    ),
+              ]),
+              h("span", { style: { display: "grid", flex: 1, minWidth: 0, gap: "6px", alignContent: "start" } satisfies CSSProperties }, [
+                h(
+                  MlcText,
+                  {
+                    as: "strong",
+                    size: 14,
+                    weight: 800,
+                    lineHeight: 1.35,
                     style: {
-                      width: "84px",
-                      height: "84px",
-                      objectFit: "cover",
-                      borderRadius: "8px",
-                      background: "#f3f4f6",
-                    },
-                  })
-                : null,
-              h("span", { style: { minWidth: 0, flex: 1 } }, [
-                h(
-                  "strong",
-                  { style: { display: "block", color: "#111827", fontSize: "14px" } },
-                  String(product.title ?? "商品名称"),
+                      display: "-webkit-box",
+                      overflow: "hidden",
+                      color: titleColor,
+                      textOverflow: "ellipsis",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                    } satisfies CSSProperties,
+                  },
+                  () => String(product.title ?? "商品名称"),
                 ),
                 h(
-                  "span",
-                  { style: { display: "block", color: "#dc2626", marginTop: "8px", fontWeight: 700 } },
-                  String(product.priceText ?? ""),
+                  MlcText,
+                  {
+                    size: 12,
+                    tone: "muted",
+                    style: { overflow: "hidden", color: textColor, textOverflow: "ellipsis", whiteSpace: "nowrap" } satisfies CSSProperties,
+                  },
+                  () => String(product.desc ?? `商品 ${index + 1}`),
                 ),
-                h(
-                  "span",
-                  { style: { display: "block", color: "#6b7280", marginTop: "6px", fontSize: "12px" } },
-                  String(product.desc ?? `商品 ${index + 1}`),
-                ),
+                h("span", { style: { display: "flex", alignItems: "baseline", gap: "6px", minWidth: 0 } satisfies CSSProperties }, [
+                  h(MlcPrice, { amountText: String(product.priceText ?? ""), size: 16, style: { color: priceColor } satisfies CSSProperties }),
+                  originPriceText
+                    ? h(
+                        MlcText,
+                        { size: 11, tone: "muted", style: { color: "#94a3b8", textDecoration: "line-through" } satisfies CSSProperties },
+                        () => originPriceText,
+                      )
+                    : null,
+                ]),
               ]),
             ],
           );
@@ -4485,26 +4572,31 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       category: "commerce",
       platforms: ["h5"],
       defaultProps: {
-        items: [
-          {
-            id: "sku_001",
-            title: "轻盈通勤手提包",
-            priceText: "¥199",
-            desc: "活动价",
-            imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
-          },
-          {
-            id: "sku_002",
-            title: "夏季舒适凉鞋",
-            priceText: "¥129",
-            desc: "限时补贴",
-            imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
-          },
-        ],
+        items: PRODUCT_LIST_DEFAULT_ITEMS,
+        backgroundColor: "#ffffff",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        priceColor: "#dc2626",
+        borderColor: "#eef0f3",
+        radius: 10,
+        imageRadius: 8,
+        paddingY: 12,
+        emptyText: "请配置商品数据",
       },
       dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
       propsSchema: {
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        priceColor: { label: "价格色", type: "string", setter: "color", defaultValue: "#dc2626", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#eef0f3", ...COLOR_SWATCHES_META },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        imageRadius: { label: "图片圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "请配置商品数据" },
       },
       events: [{ name: "onProductClick", title: "点击商品" }],
     }),

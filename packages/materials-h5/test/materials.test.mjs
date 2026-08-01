@@ -29,6 +29,7 @@ import {
   LiveEntry,
   NavGrid,
   NoticeBar,
+  ProductList,
   ProductRankList,
   RichTextBlock,
   SectionContainer,
@@ -160,6 +161,9 @@ describe("MeuMall H5 material manifests", () => {
       ["RichTextBlock", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["RichTextBlock", "fontSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["RichTextBlock", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
+      ["ProductList", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["ProductList", "imageRadius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["ProductList", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
       ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
     ];
@@ -197,6 +201,8 @@ describe("MeuMall H5 material manifests", () => {
       ["NoticeBar", "labelBackgroundColor"],
       ["RichTextBlock", "backgroundColor"],
       ["RichTextBlock", "borderColor"],
+      ["ProductList", "cardBackgroundColor"],
+      ["ProductList", "priceColor"],
       ["SectionTitle", "accentColor"],
       ["ImageCardGrid", "cardBackgroundColor"],
     ];
@@ -282,6 +288,14 @@ describe("MeuMall H5 material manifests", () => {
     const liveEntryTypes = elementTypeNames(LiveEntry({ props: { coverImageUrl: "https://example.com/live.jpg" }, node: baseNode }));
     const storeExpertTypes = elementTypeNames(StoreExpertSection({ props: {}, node: baseNode }));
     const couponSectionTypes = elementTypeNames(CouponSection({ props: {}, node: baseNode }));
+    const productListTypes = elementTypeNames(
+      ProductList({
+        props: {
+          items: [{ id: "sku_1", title: "商品", priceText: "¥99", imageUrl: "https://example.com/sku.jpg" }],
+        },
+        node: baseNode,
+      }),
+    );
     const countdownTypes = elementTypeNames(CountdownTimer({ props: {}, node: baseNode }));
     const navGridTypes = elementTypeNames(NavGrid({ props: { items: [{ id: "nav_1", title: "会场", subtitle: "精选" }] }, node: baseNode }));
     const floorAnchorTypes = elementTypeNames(FloorAnchorNav({ props: { title: "楼层导航" }, node: baseNode }));
@@ -320,6 +334,10 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(storeExpertTypes.has("MlcText"), true);
     assert.equal(couponSectionTypes.has("MlcButton"), true);
     assert.equal(couponSectionTypes.has("MlcText"), true);
+    assert.equal(productListTypes.has("MlcButton"), true);
+    assert.equal(productListTypes.has("MlcImage"), true);
+    assert.equal(productListTypes.has("MlcText"), true);
+    assert.equal(productListTypes.has("MlcPrice"), true);
     functionSourceIncludes(ActivityRuleModal, ["MlcButton", "MlcModal", "MlcText"]);
     assert.equal(countdownTypes.has("MlcCountdownText"), true);
     assert.equal(navGridTypes.has("MlcButton"), true);
@@ -399,6 +417,24 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.padding.setter, "number");
     assert.equal(material.manifest.propsSchema.fontSize.setter, "number");
     assert.equal(material.manifest.propsSchema.lineHeight.setter, "number");
+  });
+
+  it("registers the enhanced product list material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "ProductList");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "商品列表");
+    assert.equal(material.manifest.category, "commerce");
+    assert.equal(material.manifest.defaultProps.items.length, 2);
+    assert.equal(material.manifest.defaultProps.radius, 10);
+    assert.equal(material.manifest.propsSchema.items.setter, "dataSourceSelector");
+    assert.equal(material.manifest.propsSchema.cardBackgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.priceColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.propsSchema.imageRadius.setter, "number");
+    assert.equal(material.manifest.propsSchema.paddingY.setter, "number");
+    assert.equal(material.manifest.dataSourceSlots?.[0]?.name, "items");
+    assert.equal(material.manifest.events?.[0]?.name, "onProductClick");
   });
 
   it("registers the activity rule modal material", () => {

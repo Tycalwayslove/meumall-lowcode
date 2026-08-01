@@ -1030,6 +1030,15 @@ export const pageTemplates: PageTemplate[] = [
               materialVersion: "0.1.0",
               props: {
                 items: productItems,
+                backgroundColor: "#ffffff",
+                cardBackgroundColor: "#ffffff",
+                titleColor: "#111827",
+                textColor: "#64748b",
+                priceColor: "#dc2626",
+                borderColor: "#eef0f3",
+                radius: 10,
+                imageRadius: 8,
+                paddingY: 12,
               },
               dataBinding: {
                 items: "products",

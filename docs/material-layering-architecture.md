@@ -333,7 +333,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 
 1. `StickyActionBar`：按钮重复明显。
 2. `CouponBundle`：Tag、Button、Price 可复用。
-3. `ProductList` / `ProductRankList` / `FlashSaleList`：Image、Price、Tag 可复用。
+3. `ProductList` / `ProductRankList` / `FlashSaleList`：Image、Price、Tag 可复用，当前均已迁移到内部 primitives 组合。
 4. `LiveEntry`：Image、Tag、Button 可复用。
 5. `BrandFeatureSection` / `StoreExpertSection`：Image、Tag、Button 可复用。
 

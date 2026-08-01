@@ -195,6 +195,25 @@ const COLOR_SWATCHES_META = {
   ],
 };
 
+const PRODUCT_LIST_DEFAULT_ITEMS = [
+  {
+    id: "sku_001",
+    title: "轻盈通勤手提包",
+    priceText: "¥199",
+    originPriceText: "¥269",
+    desc: "活动价",
+    imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "sku_002",
+    title: "夏季舒适凉鞋",
+    priceText: "¥129",
+    originPriceText: "¥189",
+    desc: "限时补贴",
+    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+  },
+];
+
 export function BasicButton({ props }: MaterialProps) {
   const variant = option<BasicButtonVariant>(props.variant, ["solid", "outline", "ghost"], "solid");
   const size = option<BasicButtonSize>(props.size, ["sm", "md", "lg"], "md");
@@ -1422,38 +1441,112 @@ export function RichTextBlock({ props }: MaterialProps) {
 }
 
 export function ProductList({ props }: MaterialProps) {
-  const items = Array.isArray(props.items) ? props.items : [];
+  const items = list(props.items);
   const onProductClick = props.onProductClick;
+  const backgroundColor = text(props.backgroundColor, "#ffffff");
+  const cardBackgroundColor = text(props.cardBackgroundColor, "#ffffff");
+  const titleColor = text(props.titleColor, "#111827");
+  const textColor = text(props.textColor, "#64748b");
+  const priceColor = text(props.priceColor, "#dc2626");
+  const borderColor = text(props.borderColor, "#eef0f3");
+  const radius = number(props.radius, 10);
+  const imageRadius = number(props.imageRadius, 8);
+  const paddingY = number(props.paddingY, 12);
+
+  if (!items.length) {
+    return (
+      <section
+        className="mlc-material mlc-product-list mlc-product-list--empty"
+        style={{ padding: `${paddingY}px 12px`, background: backgroundColor }}
+      >
+        <MlcText as="p" tone="muted" size={13} style={{ textAlign: "center", color: textColor }}>
+          {text(props.emptyText, "请配置商品数据")}
+        </MlcText>
+      </section>
+    );
+  }
+
   return (
-    <section style={{ padding: 12 }}>
+    <section className="mlc-material mlc-product-list" style={{ display: "grid", gap: 8, padding: `${paddingY}px 12px`, background: backgroundColor }}>
       {items.map((item, index) => {
         const product = item as Record<string, unknown>;
+        const imageUrl = text(product.imageUrl);
+        const originPriceText = text(product.originPriceText);
         return (
-          <button
-            type="button"
+          <MlcButton
             key={String(product.id ?? index)}
+            type="button"
+            variant="ghost"
+            block
+            radius={radius}
+            className="mlc-product-list__item"
             onClick={() => {
               if (typeof onProductClick === "function") onProductClick(product);
             }}
             style={{
               display: "flex",
+              alignItems: "stretch",
+              justifyContent: "flex-start",
               gap: 12,
               width: "100%",
-              border: 0,
-              padding: "12px 0",
-              borderBottom: "1px solid #eee",
-              background: "transparent",
+              minHeight: 0,
+              border: `1px solid ${borderColor}`,
+              padding: 10,
+              color: titleColor,
+              background: cardBackgroundColor,
               textAlign: "left",
             }}
           >
-            {typeof product.imageUrl === "string" ? (
-              <img src={product.imageUrl} alt="" style={{ width: 88, height: 88, objectFit: "cover" }} />
-            ) : null}
-            <div>
-              <div style={{ fontWeight: 600 }}>{String(product.title ?? "商品名称")}</div>
-              <div style={{ color: "#e5484d", marginTop: 8 }}>{String(product.priceText ?? "")}</div>
-            </div>
-          </button>
+            <span style={{ display: "block", flex: "0 0 88px", width: 88 }}>
+              <MlcImage
+                src={imageUrl}
+                alt={text(product.title)}
+                ratio="1 / 1"
+                radius={imageRadius}
+                style={{ height: 88, background: "#f3f4f6" }}
+                fallback={
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 88,
+                      height: 88,
+                      borderRadius: imageRadius,
+                      color: "#94a3b8",
+                      background: "#f3f4f6",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    商品图
+                  </span>
+                }
+              />
+            </span>
+            <span style={{ display: "grid", flex: 1, minWidth: 0, gap: 6, alignContent: "start" }}>
+              <MlcText
+                as="strong"
+                size={14}
+                weight={800}
+                lineHeight={1.35}
+                style={{ overflow: "hidden", color: titleColor, textOverflow: "ellipsis", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", display: "-webkit-box" }}
+              >
+                {String(product.title ?? "商品名称")}
+              </MlcText>
+              <MlcText size={12} tone="muted" style={{ overflow: "hidden", color: textColor, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {String(product.desc ?? `商品 ${index + 1}`)}
+              </MlcText>
+              <span style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+                <MlcPrice amountText={String(product.priceText ?? "")} size={16} style={{ color: priceColor }} />
+                {originPriceText ? (
+                  <MlcText size={11} tone="muted" style={{ color: "#94a3b8", textDecoration: "line-through" }}>
+                    {originPriceText}
+                  </MlcText>
+                ) : null}
+              </span>
+            </span>
+          </MlcButton>
         );
       })}
     </section>
@@ -3546,10 +3639,32 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       title: "商品列表",
       category: "commerce",
       platforms: ["h5"],
-      defaultProps: { items: [] },
+      defaultProps: {
+        items: PRODUCT_LIST_DEFAULT_ITEMS,
+        backgroundColor: "#ffffff",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        priceColor: "#dc2626",
+        borderColor: "#eef0f3",
+        radius: 10,
+        imageRadius: 8,
+        paddingY: 12,
+        emptyText: "请配置商品数据",
+      },
       dataSourceSlots: [{ name: "items", acceptedTypes: ["product.byIds", "product.byActivity"] }],
       propsSchema: {
         items: { label: "商品数据", type: "array", setter: "dataSourceSelector", defaultValue: [] },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        priceColor: { label: "价格色", type: "string", setter: "color", defaultValue: "#dc2626", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#eef0f3", ...COLOR_SWATCHES_META },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        imageRadius: { label: "图片圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "请配置商品数据" },
       },
       events: [{ name: "onProductClick", title: "点击商品" }],
     }),

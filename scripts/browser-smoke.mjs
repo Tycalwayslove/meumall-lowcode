@@ -1556,6 +1556,7 @@ async function main() {
       { label: "React H5 图片卡片宫格已渲染", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "React H5 增强公告条已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "React H5 增强富文本已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-rich-text') && document.body.innerText.includes('运营说明')" },
+      { label: "React H5 增强商品列表已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-product-list') && document.body.innerText.includes('轻盈通勤手提包')" },
       { label: "React H5 基础按钮已渲染", expression: "document.body.innerText.includes('基础按钮示例')" },
       { label: "React H5 基础输入框已渲染", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
       { label: "React H5 基础多行输入已渲染", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
@@ -1590,6 +1591,7 @@ async function main() {
       { label: "React H5 HTTP 配置平台页面已渲染", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('HTTP 配置平台页面')" },
       { label: "React H5 HTTP action 按钮已渲染", expression: "Array.from(document.querySelectorAll('.phone-frame button')).some((item) => item.innerText.includes('HTTP 动作按钮'))" },
       { label: "React H5 HTTP 数据源商品已渲染", expression: "document.body.innerText.includes('HTTP 数据源手提包') && document.body.innerText.includes('HTTP 数据源凉鞋')" },
+      { label: "React H5 HTTP 数据源商品列表样式已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-product-list .mlc-product-list__item') && document.body.innerText.includes('来自 BFF mock')" },
       { label: "React H5 HTTP 数据源状态已记录", expression: "document.body.innerText.includes('smoke_http_products_ds') && document.body.innerText.includes('绑定到 products')" },
     ]);
     await page.clickByText(".phone-frame button", "HTTP 动作按钮");
