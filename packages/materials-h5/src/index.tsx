@@ -54,22 +54,30 @@ function findAnchorTarget(targetId: string): Element | null {
 
 export function ActivityHero({ props, children }: MaterialProps) {
   const imageUrl = text(props.imageUrl);
+  const titleColor = text(props.titleColor, "#111827");
+  const textColor = text(props.textColor, "#64748b");
+  const titleSize = number(props.titleSize, 24);
+  const imageRadius = number(props.imageRadius, 8);
+  const paddingY = number(props.paddingY, 18);
+  const titleLineHeight = number(props.titleLineHeight, 1.2);
+  const subtitleLineHeight = number(props.subtitleLineHeight, 1.6);
   return (
-    <section style={{ padding: "18px 16px", background: text(props.backgroundColor, "#fff") }}>
+    <section className="mlc-material mlc-activity-hero" style={{ padding: `${paddingY}px 16px`, background: text(props.backgroundColor, "#ffffff") }}>
       {imageUrl ? (
-        <img src={imageUrl} alt="" style={{ width: "100%", display: "block", borderRadius: 8 }} />
+        <MlcImage src={imageUrl} alt={text(props.title)} radius={imageRadius} />
       ) : null}
-      <h1
-        style={{
-          margin: "14px 0 6px",
-          fontSize: number(props.titleSize, 24),
-          lineHeight: 1.2,
-          color: text(props.titleColor, "#111827"),
-        }}
+      <MlcText
+        as="h1"
+        size={titleSize}
+        weight={900}
+        lineHeight={titleLineHeight}
+        style={{ margin: imageUrl ? "14px 0 6px" : "0 0 6px", color: titleColor }}
       >
         {text(props.title, "活动标题")}
-      </h1>
-      <p style={{ margin: 0, color: "#6b7280", fontSize: 14, lineHeight: 1.6 }}>{text(props.subtitle)}</p>
+      </MlcText>
+      <MlcText as="p" size={14} lineHeight={subtitleLineHeight} style={{ color: textColor }}>
+        {text(props.subtitle)}
+      </MlcText>
       {children}
     </section>
   );
@@ -3520,7 +3528,12 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         imageUrl: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
         backgroundColor: "#ffffff",
         titleColor: "#111827",
+        textColor: "#64748b",
         titleSize: 24,
+        imageRadius: 8,
+        paddingY: 18,
+        titleLineHeight: 1.2,
+        subtitleLineHeight: 1.6,
       },
       propsSchema: {
         title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "夏日好物节" },
@@ -3528,7 +3541,12 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         imageUrl: { label: "图片", type: "string", setter: "image", defaultValue: "" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
         titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
-        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 24 },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 24, ...NUMBER_FONT_SIZE_META },
+        imageRadius: { label: "图片圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 18, ...NUMBER_PIXEL_SIZE_META },
+        titleLineHeight: { label: "标题行高", type: "number", setter: "number", defaultValue: 1.2, ...NUMBER_LINE_HEIGHT_META },
+        subtitleLineHeight: { label: "说明行高", type: "number", setter: "number", defaultValue: 1.6, ...NUMBER_LINE_HEIGHT_META },
       },
     }),
   },

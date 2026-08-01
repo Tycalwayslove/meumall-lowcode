@@ -67,50 +67,53 @@ export const ActivityHero = defineComponent({
     return () => {
       const runtimeProps = props.props ?? {};
       const imageUrl = text(runtimeProps.imageUrl);
+      const titleColor = text(runtimeProps.titleColor, "#111827");
+      const textColor = text(runtimeProps.textColor, "#64748b");
+      const titleSize = number(runtimeProps.titleSize, 24);
+      const imageRadius = number(runtimeProps.imageRadius, 8);
+      const paddingY = number(runtimeProps.paddingY, 18);
+      const titleLineHeight = number(runtimeProps.titleLineHeight, 1.2);
+      const subtitleLineHeight = number(runtimeProps.subtitleLineHeight, 1.6);
       return h(
         "section",
         {
           class: "mlc-material mlc-activity-hero",
           style: {
-            padding: "18px 16px",
+            padding: `${paddingY}px 16px`,
             background: text(runtimeProps.backgroundColor, "#ffffff"),
-          },
+          } satisfies CSSProperties,
         },
         [
           imageUrl
-            ? h("img", {
+            ? h(MlcImage, {
                 src: imageUrl,
-                alt: "",
-                style: {
-                  width: "100%",
-                  display: "block",
-                  borderRadius: "8px",
-                },
+                alt: text(runtimeProps.title),
+                radius: imageRadius,
               })
             : null,
           h(
-            "h1",
+            MlcText,
             {
+              as: "h1",
+              size: titleSize,
+              weight: 900,
+              lineHeight: titleLineHeight,
               style: {
-                margin: "14px 0 6px",
-                fontSize: `${number(runtimeProps.titleSize, 24)}px`,
-                lineHeight: 1.2,
-                color: text(runtimeProps.titleColor, "#111827"),
-              },
+                margin: imageUrl ? "14px 0 6px" : "0 0 6px",
+                color: titleColor,
+              } satisfies CSSProperties,
             },
-            text(runtimeProps.title, "活动标题"),
+            () => text(runtimeProps.title, "活动标题"),
           ),
           h(
-            "p",
+            MlcText,
             {
-              style: {
-                margin: 0,
-                color: "#6b7280",
-                fontSize: "14px",
-                lineHeight: 1.6,
-              },
+              as: "p",
+              size: 14,
+              lineHeight: subtitleLineHeight,
+              style: { color: textColor } satisfies CSSProperties,
             },
-            text(runtimeProps.subtitle),
+            () => text(runtimeProps.subtitle),
           ),
           slots.default?.(),
         ],
@@ -4452,7 +4455,12 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         imageUrl: "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80",
         backgroundColor: "#ffffff",
         titleColor: "#111827",
+        textColor: "#64748b",
         titleSize: 24,
+        imageRadius: 8,
+        paddingY: 18,
+        titleLineHeight: 1.2,
+        subtitleLineHeight: 1.6,
       },
       propsSchema: {
         title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "夏日好物节" },
@@ -4460,7 +4468,12 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         imageUrl: { label: "图片", type: "string", setter: "image", defaultValue: "" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
         titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
-        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 24 },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 24, ...NUMBER_FONT_SIZE_META },
+        imageRadius: { label: "图片圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 18, ...NUMBER_PIXEL_SIZE_META },
+        titleLineHeight: { label: "标题行高", type: "number", setter: "number", defaultValue: 1.2, ...NUMBER_LINE_HEIGHT_META },
+        subtitleLineHeight: { label: "说明行高", type: "number", setter: "number", defaultValue: 1.6, ...NUMBER_LINE_HEIGHT_META },
       },
     }),
   },

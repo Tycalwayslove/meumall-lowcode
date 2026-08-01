@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  ActivityHero,
   ActivityRuleModal,
   BasicButton,
   BasicCard,
@@ -155,6 +156,11 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCarousel", "interval", { min: 1000, max: 10000, step: 500, unit: "ms" }],
       ["BasicVideo", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicVideo", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["ActivityHero", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["ActivityHero", "imageRadius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["ActivityHero", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["ActivityHero", "titleLineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
+      ["ActivityHero", "subtitleLineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["NoticeBar", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["NoticeBar", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
       ["RichTextBlock", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -197,6 +203,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "accentColor"],
       ["BasicCarousel", "indicatorColor"],
       ["BasicVideo", "accentColor"],
+      ["ActivityHero", "backgroundColor"],
+      ["ActivityHero", "textColor"],
       ["NoticeBar", "borderColor"],
       ["NoticeBar", "labelBackgroundColor"],
       ["RichTextBlock", "backgroundColor"],
@@ -224,6 +232,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicImage", "imageUrl"],
       ["BasicCard", "imageUrl"],
       ["BasicVideo", "posterUrl"],
+      ["ActivityHero", "imageUrl"],
       ["BrandFeatureSection", "coverImageUrl"],
       ["LiveEntry", "coverImageUrl"],
     ];
@@ -288,6 +297,7 @@ describe("MeuMall H5 material manifests", () => {
     const liveEntryTypes = elementTypeNames(LiveEntry({ props: { coverImageUrl: "https://example.com/live.jpg" }, node: baseNode }));
     const storeExpertTypes = elementTypeNames(StoreExpertSection({ props: {}, node: baseNode }));
     const couponSectionTypes = elementTypeNames(CouponSection({ props: {}, node: baseNode }));
+    const activityHeroTypes = elementTypeNames(ActivityHero({ props: { imageUrl: "https://example.com/hero.jpg" }, node: baseNode }));
     const productListTypes = elementTypeNames(
       ProductList({
         props: {
@@ -334,6 +344,8 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(storeExpertTypes.has("MlcText"), true);
     assert.equal(couponSectionTypes.has("MlcButton"), true);
     assert.equal(couponSectionTypes.has("MlcText"), true);
+    assert.equal(activityHeroTypes.has("MlcImage"), true);
+    assert.equal(activityHeroTypes.has("MlcText"), true);
     assert.equal(productListTypes.has("MlcButton"), true);
     assert.equal(productListTypes.has("MlcImage"), true);
     assert.equal(productListTypes.has("MlcText"), true);
@@ -435,6 +447,25 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.paddingY.setter, "number");
     assert.equal(material.manifest.dataSourceSlots?.[0]?.name, "items");
     assert.equal(material.manifest.events?.[0]?.name, "onProductClick");
+  });
+
+  it("registers the enhanced activity hero material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "ActivityHero");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "活动头图");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.textColor, "#64748b");
+    assert.equal(material.manifest.defaultProps.imageRadius, 8);
+    assert.equal(material.manifest.defaultProps.paddingY, 18);
+    assert.equal(material.manifest.propsSchema.imageUrl.setter, "image");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.textColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.titleSize.setter, "number");
+    assert.equal(material.manifest.propsSchema.imageRadius.setter, "number");
+    assert.equal(material.manifest.propsSchema.paddingY.setter, "number");
+    assert.equal(material.manifest.propsSchema.titleLineHeight.setter, "number");
+    assert.equal(material.manifest.propsSchema.subtitleLineHeight.setter, "number");
   });
 
   it("registers the activity rule modal material", () => {
