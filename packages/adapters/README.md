@@ -8,6 +8,7 @@ Utilities:
 
 - `createDataSourceRegistry`
 - `resolveLowcodeDataSources`
+- `createHttpDataSourceHandler`
 - `createSafeActionRegistry`
 - `createSafeActionExecutor`
 - `createHttpConfigPlatformClient`
@@ -26,6 +27,23 @@ The resolver returns:
 - `records`: per-data-source status for editor/runtime diagnostics.
 
 Resolution errors are captured into `records` and do not throw to the page layer by default, so a broken data source should not cause the whole H5 page to white screen.
+
+`createHttpDataSourceHandler(options)` creates a reusable handler for whitelisted HTTP-backed data source types.
+
+```ts
+const registry = createDataSourceRegistry({
+  "product.byIds": createHttpDataSourceHandler({
+    baseUrl: "https://bff.example.com",
+    endpoint: "/api/lowcode/products/by-ids",
+    responseDataPath: "data.items",
+    headers: { authorization: "Bearer token" },
+  }),
+});
+```
+
+For `GET` handlers, `config.params` is converted to query parameters by default. For `POST` handlers, `config.params` is sent as the JSON body by default. Hosts can override this with `buildQuery`, `buildBody`, `responseDataPath`, or `transformResponse`.
+
+The endpoint is provided by host code, not by Page Schema. This keeps operators from configuring arbitrary request URLs while still letting Java BFF/resource services expose real product, coupon, activity, store, or expert data behind approved `dataSources[].type` values.
 
 ## Safe Action Executor
 

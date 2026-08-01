@@ -178,6 +178,8 @@ interface LowcodeDataSourceConfig {
 | `bindTo` | 否 | 解析结果写入 renderer data 的路径。缺省可使用 `id`。 |
 | `cache` | 否 | 缓存建议。`public` 可跨用户复用，`private` 必须按用户或会话隔离。 |
 
+HTTP 数据源仍然遵循白名单 handler 语义：Page Schema 只保存 `type`、`params` 和 `bindTo`，真实 `baseUrl`、endpoint、鉴权、响应解包和字段校验由宿主或 Java BFF 在 adapters handler 中配置，不允许把任意请求 URL 写入 schema。
+
 ### `actions`
 
 ```ts

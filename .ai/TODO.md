@@ -13,7 +13,7 @@
 - 在 `hybird-meumall` 真实业务仓库创建低代码 H5 路由，并按 `.ai-workspace/contracts/h5-runtime-integration-v1.md` 接入 npm 包。
 - 将编辑器侧本地 URL schema handoff 的生产入口替换为 Java 配置平台 previewToken/releaseId/pageId 查询协议；React H5 runtime playground 已支持通过 env 切换 HTTP config platform client。
 - 将 Vue3 编辑器 HTTP config platform client 从本地 smoke mock 切换为真实 Java 配置平台，并补齐统一响应解包、错误提示、权限、服务端发布校验、审批和审计。
-- 将 mock data source resolver 升级为真实 HTTP 请求预览、鉴权和缓存策略。
+- 基于 `createHttpDataSourceHandler` 将 playground/真实 H5 宿主的 mock data source resolver 切到 Java/BFF 白名单 HTTP 数据源，并补齐真实鉴权、缓存、重试、分页和字段校验策略。
 - 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。
 - 在已有 renderer fallback 单测和 browser broken demo 基础上，继续扩展组件级 DOM 测试、物料搜索/拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和 visual regression。
 

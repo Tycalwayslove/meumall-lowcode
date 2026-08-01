@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { createLowcodePageSchema } from "../../schema/dist/index.js";
 import {
   createDataSourceRegistry,
+  createHttpDataSourceHandler,
   createHttpConfigPlatformClient,
   createStaticResourceLibraryClient,
   createStaticTemplateLibraryClient,
@@ -112,6 +113,145 @@ describe("@meumall/lowcode-adapters", () => {
         error: "Lowcode data source handler not found: missing",
       },
       { id: "ds_broken", type: "broken", bindTo: "brokenData", status: "error", error: "接口异常" },
+    ]);
+  });
+
+  it("creates HTTP data source handlers for whitelisted GET endpoints", async () => {
+    const calls = [];
+    const handler = createHttpDataSourceHandler({
+      baseUrl: "https://data.example.com/",
+      endpoint: "api/products/by-ids",
+      responseDataPath: "data.items",
+      headers: { authorization: "Bearer token" },
+      fetcher: async (input, init = {}) => {
+        calls.push({ input, init });
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            data: {
+              items: [
+                { id: "sku_001", title: "商品 1" },
+                { id: "sku_002", title: "商品 2" },
+              ],
+            },
+          }),
+        };
+      },
+    });
+    const registry = createDataSourceRegistry({ "product.byIds": handler });
+
+    const result = await resolveLowcodeDataSources(
+      [
+        {
+          id: "ds_products",
+          type: "product.byIds",
+          bindTo: "products",
+          params: { ids: ["sku_001", "sku_002"], limit: 2 },
+        },
+      ],
+      registry,
+    );
+
+    assert.equal(calls[0].input, "https://data.example.com/api/products/by-ids?ids=sku_001&ids=sku_002&limit=2");
+    assert.equal(calls[0].init.method, "GET");
+    assert.equal(calls[0].init.headers.authorization, "Bearer token");
+    assert.equal(calls[0].init.body, undefined);
+    assert.deepEqual(result.data.products, [
+      { id: "sku_001", title: "商品 1" },
+      { id: "sku_002", title: "商品 2" },
+    ]);
+    assert.deepEqual(result.records, [
+      { id: "ds_products", type: "product.byIds", bindTo: "products", status: "resolved" },
+    ]);
+  });
+
+  it("creates HTTP data source handlers for POST endpoints with response transforms", async () => {
+    const calls = [];
+    const handler = createHttpDataSourceHandler({
+      baseUrl: "https://data.example.com",
+      endpoint: "/api/coupons/by-activity",
+      method: "POST",
+      transformResponse(payload) {
+        return payload.result.items;
+      },
+      fetcher: async (input, init = {}) => {
+        calls.push({ input, init });
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            result: {
+              items: [{ id: "coupon_30", title: "满 199 减 30" }],
+            },
+          }),
+        };
+      },
+    });
+    const registry = createDataSourceRegistry({ "coupon.byActivity": handler });
+
+    const result = await resolveLowcodeDataSources(
+      [
+        {
+          id: "ds_coupons",
+          type: "coupon.byActivity",
+          bindTo: "coupons",
+          params: { activityId: "activity_001", limit: 3 },
+        },
+      ],
+      registry,
+    );
+
+    assert.equal(calls[0].input, "https://data.example.com/api/coupons/by-activity");
+    assert.equal(calls[0].init.method, "POST");
+    assert.deepEqual(JSON.parse(calls[0].init.body), { activityId: "activity_001", limit: 3 });
+    assert.deepEqual(result.data.coupons, [{ id: "coupon_30", title: "满 199 减 30" }]);
+  });
+
+  it("records HTTP data source failures without throwing through the resolver", async () => {
+    assert.throws(
+      () =>
+        createHttpDataSourceHandler({
+          baseUrl: "https://data.example.com",
+          endpoint: "https://unsafe.example.com/api/products",
+        }),
+      /endpoint must be a path/,
+    );
+
+    const errors = [];
+    const registry = createDataSourceRegistry({
+      "custom.http": createHttpDataSourceHandler({
+        baseUrl: "https://data.example.com",
+        endpoint: "/api/custom-data",
+        fetcher: async () => ({
+          ok: false,
+          status: 502,
+          json: async () => ({ message: "bad gateway" }),
+        }),
+      }),
+    });
+
+    const result = await resolveLowcodeDataSources(
+      [{ id: "ds_custom", type: "custom.http", bindTo: "customData", params: { scene: "preview" } }],
+      registry,
+      {
+        initialData: { products: [] },
+        onError(error, config) {
+          errors.push(`${config.id}:${error.message}`);
+        },
+      },
+    );
+
+    assert.deepEqual(result.data, { products: [] });
+    assert.deepEqual(errors, ["ds_custom:HTTP data source request failed: 502"]);
+    assert.deepEqual(result.records, [
+      {
+        id: "ds_custom",
+        type: "custom.http",
+        bindTo: "customData",
+        status: "error",
+        error: "HTTP data source request failed: 502",
+      },
     ]);
   });
 

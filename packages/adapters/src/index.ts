@@ -190,6 +190,20 @@ export type PlatformFetch = (
   },
 ) => Promise<PlatformFetchResponse>;
 
+export type HttpDataSourceMethod = "GET" | "POST";
+
+export interface CreateHttpDataSourceHandlerOptions {
+  baseUrl: string;
+  endpoint: string;
+  method?: HttpDataSourceMethod;
+  fetcher?: PlatformFetch;
+  headers?: Record<string, string>;
+  responseDataPath?: string;
+  buildQuery?: (config: LowcodeDataSourceConfig) => JsonObject | undefined;
+  buildBody?: (config: LowcodeDataSourceConfig) => JsonValue | undefined;
+  transformResponse?: (payload: unknown, config: LowcodeDataSourceConfig) => MaybePromise<JsonValue>;
+}
+
 export interface CreateHttpConfigPlatformClientOptions {
   baseUrl: string;
   fetcher?: PlatformFetch;
@@ -576,8 +590,66 @@ function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, "");
 }
 
+function normalizeHttpEndpoint(value: string): string {
+  const endpoint = value.trim();
+  if (!endpoint) {
+    throw new Error("HTTP data source endpoint is required");
+  }
+  if (/^https?:\/\//i.test(endpoint)) {
+    throw new Error("HTTP data source endpoint must be a path, not an absolute URL");
+  }
+  return endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+}
+
 function encodePath(value: string): string {
   return encodeURIComponent(value);
+}
+
+function queryValueToString(value: JsonValue): string {
+  if (value == null) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function appendQueryParams(url: string, query: JsonObject | undefined): string {
+  if (!query || !Object.keys(query).length) return url;
+  const search = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        search.append(key, queryValueToString(item));
+      });
+      return;
+    }
+    search.set(key, queryValueToString(value));
+  });
+  const queryText = search.toString();
+  if (!queryText) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}${queryText}`;
+}
+
+function getByJsonPath(source: unknown, path: string | undefined): unknown {
+  if (!path) return source;
+  return path.split(".").reduce<unknown>((current, key) => {
+    if (current && typeof current === "object" && key in current) {
+      return (current as Record<string, unknown>)[key];
+    }
+    return undefined;
+  }, source);
+}
+
+function assertJsonValue(value: unknown, description: string): JsonValue {
+  if (
+    value == null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    Array.isArray(value) ||
+    typeof value === "object"
+  ) {
+    return value as JsonValue;
+  }
+  throw new Error(`${description} must be JSON serializable`);
 }
 
 function assertPageRelease(value: unknown): ConfigPlatformPageRelease {
@@ -653,9 +725,38 @@ function assertEditorDraftSnapshot(value: unknown): ConfigPlatformEditorDraftSna
 function getDefaultFetch(): PlatformFetch {
   const candidate = globalThis as typeof globalThis & { fetch?: PlatformFetch };
   if (!candidate.fetch) {
-    throw new Error("Config platform HTTP client requires a fetch implementation");
+    throw new Error("HTTP client requires a fetch implementation");
   }
   return candidate.fetch;
+}
+
+export function createHttpDataSourceHandler(options: CreateHttpDataSourceHandlerOptions): DataSourceHandler {
+  const baseUrl = trimTrailingSlash(options.baseUrl);
+  const endpoint = normalizeHttpEndpoint(options.endpoint);
+  const method = options.method ?? "GET";
+  const fetcher = options.fetcher ?? getDefaultFetch();
+  const headers = {
+    "content-type": "application/json",
+    ...(options.headers ?? {}),
+  };
+
+  return async (config) => {
+    const query = options.buildQuery ? options.buildQuery(config) : method === "GET" ? config.params : undefined;
+    const body = options.buildBody ? options.buildBody(config) : method === "POST" ? config.params ?? {} : undefined;
+    const response = await fetcher(appendQueryParams(`${baseUrl}${endpoint}`, query), {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP data source request failed: ${response.status}`);
+    }
+    if (options.transformResponse) {
+      return assertJsonValue(await options.transformResponse(payload, config), "HTTP data source transformed response");
+    }
+    return assertJsonValue(getByJsonPath(payload, options.responseDataPath), "HTTP data source response");
+  };
 }
 
 export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatformClientOptions): LowcodeConfigPlatformClient {
