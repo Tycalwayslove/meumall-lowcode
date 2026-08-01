@@ -113,6 +113,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `ImageBanner`
 - `BasicButton`
 - `BasicInput`
+- `BasicText`
+- `DividerBlock`
 - `ActionButton`
 - `RichTextBlock`
 - `SpacerBlock`
@@ -259,6 +261,8 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `ImageBanner`
 - `BasicButton`
 - `BasicInput`
+- `BasicText`
+- `DividerBlock`
 - `ActionButton`
 - `ImageCardGrid`
 - `TabsBlock`
@@ -294,7 +298,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 ### Phase 1：内部 primitives 原型
 
 - 在 React/Vue H5 materials 包内建立 `src/primitives` 内部目录。
-- 先实现 Button、Image、Tag、Text、Price。
+- 先实现 Button、Image、Tag、Text、Price、Divider。
 - 改造 `ActionButton`、`ImageBanner`、`SectionTitle` 作为范式。
 - 不扩大 npm API，降低早期包边界反复调整成本。
 

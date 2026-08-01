@@ -433,6 +433,38 @@ export function MlcSpacer({
   );
 }
 
+export interface MlcDividerProps {
+  color?: string;
+  thickness?: number;
+  lineStyle?: React.CSSProperties["borderTopStyle"];
+  inset?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcDivider({
+  color = h5Tokens.color.border,
+  thickness = 1,
+  lineStyle = "solid",
+  inset = 0,
+  className,
+  style,
+}: MlcDividerProps): React.ReactElement {
+  return (
+    <div
+      className={className}
+      aria-hidden="true"
+      style={{
+        height: 0,
+        margin: `0 ${inset}px`,
+        border: 0,
+        borderTop: `${thickness}px ${lineStyle} ${color}`,
+        ...style,
+      }}
+    />
+  );
+}
+
 export interface MlcOverlayProps {
   open?: boolean;
   children?: React.ReactNode;

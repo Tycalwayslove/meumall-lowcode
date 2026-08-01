@@ -742,6 +742,24 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('基础输入框') && Array.from(document.querySelectorAll('.phone-frame input')).some((item) => item.getAttribute('placeholder') === '请输入内容')");
   log("通过：基础按钮和基础输入框可从快捷命令添加并在 Vue H5 画布渲染");
 
+  log("检查基础文本和分割线通用物料");
+  const nodeCountBeforeBasicText = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础文本");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础文本')");
+  await page.clickByText(".command-palette-item", "添加物料：基础文本");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicText)}`);
+  await page.waitForExpression("document.body.innerText.includes('这是一段基础文本')");
+  const nodeCountBeforeDivider = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  const dividerCountBefore = await page.evaluate("document.querySelectorAll('.phone-frame .mlc-divider-block').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "分割线");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：分割线')");
+  await page.clickByText(".command-palette-item", "添加物料：分割线");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeDivider)}`);
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame .mlc-divider-block').length > ${Number(dividerCountBefore)}`);
+  log("通过：基础文本和分割线可从快捷命令添加并在 Vue H5 画布渲染");
+
   log("检查留资表单通用物料");
   const nodeCountBeforeLeadForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1177,6 +1195,8 @@ async function main() {
       { label: "留资表单物料存在", expression: "document.body.innerText.includes('留资表单')" },
       { label: "基础按钮物料存在", expression: "document.body.innerText.includes('基础按钮')" },
       { label: "基础输入框物料存在", expression: "document.body.innerText.includes('基础输入框')" },
+      { label: "基础文本物料存在", expression: "document.body.innerText.includes('基础文本')" },
+      { label: "分割线物料存在", expression: "document.body.innerText.includes('分割线')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
@@ -1186,6 +1206,8 @@ async function main() {
       { label: "默认大促模板包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "默认大促模板包含基础按钮", expression: "document.body.innerText.includes('基础按钮示例')" },
       { label: "默认大促模板包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && Array.from(document.querySelectorAll('.phone-frame input')).some((item) => item.getAttribute('placeholder') === '请输入想看的活动品类')" },
+      { label: "默认大促模板包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "默认大促模板包含分割线", expression: "document.querySelector('.phone-frame .mlc-divider-block')" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "默认大促模板包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "默认大促模板包含间距块", expression: "document.querySelector('.phone-frame .mlc-spacer-block')" },
@@ -1223,6 +1245,8 @@ async function main() {
       { label: "编辑器内置 runtime 包含图片卡片宫格", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "编辑器内置 runtime 包含基础按钮", expression: "document.body.innerText.includes('基础按钮示例')" },
       { label: "编辑器内置 runtime 包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
+      { label: "编辑器内置 runtime 包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "编辑器内置 runtime 包含分割线", expression: "document.querySelector('[data-lowcode-page] .mlc-divider-block')" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "编辑器内置 runtime 包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "编辑器内置 runtime 包含间距块", expression: "document.querySelector('.mlc-spacer-block')" },
@@ -1244,6 +1268,8 @@ async function main() {
       { label: "React H5 图片卡片宫格已渲染", expression: "document.body.innerText.includes('专题会场') && document.body.innerText.includes('女装会场')" },
       { label: "React H5 基础按钮已渲染", expression: "document.body.innerText.includes('基础按钮示例')" },
       { label: "React H5 基础输入框已渲染", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
+      { label: "React H5 基础文本已渲染", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "React H5 分割线已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-divider-block')" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "React H5 倒计时已渲染", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },

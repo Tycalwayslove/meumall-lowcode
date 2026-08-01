@@ -5,10 +5,12 @@ import {
   ActivityRuleModal,
   BasicButton,
   BasicInput,
+  BasicText,
   BrandFeatureSection,
   CouponBundle,
   CouponSection,
   CountdownTimer,
+  DividerBlock,
   FlashSaleList,
   FloorAnchorNav,
   h5Materials,
@@ -84,6 +86,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcCountdownText",
       "MlcTabs",
       "MlcSpacer",
+      "MlcDivider",
     ];
 
     for (const name of primitiveNames) {
@@ -149,6 +152,8 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
     functionSourceIncludes(BasicButton, ["MlcButton"]);
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
+    functionSourceIncludes(BasicText, ["MlcText"]);
+    functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -209,6 +214,28 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.propsSchema.helperText.setter, "textarea");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic text material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicText");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础文本");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.as, "p");
+    assert.equal(material.manifest.propsSchema.text.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.color.setter, "color");
+  });
+
+  it("registers the divider block material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "DividerBlock");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "分割线");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.lineStyle, "solid");
+    assert.equal(material.manifest.propsSchema.color.setter, "color");
+    assert.equal(material.manifest.propsSchema.thickness.setter, "number");
   });
 
   it("registers the image card grid material", () => {

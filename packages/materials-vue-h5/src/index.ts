@@ -2,7 +2,7 @@ import { defineComponent, h, ref, watch, type CSSProperties, type PropType } fro
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcCountdownText, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -130,6 +130,9 @@ export const ImageBanner = defineComponent({
 type BasicButtonVariant = "solid" | "outline" | "ghost";
 type BasicButtonSize = "sm" | "md" | "lg";
 type BasicInputType = "text" | "tel" | "email" | "number";
+type BasicTextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
+type BasicTextAlign = "left" | "center" | "right";
+type DividerLineStyle = "solid" | "dashed" | "dotted";
 
 export const BasicButton = defineComponent({
   name: "BasicButton",
@@ -252,6 +255,80 @@ export const BasicInput = defineComponent({
                 () => helperText,
               )
             : null,
+        ],
+      );
+    };
+  },
+});
+
+export const BasicText = defineComponent({
+  name: "BasicText",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const as = option<BasicTextAs>(runtimeProps.as, ["span", "p", "strong", "h1", "h2", "h3"], "p");
+      const align = option<BasicTextAlign>(runtimeProps.align, ["left", "center", "right"], "left");
+      const content = text(runtimeProps.text, "基础文本");
+      const color = text(runtimeProps.color, "#111827");
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-text",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 10)}px 16px`,
+            color,
+            background: text(runtimeProps.backgroundColor, "transparent"),
+            textAlign: align,
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            MlcText,
+            {
+              as,
+              size: number(runtimeProps.fontSize, 14),
+              weight: number(runtimeProps.fontWeight, 400),
+              lineHeight: number(runtimeProps.lineHeight, 1.6),
+              style: {
+                display: as === "span" || as === "strong" ? "inline" : "block",
+                color,
+                whiteSpace: "pre-line",
+              } satisfies CSSProperties,
+            },
+            () => content,
+          ),
+        ],
+      );
+    };
+  },
+});
+
+export const DividerBlock = defineComponent({
+  name: "DividerBlock",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const lineStyle = option<DividerLineStyle>(runtimeProps.lineStyle, ["solid", "dashed", "dotted"], "solid");
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-divider-block",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 0`,
+            background: text(runtimeProps.backgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(MlcDivider, {
+            color: text(runtimeProps.color, "#e5e7eb"),
+            thickness: number(runtimeProps.thickness, 1),
+            lineStyle,
+            inset: number(runtimeProps.inset, 16),
+          }),
         ],
       );
     };
@@ -2338,6 +2415,64 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
       },
       events: [{ name: "onChange", title: "输入变化" }],
+    }),
+  },
+  {
+    component: BasicText,
+    manifest: createMaterialManifest({
+      componentName: "BasicText",
+      materialVersion: "0.1.0",
+      title: "基础文本",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "这是一段基础文本，可用于活动说明、提示文案或普通段落。",
+        as: "p",
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 1.6,
+        align: "left",
+        color: "#111827",
+        backgroundColor: "transparent",
+        paddingY: 10,
+      },
+      propsSchema: {
+        text: { label: "文本内容", type: "string", setter: "textarea", required: true, defaultValue: "这是一段基础文本，可用于活动说明、提示文案或普通段落。" },
+        as: { label: "标签类型", type: "string", setter: "input", defaultValue: "p" },
+        fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 14 },
+        fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 400 },
+        lineHeight: { label: "行高", type: "number", setter: "number", defaultValue: 1.6 },
+        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        color: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "transparent" },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
+      },
+    }),
+  },
+  {
+    component: DividerBlock,
+    manifest: createMaterialManifest({
+      componentName: "DividerBlock",
+      materialVersion: "0.1.0",
+      title: "分割线",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        color: "#e5e7eb",
+        thickness: 1,
+        lineStyle: "solid",
+        inset: 16,
+        paddingY: 12,
+        backgroundColor: "transparent",
+      },
+      propsSchema: {
+        color: { label: "线条色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        thickness: { label: "线条粗细", type: "number", setter: "number", defaultValue: 1 },
+        lineStyle: { label: "线条样式", type: "string", setter: "input", defaultValue: "solid" },
+        inset: { label: "左右缩进", type: "number", setter: "number", defaultValue: 16 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+      },
     }),
   },
   {

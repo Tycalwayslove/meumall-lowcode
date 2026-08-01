@@ -36,6 +36,7 @@ type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type ImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
+type DividerLineStyle = "solid" | "dashed" | "dotted";
 
 function toneColor(tone: Tone): string {
   if (tone === "accent") return h5Tokens.color.accent;
@@ -391,6 +392,32 @@ export const MlcSpacer = defineComponent({
           height: toSize(props.height),
           background: props.backgroundColor,
           borderRadius: toSize(props.radius),
+          ...props.style,
+        } satisfies CSSProperties,
+      });
+  },
+});
+
+export const MlcDivider = defineComponent({
+  name: "MlcDivider",
+  props: {
+    color: { type: String, default: h5Tokens.color.border },
+    thickness: { type: Number, default: 1 },
+    lineStyle: { type: String as PropType<DividerLineStyle>, default: "solid" },
+    inset: { type: Number, default: 0 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () =>
+      h("div", {
+        class: props.class,
+        "aria-hidden": "true",
+        style: {
+          height: 0,
+          margin: `0 ${props.inset}px`,
+          border: 0,
+          borderTop: `${props.thickness}px ${props.lineStyle} ${props.color}`,
           ...props.style,
         } satisfies CSSProperties,
       });

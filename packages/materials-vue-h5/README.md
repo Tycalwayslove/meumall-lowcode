@@ -22,6 +22,7 @@ Current internal primitives:
 - `MlcCountdownText`
 - `MlcTabs`
 - `MlcSpacer`
+- `MlcDivider`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
 
@@ -29,6 +30,8 @@ Currently migrated materials:
 
 - `BasicButton`
 - `BasicInput`
+- `BasicText`
+- `DividerBlock`
 - `ActionButton`
 - `ImageBanner`
 - `SectionTitle`
@@ -56,6 +59,8 @@ Current materials:
 - `NoticeBar`
 - `BasicButton`
 - `BasicInput`
+- `BasicText`
+- `DividerBlock`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`
