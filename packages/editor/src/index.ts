@@ -2051,7 +2051,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "卡片链接",
       description: "带说明的独立跳转入口。",
       metaName: "卡片链接",
-      props: { text: "查看活动攻略", description: "了解会场玩法和优惠说明", tagText: "指南", variant: "card", showArrow: true },
+      props: { text: "查看活动攻略", subtitle: "了解会场玩法和优惠说明", prefixText: "指南", variant: "card", showArrow: true },
       keywords: ["link", "card", "卡片"],
     },
     {
@@ -2059,7 +2059,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "横条链接",
       description: "适合页面内轻量导流。",
       metaName: "横条链接",
-      props: { text: "更多精选内容", description: "点击查看完整清单", variant: "bar", showArrow: true },
+      props: { text: "更多精选内容", subtitle: "点击查看完整清单", variant: "bar", showArrow: true },
       keywords: ["bar", "横条"],
     },
   ],

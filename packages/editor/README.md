@@ -510,6 +510,8 @@ The material catalog helpers keep material-library search, category filters, qui
 
 `LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS`, `createLowcodeMaterialInsertPresets`, `findLowcodeMaterialInsertPreset`, and `createLowcodeMaterialNodeInputFromPreset` provide common insert variants for base materials. Presets merge `manifest.defaultProps` with preset props and can set a node `meta.name`; they do not change Page Schema or Material Manifest structure. Host shells can disable defaults per component with `componentPresets: { ComponentName: false }` or provide custom presets through the options object.
 
+Built-in presets must write props that the target material manifest actually consumes. For example, `BasicLink` presets use `subtitle` and `prefixText` for helper copy and prefix labels, matching the runtime material contract.
+
 `createLowcodeMaterialCategories(manifests, allCategoryLabel)` returns a stable category list with `全部` by default.
 
 `filterLowcodeMaterialCatalog(materials, options)` filters entries that contain a `manifest` field by category and keyword. Keyword matching covers title, component name, category, category label, architecture layer label, capability family label, version, and platforms.

@@ -917,6 +917,31 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(findLowcodeMaterialInsertPreset(button, "outline-action")?.title, "描边按钮");
     assert.deepEqual(createLowcodeMaterialInsertPresets(button, { componentPresets: { BasicButton: false } }), []);
 
+    const link = createMaterialManifest({
+      componentName: "BasicLink",
+      materialVersion: "1.0.0",
+      title: "基础链接",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        text: { label: "链接文案", type: "string", setter: "input", defaultValue: "查看详情" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "" },
+        prefixText: { label: "前置标签", type: "string", setter: "input", defaultValue: "" },
+      },
+      defaultProps: { text: "查看详情", subtitle: "", prefixText: "" },
+    });
+    const linkPresets = createLowcodeMaterialInsertPresets(link);
+    assert.deepEqual(linkPresets.map((preset) => [preset.id, preset.title]), [
+      ["card-link", "卡片链接"],
+      ["bar-link", "横条链接"],
+    ]);
+    assert.equal(linkPresets[0].props.subtitle, "了解会场玩法和优惠说明");
+    assert.equal(linkPresets[0].props.prefixText, "指南");
+    assert.equal(linkPresets[0].props.description, undefined);
+    assert.equal(linkPresets[0].props.tagText, undefined);
+    assert.equal(linkPresets[1].props.subtitle, "点击查看完整清单");
+    assert.equal(linkPresets[1].props.description, undefined);
+
     const stateBlock = createMaterialManifest({
       componentName: "BasicStateBlock",
       materialVersion: "1.0.0",

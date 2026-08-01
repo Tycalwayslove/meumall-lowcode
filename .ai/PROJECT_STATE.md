@@ -125,7 +125,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 基础视频物料：React/Vue H5 物料包已新增 `BasicVideo`，支持视频地址、封面、标题、说明、角标、圆角、比例、播放控件、静音、循环、自动播放、行内播放和 `onPlay` 安全 action，并从 primitives 包复用 `MlcImage`、`MlcTag`、`MlcText`；`videoUrl` 已使用 manifest `video` setter，Vue3 编辑器可从视频素材库选择视频并同步写回封面；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。
 - 基础弹窗物料：React/Vue H5 物料包已新增 `BasicModal`，支持入口按钮、静态标题、说明、内容、确认按钮、默认打开、点击遮罩关闭、弹出位置、色彩、圆角、留白和 `onOpen` 安全 action，并从 primitives 包复用 `MlcModal`、`MlcButton`、`MlcText`；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不支持远程内容、表单提交、登录、领券、交易、个性化投放或弹窗内低代码子节点编排。
 - 基础表单物料：React/Vue H5 物料包已新增 `BasicForm`，支持标题、说明、children 字段区、提交按钮、成功文案、禁用/加载态、样式配置、基础控件字段值采集、`required/requiredMessage` 本地必填校验、表单级错误摘要、字段级 invalid/error 文案和 `onSubmit` 安全 action，并从 primitives 包复用 `MlcButton`、`MlcText`；默认模板、快捷命令添加链路、当前容器识别、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不接正则/长度/异步等复杂校验、验证码、登录、风控、远程提交、服务端保存或表单布局 DSL。
-- 基础链接物料：React/Vue H5 物料包已新增 `BasicLink`，支持文案、辅助说明、前置标签、右侧箭头、普通 H5 链接、禁用态、样式配置和 `onClick` 安全 action，并从 primitives 包复用 `MlcText`、`MlcTag`；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不接业务路由白名单、App bridge、登录鉴权、埋点平台、风控、权限审批、短链生成或远程链接校验。
+- 基础链接物料：React/Vue H5 物料包已新增 `BasicLink`，支持文案、辅助说明、前置标签、右侧箭头、普通 H5 链接、禁用态、样式配置和 `onClick` 安全 action，并从 primitives 包复用 `MlcText`、`MlcTag`；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。`@meumall/lowcode-editor` 的 BasicLink 默认插入预设已使用 `subtitle/prefixText` 写入说明和前置标签，不再写入运行时不消费的 `description/tagText`。当前不接业务路由白名单、App bridge、登录鉴权、埋点平台、风控、权限审批、短链生成或远程链接校验。
 - 基础提示物料：React/Vue H5 物料包已新增 `BasicAlert`，支持标题、正文、语气、柔和/描边/实心样式、图标文案、角标文案、行动按钮、样式配置和 `onActionClick` 安全 action，并从 primitives 包复用 `MlcText`、`MlcTag`、`MlcButton`；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不接远程公告流、系统消息中心、业务错误码、内容审核、权限审批、表单校验协议、消息已读状态或商品/优惠券/活动规则等业务模型。
 - 基础列表物料：React/Vue H5 物料包已新增 `BasicList`，支持标题、说明、静态列表项、圆点/数字/标签/隐藏标记、右侧辅助信息、样式配置和 `onItemClick` 安全 action，并从 primitives 包复用 `MlcText`、`MlcTag`；默认模板、快捷命令添加链路、editor 列表项字段模型、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不接远程数据、分页、搜索、排序、FAQ 展开、时间线协议、商品/优惠券/门店达人等业务模型。
 - 基础折叠面板物料：React/Vue H5 物料包已新增 `BasicAccordion`，支持标题、说明、静态折叠项、单开/多开、箭头/加号/隐藏图标、默认展开、样式配置和 `onItemToggle` 安全 action，并从 primitives 包复用 `MlcText`、`MlcTag`；默认模板、快捷命令添加链路、editor 列表项字段模型、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。当前不接远程 FAQ、活动规则接口、分页、搜索、排序、内容审核、权限审批、富文本编辑、嵌套低代码子节点或商品/优惠券/门店达人等业务模型。
@@ -222,7 +222,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 本次提交 | 新增基础指标组通用物料。 |
+| 2026-08-01 | 本次提交 | 修正 BasicLink 编辑器插入预设字段。 |
+| 2026-08-01 | 28eceea | 新增基础指标组通用物料。 |
 | 2026-08-01 | 3eb828a | 支持 editor 物料预设按插入目标写入，并在 Vue3 编辑器容器快捷区加入常用预设。 |
 | 2026-08-01 | 7361240 | 新增 editor 物料插入预设 API，并接入 Vue3 物料面板与快捷命令 smoke。 |
 | 2026-08-01 | af61380 | 新增 editor 物料分层总览和基础能力族 profile API，并接入 Vue3 物料面板与 smoke。 |
