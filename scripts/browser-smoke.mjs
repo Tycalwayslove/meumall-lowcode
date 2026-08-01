@@ -1267,6 +1267,21 @@ async function assertEditorApprovalActions(page) {
   log("通过：发布审批可提交、撤回、驳回、重新提交并审核通过");
 }
 
+async function assertEditorReadonlyMaterialInsert(page) {
+  log("检查只读状态下物料插入禁用");
+  await page.waitForExpression("document.querySelector('.material-insert-lock') && document.body.innerText.includes('正在编辑，当前仅可查看')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-main-button')).some((item) => item.disabled && item.innerText.includes('图片 Banner'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-quick-chip')).every((item) => item.disabled)");
+  const nodeCountBefore = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.clickChildByText(".material-item", "图片 Banner", ".material-detail-button");
+  await page.waitForExpression("document.querySelector('.material-detail-dialog') && document.querySelector('.material-detail-actions button')?.disabled && document.body.innerText.includes('正在编辑，当前仅可查看')");
+  await page.evaluate("document.querySelector('.material-detail-actions button')?.click()");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBefore)}`);
+  await page.clickFirst(".material-detail-head button");
+  await page.waitForExpression("!document.querySelector('.material-detail-dialog')");
+  log("通过：只读协作状态下物料面板和详情添加入口均禁用，且不会新增节点");
+}
+
 async function assertEditorHttpConfigPlatform(page) {
   await assertPage(page, editorHttpUrl, [
     { label: "Vue3 编辑器 HTTP 配置平台 shell 已挂载", expression: "document.querySelector('.editor-shell')" },
@@ -1510,6 +1525,7 @@ async function main() {
         expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')",
       },
     ]);
+    await assertEditorReadonlyMaterialInsert(page);
     await assertEditorApprovalActions(page);
     await assertEditorHttpConfigPlatform(page);
 

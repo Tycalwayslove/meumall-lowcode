@@ -1135,6 +1135,18 @@ button:focus-visible {
   font-weight: 700;
 }
 
+.material-insert-lock {
+  margin: 0;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #9a3412;
+  background: #fff7ed;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .material-quick-chip {
   display: inline-flex;
   align-items: center;
@@ -1157,8 +1169,8 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 
-.material-quick-chip:hover,
-.material-quick-chip:focus-visible {
+.material-quick-chip:hover:not(:disabled),
+.material-quick-chip:focus-visible:not(:disabled) {
   border-color: #2563eb;
   color: #1d4ed8;
   background: #eff6ff;
@@ -1184,8 +1196,8 @@ button:focus-visible {
   background: transparent;
 }
 
-.material-main-button:hover,
-.material-main-button:focus-visible {
+.material-main-button:hover:not(:disabled),
+.material-main-button:focus-visible:not(:disabled) {
   background: rgba(241, 245, 249, 0.72);
 }
 
@@ -1421,6 +1433,11 @@ button:focus-visible {
   color: #fff;
   background: #111827;
   font-weight: 800;
+}
+
+.material-detail-actions {
+  display: grid;
+  gap: 8px;
 }
 
 .material-detail-preview {
@@ -1832,6 +1849,15 @@ button:focus-visible {
   color: #64748b;
   font-size: 11px;
   font-weight: 700;
+}
+
+.context-insert-hint {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .canvas-context-toolbar select {

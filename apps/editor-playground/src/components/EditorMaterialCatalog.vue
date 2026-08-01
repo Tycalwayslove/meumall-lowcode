@@ -18,6 +18,7 @@ const props = defineProps<{
   keyword: string;
   category: string;
   preferenceMessage?: string;
+  insertDisabledReason?: string;
   selectedContainerTitle?: string;
 }>();
 
@@ -73,6 +74,7 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
       </select>
     </div>
     <p v-if="preferenceMessage" class="material-preference-message">{{ preferenceMessage }}</p>
+    <p v-if="insertDisabledReason" class="material-insert-lock">{{ insertDisabledReason }}</p>
     <div v-if="favoriteMaterials.length" class="material-quick-section">
       <div class="material-quick-head">
         <strong>收藏物料</strong>
@@ -83,6 +85,8 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         :key="`favorite-${material.manifest.componentName}`"
         type="button"
         class="material-quick-chip"
+        :title="insertDisabledReason ?? `添加 ${material.manifest.title}`"
+        :disabled="Boolean(insertDisabledReason)"
         @click="emit('add', material.manifest)"
       >
         <Star :size="13" />
@@ -99,6 +103,8 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         :key="`recent-${material.manifest.componentName}`"
         type="button"
         class="material-quick-chip"
+        :title="insertDisabledReason ?? `添加 ${material.manifest.title}`"
+        :disabled="Boolean(insertDisabledReason)"
         @click="emit('add', material.manifest)"
       >
         <Plus :size="13" />
@@ -110,15 +116,16 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
       :key="material.manifest.componentName"
       class="material-item"
       :class="{ favorite: isFavoriteMaterial(material.manifest.componentName) }"
-      draggable="true"
-      @pointerdown="emit('material-pointerdown', $event, material.manifest)"
-      @dragstart="emit('material-dragstart', $event, material.manifest)"
+      :draggable="!insertDisabledReason"
+      @pointerdown="!insertDisabledReason && emit('material-pointerdown', $event, material.manifest)"
+      @dragstart="!insertDisabledReason && emit('material-dragstart', $event, material.manifest)"
       @dragend="emit('material-dragend')"
     >
       <button
         type="button"
         class="material-main-button"
-        :title="materialCatalogSearchTitle(material.manifest)"
+        :title="insertDisabledReason ?? materialCatalogSearchTitle(material.manifest)"
+        :disabled="Boolean(insertDisabledReason)"
         @click="emit('material-click', $event, material.manifest)"
       >
         <span>
@@ -160,6 +167,8 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         v-for="material in materials"
         :key="`child-${material.manifest.componentName}`"
         type="button"
+        :title="insertDisabledReason ?? `加入容器：${material.manifest.title}`"
+        :disabled="Boolean(insertDisabledReason)"
         @click="emit('add-to-container', material.manifest)"
       >
         <Plus :size="14" />

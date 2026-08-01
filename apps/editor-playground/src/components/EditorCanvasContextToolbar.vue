@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Plus, Trash2 } from "@lucide/vue";
 import type {
+  LowcodeEditorMaterialInsertPlacement,
+  LowcodeEditorMaterialInsertTarget,
   LowcodeEditorNodeOperationAction,
   LowcodeEditorNodeOperationItem,
 } from "@meumall/lowcode-editor";
@@ -16,6 +19,7 @@ const props = defineProps<{
   materialOptions: readonly CanvasContextMaterialOption[];
   selectedInsertComponentName: string;
   operationItems: readonly LowcodeEditorNodeOperationItem[];
+  insertTargets: readonly LowcodeEditorMaterialInsertTarget[];
 }>();
 
 const emit = defineEmits<{
@@ -33,6 +37,31 @@ const emit = defineEmits<{
 function isOperationDisabled(action: LowcodeEditorNodeOperationAction): boolean {
   return Boolean(props.operationItems.find((item) => item.action === action)?.disabled);
 }
+
+function getInsertTarget(placement: LowcodeEditorMaterialInsertPlacement): LowcodeEditorMaterialInsertTarget | undefined {
+  return props.insertTargets.find((target) => target.placement === placement);
+}
+
+function isInsertPlacementDisabled(placement: LowcodeEditorMaterialInsertPlacement, action: LowcodeEditorNodeOperationAction): boolean {
+  return Boolean(getInsertTarget(placement)?.disabled || isOperationDisabled(action));
+}
+
+function getInsertPlacementTitle(placement: LowcodeEditorMaterialInsertPlacement, fallback: string): string {
+  const target = getInsertTarget(placement);
+  return target?.disabledReason ?? target?.description ?? fallback;
+}
+
+const insertTargetHint = computed(() => {
+  const inside = getInsertTarget("inside");
+  if (inside && !inside.disabled) return inside.description;
+  const before = getInsertTarget("before");
+  const after = getInsertTarget("after");
+  if (before && after && !before.disabled && !after.disabled) {
+    return `${before.description} ${after.description}`;
+  }
+  const blocked = props.insertTargets.find((target) => target.disabledReason);
+  return blocked?.disabledReason ?? getInsertTarget("append")?.description ?? "选择物料后可插入到画布。";
+});
 
 function getSelectValue(event: Event): string {
   return (event.target as HTMLSelectElement).value;
@@ -59,12 +88,13 @@ function getSelectValue(event: Event): string {
           {{ material.title }}
         </option>
       </select>
+      <small class="context-insert-hint">{{ insertTargetHint }}</small>
     </label>
     <div class="context-actions">
       <button
         type="button"
-        title="在当前节点前插入"
-        :disabled="isOperationDisabled('insertBefore')"
+        :title="getInsertPlacementTitle('before', '在当前节点前插入')"
+        :disabled="isInsertPlacementDisabled('before', 'insertBefore')"
         @click="emit('insert-before')"
       >
         <ArrowUp :size="15" />
@@ -72,8 +102,8 @@ function getSelectValue(event: Event): string {
       </button>
       <button
         type="button"
-        title="在当前节点后插入"
-        :disabled="isOperationDisabled('insertAfter')"
+        :title="getInsertPlacementTitle('after', '在当前节点后插入')"
+        :disabled="isInsertPlacementDisabled('after', 'insertAfter')"
         @click="emit('insert-after')"
       >
         <ArrowDown :size="15" />
@@ -81,8 +111,8 @@ function getSelectValue(event: Event): string {
       </button>
       <button
         type="button"
-        title="加入选中容器"
-        :disabled="isOperationDisabled('addInside')"
+        :title="getInsertPlacementTitle('inside', '加入选中容器')"
+        :disabled="isInsertPlacementDisabled('inside', 'addInside')"
         @click="emit('add-inside')"
       >
         <Plus :size="15" />

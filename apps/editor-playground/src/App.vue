@@ -55,6 +55,7 @@ import {
   createLowcodeMaterialDetailEventItems,
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
+  createLowcodeMaterialInsertTargets,
   createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
@@ -96,6 +97,7 @@ import {
   getLowcodeNodeDisplayName,
   getLowcodeSelectedGroupNodeIdsForDrag,
   insertNode,
+  insertLowcodeMaterialByTarget,
   insertLowcodeCanvasNodeByHint,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeFavoriteMaterial,
@@ -178,6 +180,8 @@ import {
   type LowcodeEditorVersionDiffItem as ReleaseDiffItem,
   type LowcodeEditorWorkspaceStat as WorkspaceStat,
   type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
+  type LowcodeEditorMaterialInsertPlacement as MaterialInsertPlacement,
+  type LowcodeEditorMaterialInsertTarget as MaterialInsertTarget,
   type LowcodeEditorNodeOperationAction as NodeContextAction,
   type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
   type LowcodeEditorPermissionAction,
@@ -701,6 +705,24 @@ const groupDraggableOutlineNodeIds = computed(() =>
 const selectedInsertManifest = computed(() => {
   return materials.find((item) => item.manifest.componentName === selectedInsertComponentName.value)?.manifest;
 });
+const materialInsertDisabledReason = computed(() => getEditorActionDisabledReason("material.insert") ?? getEditorActionDisabledReason("node.insert"));
+function canInsertMaterial(): boolean {
+  return canUseEditorAction("material.insert") && canUseEditorAction("node.insert");
+}
+
+const materialInsertTargets = computed<MaterialInsertTarget[]>(() =>
+  createLowcodeMaterialInsertTargets({
+    selectedRow: selectedOutlineRow.value,
+    selectedNodeIsContainer: selectedNodeIsContainer.value,
+    hasMaterial: Boolean(selectedInsertManifest.value),
+    canInsert: Boolean(selectedInsertManifest.value) && canInsertMaterial(),
+    materialTitle: selectedInsertManifest.value?.title,
+    disabledReason: materialInsertDisabledReason.value,
+  }),
+);
+const materialInsertTargetMap = computed(() => new Map(
+  materialInsertTargets.value.map((target) => [target.placement, target]),
+));
 const canvasContextMaterialOptions = computed(() =>
   materials.map((item) => ({
     componentName: item.manifest.componentName,
@@ -918,8 +940,8 @@ const topToolbarDisabledActions = computed<Partial<Record<LowcodeEditorPermissio
 });
 
 const nodeContextMenuItems = computed<NodeContextMenuItem[]>(() => createLowcodeNodeOperationItems({
-  canInsert: Boolean(selectedInsertManifest.value) && canUseEditorAction("node.insert"),
-  canAddInside: Boolean(selectedNodeIsContainer.value && selectedInsertManifest.value) && canUseEditorAction("node.insert"),
+  canInsert: Boolean(selectedInsertManifest.value) && canInsertMaterial(),
+  canAddInside: Boolean(selectedNodeIsContainer.value && selectedInsertManifest.value) && canInsertMaterial(),
   canMoveUp: canMoveSelectedUp.value && canUseEditorAction("node.move"),
   canMoveDown: canMoveSelectedDown.value && canUseEditorAction("node.move"),
   canRename: canUseEditorAction("node.rename"),
@@ -1279,8 +1301,10 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     group: "物料",
     description: createPermissionAwareDescription("material.insert", `${material.manifest.category} / ${material.manifest.componentName}`),
     keywords: [material.manifest.title, material.manifest.componentName, material.manifest.category],
-    disabled: isCommandActionDisabled("material.insert"),
-    run: () => addMaterial(material.manifest),
+    disabled: isCommandActionDisabled("material.insert") || isEditorActionDisabled("node.insert"),
+    run: () => {
+      addMaterial(material.manifest);
+    },
   })),
   ...getAllPageTemplates().map((template): CommandPaletteItem => ({
     id: `template-${template.id}`,
@@ -1890,13 +1914,22 @@ function recordRecentMaterial(manifest: LowcodeMaterialManifest): void {
   storeMaterialComponentNames(MATERIAL_RECENT_KEY, recentMaterialComponentNames.value);
 }
 
-function addMaterial(manifest: LowcodeMaterialManifest): void {
+function showMaterialInsertDisabledMessage(): void {
+  materialPreferenceMessage.value = materialInsertDisabledReason.value ?? "当前不可插入物料。";
+}
+
+function addMaterial(manifest: LowcodeMaterialManifest): boolean {
+  if (!canInsertMaterial()) {
+    showMaterialInsertDisabledMessage();
+    return false;
+  }
   editorState.value = appendNode(editorState.value, createNodeInput(manifest));
   recordRecentMaterial(manifest);
+  return true;
 }
 
 function addStarterMaterial(manifest: LowcodeMaterialManifest): void {
-  addMaterial(manifest);
+  if (!addMaterial(manifest)) return;
   releaseMessage.value = `已添加起步物料：${manifest.title}`;
 }
 
@@ -1911,12 +1944,16 @@ function closeMaterialDetail(): void {
 function addMaterialFromDetail(): void {
   const manifest = selectedMaterialDetailManifest.value;
   if (!manifest) return;
-  addMaterial(manifest);
+  if (!addMaterial(manifest)) return;
   materialPreferenceMessage.value = `已添加物料：${manifest.title}`;
   closeMaterialDetail();
 }
 
 function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void {
+  if (!canInsertMaterial()) {
+    showMaterialInsertDisabledMessage();
+    return;
+  }
   if (!selectedNode.value || !selectedNodeIsContainer.value) {
     addMaterial(manifest);
     return;
@@ -2334,6 +2371,10 @@ function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
 }
 
 function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: CanvasDropHint): void {
+  if (!canInsertMaterial()) {
+    showMaterialInsertDisabledMessage();
+    return;
+  }
   const result = insertLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, createNodeInput(manifest));
   editorState.value = result.state;
   recordRecentMaterial(manifest);
@@ -2875,22 +2916,19 @@ function runNodeContextMenuAction(item: NodeContextMenuItem): void {
   closeNodeContextMenu();
 }
 
+function getMaterialInsertTarget(placement: MaterialInsertPlacement): MaterialInsertTarget | undefined {
+  return materialInsertTargetMap.value.get(placement);
+}
+
 function insertMaterialAroundSelected(placement: "before" | "after"): void {
-  const row = selectedOutlineRow.value;
   const manifest = selectedInsertManifest.value;
   if (!manifest) return;
-  if (!row) {
-    addMaterial(manifest);
-    showNodeOperationMessage(placement === "before" ? "insertBefore" : "insertAfter", {
-      materialTitle: manifest.title,
-    });
+  const target = getMaterialInsertTarget(placement);
+  if (!target || target.disabled) {
+    materialPreferenceMessage.value = target?.disabledReason ?? materialInsertDisabledReason.value ?? "当前不可插入物料。";
     return;
   }
-  editorState.value = insertNode(editorState.value, createNodeInput(manifest), {
-    parentId: row.parentId,
-    index: placement === "before" ? row.index : row.index + 1,
-    select: true,
-  });
+  editorState.value = insertLowcodeMaterialByTarget(editorState.value, createNodeInput(manifest), target);
   recordRecentMaterial(manifest);
   showNodeOperationMessage(placement === "before" ? "insertBefore" : "insertAfter", {
     materialTitle: manifest.title,
@@ -2900,7 +2938,14 @@ function insertMaterialAroundSelected(placement: "before" | "after"): void {
 function insertMaterialInsideSelectedContainer(): void {
   const manifest = selectedInsertManifest.value;
   if (!manifest) return;
-  addMaterialToSelectedContainer(manifest);
+  const target = getMaterialInsertTarget("inside");
+  if (!target || target.disabled) {
+    materialPreferenceMessage.value = target?.disabledReason ?? "当前不可加入容器。";
+    return;
+  }
+  editorState.value = insertLowcodeMaterialByTarget(editorState.value, createNodeInput(manifest), target);
+  recordRecentMaterial(manifest);
+  showNodeOperationMessage("addInside", { materialTitle: manifest.title });
 }
 
 function resetSchema(): void {
@@ -3864,6 +3909,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       :registry="registry"
       :preview-data="previewData"
       :action-executor="actionExecutor"
+      :insert-disabled-reason="materialInsertDisabledReason"
       @close="closeMaterialDetail"
       @add="addMaterialFromDetail"
     />
@@ -3963,6 +4009,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :favorite-component-names="favoriteMaterialComponentNames"
         :categories="materialCategories"
         :preference-message="materialPreferenceMessage"
+        :insert-disabled-reason="materialInsertDisabledReason"
         :selected-container-title="selectedNodeIsContainer ? selectedManifest?.title : undefined"
         @add="addMaterial"
         @add-to-container="addMaterialToSelectedContainer"
@@ -4021,6 +4068,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
           :node-id="selectedNode.id"
           :material-options="canvasContextMaterialOptions"
           :operation-items="nodeContextMenuItems"
+          :insert-targets="materialInsertTargets"
           @insert-before="insertMaterialAroundSelected('before')"
           @insert-after="insertMaterialAroundSelected('after')"
           @add-inside="insertMaterialInsideSelectedContainer"

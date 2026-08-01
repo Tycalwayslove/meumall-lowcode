@@ -27,6 +27,7 @@ defineProps<{
   registry: MaterialRegistry<VueH5MaterialComponent>;
   previewData: JsonObject;
   actionExecutor: LowcodeActionExecutor;
+  insertDisabledReason?: string;
 }>();
 
 const emit = defineEmits<{
@@ -116,7 +117,13 @@ const emit = defineEmits<{
           </div>
 
           <div class="material-detail-actions">
-            <button type="button" @click="emit('add')">
+            <p v-if="insertDisabledReason" class="material-insert-lock">{{ insertDisabledReason }}</p>
+            <button
+              type="button"
+              :title="insertDisabledReason ?? '添加到画布'"
+              :disabled="Boolean(insertDisabledReason)"
+              @click="emit('add')"
+            >
               <Plus :size="15" />
               <span>添加到画布</span>
             </button>

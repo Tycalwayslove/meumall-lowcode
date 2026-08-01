@@ -234,6 +234,16 @@ The permission helpers keep editor operation availability reusable across the Vu
 
 These helpers do not read users, create approval instances, call Java approval or lock APIs, renew locks, release locks, render UI, or mutate Page Schema. Host shells remain responsible for real approval flows, lock services, audit logs, and persistence.
 
+## Material Insert Target API
+
+The material insert target helpers keep material insertion affordances reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeMaterialInsertTargets(options)` returns the standard `append`, `before`, `after`, and `inside` targets with labels, descriptions, parent/index placement data, disabled state, and disabled reasons.
+
+`createLowcodeMaterialInsertTarget(options)` derives one target, while `insertLowcodeMaterialByTarget(state, node, target)` applies an enabled target through the same immutable command style as `insertNode`.
+
+These helpers do not render toolbars, inspect DOM, decide whether a material is a container, create material nodes from manifests, handle drag-and-drop, or persist schema. Host shells remain responsible for UI, material registry lookup, permission state, drag/drop hints, audit, and server-side saving.
+
 ## Prop Editor Model API
 
 The prop editor model helpers keep inspector field behavior reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.

@@ -570,6 +570,35 @@ export interface CreateLowcodeNodeOperationMessageOptions {
   materialTitle?: string;
 }
 
+export type LowcodeEditorMaterialInsertPlacement = "append" | "before" | "after" | "inside";
+
+export interface LowcodeEditorMaterialInsertTarget {
+  placement: LowcodeEditorMaterialInsertPlacement;
+  label: string;
+  description: string;
+  disabled: boolean;
+  disabledReason?: string;
+  parentId?: string;
+  index?: number;
+  action?: LowcodeEditorNodeOperationAction;
+}
+
+export interface CreateLowcodeMaterialInsertTargetsOptions {
+  selectedRow?: Pick<LowcodeEditorOutlineRow, "node" | "parentId" | "index" | "title">;
+  selectedNodeIsContainer?: boolean;
+  canInsert?: boolean;
+  hasMaterial?: boolean;
+  materialTitle?: string;
+  disabledReason?: string;
+  missingMaterialReason?: string;
+  missingSelectedNodeReason?: string;
+  missingContainerReason?: string;
+}
+
+export interface CreateLowcodeMaterialInsertTargetOptions extends CreateLowcodeMaterialInsertTargetsOptions {
+  placement: LowcodeEditorMaterialInsertPlacement;
+}
+
 export interface LowcodeEditorOutlineMaterialInfo {
   componentName: string;
   title: string;
@@ -2600,6 +2629,100 @@ export function createLowcodeNodeOperationMessage(
     case "redo":
       return "已重做上一步操作";
   }
+}
+
+function getLowcodeMaterialInsertBaseDisabledReason(
+  options: CreateLowcodeMaterialInsertTargetsOptions,
+): string | undefined {
+  if (options.hasMaterial === false) return options.missingMaterialReason ?? "请先选择要插入的物料。";
+  if (options.canInsert === false) return options.disabledReason ?? "当前不可插入物料。";
+  return undefined;
+}
+
+export function createLowcodeMaterialInsertTarget(
+  options: CreateLowcodeMaterialInsertTargetOptions,
+): LowcodeEditorMaterialInsertTarget {
+  const materialTitle = options.materialTitle ?? "选中物料";
+  const selectedTitle = options.selectedRow?.title ?? "当前节点";
+  const baseDisabledReason = getLowcodeMaterialInsertBaseDisabledReason(options);
+  const disabledBySelectionReason = options.missingSelectedNodeReason ?? "请先选中一个画布节点。";
+  const disabledByContainerReason = options.missingContainerReason ?? "当前选中节点不是容器。";
+
+  if (options.placement === "append") {
+    return {
+      placement: "append",
+      label: "追加到页面",
+      description: `把 ${materialTitle} 添加到页面末尾。`,
+      disabled: Boolean(baseDisabledReason),
+      disabledReason: baseDisabledReason,
+    };
+  }
+
+  if (options.placement === "before") {
+    const disabledReason = baseDisabledReason ?? (options.selectedRow ? undefined : disabledBySelectionReason);
+    return {
+      placement: "before",
+      label: "前方插入",
+      description: options.selectedRow ? `插入到 ${selectedTitle} 前方。` : "插入到当前选中节点前方。",
+      disabled: Boolean(disabledReason),
+      disabledReason,
+      parentId: options.selectedRow?.parentId,
+      index: options.selectedRow?.index,
+      action: "insertBefore",
+    };
+  }
+
+  if (options.placement === "after") {
+    const disabledReason = baseDisabledReason ?? (options.selectedRow ? undefined : disabledBySelectionReason);
+    return {
+      placement: "after",
+      label: "后方插入",
+      description: options.selectedRow ? `插入到 ${selectedTitle} 后方。` : "插入到当前选中节点后方。",
+      disabled: Boolean(disabledReason),
+      disabledReason,
+      parentId: options.selectedRow?.parentId,
+      index: options.selectedRow ? options.selectedRow.index + 1 : undefined,
+      action: "insertAfter",
+    };
+  }
+
+  const disabledReason = baseDisabledReason
+    ?? (options.selectedRow ? undefined : disabledBySelectionReason)
+    ?? (options.selectedNodeIsContainer ? undefined : disabledByContainerReason);
+  return {
+    placement: "inside",
+    label: "加入容器",
+    description: options.selectedRow ? `加入 ${selectedTitle} 容器内部。` : "加入当前选中容器内部。",
+    disabled: Boolean(disabledReason),
+    disabledReason,
+    parentId: disabledReason ? undefined : options.selectedRow?.node.id,
+    action: "addInside",
+  };
+}
+
+export function createLowcodeMaterialInsertTargets(
+  options: CreateLowcodeMaterialInsertTargetsOptions = {},
+): LowcodeEditorMaterialInsertTarget[] {
+  return [
+    createLowcodeMaterialInsertTarget({ ...options, placement: "append" }),
+    createLowcodeMaterialInsertTarget({ ...options, placement: "before" }),
+    createLowcodeMaterialInsertTarget({ ...options, placement: "after" }),
+    createLowcodeMaterialInsertTarget({ ...options, placement: "inside" }),
+  ];
+}
+
+export function insertLowcodeMaterialByTarget(
+  state: LowcodeEditorState,
+  node: LowcodeEditorNodeInput,
+  target: LowcodeEditorMaterialInsertTarget,
+): LowcodeEditorState {
+  if (target.disabled) return state;
+  if (target.placement === "append") return appendNode(state, node);
+  return insertNode(state, node, {
+    parentId: target.parentId,
+    index: target.index,
+    select: true,
+  });
 }
 
 export function appendNode(state: LowcodeEditorState, node: NodeInput): LowcodeEditorState {

@@ -45,6 +45,8 @@ import {
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
   createLowcodeMaterialFavoriteMessage,
+  createLowcodeMaterialInsertTarget,
+  createLowcodeMaterialInsertTargets,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
   createLowcodeNodeOperationItems,
@@ -99,6 +101,7 @@ import {
   getLowcodeEditorActionDisabledReason,
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
+  insertLowcodeMaterialByTarget,
   isLowcodeHexColor,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeListImageField,
@@ -1092,6 +1095,102 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(createLowcodeNodeOperationMessage("delete", { nodeTitle: "首屏主图" }), "已删除节点：首屏主图");
     assert.equal(createLowcodeNodeOperationMessage("insertAfter", { materialTitle: "图片 Banner" }), "已在后方插入物料：图片 Banner");
     assert.equal(createLowcodeNodeOperationMessage("redo"), "已重做上一步操作");
+  });
+
+  it("creates reusable material insert targets and applies them to editor state", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "insert_target_page",
+      title: "插入目标页面",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: {},
+        }),
+        createLowcodeNode({
+          id: "container_1",
+          componentName: "SectionContainer",
+          materialVersion: "1.0.0",
+          props: {},
+          children: [
+            createLowcodeNode({
+              id: "products_1",
+              componentName: "ProductList",
+              materialVersion: "1.0.0",
+              props: {},
+            }),
+          ],
+        }),
+      ],
+    });
+    const rows = createLowcodeOutlineRows(schema.nodes, { materialManifests: manifests });
+    const bannerRow = rows.find((row) => row.node.id === "banner_1");
+    const containerRow = rows.find((row) => row.node.id === "container_1");
+    assert.ok(bannerRow);
+    assert.ok(containerRow);
+
+    const targets = createLowcodeMaterialInsertTargets({
+      selectedRow: bannerRow,
+      materialTitle: "行动按钮",
+      hasMaterial: true,
+      canInsert: true,
+    });
+    const targetByPlacement = new Map(targets.map((target) => [target.placement, target]));
+    assert.deepEqual(targets.map((target) => target.placement), ["append", "before", "after", "inside"]);
+    assert.equal(targetByPlacement.get("append")?.description, "把 行动按钮 添加到页面末尾。");
+    assert.equal(targetByPlacement.get("before")?.index, 0);
+    assert.equal(targetByPlacement.get("after")?.index, 1);
+    assert.equal(targetByPlacement.get("inside")?.disabled, true);
+    assert.equal(targetByPlacement.get("inside")?.disabledReason, "当前选中节点不是容器。");
+
+    const state = createEditorState(schema, { selectedNodeId: "banner_1" });
+    const insertedAfter = insertLowcodeMaterialByTarget(
+      state,
+      { id: "button_after", componentName: "ActionButton", materialVersion: "1.0.0", props: { text: "立即查看" } },
+      targetByPlacement.get("after"),
+    );
+    assert.equal(insertedAfter.schema.nodes[1]?.id, "button_after");
+    assert.equal(insertedAfter.selectedNodeId, "button_after");
+    assert.equal(countLowcodeNodes(insertedAfter.schema), 4);
+
+    const insideTarget = createLowcodeMaterialInsertTarget({
+      placement: "inside",
+      selectedRow: containerRow,
+      selectedNodeIsContainer: true,
+      materialTitle: "行动按钮",
+    });
+    assert.equal(insideTarget.disabled, false);
+    assert.equal(insideTarget.parentId, "container_1");
+    const insertedInside = insertLowcodeMaterialByTarget(
+      state,
+      { id: "button_inside", componentName: "ActionButton", materialVersion: "1.0.0", props: { text: "立即查看" } },
+      insideTarget,
+    );
+    assert.equal(insertedInside.schema.nodes[1]?.children?.at(-1)?.id, "button_inside");
+    assert.equal(insertedInside.selectedNodeId, "button_inside");
+
+    const readonlyTargets = createLowcodeMaterialInsertTargets({
+      selectedRow: bannerRow,
+      canInsert: false,
+      disabledReason: "运营 B 正在编辑，当前仅可查看。",
+    });
+    assert.equal(readonlyTargets.every((target) => target.disabled), true);
+    assert.equal(readonlyTargets[0]?.disabledReason, "运营 B 正在编辑，当前仅可查看。");
+
+    const missingMaterialTarget = createLowcodeMaterialInsertTarget({
+      placement: "append",
+      hasMaterial: false,
+    });
+    assert.equal(missingMaterialTarget.disabled, true);
+    assert.equal(missingMaterialTarget.disabledReason, "请先选择要插入的物料。");
+
+    const noSelectionTarget = createLowcodeMaterialInsertTarget({
+      placement: "before",
+      hasMaterial: true,
+    });
+    assert.equal(noSelectionTarget.disabled, true);
+    assert.equal(noSelectionTarget.disabledReason, "请先选中一个画布节点。");
   });
 
   it("creates reusable outline rows and visibility state", () => {
