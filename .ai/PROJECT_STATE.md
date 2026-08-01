@@ -207,7 +207,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 待提交 | 新增 BasicList 基础列表通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
+| 2026-08-01 | 39076fd | 新增 BasicList 基础列表通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
 | 2026-08-01 | 99e3a5f | 新增 BasicForm 基础表单容器通用物料，并扩展 editor 默认容器名单。 |
 | 2026-08-01 | a390a9c | 新增 GridContainer 网格容器通用物料，并公开 editor 默认容器名单和容器判断函数。 |
 | 2026-08-01 | `661bf25` | 新增 BasicPrice 基础价格通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
