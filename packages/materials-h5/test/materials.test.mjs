@@ -15,6 +15,7 @@ import {
   BasicInput,
   BasicLink,
   BasicList,
+  BasicMetric,
   BasicModal,
   BasicPrice,
   BasicProgress,
@@ -131,6 +132,9 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicStateBlock", "state", ["empty", "loading", "error", "success", "info"]],
       ["BasicStateBlock", "align", ["left", "center"]],
       ["BasicProgress", "tone", ["brand", "success", "warning", "danger", "neutral"]],
+      ["BasicMetric", "tone", ["brand", "success", "warning", "danger", "neutral"]],
+      ["BasicMetric", "variant", ["card", "plain"]],
+      ["BasicMetric", "align", ["left", "center", "right"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -202,6 +206,14 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicProgress", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicProgress", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicProgress", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicMetric", "valueSize", { min: 16, max: 64, step: 1, unit: "px" }],
+      ["BasicMetric", "labelSize", { min: 10, max: 24, step: 1, unit: "px" }],
+      ["BasicMetric", "helperSize", { min: 10, max: 20, step: 1, unit: "px" }],
+      ["BasicMetric", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetric", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetric", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetric", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicMetric", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -314,6 +326,14 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicProgress", "trackColor"],
       ["BasicProgress", "fillColor"],
       ["BasicProgress", "borderColor"],
+      ["BasicMetric", "wrapperBackgroundColor"],
+      ["BasicMetric", "backgroundColor"],
+      ["BasicMetric", "labelColor"],
+      ["BasicMetric", "valueColor"],
+      ["BasicMetric", "prefixColor"],
+      ["BasicMetric", "suffixColor"],
+      ["BasicMetric", "helperColor"],
+      ["BasicMetric", "borderColor"],
       ["BasicLink", "backgroundColor"],
       ["BasicLink", "textColor"],
       ["BasicLink", "subtitleColor"],
@@ -522,6 +542,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicAlert, ["MlcButton", "MlcText", "MlcTag"]);
     functionSourceIncludes(BasicStateBlock, ["MlcStateBlock", "MlcButton"]);
     functionSourceIncludes(BasicProgress, ["MlcProgress"]);
+    functionSourceIncludes(BasicMetric, ["MlcMetric"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -952,6 +973,48 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(progress.props.value, 80);
     assert.equal(progress.props.max, 100);
     assert.equal(progress.props.valueText, "80%");
+  });
+
+  it("registers the basic metric material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicMetric");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础指标");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.label, "参与人数");
+    assert.equal(material.manifest.defaultProps.value, "1280");
+    assert.equal(material.manifest.propsSchema.helperText.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.tone.setter, "select");
+    assert.equal(material.manifest.propsSchema.variant.setter, "select");
+    assert.equal(material.manifest.propsSchema.align.setter, "select");
+    assert.equal(material.manifest.propsSchema.valueSize.setter, "number");
+    assert.equal(material.manifest.propsSchema.valueColor.setter, "color");
+  });
+
+  it("renders basic metric props in React H5", () => {
+    const element = BasicMetric({
+      node: { id: "metric_1", componentName: "BasicMetric", props: {} },
+      props: {
+        label: "今日上新",
+        value: "24",
+        suffix: "款",
+        helperText: "静态指标示例",
+        tone: "success",
+        variant: "card",
+        align: "center",
+      },
+    });
+
+    assert.equal(element.props.className.includes("mlc-basic-metric--success"), true);
+    assert.equal(element.props.className.includes("mlc-basic-metric--card"), true);
+    const card = element.props.children;
+    assert.equal(card.props.className, "mlc-basic-metric__card");
+    const metric = card.props.children;
+    assert.equal(metric.type.name, "MlcMetric");
+    assert.equal(metric.props.label, "今日上新");
+    assert.equal(metric.props.value, "24");
+    assert.equal(metric.props.suffix, "款");
+    assert.equal(metric.props.align, "center");
   });
 
   it("renders section container layout props in React H5", () => {

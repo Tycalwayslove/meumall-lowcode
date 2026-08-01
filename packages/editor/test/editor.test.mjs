@@ -722,6 +722,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodeMaterialCategoryMeta("unknown").description, "自定义物料分类，具体业务边界以物料详情和 manifest 为准。");
     assert.equal(getLowcodeMaterialLayerMeta("business").label, "业务物料");
     assert.equal(getLowcodeMaterialFamilyMeta("input").primitiveHint.includes("Input"), true);
+    assert.equal(getLowcodeMaterialFamilyMeta("content").primitiveHint.includes("Metric"), true);
     assert.equal(getLowcodeMaterialFamilyMeta("feedback").primitiveHint.includes("StateBlock"), true);
     assert.equal(getLowcodeMaterialFamilyMeta("feedback").primitiveHint.includes("Progress"), true);
 
@@ -756,6 +757,19 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(progressProfile.layer, "generic");
     assert.equal(progressProfile.family, "feedback");
     assert.ok(progressProfile.boundary.includes("远程进度"));
+
+    const metricProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
+      componentName: "BasicMetric",
+      materialVersion: "1.0.0",
+      title: "基础指标",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {},
+      defaultProps: {},
+    }));
+    assert.equal(metricProfile.layer, "generic");
+    assert.equal(metricProfile.family, "content");
+    assert.ok(metricProfile.boundary.includes("远程统计"));
 
     const customProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
       componentName: "PartnerWidget",
@@ -920,6 +934,22 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(createLowcodeMaterialInsertPresets(progress).map((preset) => [preset.id, preset.title]), [
       ["campaign-progress", "活动进度"],
       ["neutral-progress", "说明进度"],
+    ]);
+
+    const metric = createMaterialManifest({
+      componentName: "BasicMetric",
+      materialVersion: "1.0.0",
+      title: "基础指标",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        value: { label: "指标数值", type: "string", setter: "input", defaultValue: "1280" },
+      },
+      defaultProps: { value: "1280" },
+    });
+    assert.deepEqual(createLowcodeMaterialInsertPresets(metric).map((preset) => [preset.id, preset.title]), [
+      ["participant-metric", "参与人数"],
+      ["new-arrival-metric", "上新数量"],
     ]);
 
     const customPresets = createLowcodeMaterialInsertPresets(button, {

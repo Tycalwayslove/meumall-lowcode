@@ -9,6 +9,7 @@ import {
   MlcButton,
   MlcImage,
   MlcInput,
+  MlcMetric,
   MlcProgress,
   MlcStateBlock,
   MlcText,
@@ -19,6 +20,7 @@ test("exports Vue H5 primitives as components", () => {
   assert.equal(MlcButton.name, "MlcButton");
   assert.equal(MlcImage.name, "MlcImage");
   assert.equal(MlcInput.name, "MlcInput");
+  assert.equal(MlcMetric.name, "MlcMetric");
   assert.equal(MlcProgress.name, "MlcProgress");
   assert.equal(MlcStateBlock.name, "MlcStateBlock");
   assert.equal(MlcText.name, "MlcText");
@@ -26,6 +28,7 @@ test("exports Vue H5 primitives as components", () => {
 
 test("keeps Vue primitives outside material manifest semantics", () => {
   assert.equal("manifest" in MlcButton, false);
+  assert.equal("manifest" in MlcMetric, false);
   assert.equal("manifest" in MlcProgress, false);
   assert.equal("manifest" in MlcStateBlock, false);
   assert.equal("props" in MlcButton, true);

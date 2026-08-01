@@ -13,6 +13,7 @@ import {
   MlcDivider,
   MlcImage,
   MlcInput,
+  MlcMetric,
   MlcModal,
   MlcNoticeBar,
   MlcPrice,
@@ -314,6 +315,8 @@ type BasicAlertTone = "info" | "success" | "warning" | "danger" | "neutral";
 type BasicAlertVariant = "soft" | "outline" | "solid";
 type BasicStateBlockState = MlcStateBlockState;
 type BasicProgressTone = "brand" | "success" | "warning" | "danger" | "neutral";
+type BasicMetricTone = "brand" | "success" | "warning" | "danger" | "neutral";
+type BasicMetricVariant = "card" | "plain";
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
@@ -458,6 +461,19 @@ const BASIC_PROGRESS_TONE_OPTIONS = [
   { label: "中性", value: "neutral" },
 ];
 
+const BASIC_METRIC_TONE_OPTIONS = [
+  { label: "品牌", value: "brand" },
+  { label: "成功", value: "success" },
+  { label: "警告", value: "warning" },
+  { label: "危险", value: "danger" },
+  { label: "中性", value: "neutral" },
+];
+
+const BASIC_METRIC_VARIANT_OPTIONS = [
+  { label: "卡片", value: "card" },
+  { label: "简洁", value: "plain" },
+];
+
 const BASIC_ALERT_TONE_PALETTES = {
   info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", content: "#1d4ed8" },
   success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", content: "#0f766e" },
@@ -482,6 +498,14 @@ const BASIC_PROGRESS_TONE_PALETTES = {
   neutral: { fill: "#64748b", track: "#e2e8f0", title: "#111827", description: "#64748b", value: "#475569" },
 } satisfies Record<BasicProgressTone, { fill: string; track: string; title: string; description: string; value: string }>;
 
+const BASIC_METRIC_TONE_PALETTES = {
+  brand: { value: "#1d4ed8", label: "#475569", helper: "#64748b", background: "#ffffff", border: "#dbeafe" },
+  success: { value: "#0f766e", label: "#134e4a", helper: "#0f766e", background: "#f0fdfa", border: "#99f6e4" },
+  warning: { value: "#c2410c", label: "#9a3412", helper: "#c2410c", background: "#fff7ed", border: "#fed7aa" },
+  danger: { value: "#b91c1c", label: "#991b1b", helper: "#b91c1c", background: "#fef2f2", border: "#fecaca" },
+  neutral: { value: "#111827", label: "#475569", helper: "#64748b", background: "#ffffff", border: "#e5e7eb" },
+} satisfies Record<BasicMetricTone, { value: string; label: string; helper: string; background: string; border: string }>;
+
 const BASIC_TIMELINE_STATUS_PALETTES = {
   done: { marker: "#0f766e", text: "#0f766e", line: "#99f6e4" },
   active: { marker: "#2563eb", text: "#2563eb", line: "#bfdbfe" },
@@ -501,6 +525,9 @@ const NUMBER_STEPPER_STEP_META = { min: 1, max: 20, step: 1 };
 const NUMBER_PROGRESS_VALUE_META = { min: 0, max: 100, step: 1 };
 const NUMBER_PROGRESS_MAX_META = { min: 1, max: 10000, step: 1 };
 const NUMBER_PROGRESS_HEIGHT_META = { min: 4, max: 32, step: 1, unit: "px" };
+const NUMBER_METRIC_VALUE_SIZE_META = { min: 16, max: 64, step: 1, unit: "px" };
+const NUMBER_METRIC_LABEL_SIZE_META = { min: 10, max: 24, step: 1, unit: "px" };
+const NUMBER_METRIC_HELPER_SIZE_META = { min: 10, max: 20, step: 1, unit: "px" };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
 const NUMBER_GRID_COLUMNS_META = { min: 2, max: 3, step: 1 };
 const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
@@ -1829,6 +1856,62 @@ export const BasicProgress = defineComponent({
             valueColor: text(runtimeProps.valueColor, palette.value),
             height: number(runtimeProps.height, 10),
             radius: number(runtimeProps.barRadius, 999),
+          }),
+        ),
+      );
+    };
+  },
+});
+
+export const BasicMetric = defineComponent({
+  name: "BasicMetric",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const tone = option<BasicMetricTone>(runtimeProps.tone, ["brand", "success", "warning", "danger", "neutral"], "brand");
+      const variant = option<BasicMetricVariant>(runtimeProps.variant, ["card", "plain"], "card");
+      const align = option<BasicInlineAlign>(runtimeProps.align, ["left", "center", "right"], "left");
+      const palette = BASIC_METRIC_TONE_PALETTES[tone];
+
+      return h(
+        "section",
+        {
+          class: `mlc-material mlc-basic-metric mlc-basic-metric--${tone} mlc-basic-metric--${variant}`,
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-metric__card",
+            style: {
+              display: "grid",
+              padding: variant === "card" ? `${number(runtimeProps.padding, 14)}px` : 0,
+              border: variant === "card" ? `${number(runtimeProps.borderWidth, 1)}px solid ${text(runtimeProps.borderColor, palette.border)}` : "0 solid transparent",
+              borderRadius: variant === "card" ? `${number(runtimeProps.radius, 12)}px` : 0,
+              background: variant === "card" ? text(runtimeProps.backgroundColor, palette.background) : "transparent",
+              boxShadow: variant === "card" && boolean(runtimeProps.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : "none",
+            } satisfies CSSProperties,
+          },
+          h(MlcMetric, {
+            label: text(runtimeProps.label, "基础指标"),
+            value: text(runtimeProps.value, "1280"),
+            prefix: text(runtimeProps.prefix),
+            suffix: text(runtimeProps.suffix),
+            helperText: text(runtimeProps.helperText, "用于展示静态数字指标或配置摘要。"),
+            align,
+            labelColor: text(runtimeProps.labelColor, palette.label),
+            valueColor: text(runtimeProps.valueColor, palette.value),
+            prefixColor: text(runtimeProps.prefixColor, palette.helper),
+            suffixColor: text(runtimeProps.suffixColor, palette.helper),
+            helperColor: text(runtimeProps.helperColor, palette.helper),
+            valueSize: number(runtimeProps.valueSize, 30),
+            labelSize: number(runtimeProps.labelSize, 13),
+            helperSize: number(runtimeProps.helperSize, 12),
+            gap: number(runtimeProps.gap, 6),
           }),
         ),
       );
@@ -6062,6 +6145,70 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
         padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
         gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
+    }),
+  },
+  {
+    component: BasicMetric,
+    manifest: createMaterialManifest({
+      componentName: "BasicMetric",
+      materialVersion: "0.1.0",
+      title: "基础指标",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "参与人数",
+        value: "1280",
+        prefix: "",
+        suffix: "人",
+        helperText: "用于展示静态数字指标或配置摘要。",
+        tone: "brand",
+        variant: "card",
+        align: "left",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#ffffff",
+        labelColor: "#475569",
+        valueColor: "#1d4ed8",
+        prefixColor: "#64748b",
+        suffixColor: "#64748b",
+        helperColor: "#64748b",
+        borderColor: "#dbeafe",
+        borderWidth: 1,
+        radius: 12,
+        valueSize: 30,
+        labelSize: 13,
+        helperSize: 12,
+        paddingY: 14,
+        padding: 14,
+        gap: 6,
+        shadow: true,
+      },
+      propsSchema: {
+        label: { label: "指标标签", type: "string", setter: "input", defaultValue: "参与人数" },
+        value: { label: "指标数值", type: "string", setter: "input", defaultValue: "1280" },
+        prefix: { label: "前缀", type: "string", setter: "input", defaultValue: "" },
+        suffix: { label: "后缀", type: "string", setter: "input", defaultValue: "人" },
+        helperText: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于展示静态数字指标或配置摘要。" },
+        tone: { label: "语气", type: "string", setter: "select", defaultValue: "brand", options: BASIC_METRIC_TONE_OPTIONS },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "card", options: BASIC_METRIC_VARIANT_OPTIONS },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#475569", ...COLOR_SWATCHES_META },
+        valueColor: { label: "数值色", type: "string", setter: "color", defaultValue: "#1d4ed8", ...COLOR_SWATCHES_META },
+        prefixColor: { label: "前缀色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        suffixColor: { label: "后缀色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        helperColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#dbeafe", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        valueSize: { label: "数值字号", type: "number", setter: "number", defaultValue: 30, ...NUMBER_METRIC_VALUE_SIZE_META },
+        labelSize: { label: "标签字号", type: "number", setter: "number", defaultValue: 13, ...NUMBER_METRIC_LABEL_SIZE_META },
+        helperSize: { label: "说明字号", type: "number", setter: "number", defaultValue: 12, ...NUMBER_METRIC_HELPER_SIZE_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 6, ...NUMBER_PIXEL_SIZE_META },
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
       },
     }),

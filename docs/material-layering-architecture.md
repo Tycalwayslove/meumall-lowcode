@@ -144,6 +144,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicAlert`
 - `BasicStateBlock`
 - `BasicProgress`
+- `BasicMetric`
 - `NoticeBar`
 - `ActionButton`
 - `RichTextBlock`
@@ -180,6 +181,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicStateBlock` 是通用静态状态块物料，负责空态、加载态、错误态、成功态和信息态的图标、标题、说明、行动按钮、边框、圆角、颜色和 `onActionClick` 安全事件；它不承载远程状态流、接口重试协议、业务错误码翻译、全局 toast、消息中心、权限审批或业务通知状态。这些能力应由宿主状态协议、action handler、业务物料或后续专项反馈协议扩展。
 
 `BasicProgress` 是通用静态进度条物料，负责标题、说明、当前值、最大值、数值展示、语气、轨道色、进度色、圆角、留白和阴影配置；它不承载远程活动进度、任务自动刷新、服务端百分比计算、订单状态、审批流或业务达成率接口。这些能力应由后续数据源协议、业务物料、管理台工作流或宿主服务扩展。
+
+`BasicMetric` 是通用静态指标物料，负责指标标签、数值、前缀、后缀、说明、语气、对齐、卡片样式、颜色、圆角、留白和阴影配置；它不承载远程统计、实时刷新、库存计算、销量计算、人数计算、埋点聚合或服务端格式化。这些能力应由后续数据源协议、业务物料、Java/BFF 或宿主服务扩展。
 
 `BasicLink` 是通用轻量链接入口物料，负责链接文案、辅助说明、前置标签、右侧箭头、普通 H5 链接、禁用态、圆角、边框、颜色和 `onClick` 安全事件；它不承载业务路由白名单、App bridge、登录鉴权、埋点平台、风控、权限审批、短链生成或远程链接校验。这些能力应由宿主 action handler、Java/BFF、管理台权限或后续专项协议扩展。
 
@@ -362,6 +365,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicAlert`
 - `BasicStateBlock`
 - `BasicProgress`
+- `BasicMetric`
 - `NoticeBar`
 - `ActionButton`
 - `ImageCardGrid`
@@ -370,7 +374,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `RichTextBlock`
 - `NavGrid`
 
-新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`BasicForm`、`ActivityHero`、`Basic*`、`BasicStateBlock`、`BasicProgress`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；其中基础表单字段的 DOM 描述、值格式化、值解析、空值判断和必填提示推导已沉淀为 React/Vue primitives 同名 helper。它们仍是可拖拽物料，不是 primitives API 本身。
+新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`BasicForm`、`ActivityHero`、`Basic*`、`BasicStateBlock`、`BasicProgress`、`BasicMetric`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；其中基础表单字段的 DOM 描述、值格式化、值解析、空值判断和必填提示推导已沉淀为 React/Vue primitives 同名 helper。它们仍是可拖拽物料，不是 primitives API 本身。
 
 ## Business Materials 首批规划
 

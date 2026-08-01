@@ -10,6 +10,7 @@ import {
   MlcButton,
   MlcImage,
   MlcInput,
+  MlcMetric,
   MlcProgress,
   MlcStateBlock,
   MlcText,
@@ -20,6 +21,7 @@ test("exports React H5 primitives as components", () => {
   assert.equal(typeof MlcButton, "function");
   assert.equal(typeof MlcImage, "function");
   assert.equal(typeof MlcInput, "function");
+  assert.equal(typeof MlcMetric, "function");
   assert.equal(typeof MlcProgress, "function");
   assert.equal(typeof MlcStateBlock, "function");
   assert.equal(typeof MlcText, "function");
@@ -28,9 +30,11 @@ test("exports React H5 primitives as components", () => {
 test("creates React elements without material manifest coupling", () => {
   assert.equal(React.isValidElement(React.createElement(MlcButton, null, "提交")), true);
   assert.equal(React.isValidElement(React.createElement(MlcInput, { value: "hello" })), true);
+  assert.equal(React.isValidElement(React.createElement(MlcMetric, { label: "参与人数", value: "1280" })), true);
   assert.equal(React.isValidElement(React.createElement(MlcProgress, { value: 60, max: 100 })), true);
   assert.equal(React.isValidElement(React.createElement(MlcStateBlock, { title: "暂无内容" })), true);
   assert.equal("manifest" in MlcButton, false);
+  assert.equal("manifest" in MlcMetric, false);
   assert.equal("manifest" in MlcProgress, false);
   assert.equal("manifest" in MlcStateBlock, false);
 });

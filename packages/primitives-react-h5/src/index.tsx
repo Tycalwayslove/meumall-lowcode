@@ -995,6 +995,78 @@ export function MlcProgress({
   );
 }
 
+export interface MlcMetricProps {
+  label?: React.ReactNode;
+  value?: React.ReactNode;
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  helperText?: React.ReactNode;
+  align?: "left" | "center" | "right";
+  labelColor?: string;
+  valueColor?: string;
+  prefixColor?: string;
+  suffixColor?: string;
+  helperColor?: string;
+  valueSize?: number;
+  labelSize?: number;
+  helperSize?: number;
+  gap?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcMetric({
+  label,
+  value,
+  prefix,
+  suffix,
+  helperText,
+  align = "left",
+  labelColor = h5Tokens.color.mutedText,
+  valueColor = h5Tokens.color.text,
+  prefixColor = h5Tokens.color.mutedText,
+  suffixColor = h5Tokens.color.mutedText,
+  helperColor = h5Tokens.color.mutedText,
+  valueSize = 28,
+  labelSize = 13,
+  helperSize = 12,
+  gap = 6,
+  className,
+  style,
+}: MlcMetricProps): React.ReactElement {
+  return (
+    <div className={className} style={{ display: "grid", gap, textAlign: align, minWidth: 0, ...style }}>
+      {label ? (
+        <MlcText as="span" size={labelSize} weight={700} lineHeight={1.35} style={{ color: labelColor }}>
+          {label}
+        </MlcText>
+      ) : null}
+      <strong
+        style={{
+          display: "inline-flex",
+          alignItems: "baseline",
+          justifyContent: align === "center" ? "center" : align === "right" ? "flex-end" : "flex-start",
+          gap: 3,
+          minWidth: 0,
+          color: valueColor,
+          fontSize: valueSize,
+          fontWeight: 900,
+          lineHeight: 1.05,
+        }}
+      >
+        {prefix ? <small style={{ color: prefixColor, fontSize: Math.max(11, valueSize - 12), fontWeight: 800 }}>{prefix}</small> : null}
+        <span style={{ overflowWrap: "anywhere" }}>{value ?? "0"}</span>
+        {suffix ? <small style={{ color: suffixColor, fontSize: Math.max(11, valueSize - 12), fontWeight: 800 }}>{suffix}</small> : null}
+      </strong>
+      {helperText ? (
+        <MlcText as="p" size={helperSize} lineHeight={1.55} style={{ color: helperColor }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </div>
+  );
+}
+
 export interface MlcPriceProps {
   amountText?: string;
   prefix?: string;

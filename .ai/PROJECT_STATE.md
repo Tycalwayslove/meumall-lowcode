@@ -11,6 +11,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - React/Vue H5 primitives 新增业务无关表单字段 helper：`MlcFormFieldType`、字段 data attributes、值格式化、值解析、空值判断和必填提示推导；React/Vue materials 的 `BasicForm` 字段采集已复用该基础层 API，Page Schema v1、Material Manifest v1、renderer 和提交 payload 字段保持兼容。
 - React/Vue H5 primitives 新增业务无关 `MlcStateBlock`，React/Vue materials 新增 `BasicStateBlock` 通用静态状态块物料，支持空态、加载、错误、成功和信息状态、行动按钮及 `onActionClick` 安全事件；它只承载静态状态展示，不接远程状态流、接口重试协议、错误码翻译或全局 toast。
 - React/Vue H5 primitives 新增业务无关 `MlcProgress`，React/Vue materials 新增 `BasicProgress` 通用静态进度条物料，支持标题、说明、当前值、最大值、数值展示、语气和样式配置；它只承载静态进度展示，不接远程进度、自动刷新、服务端百分比计算、订单状态或审批流。
+- React/Vue H5 primitives 新增业务无关 `MlcMetric`，React/Vue materials 新增 `BasicMetric` 通用静态指标物料，支持指标标签、数值、前缀、后缀、说明、语气、对齐和卡片样式；它只承载静态指标展示，不接远程统计、实时刷新、库存计算、销量计算、人数计算或埋点聚合。
 - `@meumall/lowcode-editor` 属性分组 API 新增 `validation` 分组，`required`、`requiredMessage` 等校验类 props 会进入“表单校验”分组；Vue3 `EditorPropGroupsPanel` 会展示 BasicForm 提交前校验提示，帮助运营理解必填配置与 H5 runtime 字段错误态的关系。Page Schema v1、Material Manifest v1、renderer 和 materials runtime 协议不变。
 
 ## 当前维护范围
@@ -43,7 +44,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Changesets 基础配置；`createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-adapters` runtime health summary API、`@meumall/lowcode-runtime-react-h5`、`@meumall/lowcode-editor` demo checklist API 和 `@meumall/lowcode-editor` publish risk summary API 已有 pending minor changeset，真实发布前仍需统一确认 linked group 版本结果。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
-- H5 materials 初始实现，已包含容器、网格容器、基础表单、公告条、区块标题、图片卡片宫格、标签内容切换、基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关、基础复选框、基础文本、基础价格、分割线、基础图片、基础标签、基础图文卡片、基础图片轮播、基础视频、基础弹窗、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
+- H5 materials 初始实现，已包含容器、网格容器、基础表单、公告条、区块标题、图片卡片宫格、标签内容切换、基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础指标、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关、基础复选框、基础文本、基础价格、分割线、基础图片、基础标签、基础图文卡片、基础图片轮播、基础视频、基础弹窗、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
 - 低代码版 AI 工作流迁移。
 - GitHub 远端 `git@github.com:Tycalwayslove/meumall-lowcode.git` 已配置并推送 `main`。
 - Page Schema v1 ready 契约：`.ai-workspace/contracts/page-schema-v1.md` 已定义字段语义、生命周期、校验规则、兼容性、安全要求、变更流程和回滚方式。
@@ -165,7 +166,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器数组列表排序：属性面板列表项已支持同一数组属性内 HTML5 拖拽排序，拖拽后写回当前节点 props 数组，并提供拖拽中和目标项视觉状态。
 - Vue3 编辑器列表项图片素材选择：数组列表项中的 `imageUrl`、`coverImageUrl` 和 `logoImageUrl` 类字段会展示缩略图、保留 URL 输入，并可展开内联素材库选择图片后写回当前列表项字段；`ImageCardGrid.items` 和 `BasicCarousel.items` 已有稳定列表项字段模型，browser smoke 已覆盖 `ImageCardGrid.items[].imageUrl` 选择素材和缩略图写回。
 - 基础组件与物料分层架构：`docs/material-layering-architecture.md` 已定义 Design Tokens、Runtime Primitives、Generic Materials、Business Materials 的边界、依赖方向、首批组件清单、分阶段演进计划和新增物料检查清单；当前已落地 `@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 和 `@meumall/lowcode-primitives-vue-h5` 公开包。
-- Runtime primitives 公开包：`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已承载 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcSelect`、`MlcRadioGroup`、`MlcTextarea`、`MlcSwitch`、`MlcCheckbox`、`MlcStepper`、`MlcOverlay`、`MlcModal`、`MlcCountdownText`、`MlcTabs`、`MlcSpacer`、`MlcDivider`、`MlcNoticeBar`、`MlcRichText`、`MlcStateBlock` 和 `MlcProgress`，并由 React/Vue H5 materials 包组合成 `BasicButton`、`BasicLink`、`BasicAlert`、`BasicStateBlock`、`BasicProgress`、`BasicInput`、`BasicTextarea`、`BasicSelect`、`BasicRadioGroup`、`BasicStepper`、`BasicSwitch`、`BasicCheckbox`、`BasicText`、`BasicPrice`、`DividerBlock`、`BasicImage`、`BasicTag`、`BasicCard`、`BasicCarousel`、`BasicVideo`、`BasicModal`、`BasicForm`、`BasicList`、`BasicAccordion`、`BasicTimeline`、`LeadFormBlock`、`SectionContainer`、`GridContainer`、`ActivityHero`、`NoticeBar`、`RichTextBlock`、`ProductList`、`SpacerBlock`、`TabsBlock`、`ActivityRuleModal` 和 `CountdownTimer` 等物料；primitives 仍不进入 material registry。
+- Runtime primitives 公开包：`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已承载 `MlcButton`、`MlcImage`、`MlcTag`、`MlcText`、`MlcPrice`、`MlcInput`、`MlcSelect`、`MlcRadioGroup`、`MlcTextarea`、`MlcSwitch`、`MlcCheckbox`、`MlcStepper`、`MlcOverlay`、`MlcModal`、`MlcCountdownText`、`MlcTabs`、`MlcSpacer`、`MlcDivider`、`MlcNoticeBar`、`MlcRichText`、`MlcStateBlock`、`MlcProgress` 和 `MlcMetric`，并由 React/Vue H5 materials 包组合成 `BasicButton`、`BasicLink`、`BasicAlert`、`BasicStateBlock`、`BasicProgress`、`BasicMetric`、`BasicInput`、`BasicTextarea`、`BasicSelect`、`BasicRadioGroup`、`BasicStepper`、`BasicSwitch`、`BasicCheckbox`、`BasicText`、`BasicPrice`、`DividerBlock`、`BasicImage`、`BasicTag`、`BasicCard`、`BasicCarousel`、`BasicVideo`、`BasicModal`、`BasicForm`、`BasicList`、`BasicAccordion`、`BasicTimeline`、`LeadFormBlock`、`SectionContainer`、`GridContainer`、`ActivityHero`、`NoticeBar`、`RichTextBlock`、`ProductList`、`SpacerBlock`、`TabsBlock`、`ActivityRuleModal` 和 `CountdownTimer` 等物料；primitives 仍不进入 material registry。
 - Vue3 编辑器体验首轮优化：左侧物料区支持关键词搜索和分类过滤，画布顶部展示节点数、当前选中、校验/发布/保存状态，右侧当前节点卡片展示节点 id、父级和层级位置，并补充按钮、输入框、列表和画布工具栏的 hover/focus/active 反馈与响应式兜底；顶部工作区状态摘要已复用 editor workspace summary API。
 - Vue3 编辑器物料偏好：左侧物料区已支持星标收藏和最近使用，均以 `componentName` 写入 localStorage；偏好内容解析、去重、未知物料过滤、最近使用数量限制、收藏切换和收藏提示文案已复用 editor material preference API，收藏和最近使用物料仍通过 editor material catalog API 按顺序恢复并在顶部快捷区一键添加。
 - Vue3 编辑器属性面板分组：右侧 props 已按内容配置、样式配置、数据配置、行为配置和其他配置分组展示，支持折叠/展开，并修复新 profile 首次打开默认选中旧节点导致属性区为空的问题；字段归类、分组文案、顺序和折叠状态 helper 已复用 editor prop groups API；属性字段控件类型、列表字段、图片字段、默认新增项和输入转换已复用 editor prop editor model API；物料事件绑定展示、节点事件写回和 action 引用同步已复用 editor event binding API；属性字段分组、数组列表编辑器、列表项图片素材选择 UI 和事件绑定列表已通过 `EditorPropGroupsPanel.vue` 独立组件渲染，真实 props/events 写回、素材查询、商品 dataSource 绑定、权限和审计仍由 playground 或未来管理台 shell 持有。
@@ -417,7 +418,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `88c022e` | 新增基础复选框通用物料。 |
 | 2026-08-01 | `67893f0` | 新增基础单选组通用物料。 |
 | 2026-08-01 | `eab51d5` | 新增基础步进器通用物料。 |
-| 2026-08-01 | 本次提交 | 新增基础进度条通用物料。 |
+| 2026-08-01 | 本次提交 | 新增基础指标通用物料。 |
+| 2026-08-01 | `cb5304a` | 新增基础进度条通用物料。 |
 | 2026-08-01 | `b8d85c0` | 新增基础状态块通用物料。 |
 
 ## 默认验证命令

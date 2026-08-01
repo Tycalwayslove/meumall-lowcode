@@ -903,6 +903,60 @@ export const MlcProgress = defineComponent({
   },
 });
 
+export const MlcMetric = defineComponent({
+  name: "MlcMetric",
+  props: {
+    label: { type: String, default: "" },
+    value: { type: String, default: "0" },
+    prefix: { type: String, default: "" },
+    suffix: { type: String, default: "" },
+    helperText: { type: String, default: "" },
+    align: { type: String as PropType<"left" | "center" | "right">, default: "left" },
+    labelColor: { type: String, default: h5Tokens.color.mutedText },
+    valueColor: { type: String, default: h5Tokens.color.text },
+    prefixColor: { type: String, default: h5Tokens.color.mutedText },
+    suffixColor: { type: String, default: h5Tokens.color.mutedText },
+    helperColor: { type: String, default: h5Tokens.color.mutedText },
+    valueSize: { type: Number, default: 28 },
+    labelSize: { type: Number, default: 13 },
+    helperSize: { type: Number, default: 12 },
+    gap: { type: Number, default: 6 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () => h("div", { class: props.class, style: { display: "grid", gap: `${props.gap}px`, textAlign: props.align, minWidth: 0, ...props.style } satisfies CSSProperties }, [
+      props.label
+        ? h(MlcText, { as: "span", size: props.labelSize, weight: 700, lineHeight: 1.35, style: { color: props.labelColor } }, () => props.label)
+        : null,
+      h(
+        "strong",
+        {
+          style: {
+            display: "inline-flex",
+            alignItems: "baseline",
+            justifyContent: props.align === "center" ? "center" : props.align === "right" ? "flex-end" : "flex-start",
+            gap: "3px",
+            minWidth: 0,
+            color: props.valueColor,
+            fontSize: `${props.valueSize}px`,
+            fontWeight: 900,
+            lineHeight: 1.05,
+          } satisfies CSSProperties,
+        },
+        [
+          props.prefix ? h("small", { style: { color: props.prefixColor, fontSize: `${Math.max(11, props.valueSize - 12)}px`, fontWeight: 800 } }, props.prefix) : null,
+          h("span", { style: { overflowWrap: "anywhere" } satisfies CSSProperties }, props.value || "0"),
+          props.suffix ? h("small", { style: { color: props.suffixColor, fontSize: `${Math.max(11, props.valueSize - 12)}px`, fontWeight: 800 } }, props.suffix) : null,
+        ],
+      ),
+      props.helperText
+        ? h(MlcText, { as: "p", size: props.helperSize, lineHeight: 1.55, style: { color: props.helperColor } }, () => props.helperText)
+        : null,
+    ]);
+  },
+});
+
 export const MlcPrice = defineComponent({
   name: "MlcPrice",
   props: {
