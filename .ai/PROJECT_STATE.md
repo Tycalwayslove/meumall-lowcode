@@ -195,7 +195,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `本次提交` | 增强 `SectionContainer` 容器区块物料，复用内部 `MlcText` primitive 并保持单列容器协议稳定。 |
+| 2026-08-01 | `a771705` | 增强 `SectionContainer` 容器区块物料，复用内部 `MlcText` primitive 并保持单列容器协议稳定。 |
 | 2026-08-01 | `0f0b86b` | 增强 `ActivityHero` 活动头图物料，复用内部 primitives 并补齐样式配置、示例和 smoke 校验。 |
 | 2026-08-01 | `dd8678a` | 增强 `ProductList` 商品列表物料，复用内部 primitives 并补齐样式配置、示例和 smoke 校验。 |
 | 2026-07-31 | `a5a8a60` | 初始化低代码 monorepo。 |
