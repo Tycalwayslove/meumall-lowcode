@@ -44,6 +44,16 @@ Handlers receive the action config plus safe context containing the action ref, 
 
 `LowcodeConfigPlatformClient` describes the editor-facing draft, preview, publish, release-list, draft-query, and published-query API.
 
+It also contains optional editor workflow methods for Java management-console integration:
+
+- `getEditorWorkflowState(pageId)`
+- `acquireEditorLock(input)`
+- `refreshEditorLock(input)`
+- `releaseEditorLock(input)`
+- `submitApproval(input)`
+- `cancelApproval(input)`
+- `reviewApproval(input)`
+
 `createHttpConfigPlatformClient` is a reference HTTP implementation for the Java config platform contract:
 
 - `POST /api/lowcode/pages/drafts`
@@ -53,8 +63,17 @@ Handlers receive the action config plus safe context containing the action ref, 
 - `GET /api/lowcode/pages/releases/{releaseId}`
 - `GET /api/lowcode/pages/{pageId}/draft`
 - `GET /api/lowcode/pages/{pageId}/published`
+- `GET /api/lowcode/pages/{pageId}/workflow`
+- `POST /api/lowcode/pages/{pageId}/locks/acquire`
+- `POST /api/lowcode/pages/{pageId}/locks/refresh`
+- `POST /api/lowcode/pages/{pageId}/locks/release`
+- `POST /api/lowcode/pages/{pageId}/approval/submit`
+- `POST /api/lowcode/pages/{pageId}/approval/cancel`
+- `POST /api/lowcode/pages/{pageId}/approval/review`
 
 The Vue editor playground currently uses a localStorage implementation of the same client interface, so real Java integration should replace only the client instance rather than the editor workflow.
+
+Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells should map `ConfigPlatformEditorWorkflowState.lock` into `createLowcodeEditorCollaborationState` and `ConfigPlatformEditorWorkflowState.approval` into `createLowcodeEditorApprovalState`, then merge those permission options with role/menu permissions.
 
 ## Resource Library Client
 

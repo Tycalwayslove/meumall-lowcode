@@ -368,10 +368,27 @@ describe("@meumall/lowcode-adapters", () => {
       createdAt: "2026-07-31T00:00:00.000Z",
       schema,
     };
+    const workflow = {
+      pageId: schema.pageId,
+      lock: {
+        status: "locked-by-me",
+        holder: { id: "op_001", name: "运营 A" },
+        expiresAt: "2026-08-01T10:00:00.000Z",
+      },
+      approval: {
+        status: "pending",
+        submitter: { id: "op_001", name: "运营 A" },
+        submittedAt: "2026-08-01T09:30:00.000Z",
+      },
+      updatedAt: "2026-08-01T09:30:00.000Z",
+    };
     const fetcher = async (input, init = {}) => {
       calls.push({ input, init });
       if (input.endsWith("/draft")) {
         return { ok: true, status: 200, json: async () => schema };
+      }
+      if (input.includes("/workflow") || input.includes("/locks/") || input.includes("/approval/")) {
+        return { ok: true, status: 200, json: async () => workflow };
       }
       if (input.includes("/releases?")) {
         return { ok: true, status: 200, json: async () => [release] };
@@ -387,6 +404,23 @@ describe("@meumall/lowcode-adapters", () => {
     assert.deepEqual(await client.saveDraft(schema), release);
     assert.deepEqual(await client.listReleases("platform_page"), [release]);
     assert.deepEqual(await client.getDraft("platform_page"), schema);
+    assert.deepEqual(await client.getEditorWorkflowState("platform_page"), workflow);
+    assert.deepEqual(
+      await client.acquireEditorLock({
+        pageId: "platform_page",
+        operator: { id: "op_001", name: "运营 A" },
+        ttlSeconds: 120,
+      }),
+      workflow,
+    );
+    assert.deepEqual(
+      await client.submitApproval({
+        pageId: "platform_page",
+        operator: { id: "op_001", name: "运营 A" },
+        comment: "活动页待审核",
+      }),
+      workflow,
+    );
 
     assert.equal(calls[0].input, "https://platform.example.com/api/lowcode/pages/drafts");
     assert.equal(calls[0].init.method, "POST");
@@ -394,6 +428,11 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(JSON.parse(calls[0].init.body).pageStatus, "draft");
     assert.equal(calls[1].input, "https://platform.example.com/api/lowcode/pages/releases?pageId=platform_page");
     assert.equal(calls[2].input, "https://platform.example.com/api/lowcode/pages/platform_page/draft");
+    assert.equal(calls[3].input, "https://platform.example.com/api/lowcode/pages/platform_page/workflow");
+    assert.equal(calls[4].input, "https://platform.example.com/api/lowcode/pages/platform_page/locks/acquire");
+    assert.equal(JSON.parse(calls[4].init.body).ttlSeconds, 120);
+    assert.equal(calls[5].input, "https://platform.example.com/api/lowcode/pages/platform_page/approval/submit");
+    assert.equal(JSON.parse(calls[5].init.body).comment, "活动页待审核");
   });
 
   it("surfaces config platform HTTP errors", async () => {

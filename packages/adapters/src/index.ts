@@ -75,6 +75,57 @@ export interface ConfigPlatformPageRelease {
   schema: LowcodePageSchema;
 }
 
+export type ConfigPlatformEditorLockStatus = "unlocked" | "locked-by-me" | "locked-by-other" | "readonly" | "expired";
+export type ConfigPlatformApprovalStatus = "none" | "draft" | "pending" | "approved" | "rejected" | "published";
+
+export interface ConfigPlatformOperatorInfo {
+  id?: string;
+  name?: string;
+  avatarUrl?: string;
+}
+
+export interface ConfigPlatformEditorLockState {
+  status: ConfigPlatformEditorLockStatus;
+  holder?: ConfigPlatformOperatorInfo;
+  lockedAt?: string;
+  expiresAt?: string;
+  reason?: string;
+}
+
+export interface ConfigPlatformApprovalState {
+  status: ConfigPlatformApprovalStatus;
+  submitter?: ConfigPlatformOperatorInfo;
+  reviewer?: ConfigPlatformOperatorInfo;
+  submittedAt?: string;
+  reviewedAt?: string;
+  reason?: string;
+  comment?: string;
+}
+
+export interface ConfigPlatformEditorWorkflowState {
+  pageId: string;
+  lock: ConfigPlatformEditorLockState;
+  approval: ConfigPlatformApprovalState;
+  updatedAt?: string;
+}
+
+export interface ConfigPlatformLockInput {
+  pageId: string;
+  operator?: ConfigPlatformOperatorInfo;
+  ttlSeconds?: number;
+}
+
+export interface ConfigPlatformApprovalInput {
+  pageId: string;
+  operator?: ConfigPlatformOperatorInfo;
+  comment?: string;
+}
+
+export interface ConfigPlatformReviewApprovalInput extends ConfigPlatformApprovalInput {
+  approved: boolean;
+  reason?: string;
+}
+
 export interface LowcodeConfigPlatformClient {
   saveDraft(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
   createPreview(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
@@ -83,11 +134,23 @@ export interface LowcodeConfigPlatformClient {
   getRelease(releaseId: string): MaybePromise<ConfigPlatformPageRelease | undefined>;
   getDraft(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
   getPublished(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
+  getEditorWorkflowState?(pageId: string): MaybePromise<ConfigPlatformEditorWorkflowState | undefined>;
+  acquireEditorLock?(input: ConfigPlatformLockInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  refreshEditorLock?(input: ConfigPlatformLockInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  releaseEditorLock?(input: ConfigPlatformLockInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  submitApproval?(input: ConfigPlatformApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  cancelApproval?(input: ConfigPlatformApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  reviewApproval?(input: ConfigPlatformReviewApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
 }
 
 export interface ConfigPlatformRequestBody {
   schema?: LowcodePageSchema;
   pageStatus?: LowcodePageStatus;
+  operator?: ConfigPlatformOperatorInfo;
+  ttlSeconds?: number;
+  comment?: string;
+  approved?: boolean;
+  reason?: string;
 }
 
 export interface PlatformFetchResponse {
@@ -515,6 +578,29 @@ function assertPageSchemaOrUndefined(value: unknown): LowcodePageSchema | undefi
   return value as LowcodePageSchema;
 }
 
+function assertEditorWorkflowStateOrUndefined(value: unknown): ConfigPlatformEditorWorkflowState | undefined {
+  if (value == null) return undefined;
+  if (!value || typeof value !== "object") {
+    throw new Error("Config platform editor workflow response must be an object");
+  }
+  const workflow = value as ConfigPlatformEditorWorkflowState;
+  if (!workflow.pageId || !workflow.lock || !workflow.approval) {
+    throw new Error("Config platform editor workflow response is missing required fields");
+  }
+  if (!workflow.lock.status || !workflow.approval.status) {
+    throw new Error("Config platform editor workflow response is missing status fields");
+  }
+  return workflow;
+}
+
+function assertEditorWorkflowState(value: unknown): ConfigPlatformEditorWorkflowState {
+  const workflow = assertEditorWorkflowStateOrUndefined(value);
+  if (!workflow) {
+    throw new Error("Config platform editor workflow response must not be empty");
+  }
+  return workflow;
+}
+
 function getDefaultFetch(): PlatformFetch {
   const candidate = globalThis as typeof globalThis & { fetch?: PlatformFetch };
   if (!candidate.fetch) {
@@ -571,6 +657,62 @@ export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatform
     },
     async getPublished(pageId) {
       return assertPageSchemaOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/published`));
+    },
+    async getEditorWorkflowState(pageId) {
+      return assertEditorWorkflowStateOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/workflow`));
+    },
+    async acquireEditorLock(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/locks/acquire`, {
+          method: "POST",
+          body: { operator: input.operator, ttlSeconds: input.ttlSeconds },
+        }),
+      );
+    },
+    async refreshEditorLock(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/locks/refresh`, {
+          method: "POST",
+          body: { operator: input.operator, ttlSeconds: input.ttlSeconds },
+        }),
+      );
+    },
+    async releaseEditorLock(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/locks/release`, {
+          method: "POST",
+          body: { operator: input.operator },
+        }),
+      );
+    },
+    async submitApproval(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/approval/submit`, {
+          method: "POST",
+          body: { operator: input.operator, comment: input.comment },
+        }),
+      );
+    },
+    async cancelApproval(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/approval/cancel`, {
+          method: "POST",
+          body: { operator: input.operator, comment: input.comment },
+        }),
+      );
+    },
+    async reviewApproval(input) {
+      return assertEditorWorkflowState(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/approval/review`, {
+          method: "POST",
+          body: {
+            operator: input.operator,
+            comment: input.comment,
+            approved: input.approved,
+            reason: input.reason,
+          },
+        }),
+      );
     },
   };
 }

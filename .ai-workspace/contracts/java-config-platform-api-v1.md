@@ -222,6 +222,213 @@ GET /api/lowcode/pages/{pageId}/published
 - H5 runtime 正式访问页面时使用该接口获取当前 active schema。
 - 该接口应可被 CDN/BFF 缓存，缓存 key 至少包含 `pageId` 和环境。
 
+### 查询编辑器工作流状态
+
+```http
+GET /api/lowcode/pages/{pageId}/workflow
+```
+
+响应：`EditorWorkflowState | null`
+
+```json
+{
+  "pageId": "summer-campaign-demo",
+  "lock": {
+    "status": "locked-by-me",
+    "holder": {
+      "id": "op_001",
+      "name": "运营 A",
+      "avatarUrl": "https://example.com/avatar.png"
+    },
+    "lockedAt": "2026-08-01T09:20:00.000Z",
+    "expiresAt": "2026-08-01T09:50:00.000Z",
+    "reason": "当前页面由你编辑"
+  },
+  "approval": {
+    "status": "pending",
+    "submitter": {
+      "id": "op_001",
+      "name": "运营 A"
+    },
+    "reviewer": {
+      "id": "op_002",
+      "name": "审核 B"
+    },
+    "submittedAt": "2026-08-01T09:30:00.000Z",
+    "reviewedAt": null,
+    "reason": "",
+    "comment": "大促活动页待审核"
+  },
+  "updatedAt": "2026-08-01T09:30:00.000Z"
+}
+```
+
+字段说明：
+
+- `lock.status`：`unlocked | locked-by-me | locked-by-other | readonly | expired`。
+- `approval.status`：`none | draft | pending | approved | rejected | published`。
+- `holder`、`submitter`、`reviewer` 使用统一操作人结构：`id`、`name`、`avatarUrl` 均可选。
+- adapters 不直接依赖 editor 包；管理台 shell 需要把 `lock` 映射到 `createLowcodeEditorCollaborationState`，把 `approval` 映射到 `createLowcodeEditorApprovalState`。
+
+### 抢占编辑锁
+
+```http
+POST /api/lowcode/pages/{pageId}/locks/acquire
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  },
+  "ttlSeconds": 120
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- 如果页面未锁定或锁已过期，Java 配置平台可以授予当前操作人锁。
+- 如果页面被其他人持有且未过期，建议返回 `409 LOWCODE_PAGE_LOCKED`，并在错误 details 中带当前 holder 和 expiresAt。
+- `ttlSeconds` 可选；Java 配置平台可以设置服务端默认值和最大值。
+
+### 续期编辑锁
+
+```http
+POST /api/lowcode/pages/{pageId}/locks/refresh
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  },
+  "ttlSeconds": 120
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- 只有当前锁持有人可以续期。
+- 若锁不存在、已过期或持有人不匹配，建议返回 `409 LOWCODE_LOCK_REFRESH_REJECTED`。
+
+### 释放编辑锁
+
+```http
+POST /api/lowcode/pages/{pageId}/locks/release
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  }
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- 页面关闭、发布完成、主动退出编辑或锁冲突处理后可调用。
+- Java 配置平台应记录释放原因、操作人和 traceId。
+
+### 提交审批
+
+```http
+POST /api/lowcode/pages/{pageId}/approval/submit
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  },
+  "comment": "大促活动页待审核"
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- 提交审批前 Java 配置平台必须校验 Page Schema、物料白名单、数据源白名单和 action 白名单。
+- 审批中页面建议进入只读，直到撤回、驳回或审核通过。
+
+### 撤回审批
+
+```http
+POST /api/lowcode/pages/{pageId}/approval/cancel
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  },
+  "comment": "需要补充活动规则"
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- 只有提交人或具备权限的管理员可以撤回。
+- 撤回后页面可回到 `draft` 或 `rejected`，具体状态由 Java 审批流确认。
+
+### 审核审批
+
+```http
+POST /api/lowcode/pages/{pageId}/approval/review
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "operator": {
+    "id": "op_002",
+    "name": "审核 B"
+  },
+  "approved": true,
+  "comment": "确认上线",
+  "reason": ""
+}
+```
+
+响应：`EditorWorkflowState`
+
+说明：
+
+- `approved = true` 表示审核通过，`approved = false` 表示驳回。
+- 审核通过后是否自动发布，或仅允许调用发布接口，需由 Java 配置平台和运营流程确认。
+- 驳回时建议填写 `reason`，用于编辑器状态 pill、审批历史和通知。
+
 ## 白名单要求
 
 Java 配置平台发布前至少校验：
@@ -256,6 +463,8 @@ Java 配置平台发布前至少校验：
 - 统一响应是否由 Java 网关包装。
 - 鉴权方式：Cookie、Bearer token、CSRF、签名或内部网关。
 - 发布是否需要审批流。
+- 编辑锁 TTL、抢锁策略、续期频率和页面关闭释放策略。
+- 审批状态是否和现有公司审批系统打通，以及审核通过后是否自动发布。
 - release 列表是否需要分页。
 - 预览链接是否需要 `previewToken` 和过期时间。
 - 数据源真实请求是否由 Java 配置平台代理。
