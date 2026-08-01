@@ -51,7 +51,7 @@ http://localhost:5174/?demo=broken
 - `demo=empty` renders an empty Page Schema to verify the H5 runtime empty state does not white-screen.
 - `demo=broken` renders an unknown material and a throwing local material to verify renderer-level local fallback does not white-screen.
 
-The left diagnostics panel shows the requested entry, effective schema source, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
+The left diagnostics panel shows the requested entry, effective schema source, config platform mode, data source mode, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
 
 ## Config Platform Client
 
@@ -66,6 +66,22 @@ pnpm --filter @meumall/lowcode-h5-runtime-playground dev
 - `VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL` enables `createHttpConfigPlatformClient`.
 - `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` is optional and is forwarded as the `authorization` header.
 - The diagnostics panel shows `配置平台: local mock` or `配置平台: http <baseUrl>`.
+
+## Data Source Client
+
+By default the playground resolves `schema.dataSources` with local sample handlers. To point `product.byIds` at an HTTP BFF endpoint while keeping Page Schema unchanged:
+
+```bash
+VITE_LOWCODE_DATA_SOURCE_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+- `VITE_LOWCODE_DATA_SOURCE_BASE_URL` enables `createHttpDataSourceHandler` for `product.byIds`.
+- `VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION` is optional and is forwarded as the `authorization` header.
+- The diagnostics panel shows `数据源模式: local sample` or `数据源模式: http <baseUrl>`.
+- The current reference endpoint is `GET /api/lowcode/data/products/by-ids`.
+- Page Schema only stores `type`, `params`, and `bindTo`; real endpoint paths stay in host code/env.
 
 ## Visual Smoke
 

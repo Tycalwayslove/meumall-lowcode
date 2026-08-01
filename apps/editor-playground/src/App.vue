@@ -13,7 +13,6 @@ import {
   X,
 } from "@lucide/vue";
 import {
-  createDataSourceRegistry,
   createSafeActionExecutor,
   createSafeActionRegistry,
   createStaticResourceLibraryClient,
@@ -216,6 +215,7 @@ import EditorSourcePanel from "./components/EditorSourcePanel.vue";
 import EditorStatusPanel from "./components/EditorStatusPanel.vue";
 import EditorTopToolbar from "./components/EditorTopToolbar.vue";
 import { createEditorConfigPlatformBinding } from "./configPlatformClient";
+import { createEditorDataSourceRegistryBinding } from "./dataSourceRegistry";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   createDefaultEditorWorkflowState,
@@ -423,13 +423,14 @@ const resourceLibraryClient = createStaticResourceLibraryClient({
   coupons: sampleCoupons,
   storeExperts: sampleStoreExperts,
 });
-const previewDataSourceRegistry = createDataSourceRegistry({
+const previewDataSourceRegistryBinding = createEditorDataSourceRegistryBinding({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
   "store.byIds": resolveSampleStoreExpertDataSource,
   "expert.byActivity": resolveSampleStoreExpertDataSource,
   "custom.http": (dataSource) => dataSource.params ?? {},
 });
+const previewDataSourceRegistry = previewDataSourceRegistryBinding.registry;
 
 const initialSchema = cloneLowcodePageSchema((pageTemplates[0] as PageTemplate).schema);
 const configPlatformBinding = createEditorConfigPlatformBinding(localConfigPlatformClient);

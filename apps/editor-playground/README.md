@@ -31,6 +31,30 @@ VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION="Bearer token"
 - `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` 可选；存在时会作为 `authorization` header 透传。
 - 保存草稿、生成预览、发布、版本列表、版本载入、workflow 和 editor draft snapshot 都按异步 client 调用。
 
+## 数据源 client
+
+默认情况下，playground 预览使用本地 sample resolver 解析 `schema.dataSources`。
+
+配置以下环境变量后，`product.byIds` 会改用 `createHttpDataSourceHandler` 注册到固定 HTTP endpoint：
+
+```bash
+VITE_LOWCODE_DATA_SOURCE_BASE_URL=http://127.0.0.1:5196
+VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION="Bearer token"
+```
+
+当前参考 endpoint：
+
+```text
+GET /api/lowcode/data/products/by-ids
+```
+
+说明：
+
+- `VITE_LOWCODE_DATA_SOURCE_BASE_URL` 为空时使用本地 sample resolver。
+- `VITE_LOWCODE_DATA_SOURCE_BASE_URL` 存在时，`product.byIds` 会请求宿主固定 endpoint。
+- `VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION` 可选；存在时会作为 `authorization` header 透传。
+- Page Schema 只保存 `type`、`params` 和 `bindTo`，不保存任意 HTTP URL。
+
 ## HTTP API
 
 HTTP client 参考契约见：
@@ -74,5 +98,6 @@ pnpm smoke:browser
 
 - 默认 local mock 编辑器。
 - HTTP config platform 编辑器。
+- HTTP data source handler。
 - 默认 React H5 runtime。
 - HTTP config platform React H5 runtime。

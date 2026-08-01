@@ -39,6 +39,25 @@ const editorHttpReleases = [];
 let editorHttpDraftSnapshot;
 let chromeUserDataDir;
 
+const smokeHttpProducts = [
+  {
+    id: "http_sku_001",
+    title: "HTTP 数据源手提包",
+    priceText: "¥188",
+    originPriceText: "¥299",
+    desc: "来自 BFF mock",
+    imageUrl: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    id: "http_sku_002",
+    title: "HTTP 数据源凉鞋",
+    priceText: "¥129",
+    originPriceText: "¥199",
+    desc: "runtime 注入",
+    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
+  },
+];
+
 const smokeHttpPageSchema = {
   schemaVersion: "1.0.0",
   pageId: "smoke-http-page",
@@ -56,6 +75,28 @@ const smokeHttpPageSchema = {
       props: {
         title: "HTTP 配置平台页面",
         subtitle: "来自 Java HTTP client mock",
+      },
+    },
+    {
+      id: "smoke_http_products",
+      componentName: "ProductList",
+      materialVersion: "0.1.0",
+      props: {
+        items: [],
+      },
+      dataBinding: {
+        items: "products",
+      },
+    },
+  ],
+  dataSources: [
+    {
+      id: "smoke_http_products_ds",
+      type: "product.byIds",
+      bindTo: "products",
+      params: {
+        ids: ["http_sku_001", "http_sku_002"],
+        limit: 2,
       },
     },
   ],
@@ -218,6 +259,16 @@ async function startConfigPlatformSmokeServer(port) {
       authorization: request.headers.authorization,
       body,
     });
+    if (request.method === "GET" && request.url?.startsWith("/api/lowcode/data/products/by-ids")) {
+      const url = new URL(request.url, configPlatformSmokeUrl);
+      const ids = url.searchParams.getAll("ids");
+      const limit = Number(url.searchParams.get("limit") ?? smokeHttpProducts.length);
+      const products = smokeHttpProducts
+        .filter((product) => !ids.length || ids.includes(product.id))
+        .slice(0, Number.isFinite(limit) ? limit : smokeHttpProducts.length);
+      writeJsonResponse(response, 200, { data: { items: products } });
+      return;
+    }
     if (request.method === "GET" && request.url === "/api/lowcode/pages/smoke-http-page/published") {
       writeJsonResponse(response, 200, smokeHttpPageSchema);
       return;
@@ -1234,11 +1285,15 @@ async function main() {
     VITE_REACT_H5_RUNTIME_URL: h5RuntimeUrl,
     VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL: configPlatformSmokeUrl,
     VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION: "Bearer smoke-token",
+    VITE_LOWCODE_DATA_SOURCE_BASE_URL: configPlatformSmokeUrl,
+    VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION: "Bearer smoke-token",
   });
   await startViteServer("H5 runtime playground", path.join(rootDir, "apps/h5-runtime-playground"), h5Port);
   await startViteServer("H5 runtime HTTP config playground", path.join(rootDir, "apps/h5-runtime-playground"), h5HttpPort, {
     VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL: configPlatformSmokeUrl,
     VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION: "Bearer smoke-token",
+    VITE_LOWCODE_DATA_SOURCE_BASE_URL: configPlatformSmokeUrl,
+    VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION: "Bearer smoke-token",
   });
   await startChrome();
 
@@ -1365,8 +1420,11 @@ async function main() {
     await assertPage(page, h5RuntimeHttpUrl, [
       { label: "React H5 HTTP 配置平台入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('配置平台')" },
       { label: "React H5 HTTP 配置平台模式展示", expression: `document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})` },
+      { label: "React H5 HTTP 数据源模式展示", expression: "document.body.innerText.includes('数据源模式') && document.body.innerText.includes('http')" },
       { label: "React H5 HTTP 配置平台命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('smoke-http-page')" },
       { label: "React H5 HTTP 配置平台页面已渲染", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('HTTP 配置平台页面')" },
+      { label: "React H5 HTTP 数据源商品已渲染", expression: "document.body.innerText.includes('HTTP 数据源手提包') && document.body.innerText.includes('HTTP 数据源凉鞋')" },
+      { label: "React H5 HTTP 数据源状态已记录", expression: "document.body.innerText.includes('smoke_http_products_ds') && document.body.innerText.includes('绑定到 products')" },
     ]);
     if (
       !configPlatformRequests.some((request) => {
@@ -1377,7 +1435,18 @@ async function main() {
     ) {
       fail("HTTP 配置平台 mock 未收到带 authorization 的 published schema 请求");
     }
-    log("通过：React H5 runtime 可通过 env 使用 HTTP 配置平台 client 并透传 authorization");
+    if (
+      !configPlatformRequests.some((request) => {
+        return request.method === "GET"
+          && request.url?.startsWith("/api/lowcode/data/products/by-ids")
+          && request.url.includes("ids=http_sku_001")
+          && request.url.includes("limit=2")
+          && request.authorization === "Bearer smoke-token";
+      })
+    ) {
+      fail("HTTP 数据源 mock 未收到带 authorization 的 product.byIds 请求");
+    }
+    log("通过：React H5 runtime 可通过 env 使用 HTTP 配置平台 client 和 HTTP 数据源 handler 并透传 authorization");
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },

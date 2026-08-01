@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  createDataSourceRegistry,
   createSafeActionExecutor,
   createSafeActionRegistry,
   loadLowcodeRuntimeSchema,
@@ -24,6 +23,7 @@ import {
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
 import { createRuntimeConfigPlatformBinding } from "./configPlatformClient";
+import { createRuntimeDataSourceRegistryBinding } from "./dataSourceRegistry";
 
 function BrokenBlock(): never {
   throw new Error("BrokenBlock render failed");
@@ -996,11 +996,12 @@ const registry = createMaterialRegistry([
     }),
   },
 ]);
-const dataSourceRegistry = createDataSourceRegistry({
+const dataSourceRegistryBinding = createRuntimeDataSourceRegistryBinding({
   "product.byActivity": resolveSampleProductDataSource,
   "product.byIds": resolveSampleProductDataSource,
   "custom.http": (dataSource) => dataSource.params ?? {},
 });
+const dataSourceRegistry = dataSourceRegistryBinding.registry;
 
 interface RuntimeSchemaSource {
   schema: LowcodePageSchema;
@@ -1228,6 +1229,10 @@ export function App() {
           <div>
             <dt>配置平台</dt>
             <dd>{runtimeConfigPlatformBinding.label}</dd>
+          </div>
+          <div>
+            <dt>数据源模式</dt>
+            <dd>{dataSourceRegistryBinding.label}</dd>
           </div>
           <div>
             <dt>页面 ID</dt>
