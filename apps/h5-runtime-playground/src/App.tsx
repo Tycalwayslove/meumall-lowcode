@@ -906,6 +906,13 @@ const sampleSchema = createLowcodePageSchema({
       materialVersion: "0.1.0",
       props: {
         html: "<p><strong>运营说明：</strong>这是一份发布后的 H5 schema 渲染示例，后续可替换为 Java 配置平台返回的数据。</p>",
+        backgroundColor: "#ffffff",
+        textColor: "#1f2937",
+        borderColor: "#e5e7eb",
+        radius: 10,
+        padding: 14,
+        fontSize: 14,
+        lineHeight: 1.7,
       },
     },
     {

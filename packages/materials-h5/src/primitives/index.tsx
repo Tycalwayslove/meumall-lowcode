@@ -231,6 +231,51 @@ export function MlcText({
   );
 }
 
+export interface MlcRichTextProps {
+  html?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  radius?: number;
+  padding?: number;
+  fontSize?: number;
+  lineHeight?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcRichText({
+  html = "<p>请输入富文本内容</p>",
+  backgroundColor = "transparent",
+  textColor = "#1f2937",
+  borderColor = "transparent",
+  radius = 0,
+  padding = 16,
+  fontSize = h5Tokens.fontSize.body,
+  lineHeight = 1.7,
+  className,
+  style,
+}: MlcRichTextProps): React.ReactElement {
+  return (
+    <section
+      className={className}
+      style={{
+        overflow: "hidden",
+        overflowWrap: "anywhere",
+        padding,
+        border: `1px solid ${borderColor}`,
+        borderRadius: radius,
+        color: textColor,
+        background: backgroundColor,
+        fontSize,
+        lineHeight,
+        ...style,
+      }}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export interface MlcNoticeBarProps {
   label?: React.ReactNode;
   content?: React.ReactNode;

@@ -213,6 +213,41 @@ export const MlcText = defineComponent({
   },
 });
 
+export const MlcRichText = defineComponent({
+  name: "MlcRichText",
+  props: {
+    html: { type: String, default: "<p>请输入富文本内容</p>" },
+    backgroundColor: { type: String, default: "transparent" },
+    textColor: { type: String, default: "#1f2937" },
+    borderColor: { type: String, default: "transparent" },
+    radius: { type: Number, default: 0 },
+    padding: { type: Number, default: 16 },
+    fontSize: { type: Number, default: h5Tokens.fontSize.body },
+    lineHeight: { type: Number, default: 1.7 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () =>
+      h("section", {
+        class: props.class,
+        style: {
+          overflow: "hidden",
+          overflowWrap: "anywhere",
+          padding: `${props.padding}px`,
+          border: `1px solid ${props.borderColor}`,
+          borderRadius: `${props.radius}px`,
+          color: props.textColor,
+          background: props.backgroundColor,
+          fontSize: `${props.fontSize}px`,
+          lineHeight: props.lineHeight,
+          ...props.style,
+        } satisfies CSSProperties,
+        innerHTML: props.html,
+      });
+  },
+});
+
 export const MlcNoticeBar = defineComponent({
   name: "MlcNoticeBar",
   props: {

@@ -30,6 +30,7 @@ import {
   NavGrid,
   NoticeBar,
   ProductRankList,
+  RichTextBlock,
   SectionContainer,
   SpacerBlock,
   StickyActionBar,
@@ -155,6 +156,10 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicVideo", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["NoticeBar", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["NoticeBar", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["RichTextBlock", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["RichTextBlock", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["RichTextBlock", "fontSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["RichTextBlock", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
     ];
@@ -190,6 +195,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicVideo", "accentColor"],
       ["NoticeBar", "borderColor"],
       ["NoticeBar", "labelBackgroundColor"],
+      ["RichTextBlock", "backgroundColor"],
+      ["RichTextBlock", "borderColor"],
       ["SectionTitle", "accentColor"],
       ["ImageCardGrid", "cardBackgroundColor"],
     ];
@@ -257,6 +264,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcSpacer",
       "MlcDivider",
       "MlcNoticeBar",
+      "MlcRichText",
     ];
 
     for (const name of primitiveNames) {
@@ -336,6 +344,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicCarousel, ["MlcImage", "MlcTag", "MlcText"]);
     functionSourceIncludes(BasicVideo, ["MlcImage", "MlcTag", "MlcText"]);
     functionSourceIncludes(NoticeBar, ["MlcNoticeBar"]);
+    functionSourceIncludes(RichTextBlock, ["MlcRichText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -373,6 +382,23 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.borderColor.setter, "color");
     assert.equal(material.manifest.propsSchema.radius.setter, "number");
     assert.equal(material.manifest.propsSchema.paddingY.setter, "number");
+  });
+
+  it("registers the enhanced rich text material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "RichTextBlock");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "富文本");
+    assert.equal(material.manifest.category, "content");
+    assert.equal(material.manifest.defaultProps.html, "<p>请输入富文本内容</p>");
+    assert.equal(material.manifest.defaultProps.padding, 16);
+    assert.equal(material.manifest.propsSchema.html.setter, "richText");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.borderColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.propsSchema.padding.setter, "number");
+    assert.equal(material.manifest.propsSchema.fontSize.setter, "number");
+    assert.equal(material.manifest.propsSchema.lineHeight.setter, "number");
   });
 
   it("registers the activity rule modal material", () => {

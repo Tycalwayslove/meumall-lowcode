@@ -2,7 +2,7 @@ import { defineComponent, h, onBeforeUnmount, ref, watch, type CSSProperties, ty
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcRichText, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -1931,15 +1931,16 @@ export const RichTextBlock = defineComponent({
   setup(props) {
     return () => {
       const runtimeProps = props.props ?? {};
-      return h("section", {
+      return h(MlcRichText, {
         class: "mlc-material mlc-rich-text",
-        style: {
-          padding: "16px",
-          color: "#1f2937",
-          lineHeight: 1.7,
-          fontSize: "14px",
-        },
-        innerHTML: text(runtimeProps.html, "<p>请输入富文本内容</p>"),
+        html: text(runtimeProps.html, "<p>请输入富文本内容</p>"),
+        backgroundColor: text(runtimeProps.backgroundColor, "transparent"),
+        textColor: text(runtimeProps.textColor, "#1f2937"),
+        borderColor: text(runtimeProps.borderColor, "transparent"),
+        radius: number(runtimeProps.radius, 0),
+        padding: number(runtimeProps.padding, 16),
+        fontSize: number(runtimeProps.fontSize, 14),
+        lineHeight: number(runtimeProps.lineHeight, 1.7),
       });
     };
   },
@@ -4960,9 +4961,25 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       title: "富文本",
       category: "content",
       platforms: ["h5"],
-      defaultProps: { html: "<p><strong>活动说明：</strong>下单即享限时优惠，数量有限。</p>" },
+      defaultProps: {
+        html: "<p>请输入富文本内容</p>",
+        backgroundColor: "transparent",
+        textColor: "#1f2937",
+        borderColor: "transparent",
+        radius: 0,
+        padding: 16,
+        fontSize: 14,
+        lineHeight: 1.7,
+      },
       propsSchema: {
         html: { label: "内容", type: "string", setter: "richText", defaultValue: "<p>请输入富文本内容</p>" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#1f2937", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 0, ...NUMBER_RADIUS_META },
+        padding: { label: "内边距", type: "number", setter: "number", defaultValue: 16, ...NUMBER_PIXEL_SIZE_META },
+        fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 14, ...NUMBER_FONT_SIZE_META },
+        lineHeight: { label: "行高", type: "number", setter: "number", defaultValue: 1.7, ...NUMBER_LINE_HEIGHT_META },
       },
     }),
   },

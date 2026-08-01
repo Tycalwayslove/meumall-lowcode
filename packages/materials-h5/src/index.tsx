@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcRichText, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -1407,9 +1407,16 @@ export function LeadFormBlock({ props }: MaterialProps) {
 
 export function RichTextBlock({ props }: MaterialProps) {
   return (
-    <section
-      style={{ padding: 16 }}
-      dangerouslySetInnerHTML={{ __html: text(props.html, "<p>请输入富文本内容</p>") }}
+    <MlcRichText
+      className="mlc-material mlc-rich-text"
+      html={text(props.html, "<p>请输入富文本内容</p>")}
+      backgroundColor={text(props.backgroundColor, "transparent")}
+      textColor={text(props.textColor, "#1f2937")}
+      borderColor={text(props.borderColor, "transparent")}
+      radius={number(props.radius, 0)}
+      padding={number(props.padding, 16)}
+      fontSize={number(props.fontSize, 14)}
+      lineHeight={number(props.lineHeight, 1.7)}
     />
   );
 }
@@ -3999,9 +4006,25 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       title: "富文本",
       category: "content",
       platforms: ["h5"],
-      defaultProps: { html: "<p>请输入富文本内容</p>" },
+      defaultProps: {
+        html: "<p>请输入富文本内容</p>",
+        backgroundColor: "transparent",
+        textColor: "#1f2937",
+        borderColor: "transparent",
+        radius: 0,
+        padding: 16,
+        fontSize: 14,
+        lineHeight: 1.7,
+      },
       propsSchema: {
         html: { label: "内容", type: "string", setter: "richText", defaultValue: "<p>请输入富文本内容</p>" },
+        backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#1f2937", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 0, ...NUMBER_RADIUS_META },
+        padding: { label: "内边距", type: "number", setter: "number", defaultValue: 16, ...NUMBER_PIXEL_SIZE_META },
+        fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 14, ...NUMBER_FONT_SIZE_META },
+        lineHeight: { label: "行高", type: "number", setter: "number", defaultValue: 1.7, ...NUMBER_LINE_HEIGHT_META },
       },
     }),
   },

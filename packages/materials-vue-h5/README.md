@@ -27,6 +27,7 @@ Current internal primitives:
 - `MlcSpacer`
 - `MlcDivider`
 - `MlcNoticeBar`
+- `MlcRichText`
 
 They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
 
@@ -65,6 +66,7 @@ Currently migrated materials:
 - `SpacerBlock`
 - `LeadFormBlock`
 - `NoticeBar`
+- `RichTextBlock`
 
 See `docs/material-layering-architecture.md` for the layering plan.
 
