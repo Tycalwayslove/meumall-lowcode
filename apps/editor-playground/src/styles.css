@@ -241,6 +241,20 @@ button:focus-visible {
   background: var(--mlc-editor-color-danger-bg);
 }
 
+.host-extension-pill {
+  display: inline-grid;
+  place-items: center;
+  min-height: var(--mlc-editor-size-status-pill-height);
+  border: 1px solid var(--mlc-editor-color-info);
+  border-radius: var(--mlc-editor-radius-xs);
+  padding: 0 8px;
+  color: var(--mlc-editor-color-info-text);
+  background: var(--mlc-editor-color-info-soft);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .toolbar,
 .viewport-switch {
   display: flex;
@@ -328,6 +342,26 @@ button:focus-visible {
   border-color: var(--mlc-editor-color-accent);
   color: var(--mlc-editor-color-accent);
   background: var(--mlc-editor-color-accent-soft);
+}
+
+.toolbar .host-extension-button,
+.host-extension-button {
+  border-color: var(--mlc-editor-color-info);
+  color: var(--mlc-editor-color-info-text);
+  background: var(--mlc-editor-color-info-soft);
+}
+
+.host-extension-button.is-wide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--mlc-editor-color-info);
+  border-radius: var(--mlc-editor-radius-sm);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .toolbar button:active,
@@ -3495,6 +3529,17 @@ button:focus-visible {
   padding: 9px 10px;
   color: #854d0e;
   background: #fffbeb;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.host-extension-note {
+  margin: 0;
+  border: 1px solid var(--mlc-editor-color-info);
+  border-radius: var(--mlc-editor-radius-sm);
+  padding: 9px 10px;
+  color: var(--mlc-editor-color-info-text);
+  background: var(--mlc-editor-color-info-soft);
   font-size: 12px;
   line-height: 1.5;
 }

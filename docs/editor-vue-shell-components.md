@@ -66,6 +66,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 展示顶部品牌、页面标题、保存状态、自动保存状态、通用 capability 状态、主工具栏和历史/保存/发布工具栏。
 - 接收页面标题、dirty 状态、自动保存文案和 tone、当前模式、撤销/重做可用状态、宿主按 editor permission/capability API 派生的按钮禁用原因，以及 `LowcodeEditorCapabilityStatusItem[]`。
 - 通过 emits 抛出打开快捷命令、新建页面、模式切换、撤销、重做、保存草稿、导出 schema、导入 schema、生成预览、发布、打开 H5 和打开 React H5。
+- 提供 `status-extra`、`primary-actions` 和 `secondary-actions` 命名插槽，供管理台宿主插入状态提示、顶部业务操作或审计入口。
 - 复用现有 `.topbar`、`.brand`、`.toolbar`、`.save-pill`、`.auto-save-pill` 和 `.capability-pill` 样式；状态项通过 `data-capability-status-id` 暴露稳定 smoke check DOM 语义。
 
 不负责：
@@ -268,6 +269,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 展示右侧发布相关区域，包括 H5 预览入口、交付清单、发布审批、发布检查、本地版本列表、版本对比和 Schema 片段预览。
 - 接收 preview links、delivery summary、approval state、readiness、release history 和 version summary API 派生后的展示模型。
 - 通过 emits 抛出预览入口打开/复制、Schema 复制/导出、提交审批、撤回审批、审核通过、审核驳回、发布检查定位、版本关键词更新、版本选择/载入/打开、载入所选版本和回滚发布。
+- 提供 `delivery-extra`、`approval-extra`、`publish-check-extra` 和 `release-extra` 命名插槽，供管理台宿主插入交付策略、审批策略、服务端校验说明或版本治理入口。
 - 复用现有 `.preview-link-*`、`.delivery-*`、`.approval-workflow-*`、`.publish-*`、`.release-*` 样式，保持当前视觉与 smoke check DOM 语义。
 
 不负责：
@@ -338,7 +340,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀，顶部工具栏已改为消费 capability status items。后续优先继续治理剩余硬编码样式、权限插槽、真实协作锁服务、真实审批流和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
+当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀，顶部工具栏已改为消费 capability status items，顶部工具栏和发布面板已提供首批管理台宿主扩展插槽。后续优先继续治理剩余硬编码样式、权限插槽、真实协作锁服务、真实审批流和更多管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
 
 ## 抽 npm 包判断
 

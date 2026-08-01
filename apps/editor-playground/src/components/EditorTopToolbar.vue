@@ -44,6 +44,12 @@ const emit = defineEmits<{
   "open-runtime": [];
   "open-react-runtime": [];
 }>();
+
+defineSlots<{
+  "status-extra"?: () => unknown;
+  "primary-actions"?: () => unknown;
+  "secondary-actions"?: () => unknown;
+}>();
 </script>
 
 <template>
@@ -70,6 +76,7 @@ const emit = defineEmits<{
       >
         {{ statusItem.title }}
       </span>
+      <slot name="status-extra" />
     </div>
 
     <div class="toolbar" aria-label="编辑器工具栏">
@@ -99,6 +106,7 @@ const emit = defineEmits<{
         <Code2 :size="17" />
         <span>源码</span>
       </button>
+      <slot name="primary-actions" />
     </div>
 
     <div class="toolbar compact" aria-label="历史与保存">
@@ -171,6 +179,7 @@ const emit = defineEmits<{
         <MonitorSmartphone :size="17" />
         <span>React H5</span>
       </button>
+      <slot name="secondary-actions" />
     </div>
   </header>
 </template>

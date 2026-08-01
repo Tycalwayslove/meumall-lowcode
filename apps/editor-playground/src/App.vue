@@ -3490,6 +3490,14 @@ function setReleaseMessage(release: EditorPageRelease, action: string): void {
   releaseMessage.value = createLowcodeReleaseMessage(release, action);
 }
 
+function showHostAuditLog(): void {
+  releaseMessage.value = "已打开宿主审计日志入口，本地示例不请求外部系统。";
+}
+
+function showHostReleasePolicy(): void {
+  releaseMessage.value = "已查看宿主发布策略，本地示例不改变发布流程。";
+}
+
 function ensurePublishReady(action: string): boolean {
   const blockingErrors = publishChecks.value.filter((check) => check.status === "error");
   if (!blockingErrors.length) return true;
@@ -3740,7 +3748,23 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       @publish="publishCurrentPage"
       @open-runtime="openRuntime()"
       @open-react-runtime="openReactH5Runtime()"
-    />
+    >
+      <template #status-extra>
+        <span class="host-extension-pill" data-testid="host-toolbar-status">审计已启用</span>
+      </template>
+      <template #secondary-actions>
+        <button
+          type="button"
+          class="host-extension-button"
+          title="查看当前页面审计日志"
+          data-testid="host-audit-button"
+          @click="showHostAuditLog"
+        >
+          <ExternalLink :size="13" />
+          <span>审计日志</span>
+        </button>
+      </template>
+    </EditorTopToolbar>
     <input
       ref="schemaFileInputRef"
       data-testid="schema-import-input"
@@ -4160,7 +4184,35 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         @open-release="openReleaseRuntime"
         @load-selected-release="loadSelectedRelease"
         @rollback-selected-release="rollbackPublishSelectedRelease"
-      />
+      >
+        <template #delivery-extra>
+          <p class="host-extension-note" data-testid="host-delivery-policy">
+            宿主交付策略：正式环境使用 Java previewToken 或 releaseId 打开 H5。
+          </p>
+        </template>
+        <template #approval-extra>
+          <p class="host-extension-note" data-testid="host-approval-policy">
+            宿主审批策略：审批通过后才能发布正式环境。
+          </p>
+        </template>
+        <template #publish-check-extra>
+          <p class="host-extension-note" data-testid="host-publish-check-policy">
+            宿主发布校验：服务端可追加商品、库存、价格和风控检查。
+          </p>
+        </template>
+        <template #release-extra>
+          <button
+            type="button"
+            class="host-extension-button is-wide"
+            title="查看宿主发布策略"
+            data-testid="host-release-policy-button"
+            @click="showHostReleasePolicy"
+          >
+            <ExternalLink :size="13" />
+            <span>发布策略</span>
+          </button>
+        </template>
+      </EditorPublishPanel>
 
       <section class="panel-section">
         <div class="panel-title">

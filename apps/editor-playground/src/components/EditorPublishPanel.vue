@@ -71,6 +71,13 @@ const emit = defineEmits<{
   (event: "rollback-selected-release"): void;
 }>();
 
+defineSlots<{
+  "delivery-extra"?: () => unknown;
+  "approval-extra"?: () => unknown;
+  "publish-check-extra"?: () => unknown;
+  "release-extra"?: () => unknown;
+}>();
+
 function getInputValue(event: Event): string {
   return (event.target as HTMLInputElement).value;
 }
@@ -152,6 +159,7 @@ function getInputValue(event: Event): string {
     <p class="delivery-note">
       当前链接用于本地 playground 验收；正式环境仍需切换到 Java 配置平台的 previewToken 或 releaseId 查询。
     </p>
+    <slot name="delivery-extra" />
   </section>
 
   <section class="panel-section approval-workflow-panel">
@@ -204,6 +212,7 @@ function getInputValue(event: Event): string {
         驳回
       </button>
     </div>
+    <slot name="approval-extra" />
   </section>
 
   <section class="panel-section">
@@ -239,6 +248,7 @@ function getInputValue(event: Event): string {
         <p>{{ check.description }}</p>
       </article>
     </div>
+    <slot name="publish-check-extra" />
   </section>
 
   <section class="panel-section">
@@ -258,6 +268,7 @@ function getInputValue(event: Event): string {
       </label>
       <small>{{ releaseListSummary.statusText }}</small>
     </div>
+    <slot name="release-extra" />
     <div v-if="visibleReleaseItems.length" class="release-list">
       <article
         v-for="item in visibleReleaseItems"
