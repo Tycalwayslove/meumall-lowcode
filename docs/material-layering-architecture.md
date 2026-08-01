@@ -71,6 +71,7 @@ Runtime Primitives 是运行时基础组件，不是低代码物料，不声明 
 - `LoadingBlock`
 - `EmptyBlock`
 - `ErrorBlock`
+- `NoticeBar`
 
 基础组件允许处理：
 
@@ -126,6 +127,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicCard`
 - `BasicCarousel`
 - `BasicVideo`
+- `NoticeBar`
 - `ActionButton`
 - `RichTextBlock`
 - `SpacerBlock`
@@ -141,6 +143,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicCarousel` 是通用图片轮播物料，负责多张图片、标题、说明、角标、指示器和点击事件；它不承载商品、券、直播或个性化推荐语义，复杂手势、AB 实验和素材中心批量选图应由后续任务或宿主能力扩展。
 
 `BasicVideo` 是通用视频展示物料，负责视频地址、封面、标题、说明、角标、播放控件和播放事件；它不承载上传、转码、审核、直播、广告贴片或素材中心业务语义，这些能力应由外部系统或后续宿主能力扩展。
+
+`NoticeBar` 是通用公告条展示物料，负责图标文案、标签、正文、背景、边框、圆角和留白配置；它不承载远程公告流、跑马灯、关闭记忆、曝光统计、权限审批或活动规则语义，这些能力应由后续数据源、业务物料、action 或宿主服务扩展。
 
 `BasicTextarea` 是通用多行输入物料，负责标签、占位、默认值、显示行数、禁用态、样式和输入变化事件；它不承载真实表单提交、校验规则、字数统计、富文本、敏感词审核或活动备注保存语义，这些能力应由后续表单协议、业务物料或宿主服务扩展。
 
@@ -305,6 +309,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicCard`
 - `BasicCarousel`
 - `BasicVideo`
+- `NoticeBar`
 - `ActionButton`
 - `ImageCardGrid`
 - `TabsBlock`

@@ -213,6 +213,102 @@ export const MlcText = defineComponent({
   },
 });
 
+export const MlcNoticeBar = defineComponent({
+  name: "MlcNoticeBar",
+  props: {
+    label: { type: String, default: "" },
+    content: { type: String, default: "" },
+    iconText: { type: String, default: "!" },
+    showIcon: { type: Boolean, default: true },
+    backgroundColor: { type: String, default: "#fffbeb" },
+    textColor: { type: String, default: "#92400e" },
+    labelBackgroundColor: { type: String, default: "rgba(146, 64, 14, 0.1)" },
+    labelColor: { type: String, default: "" },
+    borderColor: { type: String, default: "transparent" },
+    radius: { type: Number, default: h5Tokens.radius.md },
+    paddingY: { type: Number, default: 10 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () => {
+      const labelColor = props.labelColor || props.textColor;
+      return h(
+        "section",
+        {
+          class: props.class,
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            overflow: "hidden",
+            padding: `${props.paddingY}px 14px`,
+            border: `1px solid ${props.borderColor}`,
+            borderRadius: `${props.radius}px`,
+            color: props.textColor,
+            background: props.backgroundColor,
+            ...props.style,
+          } satisfies CSSProperties,
+        },
+        [
+          props.showIcon
+            ? h(
+                "span",
+                {
+                  "aria-hidden": "true",
+                  style: {
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: "0 0 auto",
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: `${h5Tokens.radius.pill}px`,
+                    color: labelColor,
+                    background: props.labelBackgroundColor,
+                    fontSize: "12px",
+                    fontWeight: 900,
+                    lineHeight: 1,
+                  } satisfies CSSProperties,
+                },
+                props.iconText,
+              )
+            : null,
+          props.label
+            ? h(
+                MlcTag,
+                {
+                  radius: h5Tokens.radius.pill,
+                  style: {
+                    flex: "0 0 auto",
+                    minHeight: "22px",
+                    color: labelColor,
+                    background: props.labelBackgroundColor,
+                    fontSize: "12px",
+                    whiteSpace: "nowrap",
+                  } satisfies CSSProperties,
+                },
+                () => props.label,
+              )
+            : null,
+          h(
+            MlcText,
+            {
+              size: 13,
+              style: {
+                minWidth: 0,
+                flex: 1,
+                color: "inherit",
+              } satisfies CSSProperties,
+            },
+            () => props.content,
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export interface MlcCountdownTextItem {
   label: string;
   value: string;

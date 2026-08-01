@@ -2,7 +2,7 @@ import { defineComponent, h, onBeforeUnmount, ref, watch, type CSSProperties, ty
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type RuntimeProps = Record<string, unknown>;
 
@@ -3124,26 +3124,20 @@ export const NoticeBar = defineComponent({
   setup(props) {
     return () => {
       const runtimeProps = props.props ?? {};
-      return h(
-        "section",
-        {
-          class: "mlc-material mlc-notice-bar",
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 14px",
-            color: text(runtimeProps.textColor, "#92400e"),
-            background: text(runtimeProps.backgroundColor, "#fffbeb"),
-            fontSize: "13px",
-            lineHeight: 1.5,
-          },
-        },
-        [
-          h("strong", { style: { flex: "0 0 auto", fontSize: "12px" } }, text(runtimeProps.label, "公告")),
-          h("span", { style: { minWidth: 0, flex: 1 } }, text(runtimeProps.content, "活动期间下单即享限时优惠。")),
-        ],
-      );
+      return h(MlcNoticeBar, {
+        class: "mlc-material mlc-notice-bar",
+        label: text(runtimeProps.label, "公告"),
+        content: text(runtimeProps.content, "活动期间下单即享限时优惠。"),
+        iconText: text(runtimeProps.iconText, "!"),
+        showIcon: boolean(runtimeProps.showIcon, true),
+        backgroundColor: text(runtimeProps.backgroundColor, "#fffbeb"),
+        textColor: text(runtimeProps.textColor, "#92400e"),
+        labelBackgroundColor: text(runtimeProps.labelBackgroundColor, "rgba(146, 64, 14, 0.1)"),
+        labelColor: text(runtimeProps.labelColor, text(runtimeProps.textColor, "#92400e")),
+        borderColor: text(runtimeProps.borderColor, "transparent"),
+        radius: number(runtimeProps.radius, 8),
+        paddingY: number(runtimeProps.paddingY, 10),
+      });
     };
   },
 });
@@ -3473,16 +3467,30 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       category: "marketing",
       platforms: ["h5"],
       defaultProps: {
+        showIcon: true,
+        iconText: "!",
         label: "公告",
         content: "活动期间下单即享限时优惠，库存有限先到先得。",
         backgroundColor: "#fffbeb",
+        labelBackgroundColor: "rgba(146, 64, 14, 0.1)",
+        labelColor: "#92400e",
         textColor: "#92400e",
+        borderColor: "transparent",
+        radius: 8,
+        paddingY: 10,
       },
       propsSchema: {
+        showIcon: { label: "显示图标", type: "boolean", setter: "switch", defaultValue: true },
+        iconText: { label: "图标文案", type: "string", setter: "input", defaultValue: "!" },
         label: { label: "标签", type: "string", setter: "input", defaultValue: "公告" },
         content: { label: "内容", type: "string", setter: "textarea", defaultValue: "活动期间下单即享限时优惠，库存有限先到先得。" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb", ...COLOR_SWATCHES_META },
+        labelBackgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "rgba(146, 64, 14, 0.1)", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签文字色", type: "string", setter: "color", defaultValue: "#92400e", ...COLOR_SWATCHES_META },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
       },
     }),
   },

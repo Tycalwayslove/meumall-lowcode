@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -2275,21 +2275,20 @@ export function StickyActionBar({ props }: MaterialProps) {
 
 export function NoticeBar({ props }: MaterialProps) {
   return (
-    <section
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "10px 14px",
-        color: text(props.textColor, "#92400e"),
-        background: text(props.backgroundColor, "#fffbeb"),
-        fontSize: 13,
-        lineHeight: 1.5,
-      }}
-    >
-      <strong style={{ flex: "0 0 auto", fontSize: 12 }}>{text(props.label, "公告")}</strong>
-      <span style={{ minWidth: 0, flex: 1 }}>{text(props.content, "活动期间下单即享限时优惠。")}</span>
-    </section>
+    <MlcNoticeBar
+      className="mlc-material mlc-notice-bar"
+      label={text(props.label, "公告")}
+      content={text(props.content, "活动期间下单即享限时优惠。")}
+      iconText={text(props.iconText, "!")}
+      showIcon={boolean(props.showIcon, true)}
+      backgroundColor={text(props.backgroundColor, "#fffbeb")}
+      textColor={text(props.textColor, "#92400e")}
+      labelBackgroundColor={text(props.labelBackgroundColor, "rgba(146, 64, 14, 0.1)")}
+      labelColor={text(props.labelColor, text(props.textColor, "#92400e"))}
+      borderColor={text(props.borderColor, "transparent")}
+      radius={number(props.radius, 8)}
+      paddingY={number(props.paddingY, 10)}
+    />
   );
 }
 
@@ -2524,16 +2523,30 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       category: "marketing",
       platforms: ["h5"],
       defaultProps: {
+        showIcon: true,
+        iconText: "!",
         label: "公告",
         content: "活动期间下单即享限时优惠，库存有限先到先得。",
         backgroundColor: "#fffbeb",
+        labelBackgroundColor: "rgba(146, 64, 14, 0.1)",
+        labelColor: "#92400e",
         textColor: "#92400e",
+        borderColor: "transparent",
+        radius: 8,
+        paddingY: 10,
       },
       propsSchema: {
+        showIcon: { label: "显示图标", type: "boolean", setter: "switch", defaultValue: true },
+        iconText: { label: "图标文案", type: "string", setter: "input", defaultValue: "!" },
         label: { label: "标签", type: "string", setter: "input", defaultValue: "公告" },
         content: { label: "内容", type: "string", setter: "textarea", defaultValue: "活动期间下单即享限时优惠，库存有限先到先得。" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb", ...COLOR_SWATCHES_META },
+        labelBackgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "rgba(146, 64, 14, 0.1)", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签文字色", type: "string", setter: "color", defaultValue: "#92400e", ...COLOR_SWATCHES_META },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
       },
     }),
   },

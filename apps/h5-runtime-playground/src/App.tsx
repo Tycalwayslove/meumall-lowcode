@@ -113,10 +113,17 @@ const sampleSchema = createLowcodePageSchema({
       componentName: "NoticeBar",
       materialVersion: "0.1.0",
       props: {
+        showIcon: true,
+        iconText: "!",
         label: "公告",
         content: "活动期间下单即享限时补贴，库存有限先到先得。",
         backgroundColor: "#fffbeb",
+        labelBackgroundColor: "rgba(146, 64, 14, 0.1)",
+        labelColor: "#92400e",
         textColor: "#92400e",
+        borderColor: "#fde68a",
+        radius: 8,
+        paddingY: 10,
       },
     },
     {

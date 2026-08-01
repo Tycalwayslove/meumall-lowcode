@@ -231,6 +231,103 @@ export function MlcText({
   );
 }
 
+export interface MlcNoticeBarProps {
+  label?: React.ReactNode;
+  content?: React.ReactNode;
+  iconText?: React.ReactNode;
+  showIcon?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
+  labelBackgroundColor?: string;
+  labelColor?: string;
+  borderColor?: string;
+  radius?: number;
+  paddingY?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcNoticeBar({
+  label,
+  content,
+  iconText = "!",
+  showIcon = true,
+  backgroundColor = "#fffbeb",
+  textColor = "#92400e",
+  labelBackgroundColor = "rgba(146, 64, 14, 0.1)",
+  labelColor = textColor,
+  borderColor = "transparent",
+  radius = h5Tokens.radius.md,
+  paddingY = 10,
+  className,
+  style,
+}: MlcNoticeBarProps): React.ReactElement {
+  return (
+    <section
+      className={className}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        overflow: "hidden",
+        padding: `${paddingY}px 14px`,
+        border: `1px solid ${borderColor}`,
+        borderRadius: radius,
+        color: textColor,
+        background: backgroundColor,
+        ...style,
+      }}
+    >
+      {showIcon ? (
+        <span
+          aria-hidden="true"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flex: "0 0 auto",
+            width: 18,
+            height: 18,
+            borderRadius: h5Tokens.radius.pill,
+            color: labelColor,
+            background: labelBackgroundColor,
+            fontSize: 12,
+            fontWeight: 900,
+            lineHeight: 1,
+          }}
+        >
+          {iconText}
+        </span>
+      ) : null}
+      {label ? (
+        <MlcTag
+          radius={h5Tokens.radius.pill}
+          style={{
+            flex: "0 0 auto",
+            minHeight: 22,
+            color: labelColor,
+            background: labelBackgroundColor,
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {label}
+        </MlcTag>
+      ) : null}
+      <MlcText
+        size={13}
+        style={{
+          minWidth: 0,
+          flex: 1,
+          color: "inherit",
+        }}
+      >
+        {content}
+      </MlcText>
+    </section>
+  );
+}
+
 export interface MlcCountdownTextItem {
   label: string;
   value: string;

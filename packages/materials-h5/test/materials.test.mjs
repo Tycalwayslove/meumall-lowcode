@@ -28,6 +28,7 @@ import {
   LeadFormBlock,
   LiveEntry,
   NavGrid,
+  NoticeBar,
   ProductRankList,
   SectionContainer,
   SpacerBlock,
@@ -152,6 +153,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCarousel", "interval", { min: 1000, max: 10000, step: 500, unit: "ms" }],
       ["BasicVideo", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicVideo", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["NoticeBar", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["NoticeBar", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
       ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
     ];
@@ -185,6 +188,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "accentColor"],
       ["BasicCarousel", "indicatorColor"],
       ["BasicVideo", "accentColor"],
+      ["NoticeBar", "borderColor"],
+      ["NoticeBar", "labelBackgroundColor"],
       ["SectionTitle", "accentColor"],
       ["ImageCardGrid", "cardBackgroundColor"],
     ];
@@ -251,6 +256,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcTabs",
       "MlcSpacer",
       "MlcDivider",
+      "MlcNoticeBar",
     ];
 
     for (const name of primitiveNames) {
@@ -329,6 +335,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicCard, ["MlcImage", "MlcTag", "MlcText", "MlcButton"]);
     functionSourceIncludes(BasicCarousel, ["MlcImage", "MlcTag", "MlcText"]);
     functionSourceIncludes(BasicVideo, ["MlcImage", "MlcTag", "MlcText"]);
+    functionSourceIncludes(NoticeBar, ["MlcNoticeBar"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -349,6 +356,23 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.posterUrl.setter, "image");
     assert.equal(material.manifest.propsSchema.autoPlay.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onPlay");
+  });
+
+  it("registers the enhanced notice bar material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "NoticeBar");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "公告条");
+    assert.equal(material.manifest.category, "marketing");
+    assert.equal(material.manifest.defaultProps.showIcon, true);
+    assert.equal(material.manifest.defaultProps.iconText, "!");
+    assert.equal(material.manifest.defaultProps.label, "公告");
+    assert.equal(material.manifest.propsSchema.showIcon.setter, "switch");
+    assert.equal(material.manifest.propsSchema.content.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.labelBackgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.borderColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.propsSchema.paddingY.setter, "number");
   });
 
   it("registers the activity rule modal material", () => {
