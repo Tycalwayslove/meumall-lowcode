@@ -159,11 +159,14 @@ type BasicModalPlacement = "center" | "bottom";
 type BasicListMarker = "dot" | "number" | "badge" | "none";
 type BasicAccordionMode = "single" | "multiple";
 type BasicAccordionIcon = "chevron" | "plus" | "none";
+type BasicTimelineMarker = "dot" | "number" | "badge";
+type BasicTimelineStatus = "done" | "active" | "pending";
 type BasicAlertTone = "info" | "success" | "warning" | "danger" | "neutral";
 type BasicAlertVariant = "soft" | "outline" | "solid";
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
+type BasicTimelineItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAlertActionHandler = () => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
@@ -262,6 +265,12 @@ const BASIC_ACCORDION_ICON_OPTIONS = [
   { label: "隐藏", value: "none" },
 ];
 
+const BASIC_TIMELINE_MARKER_OPTIONS = [
+  { label: "圆点", value: "dot" },
+  { label: "数字", value: "number" },
+  { label: "标签", value: "badge" },
+];
+
 const BASIC_ALERT_TONE_OPTIONS = [
   { label: "信息", value: "info" },
   { label: "成功", value: "success" },
@@ -283,6 +292,12 @@ const BASIC_ALERT_TONE_PALETTES = {
   danger: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", content: "#b91c1c" },
   neutral: { icon: "•", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", content: "#64748b" },
 } satisfies Record<BasicAlertTone, { icon: string; accent: string; background: string; border: string; title: string; content: string }>;
+
+const BASIC_TIMELINE_STATUS_PALETTES = {
+  done: { marker: "#0f766e", text: "#0f766e", line: "#99f6e4" },
+  active: { marker: "#2563eb", text: "#2563eb", line: "#bfdbfe" },
+  pending: { marker: "#94a3b8", text: "#64748b", line: "#e5e7eb" },
+} satisfies Record<BasicTimelineStatus, { marker: string; text: string; line: string }>;
 
 const NUMBER_PIXEL_SIZE_META = { min: 0, max: 80, step: 1, unit: "px" };
 const NUMBER_RADIUS_META = { min: 0, max: 48, step: 1, unit: "px" };
@@ -344,6 +359,12 @@ const BASIC_ACCORDION_FALLBACK_ITEMS: JsonObject[] = [
   { id: "faq_1", title: "活动什么时候开始？", content: "请以页面配置的活动时间为准，具体时间可由运营在内容中维护。", badgeText: "Q1" },
   { id: "faq_2", title: "如何查看更多说明？", content: "可以在折叠内容中配置规则、注意事项或 FAQ 文案，不请求业务接口。", badgeText: "Q2" },
   { id: "faq_3", title: "点击后会做什么？", content: "当前只做本地展开收起，并可触发安全 action 交给宿主处理。", badgeText: "Q3" },
+];
+
+const BASIC_TIMELINE_FALLBACK_ITEMS: JsonObject[] = [
+  { id: "timeline_1", title: "确认页面内容", description: "整理活动信息、素材和转化目标。", timeText: "第 1 步", badgeText: "准备", status: "done" },
+  { id: "timeline_2", title: "搭建低代码页面", description: "使用通用物料配置页面结构和重点内容。", timeText: "第 2 步", badgeText: "编辑", status: "active" },
+  { id: "timeline_3", title: "预览并提交发布", description: "检查 H5 展示效果和安全 action 后进入发布流程。", timeText: "第 3 步", badgeText: "交付", status: "pending" },
 ];
 
 export const BasicButton = defineComponent({
@@ -1086,6 +1107,216 @@ export const BasicAccordion = defineComponent({
                           ),
                         )
                       : null,
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
+      );
+    };
+  },
+});
+
+export const BasicTimeline = defineComponent({
+  name: "BasicTimeline",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items).length ? list(runtimeProps.items) : BASIC_TIMELINE_FALLBACK_ITEMS;
+      const title = text(runtimeProps.title, "基础时间线");
+      const subtitle = text(runtimeProps.subtitle);
+      const marker = option<BasicTimelineMarker>(runtimeProps.marker, ["dot", "number", "badge"], "dot");
+      const showTime = boolean(runtimeProps.showTime, true);
+      const showConnector = boolean(runtimeProps.showConnector, true);
+      const gap = number(runtimeProps.gap, 12);
+      const borderWidth = number(runtimeProps.borderWidth, 1);
+      const onItemClick = typeof runtimeProps.onItemClick === "function" ? runtimeProps.onItemClick as BasicTimelineItemClickHandler : undefined;
+      const markerTextColor = text(runtimeProps.markerTextColor, "#ffffff");
+      const markerRadius = number(runtimeProps.markerRadius, 999);
+
+      const itemStatus = (item: Record<string, unknown>) => option<BasicTimelineStatus>(item.status, ["done", "active", "pending"], "pending");
+
+      const renderMarker = (item: Record<string, unknown>, index: number, status: BasicTimelineStatus) => {
+        const palette = BASIC_TIMELINE_STATUS_PALETTES[status];
+        const markerColor = text(runtimeProps.markerColor, palette.marker);
+
+        if (marker === "badge") {
+          return h(
+            MlcTag,
+            {
+              tone: "accent",
+              radius: markerRadius,
+              class: `mlc-basic-timeline__badge mlc-basic-timeline__badge--${status}`,
+              style: {
+                color: markerColor,
+                background: text(runtimeProps.badgeBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+              } satisfies CSSProperties,
+            },
+            () => text(item.badgeText, String(index + 1)),
+          );
+        }
+
+        return h(
+          "span",
+          {
+            class: `mlc-basic-timeline__marker mlc-basic-timeline__marker--${marker} mlc-basic-timeline__marker--${status}`,
+            "aria-hidden": "true",
+            style: {
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: marker === "number" ? "26px" : "11px",
+              height: marker === "number" ? "26px" : "11px",
+              borderRadius: `${markerRadius}px`,
+              border: marker === "dot" ? `3px solid ${text(runtimeProps.itemBackgroundColor, "#ffffff")}` : undefined,
+              color: markerTextColor,
+              background: markerColor,
+              boxShadow: marker === "dot" ? `0 0 0 2px ${markerColor}` : undefined,
+              fontSize: "12px",
+              fontWeight: 900,
+              lineHeight: 1,
+            } satisfies CSSProperties,
+          },
+          marker === "number" ? String(index + 1) : "",
+        );
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-timeline",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-timeline__card",
+            style: {
+              display: "grid",
+              gap: `${gap}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+            } satisfies CSSProperties,
+          },
+          [
+            title || subtitle
+              ? h("div", { class: "mlc-basic-timeline__header", style: { display: "grid", gap: "4px" } }, [
+                  title
+                    ? h(MlcText, { as: "strong", size: 18, weight: 900, style: { color: text(runtimeProps.titleColor, "#111827") } }, () => title)
+                    : null,
+                  subtitle
+                    ? h(MlcText, { as: "p", size: 13, lineHeight: 1.6, style: { color: text(runtimeProps.subtitleColor, "#64748b") } }, () => subtitle)
+                    : null,
+                ])
+              : null,
+            h(
+              "ol",
+              { class: "mlc-basic-timeline__items", style: { display: "grid", gap: `${gap}px`, padding: 0, margin: 0, listStyle: "none" } },
+              items.map((item, index) => {
+                const status = itemStatus(item);
+                const palette = BASIC_TIMELINE_STATUS_PALETTES[status];
+                const clickable = Boolean(onItemClick);
+                const content = h(
+                  "div",
+                  {
+                    class: "mlc-basic-timeline__content",
+                    style: {
+                      display: "grid",
+                      gap: "5px",
+                      minWidth: 0,
+                      padding: `${number(runtimeProps.itemPadding, 12)}px`,
+                      borderRadius: `${number(runtimeProps.itemRadius, 10)}px`,
+                      border: `1px solid ${text(runtimeProps.itemBorderColor, "#e5e7eb")}`,
+                      background: text(runtimeProps.itemBackgroundColor, "#ffffff"),
+                    } satisfies CSSProperties,
+                  },
+                  [
+                    showTime && text(item.timeText)
+                      ? h(MlcText, { size: 12, lineHeight: 1.4, style: { color: text(runtimeProps.timeColor, palette.text) } }, () => text(item.timeText))
+                      : null,
+                    h("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" } }, [
+                      h(
+                        MlcText,
+                        { as: "strong", size: 14, weight: 800, lineHeight: 1.45, style: { color: text(runtimeProps.itemTitleColor, "#111827") } },
+                        () => text(item.title, `时间线节点 ${index + 1}`),
+                      ),
+                      text(item.statusText)
+                        ? h(MlcText, { size: 12, lineHeight: 1.4, style: { flex: "0 0 auto", color: text(runtimeProps.statusColor, palette.text) } }, () => text(item.statusText))
+                        : null,
+                    ]),
+                    text(item.description)
+                      ? h(MlcText, { as: "p", size: 13, lineHeight: 1.55, style: { color: text(runtimeProps.itemDescriptionColor, "#64748b") } }, () => text(item.description))
+                      : null,
+                  ],
+                );
+
+                return h(
+                  "li",
+                  {
+                    key: text(item.id, `${index}`),
+                    class: `mlc-basic-timeline__item mlc-basic-timeline__item--${status}`,
+                    style: { display: "grid", gridTemplateColumns: "auto 1fr", gap: "10px", alignItems: "stretch" } satisfies CSSProperties,
+                  },
+                  [
+                    h(
+                      "div",
+                      {
+                        class: "mlc-basic-timeline__rail",
+                        style: {
+                          display: "grid",
+                          justifyItems: "center",
+                          gridTemplateRows: "auto 1fr",
+                          paddingTop: marker === "badge" ? "2px" : "8px",
+                        } satisfies CSSProperties,
+                      },
+                      [
+                        renderMarker(item, index, status),
+                        showConnector && index < items.length - 1
+                          ? h("span", {
+                              class: "mlc-basic-timeline__connector",
+                              "aria-hidden": "true",
+                              style: {
+                                width: `${number(runtimeProps.lineWidth, 2)}px`,
+                                minHeight: `${Math.max(18, gap + number(runtimeProps.itemPadding, 12))}px`,
+                                marginTop: "8px",
+                                borderRadius: "999px",
+                                background: text(runtimeProps.lineColor, palette.line),
+                              } satisfies CSSProperties,
+                            })
+                          : null,
+                      ],
+                    ),
+                    clickable
+                      ? h(
+                          "button",
+                          {
+                            type: "button",
+                            class: "mlc-basic-timeline__button",
+                            style: {
+                              display: "block",
+                              width: "100%",
+                              padding: 0,
+                              border: 0,
+                              background: "transparent",
+                              color: "inherit",
+                              textAlign: "left",
+                              cursor: "pointer",
+                            } satisfies CSSProperties,
+                            onClick: () => {
+                              onItemClick?.({ item, index });
+                            },
+                          },
+                          content,
+                        )
+                      : content,
                   ],
                 );
               }),
@@ -5058,6 +5289,83 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
       },
       events: [{ name: "onItemToggle", title: "切换折叠项" }],
+    }),
+  },
+  {
+    component: BasicTimeline,
+    manifest: createMaterialManifest({
+      componentName: "BasicTimeline",
+      materialVersion: "0.1.0",
+      title: "基础时间线",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础时间线",
+        subtitle: "适合配置流程步骤、活动节奏、服务说明或上线节点。",
+        items: BASIC_TIMELINE_FALLBACK_ITEMS,
+        marker: "dot",
+        showTime: true,
+        showConnector: true,
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        itemBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        itemTitleColor: "#111827",
+        itemDescriptionColor: "#64748b",
+        timeColor: "#0f766e",
+        statusColor: "#0f766e",
+        markerColor: "#0f766e",
+        markerTextColor: "#ffffff",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        lineColor: "#99f6e4",
+        borderColor: "#e5e7eb",
+        itemBorderColor: "#e5e7eb",
+        borderWidth: 1,
+        lineWidth: 2,
+        radius: 12,
+        itemRadius: 10,
+        markerRadius: 999,
+        paddingY: 14,
+        padding: 14,
+        itemPadding: 12,
+        gap: 12,
+        shadow: false,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础时间线" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "适合配置流程步骤、活动节奏、服务说明或上线节点。" },
+        items: { label: "时间线节点", type: "array", setter: "textarea", defaultValue: BASIC_TIMELINE_FALLBACK_ITEMS },
+        marker: { label: "标记样式", type: "string", setter: "select", defaultValue: "dot", options: BASIC_TIMELINE_MARKER_OPTIONS },
+        showTime: { label: "显示时间文案", type: "boolean", setter: "switch", defaultValue: true },
+        showConnector: { label: "显示连接线", type: "boolean", setter: "switch", defaultValue: true },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        itemBackgroundColor: { label: "节点背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        itemTitleColor: { label: "节点标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        itemDescriptionColor: { label: "节点说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        timeColor: { label: "时间文案色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        statusColor: { label: "状态文字色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        markerColor: { label: "标记色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        markerTextColor: { label: "标记文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        badgeBackgroundColor: { label: "标签背景色", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)", ...COLOR_SWATCHES_META },
+        lineColor: { label: "连接线色", type: "string", setter: "color", defaultValue: "#99f6e4", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        itemBorderColor: { label: "节点边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        lineWidth: { label: "连接线宽度", type: "number", setter: "number", defaultValue: 2, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        itemRadius: { label: "节点圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        markerRadius: { label: "标记圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        itemPadding: { label: "节点留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "节点间距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+      },
+      events: [{ name: "onItemClick", title: "点击时间线节点" }],
     }),
   },
   {

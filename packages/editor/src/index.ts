@@ -4145,6 +4145,9 @@ export function createLowcodeDefaultListItem(
   if (propName === "items" && options.componentName === "BasicAccordion") {
     return { id, title: "新折叠项", content: "请输入折叠内容", badgeText: "说明" };
   }
+  if (propName === "items" && options.componentName === "BasicTimeline") {
+    return { id, title: "新时间线节点", description: "请输入节点说明", timeText: "新节点", badgeText: "节点", status: "pending" };
+  }
   if (propName === "items" && options.componentName === "StoreExpertSection") {
     return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
   }
@@ -5288,6 +5291,7 @@ function getLowcodeDefaultListFieldNames(
   if (propName === "items" && componentName === "BasicCarousel") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
   if (propName === "items" && componentName === "BasicList") return ["id", "title", "description", "badgeText", "metaText"];
   if (propName === "items" && componentName === "BasicAccordion") return ["id", "title", "content", "badgeText"];
+  if (propName === "items" && componentName === "BasicTimeline") return ["id", "title", "description", "timeText", "badgeText", "status"];
   if (propName === "items" && componentName === "StoreExpertSection") {
     return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
   }

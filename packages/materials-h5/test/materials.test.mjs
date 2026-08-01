@@ -23,6 +23,7 @@ import {
   BasicSwitch,
   BasicTag,
   BasicText,
+  BasicTimeline,
   BasicTextarea,
   BasicVideo,
   BrandFeatureSection,
@@ -137,6 +138,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCarousel", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicCarousel", "indicator", ["dots", "counter", "none"]],
       ["BasicList", "marker", ["dot", "number", "badge", "none"]],
+      ["BasicTimeline", "marker", ["dot", "number", "badge"]],
       ["BasicModal", "placement", ["center", "bottom"]],
       ["SectionTitle", "align", ["left", "center", "right"]],
     ];
@@ -169,6 +171,10 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAccordion", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAccordion", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAccordion", "badgeRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicTimeline", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicTimeline", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicTimeline", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicTimeline", "markerRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicAlert", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAlert", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAlert", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -256,6 +262,13 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAccordion", "contentColor"],
       ["BasicAccordion", "badgeColor"],
       ["BasicAccordion", "iconColor"],
+      ["BasicTimeline", "backgroundColor"],
+      ["BasicTimeline", "cardBackgroundColor"],
+      ["BasicTimeline", "itemBackgroundColor"],
+      ["BasicTimeline", "itemTitleColor"],
+      ["BasicTimeline", "markerColor"],
+      ["BasicTimeline", "lineColor"],
+      ["BasicTimeline", "timeColor"],
       ["BasicAlert", "backgroundColor"],
       ["BasicAlert", "titleColor"],
       ["BasicAlert", "contentColor"],
@@ -466,6 +479,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicForm, ["MlcButton", "MlcText"]);
     functionSourceIncludes(BasicList, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicAccordion, ["MlcText", "MlcTag"]);
+    functionSourceIncludes(BasicTimeline, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicAlert, ["MlcButton", "MlcText", "MlcTag"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
@@ -712,6 +726,56 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.itemPadding.setter, "number");
     assert.equal(material.manifest.propsSchema.badgeColor.setter, "color");
     assert.equal(material.manifest.events?.[0]?.name, "onItemToggle");
+  });
+
+  it("registers the basic timeline material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicTimeline");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础时间线");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.marker, "dot");
+    assert.equal(material.manifest.defaultProps.showTime, true);
+    assert.equal(material.manifest.defaultProps.showConnector, true);
+    assert.equal(material.manifest.defaultProps.items.length, 3);
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.marker.setter, "select");
+    assert.equal(material.manifest.propsSchema.showTime.setter, "switch");
+    assert.equal(material.manifest.propsSchema.showConnector.setter, "switch");
+    assert.equal(material.manifest.propsSchema.itemPadding.setter, "number");
+    assert.equal(material.manifest.propsSchema.markerColor.setter, "color");
+    assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
+  });
+
+  it("renders basic timeline items and item click payloads in React H5", () => {
+    const clicks = [];
+    const element = BasicTimeline({
+      node: { id: "timeline_1", componentName: "BasicTimeline", props: {} },
+      props: {
+        title: "时间线测试",
+        marker: "badge",
+        items: [
+          { id: "timeline_item_1", title: "第一步", description: "第一步说明", timeText: "阶段一", badgeText: "A", status: "done" },
+          { id: "timeline_item_2", title: "第二步", description: "第二步说明", timeText: "阶段二", badgeText: "B", status: "active" },
+        ],
+        onItemClick: (payload) => clicks.push(payload),
+      },
+    });
+
+    assert.equal(element.props.className, "mlc-material mlc-basic-timeline");
+    const card = element.props.children;
+    const itemsWrapper = card.props.children.find((child) => child?.props?.className === "mlc-basic-timeline__items");
+    assert.ok(itemsWrapper);
+    assert.equal(itemsWrapper.type, "ol");
+    assert.equal(itemsWrapper.props.children.length, 2);
+    assert.equal(itemsWrapper.props.children[0].props.className.includes("mlc-basic-timeline__item--done"), true);
+    assert.equal(itemsWrapper.props.children[0].props.children[0].props.children[0].type.name, "MlcTag");
+    assert.equal(itemsWrapper.props.children[1].props.children[1].type, "button");
+
+    itemsWrapper.props.children[1].props.children[1].props.onClick();
+    assert.equal(clicks.length, 1);
+    assert.equal(clicks[0].index, 1);
+    assert.equal(clicks[0].item.title, "第二步");
   });
 
   it("registers the basic alert material", () => {
