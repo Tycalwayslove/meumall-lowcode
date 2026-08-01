@@ -89,6 +89,8 @@ pnpm smoke:browser
 pnpm smoke:visual
 ```
 
+`pnpm check:architecture` always checks package shape, dependency direction, source imports, and React/Vue material name parity. After `pnpm build`, it also imports the public dist entries and verifies editor material insert presets against React/Vue H5 material manifests. `pnpm test` runs build before the architecture check, so the full guardrail is covered there.
+
 `pnpm smoke:visual` writes a local report under `.ai/test-reports/latest-visual/` and checks screenshot PNG size, sampled colors, and luma range to catch blank editor or H5 renders.
 
 `pnpm dev:demo` starts the Vue3 editor playground and React H5 runtime playground together, then injects `VITE_REACT_H5_RUNTIME_URL` into the editor. The default URLs are:

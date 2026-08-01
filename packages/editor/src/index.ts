@@ -2011,7 +2011,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "清爽分组",
       description: "白底、轻留白的单列内容分组。",
       metaName: "清爽分组",
-      props: { title: "活动分组", subtitle: "用于承载图文、按钮或商品模块", backgroundColor: "#ffffff", paddingY: 16, gap: 12 },
+      props: { title: "活动分组", subtitle: "用于承载图文、按钮或商品模块", backgroundColor: "#ffffff", padding: 16, gap: 12 },
       keywords: ["section", "container", "分组", "容器"],
     },
     {
@@ -2019,7 +2019,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "强调分组",
       description: "浅色背景和边框，适合突出重点内容。",
       metaName: "强调分组",
-      props: { title: "重点区域", subtitle: "突出展示活动重点", backgroundColor: "#f8fafc", borderColor: "#dbeafe", radius: 12, paddingY: 18, gap: 12 },
+      props: { title: "重点区域", subtitle: "突出展示活动重点", backgroundColor: "#f8fafc", borderColor: "#dbeafe", radius: 12, padding: 18, gap: 12 },
       keywords: ["highlight", "emphasis", "重点"],
     },
   ],
@@ -2029,7 +2029,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "双列宫格",
       description: "适合图片、卡片或入口的双列排布。",
       metaName: "双列宫格",
-      props: { columns: 2, gap: 10, backgroundColor: "#ffffff", paddingY: 12 },
+      props: { columns: 2, gap: 10, backgroundColor: "#ffffff", padding: 12 },
       keywords: ["grid", "2", "双列"],
     },
     {
@@ -2037,7 +2037,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "三列宫格",
       description: "适合轻量频道入口的三列排布。",
       metaName: "三列宫格",
-      props: { columns: 3, gap: 8, backgroundColor: "#ffffff", paddingY: 12 },
+      props: { columns: 3, gap: 8, backgroundColor: "#ffffff", padding: 12 },
       keywords: ["grid", "3", "三列"],
     },
   ],
@@ -2165,7 +2165,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "强调标签",
       description: "适合角标、卖点和提示标签。",
       metaName: "强调标签",
-      props: { text: "限时", tone: "accent", size: "md", radius: 999 },
+      props: { text: "限时", tone: "accent", radius: 999 },
       keywords: ["tag", "标签", "角标"],
     },
   ],
@@ -2298,7 +2298,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       metaName: "规则列表",
       props: {
         title: "活动规则",
-        description: "请按页面说明参与活动",
+        subtitle: "请按页面说明参与活动",
         marker: "number",
         items: [
           { title: "选择心仪商品", description: "浏览页面中的精选商品和活动会场。" },
@@ -2317,7 +2317,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       metaName: "FAQ 折叠面板",
       props: {
         title: "常见问题",
-        description: "运营可按需修改问题和答案",
+        subtitle: "运营可按需修改问题和答案",
         mode: "single",
         items: [
           { title: "活动什么时候开始？", content: "请以页面展示时间为准。", tag: "时间" },
@@ -2335,7 +2335,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       metaName: "活动时间线",
       props: {
         title: "活动节奏",
-        description: "展示活动关键阶段",
+        subtitle: "展示活动关键阶段",
         marker: "dot",
         items: [
           { title: "预热", description: "浏览活动内容并提前收藏。", time: "10:00", status: "done" },
@@ -2352,7 +2352,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       title: "规则弹窗",
       description: "静态规则说明弹窗。",
       metaName: "规则弹窗",
-      props: { triggerText: "查看规则", title: "活动规则", description: "请阅读活动说明", content: "活动权益、参与门槛和时间以平台展示为准。", confirmText: "我知道了", placement: "center" },
+      props: { triggerText: "查看规则", modalTitle: "活动规则", summary: "请阅读活动说明", content: "活动权益、参与门槛和时间以平台展示为准。", primaryText: "我知道了", placement: "center" },
       keywords: ["modal", "rules", "弹窗"],
     },
   ],
@@ -2363,7 +2363,7 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       description: "适合首屏多图横幅展示。",
       metaName: "头图轮播",
       props: {
-        aspectRatio: "16 / 9",
+        ratio: "16 / 9",
         indicator: "dots",
         radius: 12,
         items: [

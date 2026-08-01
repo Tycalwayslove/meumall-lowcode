@@ -15,6 +15,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - React/Vue materials 新增 `BasicMetricGrid` 通用静态指标组物料，继续复用 `MlcMetric`，支持标题、说明、多项指标数组、列数、语气、对齐和卡片/简洁样式；它只承载静态指标组展示，不接远程统计、实时刷新、库存计算、销量计算、人数计算或埋点聚合。
 - `@meumall/lowcode-editor` 属性分组 API 新增 `validation` 分组，`required`、`requiredMessage` 等校验类 props 会进入“表单校验”分组；Vue3 `EditorPropGroupsPanel` 会展示 BasicForm 提交前校验提示，帮助运营理解必填配置与 H5 runtime 字段错误态的关系。Page Schema v1、Material Manifest v1、renderer 和 materials runtime 协议不变。
 - `@meumall/lowcode-editor` 新增物料插入预设校验 API `validateLowcodeMaterialInsertPresets`，用于检查内置或自定义 preset props 是否存在于目标 manifest 的 `propsSchema/defaultProps`，并返回 preset 数量、已知字段、有效状态和问题列表；该能力只做字段名一致性校验，不改变 Page Schema v1、Material Manifest v1、renderer、materials 或 runtime 行为。
+- 根级 `pnpm check:architecture` 已接入物料插入预设兼容性检查：在 build 产物存在时通过公开 dist 入口读取 editor 校验 API、React H5 物料和 Vue H5 物料，逐一验证内置预设 props 是否能被对应 manifest 消费；本次同步修正了 SectionContainer、GridContainer、BasicModal、BasicList、BasicAccordion、BasicTimeline、BasicTag 和 BasicCarousel 的旧预设字段。Page Schema v1、Material Manifest v1、renderer、materials 和 runtime 行为不变。
 
 ## 当前维护范围
 
@@ -106,7 +107,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 基础单元测试：根目录提供 `pnpm test`，覆盖 schema、core、adapters、editor readiness、React/Vue renderer fallback 和 materials 公开 API 基础回归。
 - Browser smoke check：根目录提供 `pnpm smoke:browser`，脚本会启动 editor playground、默认 H5 runtime playground、HTTP config client H5 runtime playground、临时 config platform HTTP mock 和本机 Chrome headless，检查 Vue3 编辑器 shell、编辑器内置 runtime 和 React H5 runtime 的关键 DOM、核心文案与物料节点渲染；同时覆盖区块标题物料、图片卡片宫格物料、活动规则弹窗打开/关闭、页面设置、物料详情预览、模板搜索、模板视觉缩略预览、本地自定义模板、模板 H5 预览、本地版本备注/筛选/差异对比、React H5 runtime 诊断面板、pageId published 命中、releaseId preview 命中、HTTP config platform client env 模式和 authorization 透传、missing pageId fallback、empty demo 空态、broken demo 未知物料/组件异常局部兜底、应用 `商品专题页`、新建页面向导、空白 H5 页面、空白画布快捷起步、源码/预览/设计模式切换和 schema 草稿同步。
 - Visual smoke check：根目录提供 `pnpm smoke:visual`，脚本会启动 editor playground、H5 runtime playground 和本机 Chrome headless，截取 Vue3 编辑器首页、React H5 runtime `?pageId=summer-campaign-demo` published 入口和 React H5 runtime `?releaseId=preview_demo` preview 入口，并对截图 PNG 宽高、采样颜色数量和亮度范围做基础健康断言，生成 `.ai/test-reports/latest-visual/index.md` 本地报告；该报告和截图是本地验证产物，不进入 Git 历史。
-- Architecture boundary check：根目录提供 `pnpm check:architecture`，脚本会检查可发布包结构、`package.json` workspace 依赖方向、源码 import 依赖方向、React/Vue H5 物料 manifest `componentName` 对齐和 `Mlc*` runtime primitives 不注册为低代码物料；`pnpm test` 已接入该检查。
+- Architecture boundary check：根目录提供 `pnpm check:architecture`，脚本会检查可发布包结构、`package.json` workspace 依赖方向、源码 import 依赖方向、React/Vue H5 物料 manifest `componentName` 对齐和 `Mlc*` runtime primitives 不注册为低代码物料；build 产物存在时还会通过公开 dist 入口验证 editor 物料插入预设与 React/Vue H5 manifest 字段兼容性；`pnpm test` 会先 build 再执行该检查。
 - Data source resolver：`@meumall/lowcode-adapters` 提供通用数据源解析和 `createHttpDataSourceHandler`，编辑器预览和 React H5 runtime 可按 schema.dataSources 注册白名单 handler 生成 renderer data，并展示逐数据源诊断状态；HTTP handler 支持宿主固定 endpoint、GET query、POST body、响应解包和错误记录，Page Schema 不保存任意 URL。Vue3 editor playground 和 React H5 runtime playground 已支持通过 `VITE_LOWCODE_DATA_SOURCE_BASE_URL` 将 `product.byIds` 切到 HTTP handler，并通过 browser smoke 验证 React H5 runtime 可从本地 HTTP mock 拉取商品并渲染。
 - Safe action executor：`@meumall/lowcode-adapters` 提供安全 action registry/executor，编辑器可维护 actions 并绑定物料事件，Vue 预览和 React H5 runtime 可执行白名单动作。
 - 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ProductRankList`、`BrandFeatureSection`、`StickyActionBar`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`，大促模板和 React H5 runtime 示例已使用新增物料。
@@ -217,12 +218,13 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 图片/视频素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，本地自定义模板仍是 localStorage 原型；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、视频中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token；当前已具备 12 个可发布包的本地 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-adapters` runtime health summary API、`@meumall/lowcode-runtime-react-h5`、`@meumall/lowcode-editor` demo checklist API 和 `@meumall/lowcode-editor` publish risk summary API 已补 pending minor changeset，但真实发布仍需确认 registry、access、token、linked group 版本结果和 release/tag 策略。
-- 已建立浏览器级 smoke check、带 PNG 健康断言的可视化截图 smoke check、renderer fallback 单测和架构边界 check，并覆盖基础挂载、模板应用、模式切换、编辑器首页、published H5 入口、preview H5 入口、empty/broken runtime 降级、包结构、依赖方向和物料 manifest 对齐；但更完整的组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E，完整循环依赖分析，以及带基线图 diff 的 visual regression 尚未建立。
+- 已建立浏览器级 smoke check、带 PNG 健康断言的可视化截图 smoke check、renderer fallback 单测和架构边界 check，并覆盖基础挂载、模板应用、模式切换、编辑器首页、published H5 入口、preview H5 入口、empty/broken runtime 降级、包结构、依赖方向、物料 manifest 对齐和 build 后 editor 物料插入预设字段兼容性；但更完整的组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E，完整循环依赖分析，以及带基线图 diff 的 visual regression 尚未建立。
 
 ## 最近变更
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
+| 2026-08-01 | 本次提交 | 架构检查接入物料预设兼容性护栏并修正默认预设字段。 |
 | 2026-08-01 | 本次提交 | 新增 editor 物料插入预设校验 API。 |
 | 2026-08-01 | 4429764 | 修正 BasicLink 编辑器插入预设字段。 |
 | 2026-08-01 | 28eceea | 新增基础指标组通用物料。 |

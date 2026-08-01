@@ -2,7 +2,7 @@
 
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -81,6 +81,7 @@ const requiredPackageFiles = ["package.json", "README.md"];
 const requiredPublishFiles = ["dist", "README.md"];
 
 const failures = [];
+const warnings = [];
 
 function log(message) {
   process.stdout.write(`[architecture-check] ${message}\n`);
@@ -88,6 +89,10 @@ function log(message) {
 
 function fail(message) {
   failures.push(message);
+}
+
+function warn(message) {
+  warnings.push(message);
 }
 
 async function readJson(filePath) {
@@ -106,6 +111,16 @@ async function pathExists(filePath) {
 
 function toRelative(filePath) {
   return path.relative(rootDir, filePath);
+}
+
+async function importBuiltModule(relativeFile, packageName) {
+  const modulePath = path.join(rootDir, relativeFile);
+  if (!(await pathExists(modulePath))) {
+    warn(`${packageName}: 缺少 ${relativeFile}，请先运行 pnpm build 再执行完整架构检查`);
+    return undefined;
+  }
+
+  return import(pathToFileURL(modulePath).href);
 }
 
 function sortedUnique(values) {
@@ -307,6 +322,43 @@ function extractComponentNames(source) {
   return names;
 }
 
+function assertPresetCompatibilityForMaterials(label, materials, validateLowcodeMaterialInsertPresets) {
+  if (!Array.isArray(materials)) {
+    fail(`${label}: 公开入口未导出物料数组`);
+    return;
+  }
+
+  for (const material of materials) {
+    const manifest = material?.manifest;
+    if (!manifest) {
+      fail(`${label}: 发现缺少 manifest 的物料`);
+      continue;
+    }
+
+    const result = validateLowcodeMaterialInsertPresets(manifest);
+    for (const issue of result.issues) {
+      fail(`${label}/${issue.componentName}/${issue.presetId}: ${issue.message}`);
+    }
+  }
+}
+
+async function assertMaterialPresetCompatibility() {
+  const editorModule = await importBuiltModule("packages/editor/dist/index.js", "@meumall/lowcode-editor");
+  const reactMaterialsModule = await importBuiltModule("packages/materials-h5/dist/index.js", "@meumall/lowcode-materials-h5");
+  const vueMaterialsModule = await importBuiltModule("packages/materials-vue-h5/dist/index.js", "@meumall/lowcode-materials-vue-h5");
+
+  if (!editorModule || !reactMaterialsModule || !vueMaterialsModule) return;
+
+  const validateLowcodeMaterialInsertPresets = editorModule.validateLowcodeMaterialInsertPresets;
+  if (typeof validateLowcodeMaterialInsertPresets !== "function") {
+    fail("@meumall/lowcode-editor: 公开入口缺少 validateLowcodeMaterialInsertPresets");
+    return;
+  }
+
+  assertPresetCompatibilityForMaterials("React H5 materials", reactMaterialsModule.h5Materials, validateLowcodeMaterialInsertPresets);
+  assertPresetCompatibilityForMaterials("Vue H5 materials", vueMaterialsModule.h5VueMaterials, validateLowcodeMaterialInsertPresets);
+}
+
 async function main() {
   log("检查可发布包结构和 package.json 依赖方向");
   for (const [relativeDir, expectedName] of publicPackages) {
@@ -324,12 +376,19 @@ async function main() {
   log("检查 React/Vue H5 物料 manifest 对齐和 primitives 边界");
   await assertMaterialManifestParity();
 
+  log("检查编辑器物料插入预设与 React/Vue H5 manifest 兼容性");
+  await assertMaterialPresetCompatibility();
+
   if (failures.length) {
     for (const failure of failures) {
       process.stderr.write(`[architecture-check] 失败：${failure}\n`);
     }
     process.exitCode = 1;
     return;
+  }
+
+  for (const warning of warnings) {
+    process.stderr.write(`[architecture-check] 提示：${warning}\n`);
   }
 
   log("架构边界检查通过。");

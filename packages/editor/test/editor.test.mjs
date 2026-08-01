@@ -194,6 +194,8 @@ import {
   moveLowcodeCanvasNodeGroupByHint,
   resolveLowcodeCanvasDropPlacement,
 } from "../dist/index.js";
+import { h5Materials } from "../../materials-h5/dist/index.js";
+import { h5VueMaterials } from "../../materials-vue-h5/dist/index.js";
 import {
   createLowcodeNode,
   createLowcodePageSchema,
@@ -975,6 +977,12 @@ describe("@meumall/lowcode-editor readiness", () => {
       },
     });
     assert.equal(allowedLinkPresetResult.valid, true);
+
+    const materialPresetIssues = [...h5Materials, ...h5VueMaterials].flatMap((material) => validateLowcodeMaterialInsertPresets(material.manifest).issues);
+    assert.deepEqual(
+      materialPresetIssues.map((issue) => [issue.componentName, issue.presetId, issue.propName]),
+      [],
+    );
 
     const stateBlock = createMaterialManifest({
       componentName: "BasicStateBlock",
