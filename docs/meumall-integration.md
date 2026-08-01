@@ -97,6 +97,16 @@ pnpm --filter @meumall/lowcode-h5-runtime-playground dev
 
 不配置时仍使用本地 sample resolver；配置后左侧诊断面板会展示 `数据源模式: http <baseUrl>`，并通过 `createHttpDataSourceHandler` 请求宿主代码固定的 `GET /api/lowcode/data/products/by-ids`。Page Schema 只保存 `type`、`params` 和 `bindTo`，不要把任意 HTTP URL 写入 schema。
 
+H5 runtime playground 也可通过环境变量切换 `tracking.click` 动作为 HTTP BFF handler：
+
+```bash
+VITE_LOWCODE_ACTION_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_ACTION_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+不配置时仍使用本地 mock action；配置后左侧诊断面板会展示 `动作模式: http <baseUrl>`，并通过 `createHttpActionHandler` 请求宿主代码固定的 `POST /api/lowcode/actions/tracking-click`。Page Schema 只保存 `actions[].type`、`actions[].params` 和节点 `events`，不要把任意 HTTP URL 写入 schema。
+
 后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage mock 实现替换为 HTTP adapter。注意 `saveDraft` 是手动版本草稿，`saveEditorDraftSnapshot` 是自动保存恢复点，两者不要共用同一条版本历史。
 
 ## Rendering Rules

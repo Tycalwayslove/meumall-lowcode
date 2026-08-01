@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   createSafeActionExecutor,
-  createSafeActionRegistry,
   loadLowcodeRuntimeSchema,
   resolveLowcodeDataSources,
   type ConfigPlatformPageRelease,
@@ -22,6 +21,7 @@ import {
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
+import { createRuntimeActionRegistryBinding } from "./actionRegistry";
 import { createRuntimeConfigPlatformBinding } from "./configPlatformClient";
 import { createRuntimeDataSourceRegistryBinding } from "./dataSourceRegistry";
 
@@ -1143,8 +1143,8 @@ export function App() {
     { label: "Empty", href: "/?demo=empty", desc: "空页面降级演示" },
     { label: "Broken", href: "/?demo=broken", desc: "未知物料和渲染异常演示" },
   ];
-  const actionExecutor = useMemo(() => {
-    const actionRegistry = createSafeActionRegistry({
+  const actionRuntime = useMemo(() => {
+    const actionRegistryBinding = createRuntimeActionRegistryBinding({
       navigate(action) {
         setActionLogs((current) => [`模拟跳转：${getParamString(action.params, "url", "/")}`, ...current].slice(0, 5));
       },
@@ -1158,11 +1158,14 @@ export function App() {
         setActionLogs((current) => [`已执行空动作：${action.id}`, ...current].slice(0, 5));
       },
     });
-    return createSafeActionExecutor(actionRegistry, {
-      onError(error) {
-        setActionLogs((current) => [`动作执行失败：${error.message}`, ...current].slice(0, 5));
-      },
-    });
+    return {
+      ...actionRegistryBinding,
+      executor: createSafeActionExecutor(actionRegistryBinding.registry, {
+        onError(error) {
+          setActionLogs((current) => [`动作执行失败：${error.message}`, ...current].slice(0, 5));
+        },
+      }),
+    };
   }, []);
 
   useEffect(() => {
@@ -1235,6 +1238,10 @@ export function App() {
             <dd>{dataSourceRegistryBinding.label}</dd>
           </div>
           <div>
+            <dt>动作模式</dt>
+            <dd>{actionRuntime.label}</dd>
+          </div>
+          <div>
             <dt>页面 ID</dt>
             <dd>{runtimeSchema.schema.pageId}</dd>
           </div>
@@ -1303,7 +1310,7 @@ export function App() {
           schema={runtimeSchema.schema}
           registry={registry}
           data={runtimeData}
-          actionExecutor={actionExecutor}
+          actionExecutor={actionRuntime.executor}
           fallback={<div className="runtime-empty">页面暂无内容，H5 runtime 已进入安全空态</div>}
           onRenderError={(error, node) => {
             setRenderErrors((current) => [...current, `${node?.id ?? "unknown"}: ${error.message}`]);

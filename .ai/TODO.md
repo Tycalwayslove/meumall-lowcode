@@ -14,7 +14,7 @@
 - 将编辑器侧本地 URL schema handoff 的生产入口替换为 Java 配置平台 previewToken/releaseId/pageId 查询协议；React H5 runtime playground 已支持通过 env 切换 HTTP config platform client。
 - 将 Vue3 编辑器 HTTP config platform client 从本地 smoke mock 切换为真实 Java 配置平台，并补齐统一响应解包、错误提示、权限、服务端发布校验、审批和审计。
 - 基于 playground HTTP 数据源演示链路，将真实 H5 宿主的 data source resolver 切到 Java/BFF 白名单 HTTP 数据源，并补齐真实鉴权、缓存、重试、分页和字段校验策略。
-- 将 mock action handler 升级为真实跳转桥、领券接口、埋点平台、权限和风控策略。
+- 基于 adapters HTTP action handler 和 H5 runtime playground 演示链路，将真实 H5 宿主 action handler 接入跳转桥、领券接口、埋点平台、权限和风控策略，并补齐登录态刷新、幂等、防重复点击和业务错误展示。
 - 在已有 renderer fallback 单测和 browser broken demo 基础上，继续扩展组件级 DOM 测试、物料搜索/拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和 visual regression。
 
 ## P2

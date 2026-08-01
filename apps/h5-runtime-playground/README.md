@@ -83,6 +83,22 @@ pnpm --filter @meumall/lowcode-h5-runtime-playground dev
 - The current reference endpoint is `GET /api/lowcode/data/products/by-ids`.
 - Page Schema only stores `type`, `params`, and `bindTo`; real endpoint paths stay in host code/env.
 
+## Action Client
+
+By default the playground executes `navigate`, `coupon.receive`, `tracking.click`, and `noop` through local mock handlers. To point `tracking.click` at an HTTP BFF endpoint while keeping Page Schema unchanged:
+
+```bash
+VITE_LOWCODE_ACTION_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_ACTION_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+- `VITE_LOWCODE_ACTION_BASE_URL` enables `createHttpActionHandler` for `tracking.click`.
+- `VITE_LOWCODE_ACTION_AUTHORIZATION` is optional and is forwarded as the `authorization` header.
+- The diagnostics panel shows `动作模式: local mock` or `动作模式: http <baseUrl>`.
+- The current reference endpoint is `POST /api/lowcode/actions/tracking-click`.
+- Page Schema only stores `actions[].type`, `actions[].params`, and node `events`; real endpoint paths stay in host code/env.
+
 ## Visual Smoke
 
 The repository root provides a local visual smoke command:

@@ -191,6 +191,7 @@ export type PlatformFetch = (
 ) => Promise<PlatformFetchResponse>;
 
 export type HttpDataSourceMethod = "GET" | "POST";
+export type HttpActionMethod = "GET" | "POST";
 
 export interface CreateHttpDataSourceHandlerOptions {
   baseUrl: string;
@@ -202,6 +203,21 @@ export interface CreateHttpDataSourceHandlerOptions {
   buildQuery?: (config: LowcodeDataSourceConfig) => JsonObject | undefined;
   buildBody?: (config: LowcodeDataSourceConfig) => JsonValue | undefined;
   transformResponse?: (payload: unknown, config: LowcodeDataSourceConfig) => MaybePromise<JsonValue>;
+}
+
+export interface CreateHttpActionHandlerOptions {
+  baseUrl: string;
+  endpoint: string;
+  method?: HttpActionMethod;
+  fetcher?: PlatformFetch;
+  headers?: Record<string, string>;
+  buildQuery?: (config: LowcodeActionConfig, context?: SafeActionExecutionContext) => JsonObject | undefined;
+  buildBody?: (config: LowcodeActionConfig, context?: SafeActionExecutionContext) => JsonValue | undefined;
+  transformResponse?: (
+    payload: unknown,
+    config: LowcodeActionConfig,
+    context?: SafeActionExecutionContext,
+  ) => MaybePromise<void>;
 }
 
 export interface CreateHttpConfigPlatformClientOptions {
@@ -565,6 +581,12 @@ export function createSafeActionExecutor(
   registry: SafeActionRegistry,
   options: CreateSafeActionExecutorOptions = {},
 ): SafeActionExecutor {
+  function handleError(error: unknown, ref: LowcodeActionRef, context: RuntimeActionContextLike): Error {
+    const normalizedError = toError(error);
+    options.onError?.(normalizedError, ref, context);
+    return normalizedError;
+  }
+
   return {
     execute(ref, context) {
       try {
@@ -572,15 +594,19 @@ export function createSafeActionExecutor(
         if (!action) {
           throw new Error(`Lowcode action not found: ${ref.actionId}`);
         }
-        return registry.execute(action, {
+        const result = registry.execute(action, {
           ref,
           data: context.data,
           schema: context.schema,
         });
+        if (result && typeof (result as Promise<void>).then === "function") {
+          return Promise.resolve(result).catch((error) => {
+            throw handleError(error, ref, context);
+          });
+        }
+        return result;
       } catch (error) {
-        const normalizedError = toError(error);
-        options.onError?.(normalizedError, ref, context);
-        throw normalizedError;
+        throw handleError(error, ref, context);
       }
     },
   };
@@ -593,10 +619,10 @@ function trimTrailingSlash(value: string): string {
 function normalizeHttpEndpoint(value: string): string {
   const endpoint = value.trim();
   if (!endpoint) {
-    throw new Error("HTTP data source endpoint is required");
+    throw new Error("HTTP endpoint is required");
   }
   if (/^https?:\/\//i.test(endpoint)) {
-    throw new Error("HTTP data source endpoint must be a path, not an absolute URL");
+    throw new Error("HTTP endpoint must be a path, not an absolute URL");
   }
   return endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
 }
@@ -756,6 +782,46 @@ export function createHttpDataSourceHandler(options: CreateHttpDataSourceHandler
       return assertJsonValue(await options.transformResponse(payload, config), "HTTP data source transformed response");
     }
     return assertJsonValue(getByJsonPath(payload, options.responseDataPath), "HTTP data source response");
+  };
+}
+
+function createDefaultHttpActionPayload(
+  config: LowcodeActionConfig,
+  context?: SafeActionExecutionContext,
+): JsonObject {
+  return {
+    actionId: config.id,
+    type: config.type,
+    params: config.params ?? {},
+    refParams: context?.ref?.params ?? {},
+    pageId: context?.schema?.pageId ?? null,
+  };
+}
+
+export function createHttpActionHandler(options: CreateHttpActionHandlerOptions): ActionHandler {
+  const baseUrl = trimTrailingSlash(options.baseUrl);
+  const endpoint = normalizeHttpEndpoint(options.endpoint);
+  const method = options.method ?? "POST";
+  const fetcher = options.fetcher ?? getDefaultFetch();
+  const headers = {
+    "content-type": "application/json",
+    ...(options.headers ?? {}),
+  };
+
+  return async (config, context) => {
+    const defaultPayload = createDefaultHttpActionPayload(config, context);
+    const query = options.buildQuery ? options.buildQuery(config, context) : method === "GET" ? defaultPayload : undefined;
+    const body = options.buildBody ? options.buildBody(config, context) : method === "POST" ? defaultPayload : undefined;
+    const response = await fetcher(appendQueryParams(`${baseUrl}${endpoint}`, query), {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(`HTTP action request failed: ${response.status}`);
+    }
+    await options.transformResponse?.(payload, config, context);
   };
 }
 

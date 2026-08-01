@@ -78,6 +78,26 @@ const smokeHttpPageSchema = {
       },
     },
     {
+      id: "smoke_http_action_button",
+      componentName: "BasicButton",
+      materialVersion: "0.1.0",
+      props: {
+        text: "HTTP 动作按钮",
+        variant: "solid",
+        size: "md",
+        block: true,
+        backgroundColor: "#0f766e",
+        textColor: "#ffffff",
+        borderColor: "#0f766e",
+        wrapperBackgroundColor: "#f3f4f6",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onClick: { actionId: "smoke_http_tracking_click", params: { nodeId: "smoke_http_action_button" } },
+      },
+    },
+    {
       id: "smoke_http_products",
       componentName: "ProductList",
       materialVersion: "0.1.0",
@@ -86,6 +106,15 @@ const smokeHttpPageSchema = {
       },
       dataBinding: {
         items: "products",
+      },
+    },
+  ],
+  actions: [
+    {
+      id: "smoke_http_tracking_click",
+      type: "tracking.click",
+      params: {
+        eventName: "smoke_http_action_click",
       },
     },
   ],
@@ -267,6 +296,10 @@ async function startConfigPlatformSmokeServer(port) {
         .filter((product) => !ids.length || ids.includes(product.id))
         .slice(0, Number.isFinite(limit) ? limit : smokeHttpProducts.length);
       writeJsonResponse(response, 200, { data: { items: products } });
+      return;
+    }
+    if (request.method === "POST" && request.url === "/api/lowcode/actions/tracking-click") {
+      writeJsonResponse(response, 200, { success: true, receivedAt: new Date().toISOString() });
       return;
     }
     if (request.method === "GET" && request.url === "/api/lowcode/pages/smoke-http-page/published") {
@@ -1294,6 +1327,8 @@ async function main() {
     VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION: "Bearer smoke-token",
     VITE_LOWCODE_DATA_SOURCE_BASE_URL: configPlatformSmokeUrl,
     VITE_LOWCODE_DATA_SOURCE_AUTHORIZATION: "Bearer smoke-token",
+    VITE_LOWCODE_ACTION_BASE_URL: configPlatformSmokeUrl,
+    VITE_LOWCODE_ACTION_AUTHORIZATION: "Bearer smoke-token",
   });
   await startChrome();
 
@@ -1421,11 +1456,15 @@ async function main() {
       { label: "React H5 HTTP 配置平台入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('配置平台')" },
       { label: "React H5 HTTP 配置平台模式展示", expression: `document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})` },
       { label: "React H5 HTTP 数据源模式展示", expression: "document.body.innerText.includes('数据源模式') && document.body.innerText.includes('http')" },
+      { label: "React H5 HTTP 动作模式展示", expression: "document.body.innerText.includes('动作模式') && document.body.innerText.includes('http')" },
       { label: "React H5 HTTP 配置平台命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('smoke-http-page')" },
       { label: "React H5 HTTP 配置平台页面已渲染", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('HTTP 配置平台页面')" },
+      { label: "React H5 HTTP action 按钮已渲染", expression: "Array.from(document.querySelectorAll('.phone-frame button')).some((item) => item.innerText.includes('HTTP 动作按钮'))" },
       { label: "React H5 HTTP 数据源商品已渲染", expression: "document.body.innerText.includes('HTTP 数据源手提包') && document.body.innerText.includes('HTTP 数据源凉鞋')" },
       { label: "React H5 HTTP 数据源状态已记录", expression: "document.body.innerText.includes('smoke_http_products_ds') && document.body.innerText.includes('绑定到 products')" },
     ]);
+    await page.clickByText(".phone-frame button", "HTTP 动作按钮");
+    await page.waitForExpression("document.body.innerText.includes('模拟埋点：smoke_http_action_click')");
     if (
       !configPlatformRequests.some((request) => {
         return request.method === "GET"
@@ -1446,7 +1485,21 @@ async function main() {
     ) {
       fail("HTTP 数据源 mock 未收到带 authorization 的 product.byIds 请求");
     }
-    log("通过：React H5 runtime 可通过 env 使用 HTTP 配置平台 client 和 HTTP 数据源 handler 并透传 authorization");
+    if (
+      !configPlatformRequests.some((request) => {
+        return request.method === "POST"
+          && request.url === "/api/lowcode/actions/tracking-click"
+          && request.authorization === "Bearer smoke-token"
+          && request.body?.actionId === "smoke_http_tracking_click"
+          && request.body?.type === "tracking.click"
+          && request.body?.params?.eventName === "smoke_http_action_click"
+          && request.body?.refParams?.nodeId === "smoke_http_action_button"
+          && request.body?.pageId === "smoke-http-page";
+      })
+    ) {
+      fail("HTTP action mock 未收到带 authorization 和 action context 的 tracking.click 请求");
+    }
+    log("通过：React H5 runtime 可通过 env 使用 HTTP 配置平台 client、HTTP 数据源 handler 和 HTTP action handler 并透传 authorization");
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },

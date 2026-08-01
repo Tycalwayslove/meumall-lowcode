@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { createLowcodePageSchema } from "../../schema/dist/index.js";
 import {
   createDataSourceRegistry,
+  createHttpActionHandler,
   createHttpDataSourceHandler,
   createHttpConfigPlatformClient,
   createStaticResourceLibraryClient,
@@ -426,6 +427,139 @@ describe("@meumall/lowcode-adapters", () => {
     assert.deepEqual(calls, [{ params: { url: "/topic" }, pageId: "action_page" }]);
     assert.deepEqual(registry.listTypes(), ["navigate", "noop"]);
     assert.throws(() => registry.execute({ id: "bad", type: "unsafe" }), /action handler not found/);
+  });
+
+  it("creates HTTP action handlers for whitelisted POST endpoints", async () => {
+    const calls = [];
+    const registry = createSafeActionRegistry({
+      "tracking.click": createHttpActionHandler({
+        baseUrl: "https://bff.example.com/",
+        endpoint: "api/lowcode/actions/tracking-click",
+        headers: { authorization: "Bearer token" },
+        fetcher: async (input, init = {}) => {
+          calls.push({ input, init });
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ success: true }),
+          };
+        },
+      }),
+    });
+    const schema = createLowcodePageSchema({
+      pageId: "action_http_page",
+      title: "HTTP 动作页",
+      actions: [{ id: "track_button", type: "tracking.click", params: { eventName: "button_click" } }],
+    });
+    const executor = createSafeActionExecutor(registry);
+
+    await executor.execute(
+      { actionId: "track_button", params: { nodeId: "node_button" } },
+      { schema, data: { channel: "h5" } },
+    );
+
+    assert.equal(calls[0].input, "https://bff.example.com/api/lowcode/actions/tracking-click");
+    assert.equal(calls[0].init.method, "POST");
+    assert.equal(calls[0].init.headers.authorization, "Bearer token");
+    assert.deepEqual(JSON.parse(calls[0].init.body), {
+      actionId: "track_button",
+      type: "tracking.click",
+      params: { eventName: "button_click" },
+      refParams: { nodeId: "node_button" },
+      pageId: "action_http_page",
+    });
+  });
+
+  it("creates HTTP action handlers for GET endpoints with response transforms", async () => {
+    const calls = [];
+    const transformed = [];
+    const registry = createSafeActionRegistry({
+      "coupon.receive": createHttpActionHandler({
+        baseUrl: "https://bff.example.com",
+        endpoint: "/api/lowcode/actions/coupon-receive",
+        method: "GET",
+        buildQuery(action, context) {
+          return {
+            actionId: action.id,
+            couponId: action.params?.couponId ?? "",
+            pageId: context?.schema?.pageId ?? "",
+          };
+        },
+        transformResponse(payload, action, context) {
+          transformed.push({ payload, actionId: action.id, pageId: context?.schema?.pageId });
+        },
+        fetcher: async (input, init = {}) => {
+          calls.push({ input, init });
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ result: { received: true } }),
+          };
+        },
+      }),
+    });
+    const schema = createLowcodePageSchema({
+      pageId: "coupon_page",
+      title: "领券页",
+      actions: [{ id: "receive_coupon", type: "coupon.receive", params: { couponId: "coupon_001" } }],
+    });
+    const executor = createSafeActionExecutor(registry);
+
+    await executor.execute({ actionId: "receive_coupon" }, { schema, data: {} });
+
+    assert.equal(
+      calls[0].input,
+      "https://bff.example.com/api/lowcode/actions/coupon-receive?actionId=receive_coupon&couponId=coupon_001&pageId=coupon_page",
+    );
+    assert.equal(calls[0].init.method, "GET");
+    assert.equal(calls[0].init.body, undefined);
+    assert.deepEqual(transformed, [
+      {
+        payload: { result: { received: true } },
+        actionId: "receive_coupon",
+        pageId: "coupon_page",
+      },
+    ]);
+  });
+
+  it("reports HTTP action failures through the safe action executor", async () => {
+    assert.throws(
+      () =>
+        createHttpActionHandler({
+          baseUrl: "https://bff.example.com",
+          endpoint: "https://unsafe.example.com/api/action",
+        }),
+      /endpoint must be a path/,
+    );
+
+    const errors = [];
+    const schema = createLowcodePageSchema({
+      pageId: "action_error_page",
+      title: "动作错误页",
+      actions: [{ id: "track_button", type: "tracking.click", params: { eventName: "button_click" } }],
+    });
+    const registry = createSafeActionRegistry({
+      "tracking.click": createHttpActionHandler({
+        baseUrl: "https://bff.example.com",
+        endpoint: "/api/lowcode/actions/tracking-click",
+        fetcher: async () => ({
+          ok: false,
+          status: 502,
+          json: async () => ({ message: "bad gateway" }),
+        }),
+      }),
+    });
+    const executor = createSafeActionExecutor(registry, {
+      onError(error, ref) {
+        errors.push(`${ref.actionId}:${error.message}`);
+      },
+    });
+
+    await assert.rejects(
+      () => executor.execute({ actionId: "track_button" }, { schema, data: {} }),
+      /HTTP action request failed: 502/,
+    );
+    assert.deepEqual(errors, ["track_button:HTTP action request failed: 502"]);
   });
 
   it("adapts safe action registry to renderer action executor", async () => {
