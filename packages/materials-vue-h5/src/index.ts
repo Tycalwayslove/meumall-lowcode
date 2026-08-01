@@ -16,6 +16,7 @@ import {
   MlcModal,
   MlcNoticeBar,
   MlcPrice,
+  MlcProgress,
   MlcRadioGroup,
   MlcRichText,
   MlcSelect,
@@ -312,6 +313,7 @@ type BasicTimelineStatus = "done" | "active" | "pending";
 type BasicAlertTone = "info" | "success" | "warning" | "danger" | "neutral";
 type BasicAlertVariant = "soft" | "outline" | "solid";
 type BasicStateBlockState = MlcStateBlockState;
+type BasicProgressTone = "brand" | "success" | "warning" | "danger" | "neutral";
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
@@ -448,6 +450,14 @@ const BASIC_STATE_BLOCK_STATE_OPTIONS = [
   { label: "信息", value: "info" },
 ];
 
+const BASIC_PROGRESS_TONE_OPTIONS = [
+  { label: "品牌", value: "brand" },
+  { label: "成功", value: "success" },
+  { label: "警告", value: "warning" },
+  { label: "危险", value: "danger" },
+  { label: "中性", value: "neutral" },
+];
+
 const BASIC_ALERT_TONE_PALETTES = {
   info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", content: "#1d4ed8" },
   success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", content: "#0f766e" },
@@ -463,6 +473,14 @@ const BASIC_STATE_BLOCK_PALETTES = {
   success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", description: "#0f766e" },
   info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
 } satisfies Record<BasicStateBlockState, { icon: string; accent: string; background: string; border: string; title: string; description: string }>;
+
+const BASIC_PROGRESS_TONE_PALETTES = {
+  brand: { fill: "#2563eb", track: "#dbeafe", title: "#111827", description: "#64748b", value: "#1d4ed8" },
+  success: { fill: "#0f766e", track: "#ccfbf1", title: "#134e4a", description: "#0f766e", value: "#0f766e" },
+  warning: { fill: "#ea580c", track: "#fed7aa", title: "#9a3412", description: "#c2410c", value: "#c2410c" },
+  danger: { fill: "#dc2626", track: "#fecaca", title: "#991b1b", description: "#b91c1c", value: "#b91c1c" },
+  neutral: { fill: "#64748b", track: "#e2e8f0", title: "#111827", description: "#64748b", value: "#475569" },
+} satisfies Record<BasicProgressTone, { fill: string; track: string; title: string; description: string; value: string }>;
 
 const BASIC_TIMELINE_STATUS_PALETTES = {
   done: { marker: "#0f766e", text: "#0f766e", line: "#99f6e4" },
@@ -480,6 +498,9 @@ const NUMBER_LINE_HEIGHT_META = { min: 1, max: 2.5, step: 0.1, unit: "倍" };
 const NUMBER_TEXTAREA_ROWS_META = { min: 2, max: 8, step: 1 };
 const NUMBER_STEPPER_VALUE_META = { min: 0, max: 999, step: 1 };
 const NUMBER_STEPPER_STEP_META = { min: 1, max: 20, step: 1 };
+const NUMBER_PROGRESS_VALUE_META = { min: 0, max: 100, step: 1 };
+const NUMBER_PROGRESS_MAX_META = { min: 1, max: 10000, step: 1 };
+const NUMBER_PROGRESS_HEIGHT_META = { min: 4, max: 32, step: 1, unit: "px" };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
 const NUMBER_GRID_COLUMNS_META = { min: 2, max: 3, step: 1 };
 const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
@@ -1753,6 +1774,62 @@ export const BasicStateBlock = defineComponent({
                   )
               : undefined,
           },
+        ),
+      );
+    };
+  },
+});
+
+export const BasicProgress = defineComponent({
+  name: "BasicProgress",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const tone = option<BasicProgressTone>(runtimeProps.tone, ["brand", "success", "warning", "danger", "neutral"], "brand");
+      const palette = BASIC_PROGRESS_TONE_PALETTES[tone];
+      const max = Math.max(1, number(runtimeProps.max, 100));
+      const value = Math.min(max, Math.max(0, number(runtimeProps.value, 68)));
+      const suffix = text(runtimeProps.valueSuffix, "%");
+
+      return h(
+        "section",
+        {
+          class: `mlc-material mlc-basic-progress mlc-basic-progress--${tone}`,
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-progress__card",
+            style: {
+              display: "grid",
+              gap: `${number(runtimeProps.gap, 10)}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: `${number(runtimeProps.borderWidth, 1)}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}`,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              background: text(runtimeProps.backgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : "none",
+            } satisfies CSSProperties,
+          },
+          h(MlcProgress, {
+            value,
+            max,
+            label: text(runtimeProps.title, "基础进度"),
+            helperText: text(runtimeProps.description, "用于展示静态进度、达成率或完成度。"),
+            showValue: boolean(runtimeProps.showValue, true),
+            valueText: `${value}${suffix}`,
+            trackColor: text(runtimeProps.trackColor, palette.track),
+            fillColor: text(runtimeProps.fillColor, palette.fill),
+            labelColor: text(runtimeProps.titleColor, palette.title),
+            helperColor: text(runtimeProps.descriptionColor, palette.description),
+            valueColor: text(runtimeProps.valueColor, palette.value),
+            height: number(runtimeProps.height, 10),
+            radius: number(runtimeProps.barRadius, 999),
+          }),
         ),
       );
     };
@@ -5927,6 +6004,66 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         minHeight: { label: "最小高度", type: "number", setter: "number", defaultValue: 148, min: 80, max: 360, step: 1, unit: "px" },
       },
       events: [{ name: "onActionClick", title: "点击状态按钮" }],
+    }),
+  },
+  {
+    component: BasicProgress,
+    manifest: createMaterialManifest({
+      componentName: "BasicProgress",
+      materialVersion: "0.1.0",
+      title: "基础进度条",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础进度",
+        description: "用于展示静态进度、达成率或完成度。",
+        value: 68,
+        max: 100,
+        valueSuffix: "%",
+        showValue: true,
+        tone: "brand",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#ffffff",
+        titleColor: "#111827",
+        descriptionColor: "#64748b",
+        valueColor: "#1d4ed8",
+        trackColor: "#dbeafe",
+        fillColor: "#2563eb",
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        radius: 12,
+        barRadius: 999,
+        height: 10,
+        paddingY: 14,
+        padding: 14,
+        gap: 10,
+        shadow: true,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础进度" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于展示静态进度、达成率或完成度。" },
+        value: { label: "当前值", type: "number", setter: "number", defaultValue: 68, ...NUMBER_PROGRESS_VALUE_META },
+        max: { label: "最大值", type: "number", setter: "number", defaultValue: 100, ...NUMBER_PROGRESS_MAX_META },
+        valueSuffix: { label: "数值后缀", type: "string", setter: "input", defaultValue: "%" },
+        showValue: { label: "显示数值", type: "boolean", setter: "switch", defaultValue: true },
+        tone: { label: "语气", type: "string", setter: "select", defaultValue: "brand", options: BASIC_PROGRESS_TONE_OPTIONS },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        descriptionColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        valueColor: { label: "数值色", type: "string", setter: "color", defaultValue: "#1d4ed8", ...COLOR_SWATCHES_META },
+        trackColor: { label: "轨道色", type: "string", setter: "color", defaultValue: "#dbeafe", ...COLOR_SWATCHES_META },
+        fillColor: { label: "进度色", type: "string", setter: "color", defaultValue: "#2563eb", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        barRadius: { label: "进度条圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        height: { label: "进度条高度", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PROGRESS_HEIGHT_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
     }),
   },
   {

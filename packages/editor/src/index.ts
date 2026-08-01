@@ -2179,6 +2179,24 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       keywords: ["state", "error", "错误", "失败"],
     },
   ],
+  BasicProgress: [
+    {
+      id: "campaign-progress",
+      title: "活动进度",
+      description: "用于静态展示活动达成率或阶段完成度。",
+      metaName: "活动进度条",
+      props: { title: "活动达成进度", description: "展示当前静态达成率，真实进度由后续数据源协议承接。", value: 68, max: 100, valueSuffix: "%", tone: "success" },
+      keywords: ["progress", "进度", "达成率", "完成度"],
+    },
+    {
+      id: "neutral-progress",
+      title: "说明进度",
+      description: "用于配置说明类或中性进度展示。",
+      metaName: "说明进度条",
+      props: { title: "配置完成度", description: "用于展示本地静态进度说明。", value: 3, max: 5, valueSuffix: "/5", tone: "neutral" },
+      keywords: ["progress", "neutral", "进度条"],
+    },
+  ],
   BasicForm: [
     {
       id: "lead-form",
@@ -2365,7 +2383,7 @@ export const LOWCODE_EDITOR_MATERIAL_FAMILY_META: Record<string, LowcodeEditorMa
   feedback: {
     label: "反馈提示",
     description: "负责公告、提示、弹窗和轻量反馈。",
-    primitiveHint: "优先复用 NoticeBar、Modal、StateBlock、Text、Button。",
+    primitiveHint: "优先复用 NoticeBar、Modal、StateBlock、Progress、Text、Button。",
   },
   list: {
     label: "列表结构",
@@ -2437,6 +2455,7 @@ export const LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES: Record<string, LowcodeE
   BasicTimeline: { layer: "generic", family: "list", recommendedUse: "用于静态时间线和流程说明。", boundary: "不承载订单、审批、履约或活动状态接口。" },
   BasicAlert: { layer: "generic", family: "feedback", recommendedUse: "用于静态提示、警示和说明。", boundary: "不承载系统消息、错误码、已读状态或内容审核。" },
   BasicStateBlock: { layer: "generic", family: "feedback", recommendedUse: "用于静态空态、加载态、错误态和成功反馈。", boundary: "不承载远程状态流、接口重试、错误码翻译或全局 toast。" },
+  BasicProgress: { layer: "generic", family: "feedback", recommendedUse: "用于静态进度、达成率和完成度展示。", boundary: "不承载远程进度、自动刷新、服务端计算、订单状态或审批流。" },
   NoticeBar: { layer: "generic", family: "feedback", recommendedUse: "用于公告条和运营提醒。", boundary: "不承载远程公告流、跑马灯、关闭记忆或曝光统计。" },
   BasicModal: { layer: "generic", family: "feedback", recommendedUse: "用于基础弹窗和静态说明。", boundary: "不承载远程内容、表单提交、登录、领券或弹窗内低代码编排。" },
   ActivityHero: { layer: "generic", family: "marketing", recommendedUse: "用于活动首屏、主题氛围和头图信息。", boundary: "不承载活动规则、库存、权益或服务端时间语义。" },

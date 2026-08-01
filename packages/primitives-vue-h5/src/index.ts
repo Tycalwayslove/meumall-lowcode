@@ -74,6 +74,10 @@ export function createMlcFormFieldDataAttributes({
   };
 }
 
+function clampMlcNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export const MlcButton = defineComponent({
   name: "MlcButton",
   props: {
@@ -823,6 +827,78 @@ export const MlcStateBlock = defineComponent({
           slots.action ? h("div", { style: { display: "flex", justifyContent: props.align === "left" ? "flex-start" : "center" } }, slots.action()) : null,
         ],
       );
+    };
+  },
+});
+
+export const MlcProgress = defineComponent({
+  name: "MlcProgress",
+  props: {
+    value: { type: Number, default: 0 },
+    max: { type: Number, default: 100 },
+    label: { type: String, default: "" },
+    helperText: { type: String, default: "" },
+    showValue: { type: Boolean, default: true },
+    valueText: { type: String, default: "" },
+    trackColor: { type: String, default: h5Tokens.color.weakSurface },
+    fillColor: { type: String, default: h5Tokens.color.accent },
+    labelColor: { type: String, default: h5Tokens.color.text },
+    helperColor: { type: String, default: h5Tokens.color.mutedText },
+    valueColor: { type: String, default: h5Tokens.color.text },
+    height: { type: Number, default: 10 },
+    radius: { type: Number, default: h5Tokens.radius.pill },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props) {
+    return () => {
+      const safeMax = props.max > 0 ? props.max : 100;
+      const safeValue = clampMlcNumber(props.value, 0, safeMax);
+      const percent = safeMax ? clampMlcNumber((safeValue / safeMax) * 100, 0, 100) : 0;
+      const displayValue = props.valueText || `${Math.round(percent)}%`;
+
+      return h("div", { class: props.class, style: { display: "grid", gap: "8px", ...props.style } satisfies CSSProperties }, [
+        props.label || props.showValue
+          ? h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", minWidth: 0 } satisfies CSSProperties }, [
+              props.label
+                ? h(MlcText, { as: "strong", size: 14, weight: 800, lineHeight: 1.35, style: { color: props.labelColor } }, () => props.label)
+                : h("span"),
+              props.showValue
+                ? h(MlcText, { as: "span", size: 13, weight: 800, lineHeight: 1.2, style: { color: props.valueColor, whiteSpace: "nowrap" } }, () => displayValue)
+                : null,
+            ])
+          : null,
+        h(
+          "div",
+          {
+            role: "progressbar",
+            "aria-valuemin": 0,
+            "aria-valuemax": safeMax,
+            "aria-valuenow": safeValue,
+            "aria-valuetext": displayValue,
+            style: {
+              position: "relative",
+              overflow: "hidden",
+              height: `${props.height}px`,
+              borderRadius: `${props.radius}px`,
+              background: props.trackColor,
+            } satisfies CSSProperties,
+          },
+          [
+            h("span", {
+              "aria-hidden": "true",
+              style: {
+                display: "block",
+                width: `${percent}%`,
+                height: "100%",
+                borderRadius: `${props.radius}px`,
+                background: props.fillColor,
+              } satisfies CSSProperties,
+            }),
+          ],
+        ),
+        props.helperText ? h(MlcText, { as: "p", size: 12, lineHeight: 1.55, style: { color: props.helperColor } }, () => props.helperText) : null,
+      ]);
     };
   },
 });

@@ -723,6 +723,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodeMaterialLayerMeta("business").label, "业务物料");
     assert.equal(getLowcodeMaterialFamilyMeta("input").primitiveHint.includes("Input"), true);
     assert.equal(getLowcodeMaterialFamilyMeta("feedback").primitiveHint.includes("StateBlock"), true);
+    assert.equal(getLowcodeMaterialFamilyMeta("feedback").primitiveHint.includes("Progress"), true);
 
     const productProfile = createLowcodeMaterialArchitectureProfile(manifests[1]);
     assert.equal(productProfile.layer, "business");
@@ -742,6 +743,19 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(stateBlockProfile.layer, "generic");
     assert.equal(stateBlockProfile.family, "feedback");
     assert.ok(stateBlockProfile.boundary.includes("远程状态流"));
+
+    const progressProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
+      componentName: "BasicProgress",
+      materialVersion: "1.0.0",
+      title: "基础进度条",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {},
+      defaultProps: {},
+    }));
+    assert.equal(progressProfile.layer, "generic");
+    assert.equal(progressProfile.family, "feedback");
+    assert.ok(progressProfile.boundary.includes("远程进度"));
 
     const customProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
       componentName: "PartnerWidget",
@@ -890,6 +904,22 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(createLowcodeMaterialInsertPresets(stateBlock).map((preset) => [preset.id, preset.title]), [
       ["empty-state", "空态提示"],
       ["error-state", "错误状态"],
+    ]);
+
+    const progress = createMaterialManifest({
+      componentName: "BasicProgress",
+      materialVersion: "1.0.0",
+      title: "基础进度条",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        value: { label: "当前值", type: "number", setter: "number", defaultValue: 68 },
+      },
+      defaultProps: { value: 68 },
+    });
+    assert.deepEqual(createLowcodeMaterialInsertPresets(progress).map((preset) => [preset.id, preset.title]), [
+      ["campaign-progress", "活动进度"],
+      ["neutral-progress", "说明进度"],
     ]);
 
     const customPresets = createLowcodeMaterialInsertPresets(button, {

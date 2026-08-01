@@ -27,6 +27,7 @@ This package contains business-agnostic UI building blocks used by `@meumall/low
 - `MlcNoticeBar`
 - `MlcRichText`
 - `MlcStateBlock`
+- `MlcProgress`
 - Form field helpers:
   - `MlcFormFieldType`
   - `createMlcFormFieldDataAttributes`

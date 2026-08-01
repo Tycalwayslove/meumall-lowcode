@@ -72,6 +72,10 @@ export function createMlcFormFieldDataAttributes({
   };
 }
 
+function clampMlcNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 export interface MlcButtonProps {
   children?: React.ReactNode;
   type?: "button" | "submit" | "reset";
@@ -898,6 +902,96 @@ export function MlcStateBlock({
       </div>
       {action ? <div style={{ display: "flex", justifyContent: align === "left" ? "flex-start" : "center" }}>{action}</div> : null}
     </section>
+  );
+}
+
+export interface MlcProgressProps {
+  value?: number;
+  max?: number;
+  label?: React.ReactNode;
+  helperText?: React.ReactNode;
+  showValue?: boolean;
+  valueText?: React.ReactNode;
+  trackColor?: string;
+  fillColor?: string;
+  labelColor?: string;
+  helperColor?: string;
+  valueColor?: string;
+  height?: number;
+  radius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcProgress({
+  value = 0,
+  max = 100,
+  label,
+  helperText,
+  showValue = true,
+  valueText,
+  trackColor = h5Tokens.color.weakSurface,
+  fillColor = h5Tokens.color.accent,
+  labelColor = h5Tokens.color.text,
+  helperColor = h5Tokens.color.mutedText,
+  valueColor = h5Tokens.color.text,
+  height = 10,
+  radius = h5Tokens.radius.pill,
+  className,
+  style,
+}: MlcProgressProps): React.ReactElement {
+  const safeMax = max > 0 ? max : 100;
+  const safeValue = clampMlcNumber(value, 0, safeMax);
+  const percent = safeMax ? clampMlcNumber((safeValue / safeMax) * 100, 0, 100) : 0;
+  const displayValue = valueText ?? `${Math.round(percent)}%`;
+
+  return (
+    <div className={className} style={{ display: "grid", gap: 8, ...style }}>
+      {label || showValue ? (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minWidth: 0 }}>
+          {label ? (
+            <MlcText as="strong" size={14} weight={800} lineHeight={1.35} style={{ color: labelColor }}>
+              {label}
+            </MlcText>
+          ) : <span />}
+          {showValue ? (
+            <MlcText as="span" size={13} weight={800} lineHeight={1.2} style={{ color: valueColor, whiteSpace: "nowrap" }}>
+              {displayValue}
+            </MlcText>
+          ) : null}
+        </div>
+      ) : null}
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={safeMax}
+        aria-valuenow={safeValue}
+        aria-valuetext={typeof displayValue === "string" ? displayValue : undefined}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          height,
+          borderRadius: radius,
+          background: trackColor,
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: "block",
+            width: `${percent}%`,
+            height: "100%",
+            borderRadius: radius,
+            background: fillColor,
+          }}
+        />
+      </div>
+      {helperText ? (
+        <MlcText as="p" size={12} lineHeight={1.55} style={{ color: helperColor }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </div>
   );
 }
 
