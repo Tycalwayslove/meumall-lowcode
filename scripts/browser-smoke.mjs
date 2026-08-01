@@ -1240,28 +1240,28 @@ async function assertEditorApprovalActions(page) {
     },
     {
       label: "待提交审批状态存在",
-      expression: "document.querySelector('.approval-pill')?.textContent?.includes('待提交审批')",
+      expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('待提交审批')",
     },
   ]);
 
   await page.clickByText(".approval-workflow-actions button", "提交审批");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')");
   await page.waitForExpression("document.body.innerText.includes('已提交审批')");
 
   await page.clickByText(".approval-workflow-actions button", "撤回");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('待提交审批')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('待提交审批')");
   await page.waitForExpression("document.body.innerText.includes('已撤回审批')");
 
   await page.clickByText(".approval-workflow-actions button", "提交审批");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')");
   await page.clickByText(".approval-workflow-actions button", "驳回");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批驳回')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批驳回')");
   await page.waitForExpression("document.body.innerText.includes('审批已驳回')");
 
   await page.clickByText(".approval-workflow-actions button", "提交审批");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')");
   await page.clickByText(".approval-workflow-actions button", "通过");
-  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批通过')");
+  await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批通过')");
   await page.waitForExpression("document.body.innerText.includes('审批已通过，可以发布')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.toolbar button')).some((item) => (item.innerText || '').includes('发布') && !item.disabled)");
   log("通过：发布审批可提交、撤回、驳回、重新提交并审核通过");
@@ -1431,8 +1431,9 @@ async function main() {
     await assertPage(page, editorUrl, [
       { label: "Vue3 编辑器 shell 已挂载", expression: "document.querySelector('.editor-shell')" },
       { label: "编辑器品牌文案存在", expression: "document.body.innerText.includes('MeuMall Lowcode')" },
-      { label: "编辑器协作状态存在", expression: "document.querySelector('.collaboration-pill')?.textContent?.includes('可编辑')" },
-      { label: "编辑器审批状态存在", expression: "document.querySelector('.approval-pill')?.textContent?.includes('无需审批')" },
+      { label: "编辑器协作状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"collaboration\"]')?.textContent?.includes('可编辑')" },
+      { label: "编辑器审批状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('无需审批')" },
+      { label: "编辑器顶部发布检查状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"publish-check\"]')?.textContent?.includes('发布检查')" },
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },
@@ -1500,11 +1501,11 @@ async function main() {
     await assertPage(page, editorWorkflowDemoUrl, [
       {
         label: "编辑器 workflow provider 可展示他人锁定",
-        expression: "document.querySelector('.collaboration-pill')?.textContent?.includes('他人正在编辑')",
+        expression: "document.querySelector('.capability-pill[data-capability-status-id=\"collaboration\"]')?.textContent?.includes('他人正在编辑')",
       },
       {
         label: "编辑器 workflow provider 可展示审批中",
-        expression: "document.querySelector('.approval-pill')?.textContent?.includes('审批中')",
+        expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')",
       },
     ]);
     await assertEditorApprovalActions(page);

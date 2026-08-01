@@ -63,10 +63,10 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 职责：
 
-- 展示顶部品牌、页面标题、保存状态、自动保存状态、主工具栏和历史/保存/发布工具栏。
-- 接收页面标题、dirty 状态、自动保存文案和 tone、当前模式、撤销/重做可用状态、宿主按 editor permission/capability API 派生的按钮禁用原因，以及 editor collaboration state / approval state API 派生的协作和审批状态文案、tone 和说明。
+- 展示顶部品牌、页面标题、保存状态、自动保存状态、通用 capability 状态、主工具栏和历史/保存/发布工具栏。
+- 接收页面标题、dirty 状态、自动保存文案和 tone、当前模式、撤销/重做可用状态、宿主按 editor permission/capability API 派生的按钮禁用原因，以及 `LowcodeEditorCapabilityStatusItem[]`。
 - 通过 emits 抛出打开快捷命令、新建页面、模式切换、撤销、重做、保存草稿、导出 schema、导入 schema、生成预览、发布、打开 H5 和打开 React H5。
-- 复用现有 `.topbar`、`.brand`、`.toolbar`、`.save-pill`、`.auto-save-pill`、`.collaboration-pill` 和 `.approval-pill` 样式，保持当前视觉与 smoke check DOM 语义。
+- 复用现有 `.topbar`、`.brand`、`.toolbar`、`.save-pill`、`.auto-save-pill` 和 `.capability-pill` 样式；状态项通过 `data-capability-status-id` 暴露稳定 smoke check DOM 语义。
 
 不负责：
 
@@ -338,7 +338,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀。后续优先继续治理剩余硬编码样式、权限插槽、协作锁定状态、审批状态和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
+当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀，顶部工具栏已改为消费 capability status items。后续优先继续治理剩余硬编码样式、权限插槽、真实协作锁服务、真实审批流和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
 
 ## 抽 npm 包判断
 

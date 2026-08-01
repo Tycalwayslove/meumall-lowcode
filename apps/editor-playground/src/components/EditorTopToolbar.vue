@@ -13,8 +13,7 @@ import {
   Upload,
 } from "@lucide/vue";
 import type {
-  LowcodeEditorApprovalTone,
-  LowcodeEditorCollaborationTone,
+  LowcodeEditorCapabilityStatusItem,
   LowcodeEditorMode,
   LowcodeEditorPermissionAction,
 } from "@meumall/lowcode-editor";
@@ -28,12 +27,7 @@ const props = defineProps<{
   canUndo: boolean;
   canRedo: boolean;
   disabledActions?: Partial<Record<LowcodeEditorPermissionAction, string>>;
-  collaborationStatusText?: string;
-  collaborationStatusTone?: LowcodeEditorCollaborationTone;
-  collaborationStatusDescription?: string;
-  approvalStatusText?: string;
-  approvalStatusTone?: LowcodeEditorApprovalTone;
-  approvalStatusDescription?: string;
+  capabilityStatusItems?: readonly LowcodeEditorCapabilityStatusItem[];
 }>();
 
 const emit = defineEmits<{
@@ -67,20 +61,14 @@ const emit = defineEmits<{
         {{ props.autoSaveStatusText }}
       </span>
       <span
-        v-if="props.collaborationStatusText"
-        class="collaboration-pill"
-        :class="`is-${props.collaborationStatusTone ?? 'neutral'}`"
-        :title="props.collaborationStatusDescription"
+        v-for="statusItem in props.capabilityStatusItems ?? []"
+        :key="statusItem.id"
+        class="capability-pill"
+        :class="`is-${statusItem.tone}`"
+        :data-capability-status-id="statusItem.id"
+        :title="statusItem.description"
       >
-        {{ props.collaborationStatusText }}
-      </span>
-      <span
-        v-if="props.approvalStatusText"
-        class="approval-pill"
-        :class="`is-${props.approvalStatusTone ?? 'neutral'}`"
-        :title="props.approvalStatusDescription"
-      >
-        {{ props.approvalStatusText }}
+        {{ statusItem.title }}
       </span>
     </div>
 

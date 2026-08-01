@@ -208,7 +208,7 @@ button:focus-visible {
   background: var(--mlc-editor-color-danger-bg);
 }
 
-.collaboration-pill {
+.capability-pill {
   display: inline-grid;
   place-items: center;
   max-width: 150px;
@@ -223,52 +223,19 @@ button:focus-visible {
   white-space: nowrap;
 }
 
-.collaboration-pill.is-success {
+.capability-pill.is-success {
   border-color: var(--mlc-editor-color-success-border);
   color: var(--mlc-editor-color-success-text);
   background: var(--mlc-editor-color-success-bg);
 }
 
-.collaboration-pill.is-warning {
+.capability-pill.is-warning {
   border-color: var(--mlc-editor-color-warning-alt-border);
   color: var(--mlc-editor-color-warning-alt-text);
   background: var(--mlc-editor-color-warning-alt-bg);
 }
 
-.collaboration-pill.is-danger {
-  border-color: var(--mlc-editor-color-danger-border);
-  color: var(--mlc-editor-color-danger-text);
-  background: var(--mlc-editor-color-danger-bg);
-}
-
-.approval-pill {
-  display: inline-grid;
-  place-items: center;
-  max-width: 150px;
-  min-height: var(--mlc-editor-size-status-pill-height);
-  border: 1px solid #dbe3ef;
-  border-radius: var(--mlc-editor-radius-xs);
-  padding: 0 8px;
-  color: var(--mlc-editor-color-text-soft);
-  background: var(--mlc-editor-color-panel-bg);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.approval-pill.is-success {
-  border-color: var(--mlc-editor-color-success-border);
-  color: var(--mlc-editor-color-success-text);
-  background: var(--mlc-editor-color-success-bg);
-}
-
-.approval-pill.is-warning {
-  border-color: var(--mlc-editor-color-warning-border);
-  color: var(--mlc-editor-color-warning-text);
-  background: var(--mlc-editor-color-warning-bg);
-}
-
-.approval-pill.is-danger {
+.capability-pill.is-danger {
   border-color: var(--mlc-editor-color-danger-border);
   color: var(--mlc-editor-color-danger-text);
   background: var(--mlc-editor-color-danger-bg);
