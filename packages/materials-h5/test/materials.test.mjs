@@ -11,6 +11,7 @@ import {
   BasicForm,
   BasicImage,
   BasicInput,
+  BasicList,
   BasicModal,
   BasicPrice,
   BasicRadioGroup,
@@ -126,6 +127,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicCarousel", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicCarousel", "indicator", ["dots", "counter", "none"]],
+      ["BasicList", "marker", ["dot", "number", "badge", "none"]],
       ["BasicModal", "placement", ["center", "bottom"]],
       ["SectionTitle", "align", ["left", "center", "right"]],
     ];
@@ -150,6 +152,10 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicForm", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicForm", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicForm", "buttonRadius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicList", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicList", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicList", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicList", "markerRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -214,6 +220,11 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicForm", "cardBackgroundColor"],
       ["BasicForm", "titleColor"],
       ["BasicForm", "buttonColor"],
+      ["BasicList", "backgroundColor"],
+      ["BasicList", "cardBackgroundColor"],
+      ["BasicList", "itemBackgroundColor"],
+      ["BasicList", "itemTitleColor"],
+      ["BasicList", "markerColor"],
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
@@ -410,6 +421,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(SectionContainer, ["MlcText"]);
     functionSourceIncludes(GridContainer, ["MlcText"]);
     functionSourceIncludes(BasicForm, ["MlcButton", "MlcText"]);
+    functionSourceIncludes(BasicList, ["MlcText", "MlcTag"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -591,6 +603,50 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.buttonColor.setter, "color");
     assert.equal(material.manifest.propsSchema.gap.setter, "number");
     assert.equal(material.manifest.events?.[0]?.name, "onSubmit");
+  });
+
+  it("registers the basic list material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicList");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础列表");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.marker, "dot");
+    assert.equal(material.manifest.defaultProps.items.length, 3);
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.marker.setter, "select");
+    assert.equal(material.manifest.propsSchema.itemPadding.setter, "number");
+    assert.equal(material.manifest.propsSchema.markerColor.setter, "color");
+    assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
+  });
+
+  it("renders basic list items and item click payloads in React H5", () => {
+    const clicks = [];
+    const element = BasicList({
+      node: { id: "list_1", componentName: "BasicList", props: {} },
+      props: {
+        title: "列表测试",
+        marker: "badge",
+        items: [
+          { id: "item_1", title: "第一项", description: "第一条说明", badgeText: "A", metaText: "已读" },
+          { id: "item_2", title: "第二项", description: "第二条说明", badgeText: "B", metaText: "未读" },
+        ],
+        onItemClick: (payload) => clicks.push(payload),
+      },
+    });
+
+    assert.equal(element.props.className, "mlc-material mlc-basic-list");
+    const card = element.props.children;
+    const itemsWrapper = card.props.children.find((child) => child?.props?.className === "mlc-basic-list__items");
+    assert.ok(itemsWrapper);
+    assert.equal(itemsWrapper.props.children.length, 2);
+    assert.equal(itemsWrapper.props.children[0].props.role, "button");
+    assert.equal(itemsWrapper.props.children[0].props.children[0].type.name, "MlcTag");
+
+    itemsWrapper.props.children[1].props.onClick();
+    assert.equal(clicks.length, 1);
+    assert.equal(clicks[0].index, 1);
+    assert.equal(clicks[0].item.title, "第二项");
   });
 
   it("renders section container layout props in React H5", () => {

@@ -4139,6 +4139,9 @@ export function createLowcodeDefaultListItem(
   if (propName === "items" && options.componentName === "BasicCarousel") {
     return { id, title: "新轮播图", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" };
   }
+  if (propName === "items" && options.componentName === "BasicList") {
+    return { id, title: "新列表项", description: "请输入列表说明", badgeText: "1", metaText: "" };
+  }
   if (propName === "items" && options.componentName === "StoreExpertSection") {
     return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
   }
@@ -5280,6 +5283,7 @@ function getLowcodeDefaultListFieldNames(
   if (propName === "items" && componentName === "NavGrid") return ["id", "title", "subtitle"];
   if (propName === "items" && componentName === "ImageCardGrid") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
   if (propName === "items" && componentName === "BasicCarousel") return ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"];
+  if (propName === "items" && componentName === "BasicList") return ["id", "title", "description", "badgeText", "metaText"];
   if (propName === "items" && componentName === "StoreExpertSection") {
     return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
   }

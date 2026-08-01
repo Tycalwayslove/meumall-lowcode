@@ -151,6 +151,8 @@ type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
 type BasicInlineAlign = "left" | "center" | "right";
 type BasicCarouselIndicator = "dots" | "counter" | "none";
 type BasicModalPlacement = "center" | "bottom";
+type BasicListMarker = "dot" | "number" | "badge" | "none";
+type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -224,6 +226,13 @@ const BASIC_CAROUSEL_INDICATOR_OPTIONS = [
   { label: "隐藏", value: "none" },
 ];
 
+const BASIC_LIST_MARKER_OPTIONS = [
+  { label: "圆点", value: "dot" },
+  { label: "数字", value: "number" },
+  { label: "标签", value: "badge" },
+  { label: "隐藏", value: "none" },
+];
+
 const NUMBER_PIXEL_SIZE_META = { min: 0, max: 80, step: 1, unit: "px" };
 const NUMBER_RADIUS_META = { min: 0, max: 48, step: 1, unit: "px" };
 const NUMBER_PILL_RADIUS_META = { min: 0, max: 999, step: 1, unit: "px" };
@@ -272,6 +281,12 @@ const PRODUCT_LIST_DEFAULT_ITEMS = [
     desc: "限时补贴",
     imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=300&q=80",
   },
+];
+
+const BASIC_LIST_FALLBACK_ITEMS: JsonObject[] = [
+  { id: "step_1", title: "领取活动权益", description: "先查看页面权益和活动说明。", badgeText: "1", metaText: "必看" },
+  { id: "step_2", title: "选择心仪内容", description: "根据运营配置进入对应会场或专题。", badgeText: "2", metaText: "可选" },
+  { id: "step_3", title: "完成转化动作", description: "后续可通过安全 action 接入跳转或埋点。", badgeText: "3", metaText: "完成" },
 ];
 
 export const BasicButton = defineComponent({
@@ -556,6 +571,150 @@ export const BasicForm = defineComponent({
                   () => text(runtimeProps.successText, "已触发表单提交事件"),
                 )
               : null,
+          ],
+        ),
+      );
+    };
+  },
+});
+
+export const BasicList = defineComponent({
+  name: "BasicList",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items).length ? list(runtimeProps.items) : BASIC_LIST_FALLBACK_ITEMS;
+      const title = text(runtimeProps.title, "基础列表");
+      const subtitle = text(runtimeProps.subtitle);
+      const marker = option<BasicListMarker>(runtimeProps.marker, ["dot", "number", "badge", "none"], "dot");
+      const gap = number(runtimeProps.gap, 8);
+      const borderWidth = number(runtimeProps.borderWidth, 1);
+      const onItemClick = typeof runtimeProps.onItemClick === "function" ? runtimeProps.onItemClick as BasicListItemClickHandler : undefined;
+
+      const renderMarker = (item: Record<string, unknown>, index: number) => {
+        if (marker === "none") return null;
+        if (marker === "badge") {
+          return h(
+            MlcTag,
+            { tone: "accent", radius: number(runtimeProps.markerRadius, 999), class: "mlc-basic-list__badge" },
+            () => text(item.badgeText, String(index + 1)),
+          );
+        }
+
+        return h(
+          "span",
+          {
+            class: `mlc-basic-list__marker mlc-basic-list__marker--${marker}`,
+            "aria-hidden": "true",
+            style: {
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flex: "0 0 auto",
+              width: marker === "number" ? "24px" : "9px",
+              height: marker === "number" ? "24px" : "9px",
+              borderRadius: "999px",
+              color: text(runtimeProps.markerTextColor, "#ffffff"),
+              background: text(runtimeProps.markerColor, "#0f766e"),
+              fontSize: "12px",
+              fontWeight: 900,
+              lineHeight: 1,
+              marginTop: marker === "number" ? 0 : "7px",
+            } satisfies CSSProperties,
+          },
+          marker === "number" ? String(index + 1) : "",
+        );
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-list",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-list__card",
+            style: {
+              display: "grid",
+              gap: `${gap}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+            } satisfies CSSProperties,
+          },
+          [
+            title || subtitle
+              ? h("div", { class: "mlc-basic-list__header", style: { display: "grid", gap: "4px" } }, [
+                  title
+                    ? h(MlcText, { as: "strong", size: 18, weight: 900, style: { color: text(runtimeProps.titleColor, "#111827") } }, () => title)
+                    : null,
+                  subtitle
+                    ? h(MlcText, { as: "p", size: 13, lineHeight: 1.6, style: { color: text(runtimeProps.subtitleColor, "#64748b") } }, () => subtitle)
+                    : null,
+                ])
+              : null,
+            h(
+              "div",
+              { class: "mlc-basic-list__items", style: { display: "grid", gap: `${gap}px` } },
+              items.map((item, index) => {
+                const clickable = Boolean(onItemClick);
+                return h(
+                  "div",
+                  {
+                    key: text(item.id, `${index}`),
+                    class: "mlc-basic-list__item",
+                    role: clickable ? "button" : undefined,
+                    tabindex: clickable ? 0 : undefined,
+                    style: {
+                      display: "grid",
+                      gridTemplateColumns: marker === "none" ? "1fr" : "auto 1fr",
+                      gap: "10px",
+                      padding: `${number(runtimeProps.itemPadding, 12)}px`,
+                      borderRadius: `${number(runtimeProps.itemRadius, 10)}px`,
+                      border: `1px solid ${text(runtimeProps.itemBorderColor, "#e5e7eb")}`,
+                      background: text(runtimeProps.itemBackgroundColor, "#ffffff"),
+                      cursor: clickable ? "pointer" : undefined,
+                    } satisfies CSSProperties,
+                    onClick: () => {
+                      onItemClick?.({ item, index });
+                    },
+                    onKeydown: (event: KeyboardEvent) => {
+                      if (!clickable) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onItemClick?.({ item, index });
+                      }
+                    },
+                  },
+                  [
+                    renderMarker(item, index),
+                    h("div", { style: { display: "grid", gap: "4px", minWidth: 0 } }, [
+                      h("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" } }, [
+                        h(
+                          MlcText,
+                          { as: "strong", size: 14, weight: 800, lineHeight: 1.45, style: { color: text(runtimeProps.itemTitleColor, "#111827") } },
+                          () => text(item.title, `列表项 ${index + 1}`),
+                        ),
+                        text(item.metaText)
+                          ? h(MlcText, { size: 12, lineHeight: 1.4, style: { flex: "0 0 auto", color: text(runtimeProps.metaColor, "#64748b") } }, () => text(item.metaText))
+                          : null,
+                      ]),
+                      text(item.description)
+                        ? h(MlcText, { as: "p", size: 13, lineHeight: 1.55, style: { color: text(runtimeProps.itemDescriptionColor, "#64748b") } }, () => text(item.description))
+                        : null,
+                    ]),
+                  ],
+                );
+              }),
+            ),
           ],
         ),
       );
@@ -4174,6 +4333,71 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
       },
       events: [{ name: "onSubmit", title: "提交表单" }],
+    }),
+  },
+  {
+    component: BasicList,
+    manifest: createMaterialManifest({
+      componentName: "BasicList",
+      materialVersion: "0.1.0",
+      title: "基础列表",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础列表",
+        subtitle: "适合配置步骤、卖点、注意事项或 FAQ 摘要。",
+        items: BASIC_LIST_FALLBACK_ITEMS,
+        marker: "dot",
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        itemBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        itemTitleColor: "#111827",
+        itemDescriptionColor: "#64748b",
+        metaColor: "#64748b",
+        markerColor: "#0f766e",
+        markerTextColor: "#ffffff",
+        borderColor: "#e5e7eb",
+        itemBorderColor: "#e5e7eb",
+        borderWidth: 1,
+        radius: 12,
+        itemRadius: 10,
+        markerRadius: 999,
+        paddingY: 14,
+        padding: 14,
+        itemPadding: 12,
+        gap: 8,
+        shadow: false,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础列表" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "适合配置步骤、卖点、注意事项或 FAQ 摘要。" },
+        items: { label: "列表项", type: "array", setter: "textarea", defaultValue: BASIC_LIST_FALLBACK_ITEMS },
+        marker: { label: "标记样式", type: "string", setter: "select", defaultValue: "dot", options: BASIC_LIST_MARKER_OPTIONS },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        itemBackgroundColor: { label: "列表项背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        itemTitleColor: { label: "列表标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        itemDescriptionColor: { label: "列表说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        metaColor: { label: "右侧信息色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        markerColor: { label: "标记色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        markerTextColor: { label: "标记文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        itemBorderColor: { label: "列表项边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        itemRadius: { label: "列表项圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        markerRadius: { label: "标签圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        itemPadding: { label: "列表项留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "列表间距", type: "number", setter: "number", defaultValue: 8, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+      },
+      events: [{ name: "onItemClick", title: "点击列表项" }],
     }),
   },
   {
