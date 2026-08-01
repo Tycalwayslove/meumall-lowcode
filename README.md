@@ -80,6 +80,7 @@ pnpm dev
 pnpm dev:h5
 pnpm dev:demo
 pnpm demo:check
+pnpm demo:acceptance
 pnpm check:architecture
 pnpm test
 pnpm typecheck
@@ -94,12 +95,15 @@ pnpm smoke:visual
 
 ```text
 Editor: http://127.0.0.1:5173/
+Editor runtime pageId: http://127.0.0.1:5173/?runtime=1&pageId=summer-campaign-demo
+Editor runtime previewToken: http://127.0.0.1:5173/?runtime=1&previewToken=preview_demo_token
 H5 runtime: http://127.0.0.1:5174/
 Published pageId: http://127.0.0.1:5174/?pageId=summer-campaign-demo
 Preview releaseId: http://127.0.0.1:5174/?releaseId=preview_demo
+Preview token: http://127.0.0.1:5174/?previewToken=preview_demo_token
 ```
 
-Use `LOWCODE_EDITOR_PORT`, `LOWCODE_H5_PORT`, or `LOWCODE_DEMO_HOST` to change local ports or host. `pnpm demo:check` starts both servers, checks the same entries over HTTP, and exits automatically.
+Use `LOWCODE_EDITOR_PORT`, `LOWCODE_H5_PORT`, or `LOWCODE_DEMO_HOST` to change local ports or host. `pnpm demo:check` starts both servers, checks the basic editor and H5 runtime entries over HTTP, and exits automatically. `pnpm demo:acceptance` checks the full local demo entry list, including editor runtime pageId/previewToken and React H5 runtime pageId/releaseId/previewToken, then prints an acceptance checklist and exits. Browser DOM, interaction, and material rendering checks remain covered by `pnpm smoke:browser`.
 
 ## Release
 

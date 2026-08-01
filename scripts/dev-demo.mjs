@@ -12,12 +12,61 @@ const host = process.env.LOWCODE_DEMO_HOST ?? "127.0.0.1";
 const editorPort = parsePort(process.env.LOWCODE_EDITOR_PORT ?? "5173", "LOWCODE_EDITOR_PORT");
 const h5Port = parsePort(process.env.LOWCODE_H5_PORT ?? "5174", "LOWCODE_H5_PORT");
 const checkOnly = process.argv.includes("--check");
+const acceptanceOnly = process.argv.includes("--acceptance");
 const timeoutMs = 30_000;
 
 const editorUrl = `http://${host}:${editorPort}/`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
+const editorRuntimePageIdUrl = `${editorUrl}?runtime=1&pageId=summer-campaign-demo`;
+const editorRuntimePreviewTokenUrl = `${editorUrl}?runtime=1&previewToken=preview_demo_token`;
 const h5PageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5ReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
+const h5PreviewTokenUrl = `${h5RuntimeUrl}?previewToken=preview_demo_token`;
+
+const demoEntries = [
+  {
+    label: "编辑器",
+    url: editorUrl,
+    expectedText: ["MeuMall Lowcode Editor", 'id="app"'],
+  },
+  {
+    label: "编辑器内置 H5 pageId",
+    url: editorRuntimePageIdUrl,
+    expectedText: ["MeuMall Lowcode Editor", 'id="app"'],
+  },
+  {
+    label: "编辑器内置 H5 previewToken",
+    url: editorRuntimePreviewTokenUrl,
+    expectedText: ["MeuMall Lowcode Editor", 'id="app"'],
+  },
+  {
+    label: "React H5 runtime",
+    url: h5RuntimeUrl,
+    expectedText: ["MeuMall Lowcode H5 Runtime", 'id="root"'],
+  },
+  {
+    label: "React H5 published pageId",
+    url: h5PageIdUrl,
+    expectedText: ["MeuMall Lowcode H5 Runtime", 'id="root"'],
+  },
+  {
+    label: "React H5 preview releaseId",
+    url: h5ReleaseIdUrl,
+    expectedText: ["MeuMall Lowcode H5 Runtime", 'id="root"'],
+  },
+  {
+    label: "React H5 previewToken",
+    url: h5PreviewTokenUrl,
+    expectedText: ["MeuMall Lowcode H5 Runtime", 'id="root"'],
+  },
+];
+
+const healthEntries = [
+  demoEntries[0],
+  demoEntries[3],
+  demoEntries[4],
+  demoEntries[5],
+];
 
 const processes = [];
 let shuttingDown = false;
@@ -83,20 +132,26 @@ function spawnVite(name, cwd, port, env = {}) {
   return child;
 }
 
-async function waitForHttp(url, label) {
+async function waitForHttp(entry) {
   const startedAt = Date.now();
   let lastError;
   while (Date.now() - startedAt < timeoutMs) {
     try {
-      const response = await fetch(url);
-      if (response.ok) return;
-      lastError = new Error(`${label} HTTP ${response.status}`);
+      const response = await fetch(entry.url);
+      if (!response.ok) {
+        lastError = new Error(`${entry.label} HTTP ${response.status}`);
+      } else {
+        const text = await response.text();
+        const missingText = (entry.expectedText ?? []).find((item) => !text.includes(item));
+        if (!missingText) return;
+        lastError = new Error(`${entry.label} 缺少 HTML 标记：${missingText}`);
+      }
     } catch (error) {
       lastError = error;
     }
     await delay(250);
   }
-  fail(`${label} 启动超时：${lastError?.message ?? "unknown error"}`);
+  fail(`${entry.label} 启动超时：${lastError?.message ?? "unknown error"}`);
 }
 
 async function stopAll() {
@@ -120,11 +175,18 @@ function handleShutdown() {
 
 function printEntries() {
   log("本地低代码演示已启动：");
-  log(`编辑器：${editorUrl}`);
-  log(`H5 runtime：${h5RuntimeUrl}`);
-  log(`H5 published pageId：${h5PageIdUrl}`);
-  log(`H5 preview releaseId：${h5ReleaseIdUrl}`);
+  for (const entry of demoEntries) {
+    log(`${entry.label}：${entry.url}`);
+  }
   log("按 Ctrl+C 停止两个服务。");
+}
+
+function printAcceptanceReport() {
+  log("本地演示验收通过：");
+  for (const entry of demoEntries) {
+    log(`[ok] ${entry.label} 可访问：${entry.url}`);
+  }
+  log("说明：该命令验证本地 SPA 入口和关键 URL 可访问性；浏览器 DOM、交互和物料渲染仍由 pnpm smoke:browser 覆盖。");
 }
 
 async function main() {
@@ -141,17 +203,16 @@ async function main() {
   });
   spawnVite("h5-runtime", path.join(rootDir, "apps/h5-runtime-playground"), h5Port);
 
-  await Promise.all([
-    waitForHttp(editorUrl, "editor playground"),
-    waitForHttp(h5RuntimeUrl, "H5 runtime playground"),
-    waitForHttp(h5PageIdUrl, "H5 published pageId"),
-    waitForHttp(h5ReleaseIdUrl, "H5 preview releaseId"),
-  ]);
+  await Promise.all((acceptanceOnly ? demoEntries : healthEntries).map((entry) => waitForHttp(entry)));
 
   printEntries();
 
-  if (checkOnly) {
-    log("健康检查通过，正在停止本地演示服务。");
+  if (acceptanceOnly) {
+    printAcceptanceReport();
+  }
+
+  if (checkOnly || acceptanceOnly) {
+    log(`${acceptanceOnly ? "演示验收" : "健康检查"}通过，正在停止本地演示服务。`);
     await stopAll();
     return;
   }
