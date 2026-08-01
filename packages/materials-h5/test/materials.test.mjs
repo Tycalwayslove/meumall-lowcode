@@ -9,6 +9,7 @@ import {
   BasicImage,
   BasicInput,
   BasicSelect,
+  BasicSwitch,
   BasicTag,
   BasicText,
   BasicTextarea,
@@ -166,6 +167,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicInput", "borderColor"],
       ["BasicTextarea", "borderColor"],
       ["BasicSelect", "borderColor"],
+      ["BasicSwitch", "activeColor"],
       ["BasicText", "backgroundColor"],
       ["DividerBlock", "color"],
       ["BasicTag", "backgroundColor"],
@@ -303,6 +305,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
     functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
+    functionSourceIncludes(BasicSwitch, ["MlcSwitch", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     functionSourceIncludes(BasicImage, ["MlcImage"]);
@@ -457,6 +460,20 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.options[0].value, "women");
     assert.equal(material.manifest.propsSchema.options.setter, "textarea");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic switch material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicSwitch");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础开关");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.defaultChecked, true);
+    assert.equal(material.manifest.defaultProps.checkedText, "已开启");
+    assert.equal(material.manifest.propsSchema.defaultChecked.setter, "switch");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.propsSchema.activeColor.setter, "color");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 

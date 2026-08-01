@@ -801,12 +801,25 @@ export interface MlcSwitchProps {
   checked?: boolean;
   disabled?: boolean;
   label?: React.ReactNode;
+  activeColor?: string;
+  inactiveColor?: string;
+  thumbColor?: string;
   className?: string;
   style?: React.CSSProperties;
   onChange?: (checked: boolean) => void;
 }
 
-export function MlcSwitch({ checked = false, disabled = false, label, className, style, onChange }: MlcSwitchProps): React.ReactElement {
+export function MlcSwitch({
+  checked = false,
+  disabled = false,
+  label,
+  activeColor = h5Tokens.color.accent,
+  inactiveColor = "#cbd5e1",
+  thumbColor = h5Tokens.color.surface,
+  className,
+  style,
+  onChange,
+}: MlcSwitchProps): React.ReactElement {
   return (
     <button
       type="button"
@@ -839,7 +852,7 @@ export function MlcSwitch({ checked = false, disabled = false, label, className,
           width: 42,
           height: 24,
           borderRadius: h5Tokens.radius.pill,
-          background: checked ? h5Tokens.color.accent : "#cbd5e1",
+          background: checked ? activeColor : inactiveColor,
           transition: "background 0.16s ease",
         }}
       >
@@ -851,7 +864,7 @@ export function MlcSwitch({ checked = false, disabled = false, label, className,
             width: 18,
             height: 18,
             borderRadius: h5Tokens.radius.pill,
-            background: h5Tokens.color.surface,
+            background: thumbColor,
             boxShadow: "0 1px 4px rgba(15, 23, 42, 0.24)",
             transition: "left 0.16s ease",
           }}

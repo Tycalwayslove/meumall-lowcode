@@ -380,6 +380,57 @@ export function BasicSelect({ props }: MaterialProps) {
   );
 }
 
+export function BasicSwitch({ props }: MaterialProps) {
+  const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
+  const label = text(props.label, "基础开关");
+  const checkedText = text(props.checkedText, "已开启");
+  const uncheckedText = text(props.uncheckedText, "已关闭");
+  const helperText = text(props.helperText);
+  const handler = props.onChange;
+
+  React.useEffect(() => {
+    setChecked(boolean(props.defaultChecked));
+  }, [props.defaultChecked]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-switch"
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.labelColor, "#111827"),
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      <MlcSwitch
+        checked={checked}
+        disabled={boolean(props.disabled)}
+        activeColor={text(props.activeColor, "#0f766e")}
+        inactiveColor={text(props.inactiveColor, "#cbd5e1")}
+        thumbColor={text(props.thumbColor, "#ffffff")}
+        onChange={(nextChecked) => {
+          setChecked(nextChecked);
+          if (typeof handler === "function") handler(nextChecked);
+        }}
+        label={
+          <span style={{ display: "grid", gap: 2 }}>
+            <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
+              {label}
+            </MlcText>
+            <MlcText size={12} tone="muted" style={{ color: text(props.stateTextColor, "#64748b") }}>
+              {checked ? checkedText : uncheckedText}
+            </MlcText>
+          </span>
+        }
+      />
+      {helperText ? (
+        <MlcText as="p" size={12} tone="muted" style={{ display: "block", marginTop: 6, color: text(props.helperColor, "#64748b") }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </section>
+  );
+}
+
 export function BasicText({ props }: MaterialProps) {
   const as = option<BasicTextAs>(props.as, ["span", "p", "strong", "h1", "h2", "h3"], "p");
   const align = option<BasicTextAlign>(props.align, ["left", "center", "right"], "left");
@@ -2489,6 +2540,49 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onChange", title: "选择变化" }],
+    }),
+  },
+  {
+    component: BasicSwitch,
+    manifest: createMaterialManifest({
+      componentName: "BasicSwitch",
+      materialVersion: "0.1.0",
+      title: "基础开关",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础开关",
+        checkedText: "已开启",
+        uncheckedText: "已关闭",
+        helperText: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。",
+        defaultChecked: true,
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        labelColor: "#111827",
+        stateTextColor: "#64748b",
+        helperColor: "#64748b",
+        activeColor: "#0f766e",
+        inactiveColor: "#cbd5e1",
+        thumbColor: "#ffffff",
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础开关" },
+        checkedText: { label: "开启文案", type: "string", setter: "input", defaultValue: "已开启" },
+        uncheckedText: { label: "关闭文案", type: "string", setter: "input", defaultValue: "已关闭" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。" },
+        defaultChecked: { label: "默认开启", type: "boolean", setter: "switch", defaultValue: true },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        stateTextColor: { label: "状态文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        activeColor: { label: "开启色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        inactiveColor: { label: "关闭色", type: "string", setter: "color", defaultValue: "#cbd5e1", ...COLOR_SWATCHES_META },
+        thumbColor: { label: "滑块色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onChange", title: "开关变化" }],
     }),
   },
   {

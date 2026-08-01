@@ -211,6 +211,29 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_switch",
+      componentName: "BasicSwitch",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础开关示例",
+        checkedText: "展示活动提醒",
+        uncheckedText: "隐藏活动提醒",
+        helperText: "布尔开关可作为后续偏好设置和表单协议的基础单元。",
+        defaultChecked: true,
+        wrapperBackgroundColor: "#f3f4f6",
+        labelColor: "#111827",
+        stateTextColor: "#64748b",
+        helperColor: "#64748b",
+        activeColor: "#0f766e",
+        inactiveColor: "#cbd5e1",
+        thumbColor: "#ffffff",
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_switch_change" },
+      },
+    },
+    {
       id: "node_basic_text",
       componentName: "BasicText",
       materialVersion: "0.1.0",
@@ -903,6 +926,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_select_change",
+      },
+    },
+    {
+      id: "track_basic_switch_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_switch_change",
       },
     },
     {

@@ -35,6 +35,7 @@ Currently migrated materials:
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicSwitch`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
@@ -70,6 +71,7 @@ Current materials:
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicSwitch`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
