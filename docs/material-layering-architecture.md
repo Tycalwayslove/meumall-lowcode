@@ -138,7 +138,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `TabsBlock`
 - 后续可增加 `FormSubmitButton`，复杂表单字段应优先复用 `BasicInput` 再组合。
 
-`SectionContainer` 是当前编辑器唯一默认识别的嵌套容器物料，负责运营分组、基础留白、子节点间距、边框和阴影等单列布局能力。新增多列或栅格前，应优先确认是否能通过增强 `SectionContainer` 满足。
+`SectionContainer` 是当前编辑器唯一默认识别的嵌套容器物料，负责运营分组、基础留白、子节点间距、边框和阴影等单列布局能力；其标题、说明和空态文案应复用 `MlcText` 这类文本 primitive。新增多列、栅格或插槽协议前，应作为独立 layout material/协议任务设计，避免把复杂布局规则混入当前单列容器。
 
 `ActivityHero` 是通用营销头图物料，负责首屏图片、标题、说明、背景、图片圆角、标题字号、留白和行高配置；它不承载活动库存、会场规则、倒计时、用户权益、CMS 审核或 Java 活动接口语义，这些能力应由后续业务物料、富文本、倒计时、数据源或宿主服务扩展。
 
@@ -324,7 +324,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `RichTextBlock`
 - `NavGrid`
 
-新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。
+新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已开始复用内部 primitives，但它们仍是可拖拽物料，不是 primitives 公开 API。
 
 ## Business Materials 首批规划
 

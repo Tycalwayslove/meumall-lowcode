@@ -188,6 +188,9 @@ describe("MeuMall H5 material manifests", () => {
   it("keeps generic material color swatches aligned", () => {
     const colorProps = [
       ["SectionContainer", "backgroundColor"],
+      ["SectionContainer", "borderColor"],
+      ["SectionContainer", "titleColor"],
+      ["SectionContainer", "subtitleColor"],
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
@@ -375,6 +378,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicVideo, ["MlcImage", "MlcTag", "MlcText"]);
     functionSourceIncludes(NoticeBar, ["MlcNoticeBar"]);
     functionSourceIncludes(RichTextBlock, ["MlcRichText"]);
+    functionSourceIncludes(SectionContainer, ["MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -543,6 +547,25 @@ describe("MeuMall H5 material manifests", () => {
     assert.ok(body);
     assert.equal(body.props.style.gap, 10);
     assert.equal(body.props.children, "子节点");
+
+    const title = element.props.children.find((child) => child?.props?.className === "mlc-section-container__title");
+    const subtitle = element.props.children.find((child) => child?.props?.className === "mlc-section-container__subtitle");
+    assert.ok(title);
+    assert.ok(subtitle);
+    assert.equal(title.type.name, "MlcText");
+    assert.equal(subtitle.type.name, "MlcText");
+  });
+
+  it("renders section container empty state through React H5 primitives", () => {
+    const element = SectionContainer({
+      node: { id: "container_empty", componentName: "SectionContainer", props: {} },
+      props: { emptyText: "拖入内容" },
+    });
+
+    const empty = element.props.children.find((child) => child?.props?.className === "mlc-section-container__empty");
+    assert.ok(empty);
+    assert.equal(empty.type.name, "MlcText");
+    assert.equal(empty.props.children, "拖入内容");
   });
 
   it("registers the basic button material", () => {

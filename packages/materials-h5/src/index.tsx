@@ -2237,9 +2237,28 @@ export function SectionContainer({ props, children }: MaterialProps) {
         boxShadow: boolean(props.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
       }}
     >
-      {title ? <h2 style={{ margin: "0 0 6px", color: text(props.titleColor, "#111827"), fontSize: 18 }}>{title}</h2> : null}
+      {title ? (
+        <MlcText
+          as="h2"
+          size={18}
+          weight={800}
+          lineHeight={1.35}
+          className="mlc-section-container__title"
+          style={{ margin: "0 0 6px", color: text(props.titleColor, "#111827") }}
+        >
+          {title}
+        </MlcText>
+      ) : null}
       {subtitle ? (
-        <p style={{ margin: "0 0 12px", color: text(props.subtitleColor, "#64748b"), fontSize: 13, lineHeight: 1.6 }}>{subtitle}</p>
+        <MlcText
+          as="p"
+          size={13}
+          lineHeight={1.6}
+          className="mlc-section-container__subtitle"
+          style={{ margin: "0 0 12px", color: text(props.subtitleColor, "#64748b") }}
+        >
+          {subtitle}
+        </MlcText>
       ) : null}
       {children ? (
         <div
@@ -2252,19 +2271,22 @@ export function SectionContainer({ props, children }: MaterialProps) {
           {children}
         </div>
       ) : (
-        <div
+        <MlcText
+          as="p"
+          size={13}
+          tone="muted"
+          lineHeight={1.5}
           className="mlc-section-container__empty"
           style={{
             padding: 14,
             border: "1px dashed #cbd5e1",
             borderRadius: 8,
-            color: "#64748b",
             background: "#f8fafc",
             textAlign: "center",
           }}
         >
           {emptyText}
-        </div>
+        </MlcText>
       )}
     </section>
   );

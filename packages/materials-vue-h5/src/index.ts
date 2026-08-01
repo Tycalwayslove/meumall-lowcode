@@ -3055,14 +3055,45 @@ export const SectionContainer = defineComponent({
         },
         [
           title
-            ? h("h2", { style: { margin: "0 0 6px", color: text(runtimeProps.titleColor, "#111827"), fontSize: "18px" } }, title)
+            ? h(
+                MlcText,
+                {
+                  as: "h2",
+                  size: 18,
+                  weight: 800,
+                  lineHeight: 1.35,
+                  class: "mlc-section-container__title",
+                  style: { margin: "0 0 6px", color: text(runtimeProps.titleColor, "#111827") },
+                },
+                () => title,
+              )
             : null,
           subtitle
-            ? h("p", { style: { margin: "0 0 12px", color: text(runtimeProps.subtitleColor, "#64748b"), fontSize: "13px", lineHeight: 1.6 } }, subtitle)
+            ? h(
+                MlcText,
+                {
+                  as: "p",
+                  size: 13,
+                  lineHeight: 1.6,
+                  class: "mlc-section-container__subtitle",
+                  style: { margin: "0 0 12px", color: text(runtimeProps.subtitleColor, "#64748b") },
+                },
+                () => subtitle,
+              )
             : null,
           children?.length
             ? h("div", { class: "mlc-section-container__body", style: { display: "grid", gap: `${gap}px` } }, children)
-            : h("div", { class: "mlc-section-container__empty" }, emptyText),
+            : h(
+                MlcText,
+                {
+                  as: "p",
+                  size: 13,
+                  tone: "muted",
+                  lineHeight: 1.5,
+                  class: "mlc-section-container__empty",
+                },
+                () => emptyText,
+              ),
         ],
       );
     };
