@@ -115,6 +115,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicInput`
 - `BasicText`
 - `DividerBlock`
+- `BasicImage`
+- `BasicTag`
 - `ActionButton`
 - `RichTextBlock`
 - `SpacerBlock`
@@ -263,6 +265,8 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicInput`
 - `BasicText`
 - `DividerBlock`
+- `BasicImage`
+- `BasicTag`
 - `ActionButton`
 - `ImageCardGrid`
 - `TabsBlock`

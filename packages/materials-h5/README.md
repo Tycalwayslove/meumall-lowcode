@@ -34,6 +34,8 @@ Currently migrated materials:
 - `BasicInput`
 - `BasicText`
 - `DividerBlock`
+- `BasicImage`
+- `BasicTag`
 - `ActionButton`
 - `ImageBanner`
 - `SectionTitle`
@@ -63,6 +65,8 @@ Current materials:
 - `BasicInput`
 - `BasicText`
 - `DividerBlock`
+- `BasicImage`
+- `BasicTag`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`

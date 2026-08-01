@@ -83,6 +83,9 @@ type BasicInputType = "text" | "tel" | "email" | "number";
 type BasicTextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type BasicTextAlign = "left" | "center" | "right";
 type DividerLineStyle = "solid" | "dashed" | "dotted";
+type BasicImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
+type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
+type BasicInlineAlign = "left" | "center" | "right";
 
 export function BasicButton({ props }: MaterialProps) {
   const variant = option<BasicButtonVariant>(props.variant, ["solid", "outline", "ghost"], "solid");
@@ -223,6 +226,75 @@ export function DividerBlock({ props }: MaterialProps) {
         lineStyle={lineStyle}
         inset={number(props.inset, 16)}
       />
+    </section>
+  );
+}
+
+export function BasicImage({ props }: MaterialProps) {
+  const imageUrl = text(props.imageUrl);
+  const fit = option<BasicImageFit>(props.fit, ["cover", "contain", "fill", "none", "scale-down"], "cover");
+
+  return (
+    <section
+      className="mlc-material mlc-basic-image"
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        background: text(props.backgroundColor, "transparent"),
+      }}
+    >
+      <MlcImage
+        src={imageUrl}
+        alt={text(props.alt)}
+        ratio={text(props.ratio, "16 / 9")}
+        fit={fit}
+        radius={number(props.radius, 8)}
+        fallback={
+          <div
+            className="mlc-basic-image__empty"
+            style={{
+              display: "grid",
+              placeItems: "center",
+              minHeight: 120,
+              border: "1px dashed #cbd5e1",
+              borderRadius: number(props.radius, 8),
+              color: "#64748b",
+              background: "#f8fafc",
+              fontSize: 13,
+            }}
+          >
+            请配置图片
+          </div>
+        }
+      />
+    </section>
+  );
+}
+
+export function BasicTag({ props }: MaterialProps) {
+  const tone = option<BasicTagTone>(props.tone, ["neutral", "accent", "danger", "inverse"], "accent");
+  const align = option<BasicInlineAlign>(props.align, ["left", "center", "right"], "left");
+
+  return (
+    <section
+      className="mlc-material mlc-basic-tag"
+      style={{
+        padding: `${number(props.paddingY, 10)}px 16px`,
+        background: text(props.wrapperBackgroundColor, "transparent"),
+        textAlign: align,
+      }}
+    >
+      <MlcTag
+        tone={tone}
+        radius={number(props.radius, 999)}
+        style={{
+          color: text(props.textColor, "#0f766e"),
+          background: text(props.backgroundColor, "rgba(15, 118, 110, 0.1)"),
+          fontSize: number(props.fontSize, 12),
+          fontWeight: number(props.fontWeight, 800),
+        }}
+      >
+        {text(props.text, "基础标签")}
+      </MlcTag>
     </section>
   );
 }
@@ -1806,6 +1878,68 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         inset: { label: "左右缩进", type: "number", setter: "number", defaultValue: 16 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+      },
+    }),
+  },
+  {
+    component: BasicImage,
+    manifest: createMaterialManifest({
+      componentName: "BasicImage",
+      materialVersion: "0.1.0",
+      title: "基础图片",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+        alt: "活动图片",
+        ratio: "16 / 9",
+        fit: "cover",
+        radius: 8,
+        paddingY: 12,
+        backgroundColor: "transparent",
+      },
+      propsSchema: {
+        imageUrl: { label: "图片地址", type: "string", setter: "input", required: true, defaultValue: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
+        alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "活动图片" },
+        ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+      },
+    }),
+  },
+  {
+    component: BasicTag,
+    manifest: createMaterialManifest({
+      componentName: "BasicTag",
+      materialVersion: "0.1.0",
+      title: "基础标签",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "基础标签",
+        tone: "accent",
+        align: "left",
+        textColor: "#0f766e",
+        backgroundColor: "rgba(15, 118, 110, 0.1)",
+        wrapperBackgroundColor: "transparent",
+        radius: 999,
+        fontSize: 12,
+        fontWeight: 800,
+        paddingY: 10,
+      },
+      propsSchema: {
+        text: { label: "标签文案", type: "string", setter: "input", required: true, defaultValue: "基础标签" },
+        tone: { label: "语义色", type: "string", setter: "input", defaultValue: "accent" },
+        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        backgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 999 },
+        fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 12 },
+        fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 800 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
       },
     }),
   },

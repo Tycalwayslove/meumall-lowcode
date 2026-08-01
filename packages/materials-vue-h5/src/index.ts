@@ -133,6 +133,9 @@ type BasicInputType = "text" | "tel" | "email" | "number";
 type BasicTextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type BasicTextAlign = "left" | "center" | "right";
 type DividerLineStyle = "solid" | "dashed" | "dotted";
+type BasicImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
+type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
+type BasicInlineAlign = "left" | "center" | "right";
 
 export const BasicButton = defineComponent({
   name: "BasicButton",
@@ -329,6 +332,80 @@ export const DividerBlock = defineComponent({
             lineStyle,
             inset: number(runtimeProps.inset, 16),
           }),
+        ],
+      );
+    };
+  },
+});
+
+export const BasicImage = defineComponent({
+  name: "BasicImage",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const imageUrl = text(runtimeProps.imageUrl);
+      const fit = option<BasicImageFit>(runtimeProps.fit, ["cover", "contain", "fill", "none", "scale-down"], "cover");
+      const radius = number(runtimeProps.radius, 8);
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-image",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.backgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(MlcImage, {
+            src: imageUrl,
+            alt: text(runtimeProps.alt),
+            ratio: text(runtimeProps.ratio, "16 / 9"),
+            fit,
+            radius,
+            fallback: "请配置图片",
+          }),
+        ],
+      );
+    };
+  },
+});
+
+export const BasicTag = defineComponent({
+  name: "BasicTag",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const tone = option<BasicTagTone>(runtimeProps.tone, ["neutral", "accent", "danger", "inverse"], "accent");
+      const align = option<BasicInlineAlign>(runtimeProps.align, ["left", "center", "right"], "left");
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-tag",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 10)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+            textAlign: align,
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            MlcTag,
+            {
+              tone,
+              radius: number(runtimeProps.radius, 999),
+              style: {
+                color: text(runtimeProps.textColor, "#0f766e"),
+                background: text(runtimeProps.backgroundColor, "rgba(15, 118, 110, 0.1)"),
+                fontSize: `${number(runtimeProps.fontSize, 12)}px`,
+                fontWeight: number(runtimeProps.fontWeight, 800),
+              } satisfies CSSProperties,
+            },
+            () => text(runtimeProps.text, "基础标签"),
+          ),
         ],
       );
     };
@@ -2472,6 +2549,68 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         inset: { label: "左右缩进", type: "number", setter: "number", defaultValue: 16 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+      },
+    }),
+  },
+  {
+    component: BasicImage,
+    manifest: createMaterialManifest({
+      componentName: "BasicImage",
+      materialVersion: "0.1.0",
+      title: "基础图片",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        imageUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+        alt: "活动图片",
+        ratio: "16 / 9",
+        fit: "cover",
+        radius: 8,
+        paddingY: 12,
+        backgroundColor: "transparent",
+      },
+      propsSchema: {
+        imageUrl: { label: "图片地址", type: "string", setter: "input", required: true, defaultValue: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
+        alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "活动图片" },
+        ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+      },
+    }),
+  },
+  {
+    component: BasicTag,
+    manifest: createMaterialManifest({
+      componentName: "BasicTag",
+      materialVersion: "0.1.0",
+      title: "基础标签",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "基础标签",
+        tone: "accent",
+        align: "left",
+        textColor: "#0f766e",
+        backgroundColor: "rgba(15, 118, 110, 0.1)",
+        wrapperBackgroundColor: "transparent",
+        radius: 999,
+        fontSize: 12,
+        fontWeight: 800,
+        paddingY: 10,
+      },
+      propsSchema: {
+        text: { label: "标签文案", type: "string", setter: "input", required: true, defaultValue: "基础标签" },
+        tone: { label: "语义色", type: "string", setter: "input", defaultValue: "accent" },
+        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        backgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 999 },
+        fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 12 },
+        fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 800 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
       },
     }),
   },

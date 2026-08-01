@@ -4,7 +4,9 @@ import { describe, it } from "node:test";
 import {
   ActivityRuleModal,
   BasicButton,
+  BasicImage,
   BasicInput,
+  BasicTag,
   BasicText,
   BrandFeatureSection,
   CouponBundle,
@@ -154,6 +156,8 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
+    functionSourceIncludes(BasicImage, ["MlcImage"]);
+    functionSourceIncludes(BasicTag, ["MlcTag"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -236,6 +240,28 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.lineStyle, "solid");
     assert.equal(material.manifest.propsSchema.color.setter, "color");
     assert.equal(material.manifest.propsSchema.thickness.setter, "number");
+  });
+
+  it("registers the basic image material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicImage");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础图片");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.ratio, "16 / 9");
+    assert.equal(material.manifest.propsSchema.imageUrl.setter, "input");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+  });
+
+  it("registers the basic tag material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicTag");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础标签");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.text, "基础标签");
+    assert.equal(material.manifest.propsSchema.textColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.fontSize.setter, "number");
   });
 
   it("registers the image card grid material", () => {
