@@ -10,6 +10,7 @@ import {
   BasicCheckbox,
   BasicImage,
   BasicInput,
+  BasicModal,
   BasicRadioGroup,
   BasicSelect,
   BasicStepper,
@@ -121,6 +122,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicCarousel", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicCarousel", "indicator", ["dots", "counter", "none"]],
+      ["BasicModal", "placement", ["center", "bottom"]],
       ["SectionTitle", "align", ["left", "center", "right"]],
     ];
 
@@ -156,6 +158,9 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCarousel", "interval", { min: 1000, max: 10000, step: 500, unit: "ms" }],
       ["BasicVideo", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicVideo", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["BasicModal", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicModal", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicModal", "contentPadding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["ActivityHero", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ActivityHero", "imageRadius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["ActivityHero", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
@@ -206,6 +211,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "accentColor"],
       ["BasicCarousel", "indicatorColor"],
       ["BasicVideo", "accentColor"],
+      ["BasicModal", "buttonColor"],
+      ["BasicModal", "modalBackgroundColor"],
       ["ActivityHero", "backgroundColor"],
       ["ActivityHero", "textColor"],
       ["NoticeBar", "borderColor"],
@@ -376,6 +383,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicCard, ["MlcImage", "MlcTag", "MlcText", "MlcButton"]);
     functionSourceIncludes(BasicCarousel, ["MlcImage", "MlcTag", "MlcText"]);
     functionSourceIncludes(BasicVideo, ["MlcImage", "MlcTag", "MlcText"]);
+    functionSourceIncludes(BasicModal, ["MlcButton", "MlcModal", "MlcText"]);
     functionSourceIncludes(NoticeBar, ["MlcNoticeBar"]);
     functionSourceIncludes(RichTextBlock, ["MlcRichText"]);
     functionSourceIncludes(SectionContainer, ["MlcText"]);
@@ -399,6 +407,22 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.posterUrl.setter, "image");
     assert.equal(material.manifest.propsSchema.autoPlay.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onPlay");
+  });
+
+  it("registers the basic modal material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicModal");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础弹窗");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.defaultOpen, false);
+    assert.equal(material.manifest.defaultProps.closeOnBackdrop, true);
+    assert.equal(material.manifest.propsSchema.placement.setter, "select");
+    assert.equal(material.manifest.propsSchema.content.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.defaultOpen.setter, "switch");
+    assert.equal(material.manifest.propsSchema.buttonColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onOpen");
   });
 
   it("registers the enhanced notice bar material", () => {

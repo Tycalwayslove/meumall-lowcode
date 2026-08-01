@@ -489,6 +489,35 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_modal",
+      componentName: "BasicModal",
+      materialVersion: "0.1.0",
+      props: {
+        triggerText: "查看 React H5 基础弹窗",
+        summary: "React H5 runtime 渲染通用弹窗物料。",
+        modalTitle: "React H5 基础弹窗",
+        content: "基础弹窗只承载静态说明和基础交互。\\n业务弹窗、审核、投放规则和服务端内容后续由独立业务物料或宿主能力接入。",
+        primaryText: "明白",
+        closeLabel: "关闭基础弹窗",
+        defaultOpen: false,
+        closeOnBackdrop: true,
+        placement: "bottom",
+        backgroundColor: "#f3f4f6",
+        modalBackgroundColor: "#ffffff",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        contentColor: "#374151",
+        buttonColor: "#0f766e",
+        buttonTextColor: "#ffffff",
+        radius: 16,
+        paddingY: 8,
+        contentPadding: 16,
+      },
+      events: {
+        onOpen: { actionId: "track_basic_modal_open" },
+      },
+    },
+    {
       id: "node_rules",
       componentName: "ActivityRuleModal",
       materialVersion: "0.1.0",
@@ -1076,6 +1105,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_video_play",
+      },
+    },
+    {
+      id: "track_basic_modal_open",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_modal_open",
       },
     },
     {

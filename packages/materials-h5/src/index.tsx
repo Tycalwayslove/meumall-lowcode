@@ -105,6 +105,7 @@ type BasicImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
 type BasicInlineAlign = "left" | "center" | "right";
 type BasicCarouselIndicator = "dots" | "counter" | "none";
+type BasicModalPlacement = "center" | "bottom";
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -116,6 +117,11 @@ const BASIC_BUTTON_SIZE_OPTIONS = [
   { label: "小", value: "sm" },
   { label: "中", value: "md" },
   { label: "大", value: "lg" },
+];
+
+const BASIC_MODAL_PLACEMENT_OPTIONS = [
+  { label: "居中", value: "center" },
+  { label: "底部", value: "bottom" },
 ];
 
 const BASIC_INPUT_TYPE_OPTIONS = [
@@ -256,6 +262,79 @@ export function BasicButton({ props }: MaterialProps) {
       >
         {text(props.text, "基础按钮")}
       </MlcButton>
+    </section>
+  );
+}
+
+export function BasicModal({ props }: MaterialProps) {
+  const [open, setOpen] = React.useState(boolean(props.defaultOpen, false));
+  const placement = option<BasicModalPlacement>(props.placement, ["center", "bottom"], "bottom");
+  const buttonColor = text(props.buttonColor, "#111827");
+  const buttonTextColor = text(props.buttonTextColor, "#ffffff");
+  const handler = props.onOpen;
+
+  React.useEffect(() => {
+    setOpen(boolean(props.defaultOpen, false));
+  }, [props.defaultOpen]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-modal"
+      style={{
+        display: "grid",
+        gap: 8,
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.textColor, "#111827"),
+        background: text(props.backgroundColor, "transparent"),
+      }}
+    >
+      <MlcButton
+        block
+        radius={number(props.radius, 10)}
+        onClick={() => {
+          if (typeof handler === "function") handler();
+          setOpen(true);
+        }}
+        style={{
+          borderColor: buttonColor,
+          color: buttonTextColor,
+          background: buttonColor,
+        }}
+      >
+        {text(props.triggerText, "打开弹窗")}
+      </MlcButton>
+      {text(props.summary) ? (
+        <MlcText as="p" size={12} lineHeight={1.5} style={{ color: text(props.helperColor, "#64748b") }}>
+          {text(props.summary)}
+        </MlcText>
+      ) : null}
+      <MlcModal
+        open={open}
+        title={text(props.modalTitle, "基础弹窗")}
+        closeLabel={text(props.closeLabel, "关闭弹窗")}
+        placement={placement}
+        closeOnBackdrop={boolean(props.closeOnBackdrop, true)}
+        radius={placement === "bottom" ? `${number(props.radius, 16)}px ${number(props.radius, 16)}px 12px 12px` : number(props.radius, 16)}
+        style={{ background: text(props.modalBackgroundColor, "#ffffff") }}
+        bodyStyle={{ padding: `0 ${number(props.contentPadding, 16)}px ${number(props.contentPadding, 16)}px` }}
+        onClose={() => setOpen(false)}
+        footer={
+          <div style={{ padding: `0 ${number(props.contentPadding, 16)}px ${number(props.contentPadding, 16)}px` }}>
+            <MlcButton
+              block
+              radius={number(props.radius, 10)}
+              onClick={() => setOpen(false)}
+              style={{ borderColor: buttonColor, color: buttonTextColor, background: buttonColor }}
+            >
+              {text(props.primaryText, "知道了")}
+            </MlcButton>
+          </div>
+        }
+      >
+        <MlcText as="p" size={14} lineHeight={1.7} style={{ color: text(props.contentColor, "#374151"), whiteSpace: "pre-line" }}>
+          {text(props.content, "这里可以配置通用说明、活动提示或运营引导内容。")}
+        </MlcText>
+      </MlcModal>
     </section>
   );
 }
@@ -2717,6 +2796,59 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: BasicModal,
+    manifest: createMaterialManifest({
+      componentName: "BasicModal",
+      materialVersion: "0.1.0",
+      title: "基础弹窗",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        triggerText: "查看说明",
+        summary: "点击按钮打开通用弹窗，适合配置活动说明、权益提示或操作引导。",
+        modalTitle: "基础弹窗",
+        content: "这里可以配置通用说明、活动提示或运营引导内容。\\n当前物料只展示静态内容，不请求业务接口。",
+        primaryText: "知道了",
+        closeLabel: "关闭弹窗",
+        defaultOpen: false,
+        closeOnBackdrop: true,
+        placement: "bottom",
+        backgroundColor: "transparent",
+        modalBackgroundColor: "#ffffff",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        contentColor: "#374151",
+        buttonColor: "#111827",
+        buttonTextColor: "#ffffff",
+        radius: 16,
+        paddingY: 12,
+        contentPadding: 16,
+      },
+      propsSchema: {
+        triggerText: { label: "入口按钮文案", type: "string", setter: "input", defaultValue: "查看说明" },
+        summary: { label: "入口说明", type: "string", setter: "textarea", defaultValue: "点击按钮打开通用弹窗，适合配置活动说明、权益提示或操作引导。" },
+        modalTitle: { label: "弹窗标题", type: "string", setter: "input", defaultValue: "基础弹窗" },
+        content: { label: "弹窗内容", type: "string", setter: "textarea", defaultValue: "这里可以配置通用说明、活动提示或运营引导内容。\\n当前物料只展示静态内容，不请求业务接口。" },
+        primaryText: { label: "确认按钮文案", type: "string", setter: "input", defaultValue: "知道了" },
+        closeLabel: { label: "关闭读屏文案", type: "string", setter: "input", defaultValue: "关闭弹窗" },
+        defaultOpen: { label: "默认打开", type: "boolean", setter: "switch", defaultValue: false },
+        closeOnBackdrop: { label: "点击遮罩关闭", type: "boolean", setter: "switch", defaultValue: true },
+        placement: { label: "弹出位置", type: "string", setter: "select", defaultValue: "bottom", options: BASIC_MODAL_PLACEMENT_OPTIONS },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        modalBackgroundColor: { label: "弹窗背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        textColor: { label: "入口文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        helperColor: { label: "说明文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        contentColor: { label: "内容文字色", type: "string", setter: "color", defaultValue: "#374151", ...COLOR_SWATCHES_META },
+        buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 16, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        contentPadding: { label: "内容留白", type: "number", setter: "number", defaultValue: 16, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onOpen", title: "打开弹窗" }],
     }),
   },
   {

@@ -739,6 +739,15 @@ async function assertActivityRuleModal(page, label) {
   log(`通过：${label} 可打开并关闭活动规则弹窗`);
 }
 
+async function assertBasicModal(page, label, triggerText, titleText) {
+  log(`检查基础弹窗：${label}`);
+  await page.clickByText(".phone-frame .mlc-basic-modal button", triggerText);
+  await page.waitForExpression(`document.querySelector('[role="dialog"]') && document.body.innerText.includes(${jsString(titleText)})`);
+  await page.clickFirst("[role='dialog'] button");
+  await page.waitForExpression("!document.querySelector('[role=\"dialog\"]')");
+  log(`通过：${label} 可打开并关闭基础弹窗`);
+}
+
 async function assertTabsBlockSwitch(page, label) {
   log(`检查标签内容切换：${label}`);
   await page.clickByText(".phone-frame [role='tab']", "参与方式");
@@ -1007,7 +1016,19 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicVideo\"') && item.value.includes('\"posterUrl\": \"https://images.unsplash.com/photo-1607083206869') && item.value.includes('\"controls\": true'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：基础图片、基础标签、基础图文卡片、基础图片轮播和基础视频可从快捷命令添加并在 Vue H5 画布渲染");
+  const nodeCountBeforeBasicModal = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础弹窗");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础弹窗')");
+  await page.clickByText(".command-palette-item", "添加物料：基础弹窗");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicModal)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-modal') && document.body.innerText.includes('查看说明')");
+  await assertBasicModal(page, "Vue3 编辑器画布新增物料", "查看说明", "基础弹窗");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicModal\"') && item.value.includes('\"placement\": \"bottom\"') && item.value.includes('\"closeOnBackdrop\": true'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：基础图片、基础标签、基础图文卡片、基础图片轮播、基础视频和基础弹窗可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查留资表单通用物料");
   const nodeCountBeforeLeadForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1481,6 +1502,7 @@ async function main() {
       { label: "基础标签物料存在", expression: "document.body.innerText.includes('基础标签')" },
       { label: "基础图文卡片物料存在", expression: "document.body.innerText.includes('基础图文卡片')" },
       { label: "基础视频物料存在", expression: "document.body.innerText.includes('基础视频')" },
+      { label: "基础弹窗物料存在", expression: "document.body.innerText.includes('基础弹窗')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "编辑器发布面板宿主扩展位存在", expression: "document.querySelector('[data-testid=\"host-delivery-policy\"]') && document.querySelector('[data-testid=\"host-approval-policy\"]') && document.querySelector('[data-testid=\"host-publish-check-policy\"]') && document.querySelector('[data-testid=\"host-release-policy-button\"]')" },
@@ -1506,6 +1528,7 @@ async function main() {
       { label: "默认大促模板包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "默认大促模板包含基础图文卡片", expression: "document.querySelector('.phone-frame .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
       { label: "默认大促模板包含基础视频", expression: "document.querySelector('.phone-frame .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
+      { label: "默认大促模板包含基础弹窗", expression: "document.querySelector('.phone-frame .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "默认大促模板包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "默认大促模板包含间距块", expression: "document.querySelector('.phone-frame .mlc-spacer-block')" },
@@ -1516,6 +1539,7 @@ async function main() {
     ]);
     await assertEditorViewportSwitch(page);
     await assertActivityRuleModal(page, "Vue3 编辑器内置画布");
+    await assertBasicModal(page, "Vue3 编辑器内置画布", "查看基础弹窗", "基础弹窗示例");
     await assertTabsBlockSwitch(page, "Vue3 编辑器内置画布");
     await assertInspectorGroups(page);
     await assertOutlineNavigator(page);
@@ -1560,6 +1584,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "编辑器内置 runtime 包含基础图文卡片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
       { label: "编辑器内置 runtime 包含基础视频", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
+      { label: "编辑器内置 runtime 包含基础弹窗", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "编辑器内置 runtime 包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "编辑器内置 runtime 包含间距块", expression: "document.querySelector('.mlc-spacer-block')" },
@@ -1598,6 +1623,7 @@ async function main() {
       { label: "React H5 基础标签已渲染", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "React H5 基础图文卡片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
       { label: "React H5 基础视频已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
+      { label: "React H5 基础弹窗已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看 React H5 基础弹窗')" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "React H5 倒计时已渲染", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
@@ -1607,6 +1633,7 @@ async function main() {
       { label: "React H5 物料节点已渲染", expression: "document.querySelectorAll('[data-lowcode-node-id]').length >= 3" },
     ]);
     await assertActivityRuleModal(page, "React H5 runtime");
+    await assertBasicModal(page, "React H5 runtime", "查看 React H5 基础弹窗", "React H5 基础弹窗");
     await assertTabsBlockSwitch(page, "React H5 runtime");
 
     await assertPage(page, h5RuntimeHttpUrl, [
