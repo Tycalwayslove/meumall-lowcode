@@ -318,7 +318,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `1a458bf` | 沉淀 editor 权限能力模型。 |
 | 2026-08-01 | `1ff66ff` | 沉淀 editor 协作锁定状态模型。 |
 | 2026-08-01 | `71da2da` | 沉淀 editor 审批状态模型。 |
-| 2026-08-01 | 本提交 | 扩展 adapters 编辑器工作流状态 client。 |
+| 2026-08-01 | `c857c6b` | 扩展 adapters 编辑器工作流状态 client。 |
+| 2026-08-01 | 本提交 | 接入 Vue3 编辑器工作流 provider 边界。 |
 
 ## 默认验证命令
 

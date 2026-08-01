@@ -20,6 +20,7 @@ import {
   createStaticTemplateLibraryClient,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
+  type ConfigPlatformEditorWorkflowState,
   type DataSourceResolutionRecord,
   type LowcodeCouponResource,
   type LowcodeImageAssetResource,
@@ -179,7 +180,6 @@ import {
   type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
   type LowcodeEditorNodeOperationAction as NodeContextAction,
   type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
-  type LowcodeEditorApprovalStatus,
   type LowcodeEditorPermissionAction,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -215,8 +215,11 @@ import EditorStatusPanel from "./components/EditorStatusPanel.vue";
 import EditorTopToolbar from "./components/EditorTopToolbar.vue";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
+  createDefaultEditorWorkflowState,
   localConfigPlatformClient,
+  localOperator,
   type LocalPageRelease,
+  writeEditorWorkflowState,
 } from "./mockPlatform";
 
 const STORAGE_KEY = "meumall-lowcode-editor-playground";
@@ -228,7 +231,7 @@ const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http:
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 const collaborationDemoMode = runtimeQuery.get("collaboration");
-const approvalDemoMode = runtimeQuery.get("approval") as LowcodeEditorApprovalStatus | null;
+const approvalDemoMode = runtimeQuery.get("approval");
 const collaborationDemoExpiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
 const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
@@ -464,6 +467,7 @@ const schemaTransferMessage = ref("");
 const autoSaveStatus = ref<LowcodeEditorDraftPersistenceStatus>(loadedSchemaResult.restored ? "restored" : "idle");
 const lastAutoSavedAt = ref<string | undefined>(loadedSchemaResult.updatedAt);
 const configPlatformClient = localConfigPlatformClient;
+const editorWorkflowState = shallowRef(seedEditorWorkflowStateFromQuery(editorState.value.schema.pageId));
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const releaseNoteDraft = ref("");
@@ -693,72 +697,106 @@ const canMoveSelectedDown = computed(() => {
   return row.index < getSiblingCount(row.parentId) - 1;
 });
 
-function createDemoCollaborationStateOptions(): Parameters<typeof createLowcodeEditorCollaborationState>[0] {
+function readEditorWorkflowState(pageId: string): ConfigPlatformEditorWorkflowState {
+  return configPlatformClient.getEditorWorkflowState?.(pageId) ?? createDefaultEditorWorkflowState(pageId);
+}
+
+function seedEditorWorkflowStateFromQuery(pageId: string): ConfigPlatformEditorWorkflowState {
+  const baseState = readEditorWorkflowState(pageId);
+  const seededState: ConfigPlatformEditorWorkflowState = {
+    ...baseState,
+    lock: { ...baseState.lock },
+    approval: { ...baseState.approval },
+  };
+
   if (collaborationDemoMode === "locked-me") {
-    return {
-      currentUserId: "operator-me",
-      holder: { id: "operator-me", name: "当前运营" },
+    seededState.lock = {
+      status: "locked-by-me",
+      holder: localOperator,
       expiresAt: collaborationDemoExpiresAt,
     };
-  }
-  if (collaborationDemoMode === "locked-other") {
-    return {
-      currentUserId: "operator-me",
+  } else if (collaborationDemoMode === "locked-other") {
+    seededState.lock = {
+      status: "locked-by-other",
       holder: { id: "operator-other", name: "运营同事" },
       expiresAt: collaborationDemoExpiresAt,
     };
-  }
-  if (collaborationDemoMode === "readonly") {
-    return {
+  } else if (collaborationDemoMode === "readonly") {
+    seededState.lock = {
       status: "readonly",
-      readonlyReason: "当前页面处于审批中，仅允许查看和导出。",
+      reason: "当前页面处于审批中，仅允许查看和导出。",
     };
-  }
-  if (collaborationDemoMode === "expired") {
-    return {
+  } else if (collaborationDemoMode === "expired") {
+    seededState.lock = {
       status: "locked-by-me",
-      currentUserId: "operator-me",
-      holder: { id: "operator-me", name: "当前运营" },
+      holder: localOperator,
       expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
     };
   }
-  return {};
-}
 
-function createDemoApprovalStateOptions(): Parameters<typeof createLowcodeEditorApprovalState>[0] {
   if (approvalDemoMode === "draft") {
-    return { status: "draft" };
-  }
-  if (approvalDemoMode === "pending") {
-    return {
+    seededState.approval = { status: "draft" };
+  } else if (approvalDemoMode === "pending") {
+    seededState.approval = {
       status: "pending",
-      submitter: { id: "operator-me", name: "当前运营" },
+      submitter: localOperator,
       submittedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     };
-  }
-  if (approvalDemoMode === "approved") {
-    return {
+  } else if (approvalDemoMode === "approved") {
+    seededState.approval = {
       status: "approved",
       reviewer: { id: "reviewer-1", name: "审核人" },
       reviewedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
     };
-  }
-  if (approvalDemoMode === "rejected") {
-    return {
+  } else if (approvalDemoMode === "rejected") {
+    seededState.approval = {
       status: "rejected",
       reviewer: { id: "reviewer-1", name: "审核人" },
       reviewedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
       reason: "审批驳回，请调整活动利益点后重新提交。",
     };
+  } else if (approvalDemoMode === "published") {
+    seededState.approval = { status: "published" };
   }
-  if (approvalDemoMode === "published") {
-    return { status: "published" };
+
+  if (collaborationDemoMode || approvalDemoMode) {
+    return writeEditorWorkflowState(seededState);
   }
-  return {};
+  return baseState;
 }
 
-const editorCollaborationState = computed(() => createLowcodeEditorCollaborationState(createDemoCollaborationStateOptions()));
-const editorApprovalState = computed(() => createLowcodeEditorApprovalState(createDemoApprovalStateOptions()));
+function refreshEditorWorkflowState(pageId = editorState.value.schema.pageId): void {
+  editorWorkflowState.value = seedEditorWorkflowStateFromQuery(pageId);
+}
+
+function createCollaborationStateOptionsFromWorkflow(): Parameters<typeof createLowcodeEditorCollaborationState>[0] {
+  const lock = editorWorkflowState.value.lock;
+  return {
+    status: lock.status,
+    currentUserId: localOperator.id,
+    holder: lock.holder,
+    lockedAt: lock.lockedAt,
+    expiresAt: lock.expiresAt,
+    readonlyReason: lock.reason,
+    lockReason: lock.reason,
+  };
+}
+
+function createApprovalStateOptionsFromWorkflow(): Parameters<typeof createLowcodeEditorApprovalState>[0] {
+  const approval = editorWorkflowState.value.approval;
+  return {
+    status: approval.status,
+    submitter: approval.submitter,
+    reviewer: approval.reviewer,
+    submittedAt: approval.submittedAt,
+    reviewedAt: approval.reviewedAt,
+    comment: approval.comment,
+    reason: approval.reason,
+  };
+}
+
+const editorCollaborationState = computed(() => createLowcodeEditorCollaborationState(createCollaborationStateOptionsFromWorkflow()));
+const editorApprovalState = computed(() => createLowcodeEditorApprovalState(createApprovalStateOptionsFromWorkflow()));
 const editorPermissionState = computed(() => {
   const collaborationOptions = createLowcodeEditorCollaborationPermissionOptions(editorCollaborationState.value);
   const approvalOptions = createLowcodeEditorApprovalPermissionOptions(editorApprovalState.value);
@@ -1165,6 +1203,13 @@ watch(
       return;
     }
     scheduleAutoSave(schema);
+  },
+);
+
+watch(
+  () => editorState.value.schema.pageId,
+  (pageId) => {
+    refreshEditorWorkflowState(pageId);
   },
 );
 
@@ -2647,6 +2692,7 @@ function resetSchema(): void {
   schemaDraft.value = JSON.stringify(editorState.value.schema, null, 2);
   releaseMessage.value = "已重置为示例页面";
   refreshReleases();
+  refreshEditorWorkflowState(editorState.value.schema.pageId);
 }
 
 function openPageStartWizard(): void {
@@ -2677,6 +2723,7 @@ function createBlankPageFromWizard(): void {
   releaseMessage.value = "已创建空白 H5 页面";
   closePageStartWizard();
   refreshReleases();
+  refreshEditorWorkflowState(editorState.value.schema.pageId);
 }
 
 function clearCanvas(): void {
@@ -2821,6 +2868,7 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onAp
   releaseMessage.value = `已应用模板：${templateDetail.title}`;
   onApplied?.();
   refreshReleases();
+  refreshEditorWorkflowState(schema.pageId);
 }
 
 async function applyTemplateFromStartWizard(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
@@ -3214,6 +3262,7 @@ function publishCurrentPage(): void {
   }));
   schemaDraft.value = JSON.stringify(release.schema, null, 2);
   refreshReleases();
+  refreshEditorWorkflowState(release.schema.pageId);
   setReleaseMessage(release, "已发布");
 }
 
@@ -3225,6 +3274,7 @@ function loadRelease(release: LocalPageRelease): void {
   });
   schemaDraft.value = JSON.stringify(release.schema, null, 2);
   refreshReleases();
+  refreshEditorWorkflowState(release.schema.pageId);
   selectedReleaseId.value = release.id;
   setReleaseMessage(release, "已载入版本");
 }

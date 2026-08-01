@@ -16,6 +16,7 @@ const timeoutMs = 30_000;
 
 const editorUrl = `http://${host}:${editorPort}/`;
 const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
+const editorWorkflowDemoUrl = `${editorUrl}?collaboration=locked-other&approval=pending`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
 const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
@@ -823,6 +824,16 @@ async function main() {
     await assertInspectorGroups(page);
     await assertOutlineNavigator(page);
     await assertEditorWorkflow(page);
+    await assertPage(page, editorWorkflowDemoUrl, [
+      {
+        label: "编辑器 workflow provider 可展示他人锁定",
+        expression: "document.querySelector('.collaboration-pill')?.textContent?.includes('他人正在编辑')",
+      },
+      {
+        label: "编辑器 workflow provider 可展示审批中",
+        expression: "document.querySelector('.approval-pill')?.textContent?.includes('审批中')",
+      },
+    ]);
 
     await assertPage(page, editorRuntimeUrl, [
       { label: "编辑器内置 runtime shell 已挂载", expression: "document.querySelector('.runtime-shell')" },
