@@ -45,6 +45,7 @@ import {
   createLowcodeCanvasTargetDropHint,
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
+  createLowcodeDeliveryChecklist,
   createLowcodeDeliverySummary,
   createLowcodeEditorAuditListItems,
   createLowcodeEditorAuditTrail,
@@ -190,6 +191,7 @@ import {
   type LowcodeEditorListField as ListEditorField,
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
+  type LowcodeEditorDeliveryChecklistItem as DeliveryChecklistItem,
   type LowcodeEditorPublishCheck as PublishCheck,
   type LowcodeEditorPublishRiskSummary as PublishRiskSummary,
   type LowcodeEditorSchemaPreviewItem as ReleaseSchemaPreviewItem,
@@ -1242,6 +1244,10 @@ const deliverySummary = computed(() => createLowcodeDeliverySummary(editorState.
 const deliverySchemaJson = computed(() => deliverySummary.value.schemaJson);
 const deliveryStatusText = computed(() => deliverySummary.value.statusText);
 const deliveryMetrics = computed<DeliveryMetricItem[]>(() => deliverySummary.value.metrics);
+const deliveryChecklistItems = computed<DeliveryChecklistItem[]>(() => createLowcodeDeliveryChecklist(editorState.value.schema, {
+  checks: publishChecks.value,
+  previewLinkSummary: previewLinkSummary.value,
+}));
 const templateCategories = computed(() => ["全部", ...Array.from(new Set(getAllPageTemplates().map((template) => template.category)))]);
 const pageStartTemplates = computed<TemplateListItem[]>(() =>
   getAllPageTemplates().map((template) => createLowcodeTemplateListItem(template)),
@@ -4534,6 +4540,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :preview-link-summary="previewLinkSummary"
         :delivery-status-text="deliveryStatusText"
         :delivery-metrics="deliveryMetrics"
+        :delivery-checklist-items="deliveryChecklistItems"
         :publish-checks="publishChecks"
         :publish-check-summary="publishCheckSummary"
         :publish-risk-summary="publishRiskSummary"

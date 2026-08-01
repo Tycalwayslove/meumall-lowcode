@@ -4011,6 +4011,91 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 
+.delivery-checklist-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.delivery-checklist-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+  border: 1px solid #dce1ea;
+  border-radius: 8px;
+  padding: 9px;
+  background: #fff;
+}
+
+.delivery-check-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.delivery-checklist-item[data-delivery-status="done"] .delivery-check-dot {
+  background: #16a34a;
+}
+
+.delivery-checklist-item[data-delivery-status="active"] .delivery-check-dot {
+  background: #2563eb;
+}
+
+.delivery-checklist-item[data-delivery-status="pending"] .delivery-check-dot {
+  background: #94a3b8;
+}
+
+.delivery-checklist-item[data-delivery-status="blocked"] .delivery-check-dot {
+  background: #dc2626;
+}
+
+.delivery-checklist-item strong,
+.delivery-checklist-item small {
+  display: block;
+  min-width: 0;
+}
+
+.delivery-checklist-item strong {
+  color: #111827;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.delivery-checklist-item small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.delivery-checklist-item em {
+  color: #475569;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.delivery-checklist-item[data-delivery-status="done"] em {
+  color: #15803d;
+}
+
+.delivery-checklist-item[data-delivery-status="active"] em {
+  color: #1d4ed8;
+}
+
+.delivery-checklist-item[data-delivery-status="blocked"] em {
+  color: #b91c1c;
+}
+
 .delivery-link-status {
   display: grid;
   gap: 7px;

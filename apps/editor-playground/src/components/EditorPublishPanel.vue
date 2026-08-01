@@ -16,6 +16,7 @@ import {
   XCircle,
 } from "@lucide/vue";
 import type {
+  LowcodeEditorDeliveryChecklistItem,
   LowcodeEditorDeliveryMetric,
   LowcodeEditorPreviewLinkItem,
   LowcodeEditorPreviewLinkSummary,
@@ -34,6 +35,7 @@ defineProps<{
   previewLinkSummary: LowcodeEditorPreviewLinkSummary;
   deliveryStatusText: string;
   deliveryMetrics: readonly LowcodeEditorDeliveryMetric[];
+  deliveryChecklistItems: readonly LowcodeEditorDeliveryChecklistItem[];
   publishChecks: readonly LowcodeEditorPublishCheck[];
   publishCheckSummary: LowcodeEditorPublishCheckSummary;
   publishRiskSummary: LowcodeEditorPublishRiskSummary;
@@ -144,6 +146,21 @@ function locateRiskItem(item: LowcodeEditorPublishRiskItem): void {
         <strong>{{ metric.value }}</strong>
       </article>
     </div>
+    <ol class="delivery-checklist-list" data-testid="delivery-checklist">
+      <li
+        v-for="item in deliveryChecklistItems"
+        :key="item.id"
+        class="delivery-checklist-item"
+        :data-delivery-status="item.status"
+      >
+        <span class="delivery-check-dot" />
+        <div>
+          <strong>{{ item.title }}</strong>
+          <small>{{ item.description }}</small>
+        </div>
+        <em>{{ item.statusText }}</em>
+      </li>
+    </ol>
     <div class="delivery-link-status">
       <strong>H5 交付入口</strong>
       <span

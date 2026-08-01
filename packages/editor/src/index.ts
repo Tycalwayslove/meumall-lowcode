@@ -1114,6 +1114,17 @@ export interface LowcodeEditorDeliveryMetric {
   value: string;
 }
 
+export type LowcodeEditorDeliveryChecklistStatus = "done" | "active" | "pending" | "blocked";
+
+export interface LowcodeEditorDeliveryChecklistItem {
+  id: string;
+  title: string;
+  description: string;
+  status: LowcodeEditorDeliveryChecklistStatus;
+  statusText: string;
+  actionText: string;
+}
+
 export interface LowcodeEditorDeliverySummary {
   schemaJson: string;
   schemaSizeBytes: number;
@@ -1124,6 +1135,11 @@ export interface LowcodeEditorDeliverySummary {
 
 export interface CreateLowcodeDeliverySummaryOptions {
   checks?: LowcodeEditorPublishCheck[];
+}
+
+export interface CreateLowcodeDeliveryChecklistOptions {
+  checks?: LowcodeEditorPublishCheck[];
+  previewLinkSummary?: LowcodeEditorPreviewLinkSummary;
 }
 
 export type LowcodeEditorDraftPersistenceStatus = "idle" | "restored" | "pending" | "saved" | "error";
@@ -5564,6 +5580,67 @@ export function createLowcodeDeliverySummary(
       { label: "检查", value: statusText },
     ],
   };
+}
+
+export function createLowcodeDeliveryChecklist(
+  schema: LowcodePageSchema,
+  options: CreateLowcodeDeliveryChecklistOptions = {},
+): LowcodeEditorDeliveryChecklistItem[] {
+  const nodeCount = countLowcodeNodes(schema);
+  const checks = options.checks ?? createLowcodePublishChecks(schema);
+  const checkSummary = summarizeLowcodePublishChecks(checks);
+  const previewLinkSummary = options.previewLinkSummary ?? summarizeLowcodePreviewLinks([]);
+  const hasBlockingErrors = checkSummary.error > 0;
+  const hasWarnings = checkSummary.warning > 0;
+  const hasReadyPreview = previewLinkSummary.ready > 0;
+  const hasContent = nodeCount > 0;
+
+  return [
+    {
+      id: "publish-check",
+      title: "完成发布检查",
+      description: hasBlockingErrors
+        ? `存在 ${checkSummary.error} 个阻塞项，先定位并修复配置。`
+        : hasWarnings
+          ? `当前还有 ${checkSummary.warning} 个提醒，建议预览前确认。`
+          : "页面结构、素材、数据源和动作配置已通过当前检查。",
+      status: hasBlockingErrors ? "blocked" : hasWarnings ? "active" : "done",
+      statusText: hasBlockingErrors ? "阻塞" : hasWarnings ? "有提醒" : "已通过",
+      actionText: hasBlockingErrors ? "先修复" : hasWarnings ? "确认提醒" : "下一步",
+    },
+    {
+      id: "h5-preview",
+      title: "打开 H5 预览",
+      description: hasReadyPreview
+        ? `已有 ${previewLinkSummary.ready} 个可打开入口：${previewLinkSummary.readyTitles.join("、") || "H5 预览"}。`
+        : hasBlockingErrors
+          ? "发布检查阻塞时暂不建议交付预览。"
+          : "先生成预览或确认 React H5 runtime 链接可用。",
+      status: hasReadyPreview ? "done" : hasBlockingErrors ? "blocked" : "active",
+      statusText: hasReadyPreview ? "可预览" : hasBlockingErrors ? "待修复" : "待生成",
+      actionText: hasReadyPreview ? "打开预览" : "生成预览",
+    },
+    {
+      id: "schema-handoff",
+      title: "交付 Page Schema",
+      description: hasContent
+        ? `当前页面 ${nodeCount} 个节点，可复制 Schema 或导出 JSON 给配置平台/验收方。`
+        : "画布为空时不建议交付 Schema。",
+      status: hasContent && !hasBlockingErrors ? "active" : hasBlockingErrors ? "blocked" : "pending",
+      statusText: hasContent && !hasBlockingErrors ? "可交付" : hasBlockingErrors ? "待修复" : "待搭建",
+      actionText: "复制或导出",
+    },
+    {
+      id: "h5-acceptance",
+      title: "进入 H5 验收",
+      description: hasReadyPreview && !hasBlockingErrors
+        ? "可将 H5 链接和 Schema 一并交给验收方检查渲染、点击和兜底状态。"
+        : "完成发布检查并准备可打开的 H5 入口后再进入验收。",
+      status: hasReadyPreview && !hasBlockingErrors ? "active" : hasBlockingErrors ? "blocked" : "pending",
+      statusText: hasReadyPreview && !hasBlockingErrors ? "可验收" : hasBlockingErrors ? "待修复" : "待预览",
+      actionText: "交给验收",
+    },
+  ];
 }
 
 export function formatLowcodeSchemaSize(bytes: number): string {

@@ -25,6 +25,7 @@ import {
   createLowcodeDefaultListItem,
   createLowcodeDefaultDataSourceParams,
   createLowcodeDefaultActionParams,
+  createLowcodeDeliveryChecklist,
   createLowcodeDeliverySummary,
   createLowcodeEditorAuditEvent,
   createLowcodeEditorAuditListItems,
@@ -418,6 +419,56 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(delivery.schemaJson.includes("delivery_page"), true);
     assert.equal(delivery.schemaSizeBytes > 0, true);
     assert.match(delivery.schemaSizeText, /B|KB/);
+  });
+
+  it("creates delivery checklist steps for operators", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "delivery_steps_page",
+      title: "交付步骤页面",
+      nodes: [
+        createLowcodeNode({
+          id: "banner_1",
+          componentName: "ImageBanner",
+          materialVersion: "1.0.0",
+          props: { imageUrl: "https://example.com/banner.jpg" },
+        }),
+      ],
+    });
+    const readyChecks = createLowcodePublishChecks(schema, { materialManifests: manifests });
+    const readyChecklist = createLowcodeDeliveryChecklist(schema, {
+      checks: readyChecks,
+      previewLinkSummary: {
+        total: 2,
+        ready: 2,
+        disabled: 0,
+        statusText: "2 个可用入口",
+        readyTitles: ["当前草稿 React H5", "最近发布版本 H5"],
+      },
+    });
+
+    assert.deepEqual(readyChecklist.map((item) => [item.id, item.status, item.statusText]), [
+      ["publish-check", "done", "已通过"],
+      ["h5-preview", "done", "可预览"],
+      ["schema-handoff", "active", "可交付"],
+      ["h5-acceptance", "active", "可验收"],
+    ]);
+    assert.match(readyChecklist[2].description, /1 个节点/);
+
+    const blockedChecklist = createLowcodeDeliveryChecklist(schema, {
+      checks: [
+        { id: "schema", title: "Schema 校验", status: "error", description: "结构错误" },
+        { id: "images", title: "图片素材", status: "warning", description: "缺少图片" },
+      ],
+      previewLinkSummary: { total: 1, ready: 0, disabled: 1, statusText: "0 个可用 / 1 个不可用", readyTitles: [] },
+    });
+
+    assert.deepEqual(blockedChecklist.map((item) => [item.id, item.status]), [
+      ["publish-check", "blocked"],
+      ["h5-preview", "blocked"],
+      ["schema-handoff", "blocked"],
+      ["h5-acceptance", "blocked"],
+    ]);
+    assert.match(blockedChecklist[0].description, /1 个阻塞项/);
   });
 
   it("creates reusable schema file export and import results", () => {
