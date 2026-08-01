@@ -57,6 +57,8 @@ POST /api/lowcode/pages/{pageId}/track
 当前 Vue3 playground 先用 `apps/editor-playground/src/mockPlatform.ts` 模拟 Java 配置平台：
 
 - `saveDraft(schema)`：保存草稿版本，并更新 pageId -> draft release 索引。
+- `saveEditorDraftSnapshot({ pageId, schema, operator })`：保存编辑器自动草稿恢复点，不生成 release，不进入版本历史。
+- `getEditorDraftSnapshot(pageId)`：读取编辑器自动草稿恢复点；编辑器初始化后会优先通过 provider 异步恢复，旧 `STORAGE_KEY` localStorage 草稿仅作为迁移兜底。
 - `createPreview(schema)`：生成一次性预览版本，编辑器可打开 `?runtime=1&releaseId=...`。
 - `publishPage(schema)`：生成 published 版本，并更新 pageId -> published release 索引。
 - `getPublished(pageId)`：模拟 H5 运行态读取已发布页面。
@@ -75,7 +77,7 @@ http://localhost:5174/?demo=empty
 
 `apps/h5-runtime-playground` 内置一个本地 `LowcodeConfigPlatformClient` mock：`?pageId=summer-campaign-demo` 会加载本地 published schema，`?releaseId=preview_demo` 会加载本地 preview release schema；未知 `pageId` 或 `releaseId` 会回落到 sample schema 并展示 fallback 原因。左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
 
-后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage 实现替换为 HTTP adapter。
+后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage mock 实现替换为 HTTP adapter。注意 `saveDraft` 是手动版本草稿，`saveEditorDraftSnapshot` 是自动保存恢复点，两者不要共用同一条版本历史。
 
 ## Rendering Rules
 

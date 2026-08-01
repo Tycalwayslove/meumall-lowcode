@@ -20,6 +20,7 @@ import {
   createStaticTemplateLibraryClient,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
+  type ConfigPlatformEditorDraftSnapshot,
   type ConfigPlatformEditorWorkflowState,
   type DataSourceResolutionRecord,
   type LowcodeCouponResource,
@@ -430,6 +431,7 @@ const previewDataSourceRegistry = createDataSourceRegistry({
 });
 
 const initialSchema = cloneLowcodePageSchema((pageTemplates[0] as PageTemplate).schema);
+const configPlatformClient = localConfigPlatformClient;
 
 interface LoadedSchemaResult {
   schema: LowcodePageSchema;
@@ -466,7 +468,6 @@ const releaseMessage = ref("");
 const schemaTransferMessage = ref("");
 const autoSaveStatus = ref<LowcodeEditorDraftPersistenceStatus>(loadedSchemaResult.restored ? "restored" : "idle");
 const lastAutoSavedAt = ref<string | undefined>(loadedSchemaResult.updatedAt);
-const configPlatformClient = localConfigPlatformClient;
 const editorWorkflowState = shallowRef(seedEditorWorkflowStateFromQuery(editorState.value.schema.pageId));
 const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
@@ -528,6 +529,7 @@ let productSearchSeq = 0;
 let couponSearchSeq = 0;
 let storeExpertSearchSeq = 0;
 let autoSaveTimer: number | undefined;
+let autoSavePersistSeq = 0;
 let suppressNextAutoSave = false;
 
 interface CanvasDragPoint extends CanvasPoint {
@@ -1362,6 +1364,7 @@ onMounted(() => {
   window.addEventListener("pointerup", onPointerCanvasDragEnd);
   window.addEventListener("pointercancel", onPointerCanvasDragCancel);
   window.addEventListener("keydown", onGlobalKeydown);
+  void restoreEditorDraftSnapshot();
 });
 
 onUnmounted(() => {
@@ -1407,18 +1410,85 @@ function scheduleAutoSave(schema: LowcodePageSchema): void {
   if (autoSaveTimer) window.clearTimeout(autoSaveTimer);
   autoSaveStatus.value = "pending";
   autoSaveTimer = window.setTimeout(() => {
-    persistLocalDraft(schema);
+    autoSaveTimer = undefined;
+    void persistEditorDraftSnapshot(schema);
   }, AUTO_SAVE_DELAY_MS);
 }
 
-function persistLocalDraft(schema: LowcodePageSchema): void {
+function persistLegacyLocalDraft(schema: LowcodePageSchema): { updatedAt: string } {
+  const payload = createLowcodeEditorDraftPayload(schema);
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  return { updatedAt: payload.updatedAt };
+}
+
+async function persistEditorDraftSnapshot(schema: LowcodePageSchema): Promise<void> {
+  const persistSeq = ++autoSavePersistSeq;
   try {
-    const payload = createLowcodeEditorDraftPayload(schema);
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    lastAutoSavedAt.value = payload.updatedAt;
+    if (configPlatformClient.saveEditorDraftSnapshot) {
+      const snapshot = await Promise.resolve(
+        configPlatformClient.saveEditorDraftSnapshot({
+          pageId: schema.pageId,
+          schema,
+          operator: localOperator,
+        }),
+      );
+      if (persistSeq !== autoSavePersistSeq) return;
+      lastAutoSavedAt.value = snapshot.updatedAt;
+      autoSaveStatus.value = "saved";
+      return;
+    }
+    const legacyDraft = persistLegacyLocalDraft(schema);
+    if (persistSeq !== autoSavePersistSeq) return;
+    lastAutoSavedAt.value = legacyDraft.updatedAt;
     autoSaveStatus.value = "saved";
   } catch {
-    autoSaveStatus.value = "error";
+    try {
+      const legacyDraft = persistLegacyLocalDraft(schema);
+      if (persistSeq !== autoSavePersistSeq) return;
+      lastAutoSavedAt.value = legacyDraft.updatedAt;
+      autoSaveStatus.value = "saved";
+    } catch {
+      if (persistSeq === autoSavePersistSeq) {
+        autoSaveStatus.value = "error";
+      }
+    }
+  }
+}
+
+function isDraftSnapshotNewer(snapshot: ConfigPlatformEditorDraftSnapshot, currentUpdatedAt: string | undefined): boolean {
+  if (!currentUpdatedAt) return true;
+  const nextTime = Date.parse(snapshot.updatedAt);
+  const currentTime = Date.parse(currentUpdatedAt);
+  if (Number.isNaN(nextTime) || Number.isNaN(currentTime)) return snapshot.updatedAt !== currentUpdatedAt;
+  return nextTime > currentTime;
+}
+
+function applyRestoredDraftSnapshot(snapshot: ConfigPlatformEditorDraftSnapshot): void {
+  const schema = cloneLowcodePageSchema(snapshot.schema);
+  suppressNextAutoSave = true;
+  editorState.value = createEditorState(schema, {
+    selectedNodeId: schema.nodes[0]?.id,
+    mode: editorState.value.mode,
+    viewport: editorState.value.viewport,
+  });
+  schemaDraft.value = JSON.stringify(schema, null, 2);
+  jsonError.value = "";
+  lastAutoSavedAt.value = snapshot.updatedAt;
+  autoSaveStatus.value = "restored";
+  refreshReleases();
+  refreshEditorWorkflowState(schema.pageId);
+}
+
+async function restoreEditorDraftSnapshot(): Promise<void> {
+  if (isRuntimeMode || !configPlatformClient.getEditorDraftSnapshot) return;
+  try {
+    const snapshot = await Promise.resolve(configPlatformClient.getEditorDraftSnapshot(editorState.value.schema.pageId));
+    if (!snapshot?.schema || !isDraftSnapshotNewer(snapshot, lastAutoSavedAt.value)) return;
+    applyRestoredDraftSnapshot(snapshot);
+  } catch {
+    if (autoSaveStatus.value === "idle") {
+      autoSaveStatus.value = "error";
+    }
   }
 }
 
@@ -1488,7 +1558,7 @@ function markSchemaPersisted(schema: LowcodePageSchema): void {
     window.clearTimeout(autoSaveTimer);
     autoSaveTimer = undefined;
   }
-  persistLocalDraft(schema);
+  void persistEditorDraftSnapshot(schema);
   suppressNextAutoSave = true;
 }
 

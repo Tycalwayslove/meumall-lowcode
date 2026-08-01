@@ -791,7 +791,7 @@ async function assertOutlineNavigator(page) {
   await page.clickFirst(".outline-rename button[title='确认重命名']");
   await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('精选专区 CTA') && selected.innerText.includes('行动按钮')); })()");
   await page.waitForExpression("document.body.innerText.includes('已自动保存')");
-  await page.waitForExpression("(() => { const raw = window.localStorage.getItem('meumall-lowcode-editor-playground'); return Boolean(raw && raw.includes('精选专区 CTA')); })()");
+  await page.waitForExpression("(() => { const providerRaw = window.localStorage.getItem('meumall-lowcode-local-platform-editor-draft-snapshots'); const legacyRaw = window.localStorage.getItem('meumall-lowcode-editor-playground'); return Boolean((providerRaw && providerRaw.includes('精选专区 CTA')) || (legacyRaw && legacyRaw.includes('精选专区 CTA'))); })()");
   await page.fillByPlaceholder("搜索节点", "精选专区");
   await page.waitForExpression("Array.from(document.querySelectorAll('.outline-item')).some((item) => item.innerText.includes('精选专区 CTA'))");
   await page.fillByPlaceholder("搜索节点", "");

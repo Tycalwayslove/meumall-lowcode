@@ -81,6 +81,29 @@ Java 配置平台。
 - `pageVersion`：页面版本号，建议由 Java 配置平台生成。
 - `schema`：完整 `LowcodePageSchema`。
 
+### EditorDraftSnapshot
+
+```json
+{
+  "pageId": "summer-campaign-demo",
+  "schema": {},
+  "updatedAt": "2026-08-01T10:20:00.000Z",
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A",
+    "avatarUrl": "https://example.com/avatar.png"
+  }
+}
+```
+
+字段说明：
+
+- `pageId`：页面稳定 id。
+- `schema`：完整 `LowcodePageSchema`，用于编辑器恢复当前未手动保存的编辑状态。
+- `updatedAt`：服务端保存时间，用于编辑器判断是否覆盖本地兜底草稿。
+- `operator`：最后保存该自动草稿快照的操作人，可选。
+- EditorDraftSnapshot 不等同于 PageRelease，不生成版本号，不进入 release list，不作为发布或回滚依据。
+
 ## API
 
 ### 保存草稿
@@ -208,6 +231,48 @@ GET /api/lowcode/pages/{pageId}/draft
 
 - 编辑器打开页面时可优先加载草稿。
 - 若不存在草稿，可返回 `null` 或 `404 LOWCODE_DRAFT_NOT_FOUND`。
+
+### 保存编辑器自动草稿快照
+
+```http
+PUT /api/lowcode/pages/{pageId}/editor-draft-snapshot
+Content-Type: application/json
+```
+
+请求：
+
+```json
+{
+  "schema": {},
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  }
+}
+```
+
+响应：`EditorDraftSnapshot`
+
+说明：
+
+- 该接口用于编辑器自动保存恢复点，不创建 PageRelease，不更新 pageId -> draft release 索引。
+- Java 配置平台必须校验 Page Schema，但不应把每次自动保存写入发布版本历史。
+- 建议服务端按 `pageId + operator.id` 或 `pageId + sessionId` 做保存频控、覆盖写和过期清理，具体策略待 Java 配置平台确认。
+- 后续可增加 `etag`、`baseUpdatedAt`、`sessionId` 或 `conflict` 字段处理多端冲突。
+
+### 查询编辑器自动草稿快照
+
+```http
+GET /api/lowcode/pages/{pageId}/editor-draft-snapshot
+```
+
+响应：`EditorDraftSnapshot | null`
+
+说明：
+
+- 编辑器打开页面后可异步查询该接口，并仅在 `updatedAt` 新于本地兜底草稿时恢复。
+- 若不存在自动草稿快照，可返回 `null` 或 `404 LOWCODE_EDITOR_DRAFT_SNAPSHOT_NOT_FOUND`。
+- 管理台 shell 仍应保留本地兜底草稿读取能力，避免网络异常时运营编辑内容丢失。
 
 ### 查询线上 active schema
 

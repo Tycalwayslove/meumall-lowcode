@@ -91,7 +91,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 高阶活动物料：React/Vue H5 物料包已新增 `CountdownTimer`、`NavGrid`、`FloorAnchorNav`、`FlashSaleList`、`ProductRankList`、`BrandFeatureSection`、`StickyActionBar`、`ActivityRuleModal`、`CouponBundle`、`StoreExpertSection`、`LiveEntry`，大促模板和 React H5 runtime 示例已使用新增物料。
 - Java 配置平台 API 草案：`.ai-workspace/contracts/java-config-platform-api-v1.md` 已定义草稿、预览、发布、release 查询、draft 查询和 active published schema 查询接口。
 - Material Manifest v1 契约：`.ai-workspace/contracts/material-manifest-v1.md` 已定义物料 manifest 的字段语义、兼容性、编辑器/renderer/Java/H5 消费规则、测试方式、变更流程和回滚方式。
-- Config platform client：`@meumall/lowcode-adapters` 提供 `LowcodeConfigPlatformClient` 和 `createHttpConfigPlatformClient`，编辑器本地 mock 已实现同一 client 接口。
+- Config platform client：`@meumall/lowcode-adapters` 提供 `LowcodeConfigPlatformClient` 和 `createHttpConfigPlatformClient`，覆盖 release draft/preview/publish、release 查询、published 查询、编辑器 workflow、编辑锁/审批操作和 editor draft snapshot；编辑器本地 mock 已实现同一 client 接口。注意 `saveDraft` 是手动版本草稿，`saveEditorDraftSnapshot` 是自动保存恢复点，两者不共用 release history。
 - H5 runtime 集成契约：`.ai-workspace/contracts/h5-runtime-integration-v1.md` 已定义 `hybird-meumall` npm 依赖、推荐路由、schema 获取优先级、数据源、action、降级、监控和 smoke check。
 - Runtime schema loader：`@meumall/lowcode-adapters` 提供 `loadLowcodeRuntimeSchema`，统一支持 encoded schema、releaseId、pageId 和 fallback schema；React H5 runtime playground 已切换为同一 loader。
 - Renderer fallback：React/Vue H5 renderer 已统一未知物料和组件异常局部兜底 DOM 标记；未知物料输出 `mlc-runtime-missing`、`data-lowcode-node-id`、`data-lowcode-missing`，组件异常输出 `mlc-runtime-error`、`data-lowcode-node-id`、`data-lowcode-error`，并支持宿主通过 `onRenderError` 记录异常。
@@ -136,7 +136,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器结构树导航：左侧结构树支持搜索节点、折叠/展开容器、搜索命中路径展示和点击节点滚动定位到 H5 画布对应节点；当前选中节点会保持在结构树可见路径内，节点扁平化、搜索、折叠可见性和可见摘要已复用 editor outline tree API。
 - Vue3 编辑器节点命名：结构树、右键菜单和右侧当前节点信息卡支持给节点设置运营可读名称，写入已有 `node.meta.name`，搜索可命中新名称，清空名称时回退物料标题。
 - Vue3 编辑器当前节点信息卡组件化：右侧当前节点信息卡已通过 `EditorSelectedNodeCard.vue` 独立组件渲染，展示节点展示名、物料标题/分类、节点名称输入、节点 id、位置和父级；真实展示名/父级/位置计算、`node.meta.name` 写回、权限和审计仍由 playground 或未来管理台 shell 持有。
-- Vue3 编辑器本地自动保存：schema 变更后会延迟写入 localStorage 草稿，顶栏展示自动保存和恢复状态；从 localStorage 成功读取草稿时显示“已恢复本地草稿”，browser smoke 已验证重命名后自动保存到 localStorage；草稿 payload、旧草稿恢复兼容、恢复校验、状态文案和 tone 已复用 editor draft persistence API。
+- Vue3 编辑器自动草稿 snapshot provider：schema 变更后会延迟调用 `LowcodeConfigPlatformClient.saveEditorDraftSnapshot`，顶栏展示自动保存和恢复状态；初始化后会通过 `getEditorDraftSnapshot` 异步恢复新于本地兜底的快照，旧 `STORAGE_KEY` localStorage 草稿保留为迁移和异常兜底；browser smoke 已验证重命名后自动保存到 provider snapshot 或旧兜底。该 snapshot 不等同于 `saveDraft` 生成的 draft release，不进入 release list，不作为发布或回滚依据。
 - Vue3 编辑器 H5 画布视口预设：画布顶部提供 360 紧凑屏、390 标准屏、430 大屏三个本地预设，手机框宽度和状态栏会同步当前预设；该能力复用 `@meumall/lowcode-editor` 的 viewport preset API，只使用 `editorState.viewport`，不写入 Page Schema、物料 manifest 或 renderer 协议。
 - Vue3 编辑器画布工具条组件化：画布顶部标题、选中节点位置或校验状态、工作区状态摘要和 H5 视口预设按钮已通过 `EditorCanvasToolbar.vue` 独立组件渲染；真实模式、选中节点上下文、校验状态、workspace stats 派生、视口写入、权限和审计仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器物料目录组件化：左侧物料分类、关键词过滤、收藏/最近使用物料恢复和物料卡片摘要已复用 `@meumall/lowcode-editor` 的 material catalog API，并通过 `EditorMaterialCatalog.vue` 独立组件渲染；真实添加、收藏持久化、Pointer Events、DragEvent、详情弹窗、权限和审计仍由 playground 或未来管理台 shell 持有。
@@ -155,7 +155,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - Vue3 编辑器事件绑定 API 复用：物料事件到 Page Schema actions 的绑定展示、未绑定/缺失 action 状态、节点 events 写回、action id 改名引用同步和 action 删除引用清理已复用 `@meumall/lowcode-editor` 的 event binding API；具体 select 控件、真实 action handler、权限、风控、审计和服务端保存仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器动作配置 API 复用：Page Schema actions 的默认动作类型、默认参数、动作表单行模型、动作新增、更新、改名、类型切换和删除清理已复用 `@meumall/lowcode-editor` 的 action config API；具体 Vue 表单、JSON 解析错误、真实 action handler、权限、风控、审计和服务端保存仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器 Schema 文件 API 复用：Page Schema 文件名生成、导出 JSON 内容、mimeType、字节大小、大小文案和导入 JSON 解析校验已复用 `@meumall/lowcode-editor` 的 schema file API；文件选择、Blob 下载、覆盖确认和用户反馈仍由 playground 或未来管理台 shell 持有。
-- Vue3 编辑器草稿持久化 API 复用：本地自动保存 payload、草稿 JSON 解析恢复、旧版 Page Schema 直存格式兼容、状态文案和状态 tone 已复用 `@meumall/lowcode-editor` 的 draft persistence API；定时器、localStorage 读写、服务端草稿接口、冲突合并和用户反馈仍由 playground 或未来管理台 shell 持有。
+- Vue3 编辑器草稿持久化 API 复用：本地自动保存 payload、草稿 JSON 解析恢复、旧版 Page Schema 直存格式兼容、状态文案和状态 tone 已复用 `@meumall/lowcode-editor` 的 draft persistence API；定时器、provider 调用、旧 localStorage 兜底、服务端草稿接口、冲突合并和用户反馈仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器 H5 预览链接 API 复用：H5 预览入口列表、ready/disabled 状态、打开/复制能力和交付入口摘要已复用 `@meumall/lowcode-editor` 的 preview links API；具体 URL 构造、schema URL handoff、打开窗口、复制剪贴板和用户反馈仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器工作区状态摘要组件化：顶部节点数、当前选中、校验、发布和保存状态摘要已复用 `@meumall/lowcode-editor` 的 workspace summary API，并通过 `EditorWorkspaceStats.vue` 独立组件渲染；具体布局组合、点击行为、权限、协作锁定和服务端审批状态仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器发布历史 API 复用：本地版本列表、关键词筛选、类型文案、时间展示、差异数量摘要、操作反馈、发布检查拦截和回滚备注/确认文案已复用 `@meumall/lowcode-editor` 的 release history API；具体保存草稿、生成预览、发布、载入、打开 runtime、确认弹窗、权限、审批、审计和服务端回滚仍由 playground 或未来管理台 shell 持有。
@@ -320,7 +320,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `71da2da` | 沉淀 editor 审批状态模型。 |
 | 2026-08-01 | `c857c6b` | 扩展 adapters 编辑器工作流状态 client。 |
 | 2026-08-01 | `4233f54` | 接入 Vue3 编辑器工作流 provider 边界。 |
-| 2026-08-01 | 本提交 | 补齐 Vue3 编辑器发布面板审批操作。 |
+| 2026-08-01 | `9635bd9` | 补齐 Vue3 编辑器发布面板审批操作。 |
+| 2026-08-01 | 本提交 | 接入编辑器自动草稿 snapshot provider。 |
 
 ## 默认验证命令
 

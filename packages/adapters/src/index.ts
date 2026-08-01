@@ -109,6 +109,13 @@ export interface ConfigPlatformEditorWorkflowState {
   updatedAt?: string;
 }
 
+export interface ConfigPlatformEditorDraftSnapshot {
+  pageId: string;
+  schema: LowcodePageSchema;
+  updatedAt: string;
+  operator?: ConfigPlatformOperatorInfo;
+}
+
 export interface ConfigPlatformLockInput {
   pageId: string;
   operator?: ConfigPlatformOperatorInfo;
@@ -126,6 +133,12 @@ export interface ConfigPlatformReviewApprovalInput extends ConfigPlatformApprova
   reason?: string;
 }
 
+export interface ConfigPlatformEditorDraftSnapshotInput {
+  pageId: string;
+  schema: LowcodePageSchema;
+  operator?: ConfigPlatformOperatorInfo;
+}
+
 export interface LowcodeConfigPlatformClient {
   saveDraft(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
   createPreview(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
@@ -141,6 +154,8 @@ export interface LowcodeConfigPlatformClient {
   submitApproval?(input: ConfigPlatformApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
   cancelApproval?(input: ConfigPlatformApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
   reviewApproval?(input: ConfigPlatformReviewApprovalInput): MaybePromise<ConfigPlatformEditorWorkflowState>;
+  saveEditorDraftSnapshot?(input: ConfigPlatformEditorDraftSnapshotInput): MaybePromise<ConfigPlatformEditorDraftSnapshot>;
+  getEditorDraftSnapshot?(pageId: string): MaybePromise<ConfigPlatformEditorDraftSnapshot | undefined>;
 }
 
 export interface ConfigPlatformRequestBody {
@@ -601,6 +616,33 @@ function assertEditorWorkflowState(value: unknown): ConfigPlatformEditorWorkflow
   return workflow;
 }
 
+function assertEditorDraftSnapshotOrUndefined(value: unknown): ConfigPlatformEditorDraftSnapshot | undefined {
+  if (value == null) return undefined;
+  if (!value || typeof value !== "object") {
+    throw new Error("Config platform editor draft snapshot response must be an object");
+  }
+  const snapshot = value as ConfigPlatformEditorDraftSnapshot;
+  if (!snapshot.pageId || !snapshot.updatedAt || !snapshot.schema) {
+    throw new Error("Config platform editor draft snapshot response is missing required fields");
+  }
+  const schema = assertPageSchemaOrUndefined(snapshot.schema);
+  if (!schema) {
+    throw new Error("Config platform editor draft snapshot schema must not be empty");
+  }
+  return {
+    ...snapshot,
+    schema,
+  };
+}
+
+function assertEditorDraftSnapshot(value: unknown): ConfigPlatformEditorDraftSnapshot {
+  const snapshot = assertEditorDraftSnapshotOrUndefined(value);
+  if (!snapshot) {
+    throw new Error("Config platform editor draft snapshot response must not be empty");
+  }
+  return snapshot;
+}
+
 function getDefaultFetch(): PlatformFetch {
   const candidate = globalThis as typeof globalThis & { fetch?: PlatformFetch };
   if (!candidate.fetch) {
@@ -712,6 +754,19 @@ export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatform
             reason: input.reason,
           },
         }),
+      );
+    },
+    async saveEditorDraftSnapshot(input) {
+      return assertEditorDraftSnapshot(
+        await request(`/api/lowcode/pages/${encodePath(input.pageId)}/editor-draft-snapshot`, {
+          method: "PUT",
+          body: { schema: input.schema, operator: input.operator },
+        }),
+      );
+    },
+    async getEditorDraftSnapshot(pageId) {
+      return assertEditorDraftSnapshotOrUndefined(
+        await request(`/api/lowcode/pages/${encodePath(pageId)}/editor-draft-snapshot`),
       );
     },
   };

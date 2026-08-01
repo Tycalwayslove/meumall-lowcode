@@ -382,8 +382,17 @@ describe("@meumall/lowcode-adapters", () => {
       },
       updatedAt: "2026-08-01T09:30:00.000Z",
     };
+    const draftSnapshot = {
+      pageId: schema.pageId,
+      schema,
+      updatedAt: "2026-08-01T09:31:00.000Z",
+      operator: { id: "op_001", name: "运营 A" },
+    };
     const fetcher = async (input, init = {}) => {
       calls.push({ input, init });
+      if (input.endsWith("/editor-draft-snapshot")) {
+        return { ok: true, status: 200, json: async () => draftSnapshot };
+      }
       if (input.endsWith("/draft")) {
         return { ok: true, status: 200, json: async () => schema };
       }
@@ -421,6 +430,15 @@ describe("@meumall/lowcode-adapters", () => {
       }),
       workflow,
     );
+    assert.deepEqual(
+      await client.saveEditorDraftSnapshot({
+        pageId: "platform_page",
+        schema,
+        operator: { id: "op_001", name: "运营 A" },
+      }),
+      draftSnapshot,
+    );
+    assert.deepEqual(await client.getEditorDraftSnapshot("platform_page"), draftSnapshot);
 
     assert.equal(calls[0].input, "https://platform.example.com/api/lowcode/pages/drafts");
     assert.equal(calls[0].init.method, "POST");
@@ -433,6 +451,11 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(JSON.parse(calls[4].init.body).ttlSeconds, 120);
     assert.equal(calls[5].input, "https://platform.example.com/api/lowcode/pages/platform_page/approval/submit");
     assert.equal(JSON.parse(calls[5].init.body).comment, "活动页待审核");
+    assert.equal(calls[6].input, "https://platform.example.com/api/lowcode/pages/platform_page/editor-draft-snapshot");
+    assert.equal(calls[6].init.method, "PUT");
+    assert.equal(JSON.parse(calls[6].init.body).schema.pageId, "platform_page");
+    assert.equal(calls[7].input, "https://platform.example.com/api/lowcode/pages/platform_page/editor-draft-snapshot");
+    assert.equal(calls[7].init.method, "GET");
   });
 
   it("surfaces config platform HTTP errors", async () => {

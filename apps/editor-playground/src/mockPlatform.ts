@@ -1,5 +1,7 @@
 import type {
   ConfigPlatformApprovalInput,
+  ConfigPlatformEditorDraftSnapshot,
+  ConfigPlatformEditorDraftSnapshotInput,
   ConfigPlatformEditorWorkflowState,
   ConfigPlatformLockInput,
   ConfigPlatformOperatorInfo,
@@ -16,6 +18,7 @@ const RELEASES_KEY = "meumall-lowcode-local-platform-releases";
 const DRAFT_INDEX_KEY = "meumall-lowcode-local-platform-draft-index";
 const PUBLISHED_INDEX_KEY = "meumall-lowcode-local-platform-published-index";
 const WORKFLOW_KEY = "meumall-lowcode-local-platform-workflows";
+const EDITOR_DRAFT_SNAPSHOT_KEY = "meumall-lowcode-local-platform-editor-draft-snapshots";
 const DEFAULT_LOCK_TTL_SECONDS = 20 * 60;
 
 export const localOperator: ConfigPlatformOperatorInfo = {
@@ -46,6 +49,10 @@ function cloneSchema(schema: LowcodePageSchema): LowcodePageSchema {
 
 function cloneWorkflowState(state: ConfigPlatformEditorWorkflowState): ConfigPlatformEditorWorkflowState {
   return JSON.parse(JSON.stringify(state)) as ConfigPlatformEditorWorkflowState;
+}
+
+function cloneDraftSnapshot(snapshot: ConfigPlatformEditorDraftSnapshot): ConfigPlatformEditorDraftSnapshot {
+  return JSON.parse(JSON.stringify(snapshot)) as ConfigPlatformEditorDraftSnapshot;
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -140,6 +147,19 @@ function writeWorkflows(workflows: Record<string, ConfigPlatformEditorWorkflowSt
   writeJson(WORKFLOW_KEY, workflows);
 }
 
+function readDraftSnapshots(): Record<string, ConfigPlatformEditorDraftSnapshot> {
+  const snapshots = readJson<Record<string, ConfigPlatformEditorDraftSnapshot>>(EDITOR_DRAFT_SNAPSHOT_KEY, {});
+  return Object.fromEntries(
+    Object.entries(snapshots).filter(([, snapshot]) => {
+      return Boolean(snapshot?.pageId && snapshot.updatedAt && validateLowcodePageSchema(snapshot.schema).valid);
+    }),
+  );
+}
+
+function writeDraftSnapshots(snapshots: Record<string, ConfigPlatformEditorDraftSnapshot>): void {
+  writeJson(EDITOR_DRAFT_SNAPSHOT_KEY, snapshots);
+}
+
 export function createDefaultEditorWorkflowState(pageId: string): ConfigPlatformEditorWorkflowState {
   return {
     pageId,
@@ -169,6 +189,29 @@ export function getEditorWorkflowState(pageId: string): ConfigPlatformEditorWork
   const stored = readWorkflows()[pageId];
   if (stored) return cloneWorkflowState(stored);
   return writeEditorWorkflowState(createDefaultEditorWorkflowState(pageId));
+}
+
+export function saveEditorDraftSnapshot(input: ConfigPlatformEditorDraftSnapshotInput): ConfigPlatformEditorDraftSnapshot {
+  const validation = validateLowcodePageSchema(input.schema);
+  if (!validation.valid) {
+    throw new Error(`自动草稿快照 schema 不合法：${validation.errors.join("; ")}`);
+  }
+  const snapshot: ConfigPlatformEditorDraftSnapshot = {
+    pageId: input.pageId,
+    schema: cloneSchema(input.schema),
+    updatedAt: new Date().toISOString(),
+    operator: input.operator ?? localOperator,
+  };
+  writeDraftSnapshots({
+    ...readDraftSnapshots(),
+    [input.pageId]: snapshot,
+  });
+  return cloneDraftSnapshot(snapshot);
+}
+
+export function getEditorDraftSnapshot(pageId: string): ConfigPlatformEditorDraftSnapshot | undefined {
+  const snapshot = readDraftSnapshots()[pageId];
+  return snapshot ? cloneDraftSnapshot(snapshot) : undefined;
 }
 
 function getLockExpiresAt(ttlSeconds: number | undefined): string {
@@ -327,6 +370,12 @@ export const localConfigPlatformClient = {
   },
   getEditorWorkflowState(pageId: string) {
     return getEditorWorkflowState(pageId);
+  },
+  saveEditorDraftSnapshot(input: ConfigPlatformEditorDraftSnapshotInput) {
+    return saveEditorDraftSnapshot(input);
+  },
+  getEditorDraftSnapshot(pageId: string) {
+    return getEditorDraftSnapshot(pageId);
   },
   acquireEditorLock(input: ConfigPlatformLockInput) {
     return acquireEditorLock(input);
