@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import {
   Check,
+  CheckCircle2,
   Copy,
   Download,
   ExternalLink,
   Link2,
   LocateFixed,
   PanelRight,
+  RotateCcw,
   Save,
   Search,
+  Send,
+  ShieldCheck,
+  XCircle,
 } from "@lucide/vue";
 import type {
   LowcodeEditorDeliveryMetric,
@@ -30,6 +35,14 @@ defineProps<{
   publishChecks: readonly LowcodeEditorPublishCheck[];
   publishCheckSummary: LowcodeEditorPublishCheckSummary;
   hasPublishBlockingErrors: boolean;
+  approvalStatusText: string;
+  approvalStatusDescription: string;
+  approvalCanSubmit: boolean;
+  approvalCanCancel: boolean;
+  approvalCanReview: boolean;
+  approvalSubmitDisabledReason?: string;
+  approvalCancelDisabledReason?: string;
+  approvalReviewDisabledReason?: string;
   releaseCount: number;
   releaseKeyword: string;
   releaseListSummary: LowcodeEditorReleaseListSummary;
@@ -46,6 +59,10 @@ const emit = defineEmits<{
   (event: "copy-schema"): void;
   (event: "export-schema"): void;
   (event: "locate-publish-check", check: LowcodeEditorPublishCheck): void;
+  (event: "submit-approval"): void;
+  (event: "cancel-approval"): void;
+  (event: "approve-approval"): void;
+  (event: "reject-approval"): void;
   (event: "update:releaseKeyword", value: string): void;
   (event: "select-release", releaseId: string): void;
   (event: "load-release", releaseId: string): void;
@@ -135,6 +152,58 @@ function getInputValue(event: Event): string {
     <p class="delivery-note">
       当前链接用于本地 playground 验收；正式环境仍需切换到 Java 配置平台的 previewToken 或 releaseId 查询。
     </p>
+  </section>
+
+  <section class="panel-section approval-workflow-panel">
+    <div class="panel-title">
+      <ShieldCheck :size="16" />
+      <span>发布审批</span>
+      <small>{{ approvalStatusText }}</small>
+    </div>
+    <div class="approval-workflow-summary">
+      <strong>{{ approvalStatusText }}</strong>
+      <span>{{ approvalStatusDescription }}</span>
+    </div>
+    <div class="approval-workflow-actions">
+      <button
+        type="button"
+        class="approval-submit-button"
+        :title="approvalSubmitDisabledReason"
+        :disabled="!approvalCanSubmit"
+        @click="emit('submit-approval')"
+      >
+        <Send :size="13" />
+        提交审批
+      </button>
+      <button
+        type="button"
+        :title="approvalCancelDisabledReason"
+        :disabled="!approvalCanCancel"
+        @click="emit('cancel-approval')"
+      >
+        <RotateCcw :size="13" />
+        撤回
+      </button>
+      <button
+        type="button"
+        :title="approvalReviewDisabledReason"
+        :disabled="!approvalCanReview"
+        @click="emit('approve-approval')"
+      >
+        <CheckCircle2 :size="13" />
+        通过
+      </button>
+      <button
+        type="button"
+        class="danger"
+        :title="approvalReviewDisabledReason"
+        :disabled="!approvalCanReview"
+        @click="emit('reject-approval')"
+      >
+        <XCircle :size="13" />
+        驳回
+      </button>
+    </div>
   </section>
 
   <section class="panel-section">

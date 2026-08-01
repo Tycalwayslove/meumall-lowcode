@@ -870,6 +870,16 @@ const nodeOperationItemMap = computed(() => new Map(
 const publishChecks = computed(() => createPublishChecks());
 const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
+const approvalSubmitDisabledReason = computed(() =>
+  hasPublishBlockingErrors.value
+    ? "存在发布检查错误，修复后再提交审批。"
+    : getEditorActionDisabledReason("approval.submit"),
+);
+const approvalCancelDisabledReason = computed(() => getEditorActionDisabledReason("approval.cancel"));
+const approvalReviewDisabledReason = computed(() => getEditorActionDisabledReason("approval.review"));
+const canSubmitApproval = computed(() => !hasPublishBlockingErrors.value && canUseEditorAction("approval.submit"));
+const canCancelApproval = computed(() => canUseEditorAction("approval.cancel"));
+const canReviewApproval = computed(() => canUseEditorAction("approval.review"));
 const materialCategories = computed(() => createLowcodeMaterialCategories(materials.map((item) => item.manifest)));
 const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
 const recentMaterials = computed(() => materialItemsFromComponentNames(recentMaterialComponentNames.value));
@@ -1143,6 +1153,42 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
     keywords: ["publish", "发布", "上线"],
     disabled: isCommandActionDisabled("publish.submit", hasPublishBlockingErrors.value),
     run: publishCurrentPage,
+  },
+  {
+    id: "submit-approval",
+    title: "提交审批",
+    group: "发布审批",
+    description: approvalSubmitDisabledReason.value ?? "将当前页面提交到本地审批流程。",
+    keywords: ["approval", "submit", "审批", "提交审批"],
+    disabled: !canSubmitApproval.value,
+    run: submitCurrentApproval,
+  },
+  {
+    id: "cancel-approval",
+    title: "撤回审批",
+    group: "发布审批",
+    description: approvalCancelDisabledReason.value ?? "撤回当前审批单并回到可编辑状态。",
+    keywords: ["approval", "cancel", "审批", "撤回"],
+    disabled: !canCancelApproval.value,
+    run: cancelCurrentApproval,
+  },
+  {
+    id: "approve-approval",
+    title: "审核通过",
+    group: "发布审批",
+    description: approvalReviewDisabledReason.value ?? "将当前审批单标记为审核通过。",
+    keywords: ["approval", "review", "approve", "审核", "通过"],
+    disabled: !canReviewApproval.value,
+    run: approveCurrentApproval,
+  },
+  {
+    id: "reject-approval",
+    title: "审核驳回",
+    group: "发布审批",
+    description: approvalReviewDisabledReason.value ?? "驳回当前审批单并要求重新修改。",
+    keywords: ["approval", "review", "reject", "审核", "驳回"],
+    disabled: !canReviewApproval.value,
+    run: rejectCurrentApproval,
   },
   {
     id: "open-runtime",
@@ -3227,6 +3273,66 @@ function ensurePublishReady(action: string): boolean {
   return false;
 }
 
+function setEditorWorkflowStateFromAction(nextState: ConfigPlatformEditorWorkflowState | undefined, message: string): void {
+  if (!nextState) {
+    releaseMessage.value = "当前配置平台 client 不支持审批操作";
+    return;
+  }
+  editorWorkflowState.value = nextState;
+  releaseMessage.value = message;
+}
+
+function submitCurrentApproval(): void {
+  if (!canSubmitApproval.value || !ensurePublishReady("提交审批")) return;
+  setEditorWorkflowStateFromAction(
+    configPlatformClient.submitApproval?.({
+      pageId: editorState.value.schema.pageId,
+      operator: localOperator,
+      comment: releaseNoteDraft.value.trim() || "提交审批",
+    }),
+    "已提交审批",
+  );
+}
+
+function cancelCurrentApproval(): void {
+  if (!canCancelApproval.value) return;
+  setEditorWorkflowStateFromAction(
+    configPlatformClient.cancelApproval?.({
+      pageId: editorState.value.schema.pageId,
+      operator: localOperator,
+      comment: "撤回审批，继续编辑。",
+    }),
+    "已撤回审批",
+  );
+}
+
+function approveCurrentApproval(): void {
+  if (!canReviewApproval.value) return;
+  setEditorWorkflowStateFromAction(
+    configPlatformClient.reviewApproval?.({
+      pageId: editorState.value.schema.pageId,
+      operator: { id: "reviewer-1", name: "审核人" },
+      approved: true,
+      comment: "本地审核通过。",
+    }),
+    "审批已通过，可以发布",
+  );
+}
+
+function rejectCurrentApproval(): void {
+  if (!canReviewApproval.value) return;
+  setEditorWorkflowStateFromAction(
+    configPlatformClient.reviewApproval?.({
+      pageId: editorState.value.schema.pageId,
+      operator: { id: "reviewer-1", name: "审核人" },
+      approved: false,
+      comment: "本地审核驳回。",
+      reason: "审批驳回，请调整活动内容后重新提交。",
+    }),
+    "审批已驳回",
+  );
+}
+
 function saveSchema(): void {
   const release = configPlatformClient.saveDraft(editorState.value.schema, { note: releaseNoteDraft.value });
   releaseNoteDraft.value = "";
@@ -3759,6 +3865,14 @@ function rollbackPublishSelectedRelease(): void {
         :publish-checks="publishChecks"
         :publish-check-summary="publishCheckSummary"
         :has-publish-blocking-errors="hasPublishBlockingErrors"
+        :approval-status-text="editorApprovalState.title"
+        :approval-status-description="editorApprovalState.description"
+        :approval-can-submit="canSubmitApproval"
+        :approval-can-cancel="canCancelApproval"
+        :approval-can-review="canReviewApproval"
+        :approval-submit-disabled-reason="approvalSubmitDisabledReason"
+        :approval-cancel-disabled-reason="approvalCancelDisabledReason"
+        :approval-review-disabled-reason="approvalReviewDisabledReason"
         :release-count="releases.length"
         :release-list-summary="releaseListSummary"
         :visible-release-items="visibleReleaseItems"
@@ -3771,6 +3885,10 @@ function rollbackPublishSelectedRelease(): void {
         @copy-schema="copyCurrentSchema"
         @export-schema="exportCurrentSchema"
         @locate-publish-check="locatePublishCheck"
+        @submit-approval="submitCurrentApproval"
+        @cancel-approval="cancelCurrentApproval"
+        @approve-approval="approveCurrentApproval"
+        @reject-approval="rejectCurrentApproval"
         @select-release="selectRelease"
         @load-release="loadReleaseById"
         @open-release="openReleaseRuntime"

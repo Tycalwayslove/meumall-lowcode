@@ -2282,14 +2282,13 @@ export function createLowcodeEditorApprovalState(
 export function createLowcodeEditorApprovalPermissionOptions(
   state: LowcodeEditorApprovalState,
 ): CreateLowcodeEditorPermissionStateOptions {
+  const approvalFlowActionDisabledReason = state.status === "pending" ? undefined : "仅审批中页面可执行该操作。";
   const decisions: CreateLowcodeEditorPermissionStateOptions["decisions"] = {
     "approval.submit": state.submittable ? true : { allowed: false, reason: state.submitDisabledReason ?? state.description },
+    "approval.cancel": state.status === "pending" ? true : { allowed: false, reason: approvalFlowActionDisabledReason ?? state.description },
+    "approval.review": state.status === "pending" ? true : { allowed: false, reason: approvalFlowActionDisabledReason ?? state.description },
     "publish.submit": state.publishable ? true : { allowed: false, reason: state.publishDisabledReason ?? state.description },
   };
-
-  if (state.status === "pending") {
-    decisions["approval.cancel"] = true;
-  }
 
   return {
     readonly: state.readonly,

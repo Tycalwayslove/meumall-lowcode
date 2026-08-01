@@ -17,6 +17,7 @@ const timeoutMs = 30_000;
 const editorUrl = `http://${host}:${editorPort}/`;
 const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
 const editorWorkflowDemoUrl = `${editorUrl}?collaboration=locked-other&approval=pending`;
+const editorApprovalActionsUrl = `${editorUrl}?collaboration=locked-me&approval=draft`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
 const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
@@ -726,6 +727,41 @@ async function assertEditorWorkflow(page) {
   log("通过：新建页面向导可从模板起点进入可编辑 H5 页面");
 }
 
+async function assertEditorApprovalActions(page) {
+  await assertPage(page, editorApprovalActionsUrl, [
+    {
+      label: "发布审批区域存在",
+      expression: "document.querySelector('.approval-workflow-panel') && document.body.innerText.includes('发布审批')",
+    },
+    {
+      label: "待提交审批状态存在",
+      expression: "document.querySelector('.approval-pill')?.textContent?.includes('待提交审批')",
+    },
+  ]);
+
+  await page.clickByText(".approval-workflow-actions button", "提交审批");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.waitForExpression("document.body.innerText.includes('已提交审批')");
+
+  await page.clickByText(".approval-workflow-actions button", "撤回");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('待提交审批')");
+  await page.waitForExpression("document.body.innerText.includes('已撤回审批')");
+
+  await page.clickByText(".approval-workflow-actions button", "提交审批");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.clickByText(".approval-workflow-actions button", "驳回");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批驳回')");
+  await page.waitForExpression("document.body.innerText.includes('审批已驳回')");
+
+  await page.clickByText(".approval-workflow-actions button", "提交审批");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批中')");
+  await page.clickByText(".approval-workflow-actions button", "通过");
+  await page.waitForExpression("document.querySelector('.approval-pill')?.textContent?.includes('审批通过')");
+  await page.waitForExpression("document.body.innerText.includes('审批已通过，可以发布')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.toolbar button')).some((item) => (item.innerText || '').includes('发布') && !item.disabled)");
+  log("通过：发布审批可提交、撤回、驳回、重新提交并审核通过");
+}
+
 async function assertInspectorGroups(page) {
   log("检查属性面板分组折叠");
   await page.waitForExpression("document.body.innerText.includes('内容配置')");
@@ -834,6 +870,7 @@ async function main() {
         expression: "document.querySelector('.approval-pill')?.textContent?.includes('审批中')",
       },
     ]);
+    await assertEditorApprovalActions(page);
 
     await assertPage(page, editorRuntimeUrl, [
       { label: "编辑器内置 runtime shell 已挂载", expression: "document.querySelector('.runtime-shell')" },

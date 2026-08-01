@@ -902,6 +902,8 @@ describe("@meumall/lowcode-editor readiness", () => {
       createLowcodeEditorApprovalPermissionOptions(draftState),
     );
     assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "approval.submit"), true);
+    assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "approval.cancel"), false);
+    assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "approval.review"), false);
     assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "publish.submit"), false);
 
     const pendingState = createLowcodeEditorApprovalState({
@@ -917,6 +919,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(isLowcodeEditorActionAllowed(pendingPermissionState, "draft.save"), false);
     assert.equal(getLowcodeEditorActionDisabledReason(pendingPermissionState, "draft.save"), "页面审批中，暂不可编辑或发布。");
     assert.equal(isLowcodeEditorActionAllowed(pendingPermissionState, "approval.cancel"), true);
+    assert.equal(isLowcodeEditorActionAllowed(pendingPermissionState, "approval.review"), true);
 
     const approvedState = createLowcodeEditorApprovalState({
       status: "approved",
