@@ -162,6 +162,28 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_textarea",
+      componentName: "BasicTextarea",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础多行输入示例",
+        placeholder: "请输入活动备注或补充说明",
+        helperText: "多行输入可作为备注、需求说明和表单扩展的基础单元。",
+        rows: 3,
+        wrapperBackgroundColor: "#f3f4f6",
+        textareaBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#d1d5db",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_textarea_change" },
+      },
+    },
+    {
       id: "node_basic_select",
       componentName: "BasicSelect",
       materialVersion: "0.1.0",
@@ -867,6 +889,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_input_change",
+      },
+    },
+    {
+      id: "track_basic_textarea_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_textarea_change",
       },
     },
     {

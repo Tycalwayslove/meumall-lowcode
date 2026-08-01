@@ -113,6 +113,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `ImageBanner`
 - `BasicButton`
 - `BasicInput`
+- `BasicTextarea`
 - `BasicSelect`
 - `BasicText`
 - `DividerBlock`
@@ -136,6 +137,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicCarousel` 是通用图片轮播物料，负责多张图片、标题、说明、角标、指示器和点击事件；它不承载商品、券、直播或个性化推荐语义，复杂手势、AB 实验和素材中心批量选图应由后续任务或宿主能力扩展。
 
 `BasicVideo` 是通用视频展示物料，负责视频地址、封面、标题、说明、角标、播放控件和播放事件；它不承载上传、转码、审核、直播、广告贴片或素材中心业务语义，这些能力应由外部系统或后续宿主能力扩展。
+
+`BasicTextarea` 是通用多行输入物料，负责标签、占位、默认值、显示行数、禁用态、样式和输入变化事件；它不承载真实表单提交、校验规则、字数统计、富文本、敏感词审核或活动备注保存语义，这些能力应由后续表单协议、业务物料或宿主服务扩展。
 
 `BasicSelect` 是通用静态单选物料，负责标签、占位、静态选项、默认值、禁用态、样式和选择变化事件；它不承载远程业务字典、商品类目、会员标签、级联选择、多选搜索或表单提交语义，这些能力应通过后续数据源契约、业务物料或编辑器专用控件扩展。
 
@@ -277,6 +280,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `ImageBanner`
 - `BasicButton`
 - `BasicInput`
+- `BasicTextarea`
 - `BasicSelect`
 - `BasicText`
 - `DividerBlock`

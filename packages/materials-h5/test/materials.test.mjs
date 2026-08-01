@@ -11,6 +11,7 @@ import {
   BasicSelect,
   BasicTag,
   BasicText,
+  BasicTextarea,
   BasicVideo,
   BrandFeatureSection,
   CouponBundle,
@@ -131,6 +132,8 @@ describe("MeuMall H5 material manifests", () => {
       ["SectionContainer", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["SectionContainer", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
+      ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicSelect", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
@@ -161,6 +164,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
+      ["BasicTextarea", "borderColor"],
       ["BasicSelect", "borderColor"],
       ["BasicText", "backgroundColor"],
       ["DividerBlock", "color"],
@@ -297,6 +301,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
     functionSourceIncludes(BasicButton, ["MlcButton"]);
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
+    functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
@@ -425,6 +430,20 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.placeholder, "请输入内容");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.propsSchema.helperText.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic textarea material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicTextarea");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础多行输入");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.placeholder, "请输入多行内容");
+    assert.equal(material.manifest.defaultProps.rows, 3);
+    assert.equal(material.manifest.propsSchema.defaultValue.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.rows.setter, "number");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 

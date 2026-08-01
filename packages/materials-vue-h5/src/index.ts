@@ -212,6 +212,7 @@ const NUMBER_BORDER_WIDTH_META = { min: 0, max: 8, step: 1, unit: "px" };
 const NUMBER_FONT_SIZE_META = { min: 10, max: 48, step: 1, unit: "px" };
 const NUMBER_FONT_WEIGHT_META = { min: 100, max: 900, step: 100 };
 const NUMBER_LINE_HEIGHT_META = { min: 1, max: 2.5, step: 0.1, unit: "倍" };
+const NUMBER_TEXTAREA_ROWS_META = { min: 2, max: 8, step: 1 };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
 const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
 const COLOR_SWATCHES_META = {
@@ -335,6 +336,83 @@ export const BasicInput = defineComponent({
               borderColor: text(runtimeProps.borderColor, "#e5e7eb"),
               color: text(runtimeProps.textColor, "#111827"),
               background: text(runtimeProps.inputBackgroundColor, "#ffffff"),
+            } satisfies CSSProperties,
+            onChange: (nextValue: string) => {
+              value.value = nextValue;
+              if (typeof handler === "function") handler(nextValue);
+            },
+          }),
+          helperText
+            ? h(
+                MlcText,
+                {
+                  as: "p",
+                  size: 12,
+                  tone: "muted",
+                  style: { color: text(runtimeProps.helperColor, "#64748b") } satisfies CSSProperties,
+                },
+                () => helperText,
+              )
+            : null,
+        ],
+      );
+    };
+  },
+});
+
+export const BasicTextarea = defineComponent({
+  name: "BasicTextarea",
+  props: materialPropOptions,
+  setup(props) {
+    const value = ref(text(props.props?.defaultValue));
+    watch(
+      () => props.props?.defaultValue,
+      (nextValue) => {
+        value.value = text(nextValue);
+      },
+    );
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const label = text(runtimeProps.label, "基础多行输入");
+      const helperText = text(runtimeProps.helperText);
+      const handler = runtimeProps.onChange;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-textarea",
+          style: {
+            display: "grid",
+            gap: "8px",
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            color: text(runtimeProps.textColor, "#111827"),
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          label
+            ? h(
+                MlcText,
+                {
+                  as: "strong",
+                  size: 13,
+                  weight: 800,
+                  style: { color: text(runtimeProps.labelColor, "#111827") } satisfies CSSProperties,
+                },
+                () => label,
+              )
+            : null,
+          h(MlcTextarea, {
+            value: value.value,
+            rows: number(runtimeProps.rows, 3),
+            placeholder: text(runtimeProps.placeholder, "请输入多行内容"),
+            disabled: boolean(runtimeProps.disabled),
+            radius: number(runtimeProps.radius, 8),
+            style: {
+              borderColor: text(runtimeProps.borderColor, "#e5e7eb"),
+              color: text(runtimeProps.textColor, "#111827"),
+              background: text(runtimeProps.textareaBackgroundColor, "#ffffff"),
             } satisfies CSSProperties,
             onChange: (nextValue: string) => {
               value.value = nextValue;
@@ -3151,6 +3229,49 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         inputBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onChange", title: "输入变化" }],
+    }),
+  },
+  {
+    component: BasicTextarea,
+    manifest: createMaterialManifest({
+      componentName: "BasicTextarea",
+      materialVersion: "0.1.0",
+      title: "基础多行输入",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础多行输入",
+        placeholder: "请输入多行内容",
+        helperText: "用于收集备注、说明或活动需求，本地示例不会提交数据。",
+        defaultValue: "",
+        rows: 3,
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        textareaBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#e5e7eb",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础多行输入" },
+        placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入多行内容" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，本地示例不会提交数据。" },
+        defaultValue: { label: "默认值", type: "string", setter: "textarea", defaultValue: "" },
+        rows: { label: "显示行数", type: "number", setter: "number", defaultValue: 3, ...NUMBER_TEXTAREA_ROWS_META },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        textareaBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
         labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
         helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },

@@ -31,6 +31,7 @@ Currently migrated materials:
 
 - `BasicButton`
 - `BasicInput`
+- `BasicTextarea`
 - `BasicSelect`
 - `BasicText`
 - `DividerBlock`
@@ -65,6 +66,7 @@ Current materials:
 - `NoticeBar`
 - `BasicButton`
 - `BasicInput`
+- `BasicTextarea`
 - `BasicSelect`
 - `BasicText`
 - `DividerBlock`
