@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板、空态演示和 broken 降级演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor/renderer 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、架构边界 check、editor readiness API、editor version summary API、editor release history API、editor template summary API、editor page start API、editor viewport preset API、editor material catalog API、editor material detail API、editor material preference API、editor command palette API、editor node operation API、editor node selection API、editor canvas drop hint API、editor canvas drop target API、editor canvas operation API、editor outline tree API、editor prop groups API、editor prop editor model API、editor page settings API、editor data source config API、editor event binding API、editor action config API、editor schema file API、editor draft persistence API、editor preview links API、editor workspace summary API、data source resolver、HTTP data source handler、playground HTTP 数据源演示链路、HTTP action handler、playground HTTP 动作演示链路、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、H5 画布视口预设、当前节点信息卡、属性面板分组折叠、枚举属性 select 编辑、数值属性范围步进编辑、颜色属性色板编辑、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、标签内容切换物料、基础按钮物料、基础输入框物料、基础文本物料、分割线物料、基础图片物料及素材选择、基础标签物料、基础图文卡片物料、基础容器布局能力、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序、列表项图片素材选择、Vue3 编辑器工作区状态条组件化、Vue3 编辑器顶部工具栏组件化、Vue3 编辑器快捷命令面板组件化、Vue3 编辑器节点右键菜单组件化、Vue3 编辑器物料目录组件化、Vue3 编辑器物料详情组件化、Vue3 编辑器结构树组件化、Vue3 编辑器画布工具条组件化、Vue3 编辑器画布上下文工具条组件化、Vue3 编辑器当前节点信息卡组件化、Vue3 编辑器属性字段分组组件化、Vue3 编辑器资源选择器主面板组件化、Vue3 编辑器页面设置面板组件化、Vue3 编辑器发布面板组件化、Vue3 编辑器 Schema 配置面板组件化、Vue3 编辑器源码辅助面板组件化、Vue3 编辑器状态面板组件化、Vue3 编辑器主题 token 原型和 Vue3 编辑器配置平台 HTTP client 开关，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单、弹层、倒计时、标签切换、间距、分割线、图片、标签和业务物料复用。
+MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub 远端推送、schema/editor 第一批基础代码、Vue3 编辑器 playground 初版、本地 mock 发布预览链路、React H5 与 Vue H5 基础物料对齐、独立 React H5 runtime playground、React H5 runtime 本地 pageId/releaseId 加载、React H5 runtime 诊断面板、空态演示和 broken 降级演示、编辑器到 React H5 runtime 的 schema URL handoff、基础电商物料库扩展、编辑器页面模板库、schema/core/adapters/editor/renderer 基础单元测试体系、浏览器级 smoke check、可视化截图 smoke check、本地编辑器与 H5 runtime 联合 demo runner、架构边界 check、editor readiness API、editor version summary API、editor release history API、editor template summary API、editor page start API、editor viewport preset API、editor material catalog API、editor material detail API、editor material preference API、editor command palette API、editor node operation API、editor node selection API、editor canvas drop hint API、editor canvas drop target API、editor canvas operation API、editor outline tree API、editor prop groups API、editor prop editor model API、editor page settings API、editor data source config API、editor event binding API、editor action config API、editor schema file API、editor draft persistence API、editor preview links API、editor workspace summary API、data source resolver、HTTP data source handler、playground HTTP 数据源演示链路、HTTP action handler、playground HTTP 动作演示链路、action 安全执行闭环、高阶活动物料、Java 配置平台 API 草案、配置平台客户端抽象、H5 runtime 集成契约、Page Schema v1 ready 契约、Material Manifest v1 契约、runtime schema loader、Resource Library Client、Template Library Client 和 npm pack dry-run 发布预检，并增强 Vue3 编辑器 mock 素材库、商品选择器、优惠券选择器、门店/达人选择器、新建页面向导、空白画布起步引导、页面设置面板、模板搜索筛选、模板卡片摘要、模板视觉缩略预览、模板 H5 预览入口、交付分享清单、本地自定义模板、Schema 文件导入导出、物料搜索过滤、物料详情预览、物料收藏与最近使用、快捷命令面板、节点右键菜单、节点键盘快捷键、节点命名、本地自动保存和恢复提示、结构树搜索折叠与画布定位、画布工作区状态摘要、H5 画布视口预设、当前节点信息卡、属性面板分组折叠、枚举属性 select 编辑、数值属性范围步进编辑、颜色属性色板编辑、画布拖拽物料插入线、已有节点画布拖拽移动、触屏 Pointer Events 画布拖拽、画布吸附线、同父级多选拖拽、发布前检查清单和节点定位、H5 预览入口、本地版本备注/筛选/差异详情/回滚、活动规则弹窗物料、楼层锚点导航、布尔开关属性编辑、区块标题物料、图片卡片宫格物料、标签内容切换物料、基础按钮物料、基础输入框物料、基础文本物料、分割线物料、基础图片物料及素材选择、基础标签物料、基础图文卡片物料、基础容器布局能力、留资表单物料、组合券包物料、门店/达人推荐物料、直播入口物料、商品榜单物料、品牌专题物料、底部转化条物料、数组属性列表编辑器、列表项拖拽排序、列表项图片素材选择、Vue3 编辑器工作区状态条组件化、Vue3 编辑器顶部工具栏组件化、Vue3 编辑器快捷命令面板组件化、Vue3 编辑器节点右键菜单组件化、Vue3 编辑器物料目录组件化、Vue3 编辑器物料详情组件化、Vue3 编辑器结构树组件化、Vue3 编辑器画布工具条组件化、Vue3 编辑器画布上下文工具条组件化、Vue3 编辑器当前节点信息卡组件化、Vue3 编辑器属性字段分组组件化、Vue3 编辑器资源选择器主面板组件化、Vue3 编辑器页面设置面板组件化、Vue3 编辑器发布面板组件化、Vue3 编辑器 Schema 配置面板组件化、Vue3 编辑器源码辅助面板组件化、Vue3 编辑器状态面板组件化、Vue3 编辑器主题 token 原型和 Vue3 编辑器配置平台 HTTP client 开关，并已沉淀基础组件、通用物料和业务物料分层架构，且在 React/Vue materials 包内部建立 runtime primitives 原型并推进到主要活动、导航、优惠券、表单、弹层、倒计时、标签切换、间距、分割线、图片、标签和业务物料复用。
 
 ## 当前维护范围
 
@@ -26,6 +26,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - TypeScript project references。
 - 可发布 npm 包结构。
 - npm pack dry-run 发布预检：根级 `pnpm pack:dry-run` 会自动发现 8 个可发布包，逐包执行 `npm pack --dry-run --json`，并校验实际包内容包含 `package.json`、`README.md`、`dist/index.js` 和 `dist/index.d.ts`。
+- 本地联合演示入口：根级 `pnpm dev:demo` 可同时启动 Vue3 editor playground 和 React H5 runtime playground，并把 H5 runtime URL 注入编辑器；`pnpm demo:check` 可启动两端并做 HTTP 健康检查后自动退出。
 - Changesets 基础配置；`createHttpActionHandler` 已有 pending minor changeset，真实发布前仍需统一确认 linked group 版本结果。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
@@ -340,7 +341,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `4e34850` | 接入 playground HTTP 数据源演示链路。 |
 | 2026-08-01 | `d1ac026` | 新增 adapters HTTP action handler 并接入 H5 runtime 演示链路。 |
 | 2026-08-01 | `d6fefc6` | 补充 HTTP 动作适配版本记录。 |
-| 2026-08-01 | 本提交 | 增强 visual smoke 截图健康断言。 |
+| 2026-08-01 | `d7058f8` | 增强 visual smoke 截图健康断言。 |
+| 2026-08-01 | 本提交 | 新增本地编辑器与 H5 runtime 联合启动器。 |
 
 ## 默认验证命令
 
@@ -348,6 +350,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 pnpm typecheck
 pnpm build
 pnpm check:architecture
+pnpm demo:check
 pnpm test
 pnpm pack:dry-run
 pnpm smoke:browser

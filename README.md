@@ -78,6 +78,8 @@ apps/h5-runtime-playground
 pnpm install
 pnpm dev
 pnpm dev:h5
+pnpm dev:demo
+pnpm demo:check
 pnpm check:architecture
 pnpm test
 pnpm typecheck
@@ -87,6 +89,17 @@ pnpm smoke:visual
 ```
 
 `pnpm smoke:visual` writes a local report under `.ai/test-reports/latest-visual/` and checks screenshot PNG size, sampled colors, and luma range to catch blank editor or H5 renders.
+
+`pnpm dev:demo` starts the Vue3 editor playground and React H5 runtime playground together, then injects `VITE_REACT_H5_RUNTIME_URL` into the editor. The default URLs are:
+
+```text
+Editor: http://127.0.0.1:5173/
+H5 runtime: http://127.0.0.1:5174/
+Published pageId: http://127.0.0.1:5174/?pageId=summer-campaign-demo
+Preview releaseId: http://127.0.0.1:5174/?releaseId=preview_demo
+```
+
+Use `LOWCODE_EDITOR_PORT`, `LOWCODE_H5_PORT`, or `LOWCODE_DEMO_HOST` to change local ports or host. `pnpm demo:check` starts both servers, checks the same entries over HTTP, and exits automatically.
 
 ## Release
 
