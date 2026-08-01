@@ -47,13 +47,13 @@ Design Tokens 是框架无关的视觉变量。
 - React/Vue 组件。
 - CSS reset 或具体页面布局。
 
-建议后续包名：
+当前公开包名：
 
 ```text
 @meumall/lowcode-design-tokens
 ```
 
-当前阶段也可以先以 `packages/materials-*/src/tokens` 内部模块落地，待 API 稳定后再抽包。
+当前已实现 `packages/design-tokens`，提供 H5 runtime primitives 共用的框架无关 token、tone 取色、颜色 tint 和 CSS 变量派生 helper。该包不依赖 schema/core/editor/renderer/materials，也不承载业务字段、物料 manifest 或 Page Schema 语义。
 
 ### Runtime Primitives
 
@@ -222,10 +222,12 @@ design-tokens
 primitives-react-h5 -> design-tokens
 primitives-vue-h5 -> design-tokens
 
-materials-h5 -> primitives-react-h5 -> design-tokens
+materials-h5 -> design-tokens
+future materials-h5 -> primitives-react-h5 -> design-tokens
 materials-h5 -> core -> schema
 
-materials-vue-h5 -> primitives-vue-h5 -> design-tokens
+materials-vue-h5 -> design-tokens
+future materials-vue-h5 -> primitives-vue-h5 -> design-tokens
 materials-vue-h5 -> core -> schema
 
 editor -> schema + core
@@ -238,6 +240,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `schema` 依赖任何 UI 包。
 - `core` 依赖任何 UI 包。
 - `renderer-*` 依赖 `materials-*` 或 `primitives-*`。
+- `design-tokens` 依赖 `schema`、`core`、`editor`、`renderer`、`materials` 或业务项目。
 - `primitives-*` 依赖 `schema`、`core`、`editor`、`renderer` 或业务项目。
 - `editor` 依赖 H5 runtime primitives。
 - `materials-*` 依赖 `hybird-meumall` 内部代码。
@@ -356,6 +359,12 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - 改造 `ActionButton`、`ImageBanner`、`SectionTitle` 作为范式。
 - 不扩大 npm API，降低早期包边界反复调整成本。
 
+### Phase 1.5：抽出 design tokens npm 包
+
+- 新增 `@meumall/lowcode-design-tokens`。
+- React/Vue H5 materials 内部 primitives 共同消费该包的 H5 token 和 helper。
+- 继续保留内部 `Mlc*` primitives，不把 Button/Input 等组件 API 过早公开。
+
 ### Phase 2：抽出 primitives npm 包
 
 触发条件：
@@ -363,13 +372,13 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - 至少 5 个物料复用同一批 primitives。
 - React/Vue primitives API 已稳定。
 - README、测试和 dry-run 能证明包内容明确。
+- design tokens 包已稳定，不再需要在各端重复定义 `h5Tokens`。
 
 抽包目标：
 
 ```text
 @meumall/lowcode-primitives-react-h5
 @meumall/lowcode-primitives-vue-h5
-@meumall/lowcode-design-tokens
 ```
 
 ### Phase 3：通用物料包拆分

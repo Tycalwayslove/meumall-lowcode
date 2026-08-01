@@ -41,4 +41,4 @@ meumall-lowcode-miniapp
 
 Only split after npm package boundaries are stable. Do not split by folder before package APIs are stable.
 
-Runtime primitives should not be split out on day one. First build an internal primitives layer inside the materials packages, migrate several generic materials to prove the API, then split into npm packages after the API is stable. See `docs/material-layering-architecture.md`.
+`@meumall/lowcode-design-tokens` has been introduced as the first public package below runtime primitives. Runtime primitives should still stay inside the materials packages until Button/Input/Image/etc. APIs are stable, then split into npm packages after the API is proven. See `docs/material-layering-architecture.md`.

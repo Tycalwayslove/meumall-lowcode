@@ -5,6 +5,7 @@ Vue 3 H5 business materials for MeuMall low-code pages.
 ## Internal Primitives
 
 This package contains an internal runtime primitives prototype under `src/primitives`.
+These primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; the primitives themselves are still internal implementation details.
 
 Current internal primitives:
 

@@ -7,6 +7,7 @@ The first version is intentionally small and business-oriented. Avoid exposing t
 ## Internal Primitives
 
 This package contains an internal runtime primitives prototype under `src/primitives`.
+These primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; the primitives themselves are still internal implementation details.
 
 Current internal primitives:
 

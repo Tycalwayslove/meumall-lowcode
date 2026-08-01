@@ -1,7 +1,7 @@
 {
-  "name": "@meumall/lowcode-materials-vue-h5",
+  "name": "@meumall/lowcode-design-tokens",
   "version": "0.1.0",
-  "description": "Vue H5 business materials for MeuMall low-code pages",
+  "description": "Framework-agnostic design tokens for MeuMall low-code runtime primitives",
   "license": "UNLICENSED",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,15 +17,6 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "@meumall/lowcode-core": "workspace:*",
-    "@meumall/lowcode-design-tokens": "workspace:*",
-    "@meumall/lowcode-renderer-vue-h5": "workspace:*",
-    "@meumall/lowcode-schema": "workspace:*"
-  },
-  "peerDependencies": {
-    "vue": ">=3"
   },
   "publishConfig": {
     "access": "public"

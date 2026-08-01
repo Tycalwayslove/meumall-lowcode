@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/design-tokens" },
     { "path": "./packages/schema" },
     { "path": "./packages/core" },
     { "path": "./packages/adapters" },

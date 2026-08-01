@@ -116,6 +116,8 @@ importers:
         specifier: workspace:*
         version: link:../schema
 
+  packages/design-tokens: {}
+
   packages/editor:
     dependencies:
       '@meumall/lowcode-schema':
@@ -127,6 +129,9 @@ importers:
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../core
+      '@meumall/lowcode-design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       '@meumall/lowcode-schema':
         specifier: workspace:*
         version: link:../schema
@@ -139,6 +144,9 @@ importers:
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../core
+      '@meumall/lowcode-design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       '@meumall/lowcode-renderer-vue-h5':
         specifier: workspace:*
         version: link:../renderer-vue-h5

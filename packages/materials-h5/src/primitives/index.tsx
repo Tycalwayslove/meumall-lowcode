@@ -1,35 +1,7 @@
 import React from "react";
+import { createLowcodeH5TintColor, getLowcodeH5ToneColor, h5Tokens, type LowcodeH5Tone } from "@meumall/lowcode-design-tokens";
 
-export const h5Tokens = {
-  color: {
-    text: "#111827",
-    mutedText: "#64748b",
-    inverseText: "#ffffff",
-    surface: "#ffffff",
-    weakSurface: "#f3f4f6",
-    primary: "#111827",
-    accent: "#0f766e",
-    danger: "#dc2626",
-    border: "#e5e7eb",
-  },
-  radius: {
-    sm: 6,
-    md: 8,
-    lg: 12,
-    pill: 999,
-  },
-  fontSize: {
-    caption: 11,
-    body: 13,
-    button: 15,
-    title: 20,
-  },
-  touch: {
-    minHeight: 44,
-  },
-} as const;
-
-type Tone = "neutral" | "accent" | "danger" | "inverse";
+type Tone = LowcodeH5Tone;
 type ButtonVariant = "solid" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
@@ -40,24 +12,6 @@ export interface MlcSelectOption {
   label?: string;
   value?: string;
   disabled?: boolean;
-}
-
-function toneColor(tone: Tone): string {
-  if (tone === "accent") return h5Tokens.color.accent;
-  if (tone === "danger") return h5Tokens.color.danger;
-  if (tone === "inverse") return h5Tokens.color.inverseText;
-  return h5Tokens.color.text;
-}
-
-function tintHexColor(color: string, opacity: number): string {
-  const normalized = color.trim();
-  const match = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (!match) return "rgba(15, 118, 110, 0.08)";
-  const hex = match[1].length === 3 ? match[1].split("").map((char) => `${char}${char}`).join("") : match[1];
-  const red = Number.parseInt(hex.slice(0, 2), 16);
-  const green = Number.parseInt(hex.slice(2, 4), 16);
-  const blue = Number.parseInt(hex.slice(4, 6), 16);
-  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
 
 export interface MlcButtonProps {
@@ -96,7 +50,7 @@ export function MlcButton({
   onClick,
 }: MlcButtonProps): React.ReactElement {
   const height = size === "sm" ? 34 : size === "lg" ? 48 : h5Tokens.touch.minHeight;
-  const color = toneColor(tone);
+  const color = getLowcodeH5ToneColor(tone);
   const isSolid = variant === "solid";
   return (
     <button
@@ -169,7 +123,7 @@ export interface MlcTagProps {
 }
 
 export function MlcTag({ children, tone = "accent", radius = h5Tokens.radius.pill, className, style }: MlcTagProps): React.ReactElement {
-  const color = toneColor(tone);
+  const color = getLowcodeH5ToneColor(tone);
   return (
     <span
       className={className}
@@ -213,7 +167,7 @@ export function MlcText({
   className,
   style,
 }: MlcTextProps): React.ReactElement {
-  const color = tone === "muted" ? h5Tokens.color.mutedText : toneColor(tone);
+  const color = tone === "muted" ? h5Tokens.color.mutedText : getLowcodeH5ToneColor(tone);
   return React.createElement(
     as,
     {
@@ -787,7 +741,7 @@ export interface MlcPriceProps {
 export function MlcPrice({ amountText = "", prefix = "", suffix = "", tone = "danger", size = 18, className, style }: MlcPriceProps): React.ReactElement | null {
   if (!amountText) return null;
   return (
-    <strong className={className} style={{ color: toneColor(tone), fontSize: size, lineHeight: 1, ...style }}>
+    <strong className={className} style={{ color: getLowcodeH5ToneColor(tone), fontSize: size, lineHeight: 1, ...style }}>
       {prefix}
       {amountText}
       {suffix ? <small style={{ marginLeft: 2, fontSize: Math.max(11, size - 6) }}>{suffix}</small> : null}
@@ -964,7 +918,7 @@ export function MlcRadioGroup({
               borderRadius: radius,
               padding: "0 12px",
               color: selected ? activeColor : textColor,
-              background: selected ? tintHexColor(activeColor, 0.08) : backgroundColor,
+              background: selected ? createLowcodeH5TintColor(activeColor, 0.08) : backgroundColor,
               fontSize: h5Tokens.fontSize.body,
               fontWeight: selected ? 800 : 600,
               textAlign: "left",

@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@meumall/lowcode-core": "workspace:*",
+    "@meumall/lowcode-design-tokens": "workspace:*",
     "@meumall/lowcode-schema": "workspace:*"
   },
   "peerDependencies": {

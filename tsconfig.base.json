@@ -15,6 +15,7 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
+      "@meumall/lowcode-design-tokens": ["packages/design-tokens/src/index.ts"],
       "@meumall/lowcode-schema": ["packages/schema/src/index.ts"],
       "@meumall/lowcode-core": ["packages/core/src/index.ts"],
       "@meumall/lowcode-renderer-h5": ["packages/renderer-h5/src/index.tsx"],

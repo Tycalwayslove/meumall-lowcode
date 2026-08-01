@@ -4,13 +4,16 @@
 
 ```text
 editor -> schema
+design-tokens
 renderer-h5 -> core -> schema
 materials-h5 -> core -> schema
-future primitives-react-h5 -> future design-tokens
+materials-h5 -> design-tokens
+future primitives-react-h5 -> design-tokens
 future materials-h5 -> future primitives-react-h5
 renderer-vue-h5 -> core -> schema
 materials-vue-h5 -> renderer-vue-h5 -> core -> schema
-future primitives-vue-h5 -> future design-tokens
+materials-vue-h5 -> design-tokens
+future primitives-vue-h5 -> design-tokens
 future materials-vue-h5 -> future primitives-vue-h5
 adapters -> schema
 editor-playground -> editor + renderer-vue-h5 + materials-vue-h5
@@ -63,15 +66,18 @@ npm 包：`@meumall/lowcode-materials-vue-h5`
 
 Vue H5 物料与 React H5 物料必须保持同一 `componentName` 和 manifest 语义。Vue runtime primitives 与编辑器后台 UI 控件分开治理。
 
-### 规划中的 runtime primitives
+### Runtime primitives 和 design tokens
 
-规划包：
+已实现基础 token 包：
 
 - `@meumall/lowcode-design-tokens`
+
+规划中的 runtime primitives 包：
+
 - `@meumall/lowcode-primitives-react-h5`
 - `@meumall/lowcode-primitives-vue-h5`
 
-这些包当前尚未实现。触发条件和演进路线见 `docs/material-layering-architecture.md`。原则上 primitives 不声明低代码 manifest，不依赖 schema/core/editor/renderer，只提供业务无关的运行时基础 UI。
+`@meumall/lowcode-design-tokens` 已作为框架无关公开包实现，当前提供 H5 runtime primitives 共用的 token 和 helper，不依赖 schema/core/editor/renderer/materials。React/Vue runtime primitives 仍在 materials 包内部治理，触发条件和演进路线见 `docs/material-layering-architecture.md`。原则上 primitives 不声明低代码 manifest，不依赖 schema/core/editor/renderer，只提供业务无关的运行时基础 UI。
 
 ### `packages/editor`
 
@@ -128,10 +134,11 @@ H5 消费方。通过 npm 引入 schema、renderer、materials 和 adapters，�
 ## 依赖方向
 
 - `schema` 不依赖任何业务包。
+- `design-tokens` 不依赖 schema、core、editor、renderer、materials 或业务项目。
 - `core` 只依赖 `schema`。
 - `renderer-*` 可以依赖 `core` 和 `schema`，不得依赖 `editor`。
 - `materials-*` 可以依赖 `core` 和 `schema`，不得依赖业务项目。
-- 未来 `materials-*` 可以依赖对应端 `primitives-*`，但 `primitives-*` 不得反向依赖 `materials-*`、`renderer-*`、`editor`、`schema` 或 `core`。
+- 当前 `materials-*` 可以依赖 `design-tokens`；未来 `materials-*` 可以依赖对应端 `primitives-*`，但 `primitives-*` 不得反向依赖 `materials-*`、`renderer-*`、`editor`、`schema` 或 `core`。
 - `editor` 可以依赖 `core` 和 `schema`，不得依赖 renderer 的私有实现。
 - `editor` 不直接依赖 H5 runtime primitives；编辑器后台控件单独治理或接入管理台组件库。
 - `adapters` 可以依赖 `schema`，宿主实现通过注册注入。

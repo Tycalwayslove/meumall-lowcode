@@ -1,35 +1,7 @@
 import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue";
+import { createLowcodeH5TintColor, getLowcodeH5ToneColor, h5Tokens, type LowcodeH5Tone } from "@meumall/lowcode-design-tokens";
 
-export const h5Tokens = {
-  color: {
-    text: "#111827",
-    mutedText: "#64748b",
-    inverseText: "#ffffff",
-    surface: "#ffffff",
-    weakSurface: "#f3f4f6",
-    primary: "#111827",
-    accent: "#0f766e",
-    danger: "#dc2626",
-    border: "#e5e7eb",
-  },
-  radius: {
-    sm: 6,
-    md: 8,
-    lg: 12,
-    pill: 999,
-  },
-  fontSize: {
-    caption: 11,
-    body: 13,
-    button: 15,
-    title: 20,
-  },
-  touch: {
-    minHeight: 44,
-  },
-} as const;
-
-type Tone = "neutral" | "accent" | "danger" | "inverse";
+type Tone = LowcodeH5Tone;
 type ButtonVariant = "solid" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
@@ -42,24 +14,6 @@ export interface MlcSelectOption {
   label?: string;
   value?: string;
   disabled?: boolean;
-}
-
-function toneColor(tone: Tone): string {
-  if (tone === "accent") return h5Tokens.color.accent;
-  if (tone === "danger") return h5Tokens.color.danger;
-  if (tone === "inverse") return h5Tokens.color.inverseText;
-  return h5Tokens.color.text;
-}
-
-function tintHexColor(color: string, opacity: number): string {
-  const normalized = color.trim();
-  const match = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (!match) return "rgba(15, 118, 110, 0.08)";
-  const hex = match[1].length === 3 ? match[1].split("").map((char) => `${char}${char}`).join("") : match[1];
-  const red = Number.parseInt(hex.slice(0, 2), 16);
-  const green = Number.parseInt(hex.slice(2, 4), 16);
-  const blue = Number.parseInt(hex.slice(4, 6), 16);
-  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
 
 export const MlcButton = defineComponent({
@@ -80,7 +34,7 @@ export const MlcButton = defineComponent({
   setup(props, { slots }) {
     return () => {
       const height = props.size === "sm" ? 34 : props.size === "lg" ? 48 : h5Tokens.touch.minHeight;
-      const color = toneColor(props.tone);
+      const color = getLowcodeH5ToneColor(props.tone);
       const isSolid = props.variant === "solid";
       return h(
         "button",
@@ -155,7 +109,7 @@ export const MlcTag = defineComponent({
   },
   setup(props, { slots }) {
     return () => {
-      const color = toneColor(props.tone);
+      const color = getLowcodeH5ToneColor(props.tone);
       return h(
         "span",
         {
@@ -193,7 +147,7 @@ export const MlcText = defineComponent({
   },
   setup(props, { slots }) {
     return () => {
-      const color = props.tone === "muted" ? h5Tokens.color.mutedText : toneColor(props.tone);
+      const color = props.tone === "muted" ? h5Tokens.color.mutedText : getLowcodeH5ToneColor(props.tone);
       return h(
         props.as,
         {
@@ -731,7 +685,7 @@ export const MlcPrice = defineComponent({
         {
           class: props.class,
           style: {
-            color: toneColor(props.tone),
+            color: getLowcodeH5ToneColor(props.tone),
             fontSize: `${props.size}px`,
             lineHeight: 1,
             ...props.style,
@@ -885,7 +839,7 @@ export const MlcRadioGroup = defineComponent({
                 borderRadius: `${props.radius}px`,
                 padding: "0 12px",
                 color: selected ? props.activeColor : props.textColor,
-                background: selected ? tintHexColor(props.activeColor, 0.08) : props.backgroundColor,
+                background: selected ? createLowcodeH5TintColor(props.activeColor, 0.08) : props.backgroundColor,
                 fontSize: `${h5Tokens.fontSize.body}px`,
                 fontWeight: selected ? 800 : 600,
                 textAlign: "left",

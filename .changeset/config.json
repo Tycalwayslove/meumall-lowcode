@@ -5,6 +5,7 @@
   "fixed": [],
   "linked": [
     [
+      "@meumall/lowcode-design-tokens",
       "@meumall/lowcode-schema",
       "@meumall/lowcode-core",
       "@meumall/lowcode-renderer-h5",
