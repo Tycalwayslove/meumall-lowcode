@@ -784,6 +784,7 @@ async function assertBasicFormSubmitValues(page) {
     return true;
   })()`);
   await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form__errors[role=\"alert\"]') && document.body.innerText.includes('请完善必填项后再提交') && document.body.innerText.includes('请填写表单内输入框') && document.body.innerText.includes('请确认同意接收活动通知') && !document.body.innerText.includes('表单值：')");
+  await page.waitForExpression("(() => { const form = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form'); const inputField = form?.querySelector('.mlc-basic-input[data-mlc-form-field-invalid=\"true\"][aria-invalid=\"true\"]'); const checkboxField = form?.querySelector('.mlc-basic-checkbox[data-mlc-form-field-invalid=\"true\"][aria-invalid=\"true\"]'); return Boolean(inputField?.querySelector('.mlc-basic-form__field-error')?.innerText.includes('请填写表单内输入框') && checkboxField?.querySelector('.mlc-basic-form__field-error')?.innerText.includes('请确认同意接收活动通知')); })()");
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
     const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
@@ -796,6 +797,7 @@ async function assertBasicFormSubmitValues(page) {
     checkbox.click();
     return true;
   })()`);
+  await page.waitForExpression("(() => { const form = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form'); return Boolean(form && !form.querySelector('[data-mlc-form-field-invalid=\"true\"]') && !form.querySelector('.mlc-basic-form__errors[role=\"alert\"]')); })()");
   await page.wait(100);
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
@@ -830,6 +832,7 @@ async function assertReactRuntimeBasicFormSubmitValues(page) {
     return true;
   })()`);
   await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form__errors[role=\"alert\"]') && document.body.innerText.includes('请完善必填项后再提交') && document.body.innerText.includes('请填写表单内输入框') && document.body.innerText.includes('请确认同意接收活动通知') && !document.body.innerText.includes('模拟埋点：basic_form_submit')");
+  await page.waitForExpression("(() => { const form = document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form'); const inputField = form?.querySelector('.mlc-basic-input[data-mlc-form-field-invalid=\"true\"][aria-invalid=\"true\"]'); const checkboxField = form?.querySelector('.mlc-basic-checkbox[data-mlc-form-field-invalid=\"true\"][aria-invalid=\"true\"]'); return Boolean(inputField?.querySelector('.mlc-basic-form__field-error')?.innerText.includes('请填写表单内输入框') && checkboxField?.querySelector('.mlc-basic-form__field-error')?.innerText.includes('请确认同意接收活动通知')); })()");
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
     const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
@@ -842,6 +845,7 @@ async function assertReactRuntimeBasicFormSubmitValues(page) {
     checkbox.click();
     return true;
   })()`);
+  await page.waitForExpression("(() => { const form = document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form'); return Boolean(form && !form.querySelector('[data-mlc-form-field-invalid=\"true\"]') && !form.querySelector('.mlc-basic-form__errors[role=\"alert\"]')); })()");
   await page.wait(100);
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');

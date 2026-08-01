@@ -9,6 +9,20 @@ type MaterialProps = {
   children?: React.ReactNode;
 };
 
+const BASIC_FORM_DEFAULT_ERROR_COLOR = "#b91c1c";
+
+type BasicFormValidationContextValue = {
+  fieldErrors: Record<string, string>;
+  errorColor: string;
+  clearFieldError: (fieldId: string) => void;
+};
+
+const BasicFormValidationContext = React.createContext<BasicFormValidationContextValue>({
+  fieldErrors: {},
+  errorColor: BASIC_FORM_DEFAULT_ERROR_COLOR,
+  clearFieldError: () => {},
+});
+
 function text(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value : fallback;
 }
@@ -122,13 +136,49 @@ function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode, 
 }
 
 function getBasicFormErrorMessages(payload: JsonObject): string[] {
+  return Object.values(getBasicFormErrorMap(payload));
+}
+
+function getBasicFormErrorMap(payload: JsonObject): Record<string, string> {
   const errors = payload.errors;
-  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return [];
-  return Object.values(errors).filter((item): item is string => typeof item === "string" && item.length > 0);
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return {};
+  return Object.entries(errors).reduce<Record<string, string>>((result, [fieldId, message]) => {
+    if (typeof message === "string" && message.length > 0) result[fieldId] = message;
+    return result;
+  }, {});
 }
 
 function getBasicFormRequiredMessage(props: Record<string, unknown>, label: string, verb: "填写" | "选择" | "确认"): string {
   return text(props.requiredMessage, `请${verb}${label || "该字段"}`);
+}
+
+function createBasicFormFieldClassName(baseClassName: string, errorMessage: string): string {
+  return errorMessage ? `${baseClassName} mlc-basic-form__field--invalid` : baseClassName;
+}
+
+function getBasicFormFieldStatus(errorMessage: string) {
+  return {
+    "aria-invalid": errorMessage ? true : undefined,
+    "data-mlc-form-field-invalid": errorMessage ? "true" : "false",
+    "data-mlc-form-field-error": errorMessage || undefined,
+  };
+}
+
+function renderBasicFormFieldError(errorMessage: string, errorColor: string): React.ReactElement | null {
+  if (!errorMessage) return null;
+  return (
+    <MlcText
+      as="p"
+      size={12}
+      className="mlc-basic-form__field-error"
+      style={{
+        color: errorColor,
+        fontWeight: 700,
+      }}
+    >
+      {errorMessage}
+    </MlcText>
+  );
 }
 
 function ruleList(value: unknown): Array<Record<string, unknown> | string> {
@@ -615,7 +665,7 @@ export function BasicModal({ props }: MaterialProps) {
 
 export function BasicForm({ props, node, children }: MaterialProps) {
   const [submitted, setSubmitted] = React.useState(false);
-  const [validationMessages, setValidationMessages] = React.useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
   const title = text(props.title, "基础表单");
   const description = text(props.description);
   const handler = props.onSubmit;
@@ -625,25 +675,44 @@ export function BasicForm({ props, node, children }: MaterialProps) {
   const radius = number(props.radius, 12);
   const gap = number(props.gap, 10);
   const hasChildren = React.Children.count(children) > 0;
+  const validationMessages = Object.values(fieldErrors);
+  const clearFieldError = React.useCallback((fieldId: string) => {
+    setFieldErrors((current) => {
+      if (!current[fieldId]) return current;
+      const next = { ...current };
+      delete next[fieldId];
+      return next;
+    });
+  }, []);
+  const validationContext = React.useMemo<BasicFormValidationContextValue>(
+    () => ({
+      fieldErrors,
+      errorColor: text(props.errorColor, BASIC_FORM_DEFAULT_ERROR_COLOR),
+      clearFieldError,
+    }),
+    [clearFieldError, fieldErrors, props.errorColor],
+  );
 
   return (
-    <section
-      className="mlc-material mlc-basic-form"
-      style={{
-        padding: `${number(props.paddingY, 14)}px 12px`,
-        background: text(props.backgroundColor, "#f3f4f6"),
-      }}
-    >
+    <BasicFormValidationContext.Provider value={validationContext}>
+      <section
+        className="mlc-material mlc-basic-form"
+        style={{
+          padding: `${number(props.paddingY, 14)}px 12px`,
+          background: text(props.backgroundColor, "#f3f4f6"),
+        }}
+      >
       <form
         className="mlc-basic-form__card"
         onSubmit={(event) => {
           event.preventDefault();
           if (disabled || loading) return;
           const payload = createBasicFormSubmitPayload(event.currentTarget, node, React.Children.count(children));
-          const messages = getBasicFormErrorMessages(payload);
-          setValidationMessages(messages);
-          setSubmitted(messages.length === 0);
-          if (messages.length > 0) return;
+          const nextFieldErrors = getBasicFormErrorMap(payload);
+          const errorCount = Object.keys(nextFieldErrors).length;
+          setFieldErrors(nextFieldErrors);
+          setSubmitted(errorCount === 0);
+          if (errorCount > 0) return;
           if (typeof handler === "function") {
             handler(payload);
           }
@@ -738,7 +807,8 @@ export function BasicForm({ props, node, children }: MaterialProps) {
           </MlcText>
         ) : null}
       </form>
-    </section>
+      </section>
+    </BasicFormValidationContext.Provider>
   );
 }
 
@@ -1353,6 +1423,9 @@ export function BasicAlert({ props }: MaterialProps) {
 }
 
 export function BasicInput({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [value, setValue] = React.useState(text(props.defaultValue));
   const inputType = option<BasicInputType>(props.type, ["text", "tel", "email", "number"], "text");
   const label = text(props.label, "基础输入框");
@@ -1365,7 +1438,8 @@ export function BasicInput({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-input"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-input", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         display: "grid",
         gap: 8,
@@ -1380,6 +1454,7 @@ export function BasicInput({ props, node }: MaterialProps) {
         </MlcText>
       ) : null}
       <MlcInput
+        className={fieldError ? "mlc-basic-form__control--invalid" : undefined}
         value={value}
         type={inputType}
         placeholder={text(props.placeholder, "请输入内容")}
@@ -1387,10 +1462,11 @@ export function BasicInput({ props, node }: MaterialProps) {
         radius={number(props.radius, 8)}
         onChange={(nextValue) => {
           setValue(nextValue);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextValue);
         }}
         style={{
-          borderColor: text(props.borderColor, "#e5e7eb"),
+          borderColor: fieldError ? fieldErrorColor : text(props.borderColor, "#e5e7eb"),
           color: text(props.textColor, "#111827"),
           background: text(props.inputBackgroundColor, "#ffffff"),
         }}
@@ -1404,6 +1480,7 @@ export function BasicInput({ props, node }: MaterialProps) {
         boolean(props.required),
         getBasicFormRequiredMessage(props, label, "填写"),
       )}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1414,6 +1491,9 @@ export function BasicInput({ props, node }: MaterialProps) {
 }
 
 export function BasicTextarea({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础多行输入");
   const helperText = text(props.helperText);
@@ -1425,7 +1505,8 @@ export function BasicTextarea({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-textarea"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-textarea", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         display: "grid",
         gap: 8,
@@ -1440,6 +1521,7 @@ export function BasicTextarea({ props, node }: MaterialProps) {
         </MlcText>
       ) : null}
       <MlcTextarea
+        className={fieldError ? "mlc-basic-form__control--invalid" : undefined}
         value={value}
         rows={number(props.rows, 3)}
         placeholder={text(props.placeholder, "请输入多行内容")}
@@ -1447,15 +1529,17 @@ export function BasicTextarea({ props, node }: MaterialProps) {
         radius={number(props.radius, 8)}
         onChange={(nextValue) => {
           setValue(nextValue);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextValue);
         }}
         style={{
-          borderColor: text(props.borderColor, "#e5e7eb"),
+          borderColor: fieldError ? fieldErrorColor : text(props.borderColor, "#e5e7eb"),
           color: text(props.textColor, "#111827"),
           background: text(props.textareaBackgroundColor, "#ffffff"),
         }}
       />
       {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "填写"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1466,6 +1550,9 @@ export function BasicTextarea({ props, node }: MaterialProps) {
 }
 
 export function BasicSelect({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础选择框");
   const helperText = text(props.helperText);
@@ -1478,7 +1565,8 @@ export function BasicSelect({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-select"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-select", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         display: "grid",
         gap: 8,
@@ -1493,6 +1581,7 @@ export function BasicSelect({ props, node }: MaterialProps) {
         </MlcText>
       ) : null}
       <MlcSelect
+        className={fieldError ? "mlc-basic-form__control--invalid" : undefined}
         value={value}
         placeholder={text(props.placeholder, "请选择")}
         disabled={boolean(props.disabled)}
@@ -1504,15 +1593,17 @@ export function BasicSelect({ props, node }: MaterialProps) {
         }))}
         onChange={(nextValue) => {
           setValue(nextValue);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextValue);
         }}
         style={{
-          borderColor: text(props.borderColor, "#e5e7eb"),
+          borderColor: fieldError ? fieldErrorColor : text(props.borderColor, "#e5e7eb"),
           color: text(props.textColor, "#111827"),
           background: text(props.selectBackgroundColor, "#ffffff"),
         }}
       />
       {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "选择"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1523,6 +1614,9 @@ export function BasicSelect({ props, node }: MaterialProps) {
 }
 
 export function BasicRadioGroup({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础单选组");
   const helperText = text(props.helperText);
@@ -1535,7 +1629,8 @@ export function BasicRadioGroup({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-radio-group"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-radio-group", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         display: "grid",
         gap: 8,
@@ -1554,7 +1649,7 @@ export function BasicRadioGroup({ props, node }: MaterialProps) {
         disabled={boolean(props.disabled)}
         radius={number(props.radius, 8)}
         activeColor={text(props.activeColor, "#0f766e")}
-        borderColor={text(props.borderColor, "#e5e7eb")}
+        borderColor={fieldError ? fieldErrorColor : text(props.borderColor, "#e5e7eb")}
         textColor={text(props.textColor, "#111827")}
         backgroundColor={text(props.optionBackgroundColor, "#ffffff")}
         options={options.map((item) => ({
@@ -1564,10 +1659,12 @@ export function BasicRadioGroup({ props, node }: MaterialProps) {
         }))}
         onChange={(nextValue) => {
           setValue(nextValue);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextValue);
         }}
       />
       {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "选择"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1578,6 +1675,9 @@ export function BasicRadioGroup({ props, node }: MaterialProps) {
 }
 
 export function BasicStepper({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const range = basicStepperRange(props);
   const [value, setValue] = React.useState(range.defaultValue);
   const label = text(props.label, "基础步进器");
@@ -1590,7 +1690,8 @@ export function BasicStepper({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-stepper"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-stepper", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         display: "grid",
         gap: 8,
@@ -1611,16 +1712,18 @@ export function BasicStepper({ props, node }: MaterialProps) {
         step={range.step}
         disabled={boolean(props.disabled)}
         accentColor={text(props.accentColor, "#0f766e")}
-        borderColor={text(props.borderColor, "#e5e7eb")}
+        borderColor={fieldError ? fieldErrorColor : text(props.borderColor, "#e5e7eb")}
         textColor={text(props.textColor, "#111827")}
         buttonBackgroundColor={text(props.buttonBackgroundColor, "#ffffff")}
         radius={number(props.radius, 8)}
         onChange={(nextValue) => {
           setValue(nextValue);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextValue);
         }}
       />
       {createBasicFormHiddenField(node, label, value, "number", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "填写"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1631,6 +1734,9 @@ export function BasicStepper({ props, node }: MaterialProps) {
 }
 
 export function BasicSwitch({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
   const label = text(props.label, "基础开关");
   const checkedText = text(props.checkedText, "已开启");
@@ -1644,7 +1750,8 @@ export function BasicSwitch({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-switch"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-switch", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         padding: `${number(props.paddingY, 12)}px 16px`,
         color: text(props.labelColor, "#111827"),
@@ -1659,8 +1766,19 @@ export function BasicSwitch({ props, node }: MaterialProps) {
         thumbColor={text(props.thumbColor, "#ffffff")}
         onChange={(nextChecked) => {
           setChecked(nextChecked);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextChecked);
         }}
+        className={fieldError ? "mlc-basic-form__control--invalid" : undefined}
+        style={
+          fieldError
+            ? {
+                border: `1px solid ${fieldErrorColor}`,
+                borderRadius: 8,
+                padding: "8px 10px",
+              }
+            : undefined
+        }
         label={
           <span style={{ display: "grid", gap: 2 }}>
             <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
@@ -1673,6 +1791,7 @@ export function BasicSwitch({ props, node }: MaterialProps) {
         }
       />
       {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "确认"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", marginTop: 6, color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1683,6 +1802,9 @@ export function BasicSwitch({ props, node }: MaterialProps) {
 }
 
 export function BasicCheckbox({ props, node }: MaterialProps) {
+  const validation = React.useContext(BasicFormValidationContext);
+  const fieldError = validation.fieldErrors[node.id] ?? "";
+  const fieldErrorColor = validation.errorColor;
   const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
   const label = text(props.label, "基础复选框");
   const helperText = text(props.helperText);
@@ -1694,7 +1816,8 @@ export function BasicCheckbox({ props, node }: MaterialProps) {
 
   return (
     <section
-      className="mlc-material mlc-basic-checkbox"
+      className={createBasicFormFieldClassName("mlc-material mlc-basic-checkbox", fieldError)}
+      {...getBasicFormFieldStatus(fieldError)}
       style={{
         padding: `${number(props.paddingY, 12)}px 16px`,
         color: text(props.labelColor, "#111827"),
@@ -1710,8 +1833,19 @@ export function BasicCheckbox({ props, node }: MaterialProps) {
         radius={number(props.radius, 6)}
         onChange={(nextChecked) => {
           setChecked(nextChecked);
+          validation.clearFieldError(node.id);
           if (typeof handler === "function") handler(nextChecked);
         }}
+        className={fieldError ? "mlc-basic-form__control--invalid" : undefined}
+        style={
+          fieldError
+            ? {
+                border: `1px solid ${fieldErrorColor}`,
+                borderRadius: 8,
+                padding: "8px 10px",
+              }
+            : undefined
+        }
         label={
           <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
             {label}
@@ -1719,6 +1853,7 @@ export function BasicCheckbox({ props, node }: MaterialProps) {
         }
       />
       {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "确认"))}
+      {renderBasicFormFieldError(fieldError, fieldErrorColor)}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", margin: "6px 0 0 32px", color: text(props.helperColor, "#64748b") }}>
           {helperText}
