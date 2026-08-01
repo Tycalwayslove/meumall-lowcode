@@ -1327,7 +1327,7 @@ export const LOWCODE_EDITOR_DEFAULT_LIST_FIELDS: Record<string, readonly string[
 };
 
 const DEFAULT_PRODUCT_COMPONENT_NAMES = ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"];
-export const LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES = ["SectionContainer", "GridContainer"] as const;
+export const LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES = ["SectionContainer", "GridContainer", "BasicForm"] as const;
 const DEFAULT_ACTION_PARAM_RULES: LowcodeEditorActionParamRule[] = [
   { actionType: "navigate", paramName: "url", label: "跳转 URL" },
   { actionType: "coupon.receive", paramName: "couponId", label: "couponId" },

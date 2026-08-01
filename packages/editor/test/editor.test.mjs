@@ -1480,6 +1480,13 @@ describe("@meumall/lowcode-editor readiness", () => {
       props: {},
       children: [],
     });
+    const basicFormNode = createLowcodeNode({
+      id: "basic_form_1",
+      componentName: "BasicForm",
+      materialVersion: "1.0.0",
+      props: {},
+      children: [],
+    });
     const buttonNode = createLowcodeNode({
       id: "button_1",
       componentName: "ActionButton",
@@ -1489,12 +1496,14 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 160 }, buttonNode, targetRect), "before");
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 230 }, buttonNode, targetRect), "after");
-    assert.deepEqual([...LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES], ["SectionContainer", "GridContainer"]);
+    assert.deepEqual([...LOWCODE_EDITOR_DEFAULT_CANVAS_INSIDE_COMPONENT_NAMES], ["SectionContainer", "GridContainer", "BasicForm"]);
     assert.equal(isLowcodeEditorContainerComponentName("SectionContainer"), true);
     assert.equal(isLowcodeEditorContainerComponentName("GridContainer"), true);
+    assert.equal(isLowcodeEditorContainerComponentName("BasicForm"), true);
     assert.equal(isLowcodeEditorContainerComponentName("ActionButton"), false);
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect), "inside");
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, gridContainerNode, targetRect), "inside");
+    assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, basicFormNode, targetRect), "inside");
     assert.equal(resolveLowcodeCanvasDropPlacement({ clientY: 200 }, containerNode, targetRect, {
       insideComponentNames: ["CustomContainer"],
     }), "after");

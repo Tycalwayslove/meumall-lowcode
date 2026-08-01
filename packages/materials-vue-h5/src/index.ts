@@ -439,6 +439,130 @@ export const BasicModal = defineComponent({
   },
 });
 
+export const BasicForm = defineComponent({
+  name: "BasicForm",
+  props: materialPropOptions,
+  setup(props, { slots }) {
+    const submitted = ref(false);
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const children = slots.default?.();
+      const title = text(runtimeProps.title, "基础表单");
+      const description = text(runtimeProps.description);
+      const disabled = boolean(runtimeProps.disabled);
+      const loading = boolean(runtimeProps.loading);
+      const gap = number(runtimeProps.gap, 10);
+      const borderWidth = number(runtimeProps.borderWidth, 1);
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-form",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "form",
+          {
+            class: "mlc-basic-form__card",
+            style: {
+              display: "grid",
+              gap: `${gap}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              color: text(runtimeProps.titleColor, "#111827"),
+              background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow, true) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+            } satisfies CSSProperties,
+            onSubmit: (event: Event) => {
+              event.preventDefault();
+              if (disabled || loading) return;
+              submitted.value = true;
+              const onSubmit = runtimeProps.onSubmit;
+              if (typeof onSubmit === "function") {
+                onSubmit({
+                  formId: props.node?.id ?? "",
+                  childCount: children?.length ?? 0,
+                });
+              }
+            },
+          },
+          [
+            title || description
+              ? h("div", { class: "mlc-basic-form__header", style: { display: "grid", gap: "4px" } }, [
+                  title
+                    ? h(MlcText, { as: "strong", size: 18, weight: 900, style: { color: text(runtimeProps.titleColor, "#111827") } }, () => title)
+                    : null,
+                  description
+                    ? h(
+                        MlcText,
+                        { as: "p", size: 13, lineHeight: 1.6, style: { color: text(runtimeProps.descriptionColor, "#64748b") } },
+                        () => description,
+                      )
+                    : null,
+                ])
+              : null,
+            children?.length
+              ? h("div", { class: "mlc-basic-form__fields", style: { display: "grid", gap: `${gap}px` } }, children)
+              : h(
+                  MlcText,
+                  {
+                    as: "p",
+                    size: 13,
+                    tone: "muted",
+                    lineHeight: 1.5,
+                    class: "mlc-basic-form__empty",
+                    style: {
+                      padding: "14px",
+                      border: "1px dashed #cbd5e1",
+                      borderRadius: "8px",
+                      background: "#f8fafc",
+                      textAlign: "center",
+                    } satisfies CSSProperties,
+                  },
+                  () => text(runtimeProps.emptyText, "向表单中添加输入物料"),
+                ),
+            h(
+              MlcButton,
+              {
+                type: "submit",
+                block: true,
+                size: "lg",
+                radius: number(runtimeProps.buttonRadius, 10),
+                disabled,
+                loading,
+                style: {
+                  borderColor: text(runtimeProps.buttonColor, "#111827"),
+                  color: text(runtimeProps.buttonTextColor, "#ffffff"),
+                  background: text(runtimeProps.buttonColor, "#111827"),
+                },
+              },
+              () => text(runtimeProps.submitText, "提交"),
+            ),
+            submitted.value && boolean(runtimeProps.showSuccessMessage, true)
+              ? h(
+                  MlcText,
+                  {
+                    as: "p",
+                    size: 12,
+                    lineHeight: 1.5,
+                    class: "mlc-basic-form__success",
+                    style: { color: text(runtimeProps.successColor, "#0f766e"), textAlign: "center" } satisfies CSSProperties,
+                  },
+                  () => text(runtimeProps.successText, "已触发表单提交事件"),
+                )
+              : null,
+          ],
+        ),
+      );
+    };
+  },
+});
+
 export const BasicInput = defineComponent({
   name: "BasicInput",
   props: materialPropOptions,
@@ -3989,6 +4113,67 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         contentPadding: { label: "内容留白", type: "number", setter: "number", defaultValue: 16, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onOpen", title: "打开弹窗" }],
+    }),
+  },
+  {
+    component: BasicForm,
+    manifest: createMaterialManifest({
+      componentName: "BasicForm",
+      materialVersion: "0.1.0",
+      title: "基础表单",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础表单",
+        description: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。",
+        submitText: "提交",
+        successText: "已触发表单提交事件",
+        emptyText: "向表单中添加输入物料",
+        showSuccessMessage: true,
+        disabled: false,
+        loading: false,
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        descriptionColor: "#64748b",
+        buttonColor: "#111827",
+        buttonTextColor: "#ffffff",
+        successColor: "#0f766e",
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        radius: 12,
+        buttonRadius: 10,
+        paddingY: 14,
+        padding: 14,
+        gap: 10,
+        shadow: true,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础表单" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。" },
+        submitText: { label: "提交按钮文案", type: "string", setter: "input", defaultValue: "提交" },
+        successText: { label: "成功文案", type: "string", setter: "input", defaultValue: "已触发表单提交事件" },
+        emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向表单中添加输入物料" },
+        showSuccessMessage: { label: "显示成功文案", type: "boolean", setter: "switch", defaultValue: true },
+        disabled: { label: "禁用提交", type: "boolean", setter: "switch", defaultValue: false },
+        loading: { label: "提交中", type: "boolean", setter: "switch", defaultValue: false },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "表单背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        descriptionColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        successColor: { label: "成功文案色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        buttonRadius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "表单内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "字段间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
+      events: [{ name: "onSubmit", title: "提交表单" }],
     }),
   },
   {

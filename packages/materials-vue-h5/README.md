@@ -49,6 +49,7 @@ Currently migrated materials:
 - `BasicTag`
 - `BasicCarousel`
 - `BasicVideo`
+- `BasicForm`
 - `SectionContainer`
 - `GridContainer`
 - `ActionButton`
@@ -95,6 +96,7 @@ Current materials:
 - `BasicCard`
 - `BasicCarousel`
 - `BasicVideo`
+- `BasicForm`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`
@@ -118,6 +120,6 @@ Current materials:
 - `FlashSaleList`
 - `RichTextBlock`
 
-`SectionContainer` is the current nested layout entry for editor canvas operations. It supports configurable spacing, border, shadow, title colors, and empty-state copy, and its title, subtitle, and empty state reuse the internal `MlcText` primitive while keeping the Page Schema node shape unchanged.
+`SectionContainer`, `GridContainer`, and `BasicForm` are the current nested entries for editor canvas operations. They keep the Page Schema `children` shape unchanged. `BasicForm` provides a generic submit container and `onSubmit` event, but it does not automatically collect child field values or implement validation/remote submit protocols.
 
 These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-h5` so Vue editor preview schemas can be rendered by the React H5 runtime package.

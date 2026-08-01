@@ -132,6 +132,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicCarousel`
 - `BasicVideo`
 - `BasicModal`
+- `BasicForm`
 - `NoticeBar`
 - `ActionButton`
 - `RichTextBlock`
@@ -139,7 +140,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `NavGrid`
 - `ImageCardGrid`
 - `TabsBlock`
-- 后续可增加 `FormSubmitButton`，复杂表单字段应优先复用 `BasicInput` 再组合。
+- 复杂表单字段应优先复用 `BasicInput` 等基础输入物料，再通过 `BasicForm` 或后续独立表单协议组合。
 
 `SectionContainer` 是当前编辑器默认识别的单列嵌套容器物料，负责运营分组、基础留白、子节点间距、边框和阴影等单列布局能力；其标题、说明和空态文案应复用 `MlcText` 这类文本 primitive。
 
@@ -154,6 +155,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicVideo` 是通用视频展示物料，负责视频地址、封面、标题、说明、角标、播放控件和播放事件；它不承载上传、转码、审核、直播、广告贴片或素材中心业务语义，这些能力应由外部系统或后续宿主能力扩展。
 
 `BasicModal` 是通用基础弹窗物料，负责入口按钮、静态标题、说明、内容、确认按钮、弹出位置、关闭行为、色彩、圆角和留白配置；它不承载远程内容、表单提交、登录、领券、交易、权限、审核、个性化投放或弹窗内低代码子节点编排，这些能力应由后续业务物料、宿主服务或单独 slot/layout 协议扩展。
+
+`BasicForm` 是通用基础表单容器物料，负责标题、说明、子节点字段区、提交按钮、提交成功态和 `onSubmit` 安全事件；它复用 Page Schema `children` 组合现有基础输入物料，不自动采集子字段值，不承载校验规则、验证码、登录、风控、远程提交、服务端保存或表单布局 DSL。这些能力应由后续表单协议、action、业务物料或宿主服务扩展。
 
 `NoticeBar` 是通用公告条展示物料，负责图标文案、标签、正文、背景、边框、圆角和留白配置；它不承载远程公告流、跑马灯、关闭记忆、曝光统计、权限审批或活动规则语义，这些能力应由后续数据源、业务物料、action 或宿主服务扩展。
 
@@ -326,6 +329,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicCard`
 - `BasicCarousel`
 - `BasicVideo`
+- `BasicForm`
 - `NoticeBar`
 - `ActionButton`
 - `ImageCardGrid`
@@ -334,7 +338,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `RichTextBlock`
 - `NavGrid`
 
-新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；它们仍是可拖拽物料，不是 primitives API 本身。
+新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`GridContainer`、`BasicForm`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包或已有 Page Schema `children` 能力；它们仍是可拖拽物料，不是 primitives API 本身。
 
 ## Business Materials 首批规划
 

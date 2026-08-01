@@ -8,6 +8,7 @@ import {
   BasicCard,
   BasicCarousel,
   BasicCheckbox,
+  BasicForm,
   BasicImage,
   BasicInput,
   BasicModal,
@@ -146,6 +147,9 @@ describe("MeuMall H5 material manifests", () => {
       ["SectionContainer", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
       ["GridContainer", "columns", { min: 2, max: 3, step: 1, unit: undefined }],
       ["GridContainer", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicForm", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicForm", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicForm", "buttonRadius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -206,6 +210,10 @@ describe("MeuMall H5 material manifests", () => {
       ["GridContainer", "borderColor"],
       ["GridContainer", "titleColor"],
       ["GridContainer", "subtitleColor"],
+      ["BasicForm", "backgroundColor"],
+      ["BasicForm", "cardBackgroundColor"],
+      ["BasicForm", "titleColor"],
+      ["BasicForm", "buttonColor"],
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
@@ -401,6 +409,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(RichTextBlock, ["MlcRichText"]);
     functionSourceIncludes(SectionContainer, ["MlcText"]);
     functionSourceIncludes(GridContainer, ["MlcText"]);
+    functionSourceIncludes(BasicForm, ["MlcButton", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -567,6 +576,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
     assert.equal(material.manifest.propsSchema.shadow.setter, "switch");
     assert.equal(material.manifest.propsSchema.emptyText.setter, "input");
+  });
+
+  it("registers the basic form material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicForm");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础表单");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.submitText, "提交");
+    assert.equal(material.manifest.defaultProps.showSuccessMessage, true);
+    assert.equal(material.manifest.propsSchema.description.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.showSuccessMessage.setter, "switch");
+    assert.equal(material.manifest.propsSchema.buttonColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.gap.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onSubmit");
   });
 
   it("renders section container layout props in React H5", () => {
