@@ -201,7 +201,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `本次提交` | 新增 editor audit trail API，并在 Vue3 编辑器状态面板展示最近操作。 |
+| 2026-08-01 | `cca099e` | 新增 editor audit trail API，并在 Vue3 编辑器状态面板展示最近操作。 |
 | 2026-08-01 | `edd43cc` | 新增 editor material insert target API，并统一 Vue3 编辑器物料插入目标提示、只读禁用原因和 smoke 覆盖。 |
 | 2026-08-01 | `3f6d86f` | 新增 React/Vue H5 runtime primitives 公开包，并让 materials 包从 primitives 包组合低代码物料。 |
 | 2026-08-01 | `880e5e3` | 新增 `@meumall/lowcode-design-tokens` 公开包，并让 React/Vue H5 内部 primitives 共同消费共享 token。 |
