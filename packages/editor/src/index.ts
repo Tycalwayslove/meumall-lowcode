@@ -1428,8 +1428,10 @@ export const LOWCODE_EDITOR_COMMON_LIST_FIELDS: Record<string, LowcodeEditorList
   id: { name: "id", label: "ID", placeholder: "唯一标识" },
   typeText: { name: "typeText", label: "类型", placeholder: "门店 / 达人 / 推荐" },
   title: { name: "title", label: "标题", placeholder: "请输入标题" },
+  label: { name: "label", label: "标签", placeholder: "请输入标签" },
   subtitle: { name: "subtitle", label: "副标题", placeholder: "请输入副标题" },
   desc: { name: "desc", label: "说明", placeholder: "请输入说明" },
+  helperText: { name: "helperText", label: "辅助说明", placeholder: "请输入辅助说明" },
   content: { name: "content", label: "内容", placeholder: "请输入内容", multiline: true },
   imageUrl: { name: "imageUrl", label: "图片", placeholder: "图片 URL" },
   coverImageUrl: { name: "coverImageUrl", label: "封面图", placeholder: "封面图 URL" },
@@ -1442,6 +1444,8 @@ export const LOWCODE_EDITOR_COMMON_LIST_FIELDS: Record<string, LowcodeEditorList
   metricText: { name: "metricText", label: "指标", placeholder: "4.9 分 / 12.8w 粉丝" },
   linkUrl: { name: "linkUrl", label: "链接", placeholder: "跳转 URL" },
   badgeText: { name: "badgeText", label: "角标", placeholder: "热卖 / 精选" },
+  prefix: { name: "prefix", label: "前缀", placeholder: "¥ / 约" },
+  suffix: { name: "suffix", label: "后缀", placeholder: "人 / 款 / 张" },
   value: { name: "value", label: "值", placeholder: "请输入值", multiline: true },
 };
 export const LOWCODE_EDITOR_DEFAULT_LIST_FIELDS: Record<string, readonly string[]> = {
@@ -2215,6 +2219,45 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       keywords: ["metric", "上新", "数量", "库存"],
     },
   ],
+  BasicMetricGrid: [
+    {
+      id: "campaign-metric-grid",
+      title: "活动指标组",
+      description: "用于静态展示多个活动指标摘要。",
+      metaName: "活动指标组",
+      props: {
+        title: "活动指标",
+        description: "静态展示，真实统计由后续数据源协议承接。",
+        columns: 3,
+        tone: "brand",
+        variant: "card",
+        items: [
+          { id: "metric_1", label: "参与人数", value: "1280", suffix: "人", helperText: "静态展示" },
+          { id: "metric_2", label: "今日上新", value: "24", suffix: "款", helperText: "运营配置" },
+          { id: "metric_3", label: "优惠券", value: "6", suffix: "张", helperText: "权益摘要" },
+        ],
+      },
+      keywords: ["metric", "指标组", "数据", "摘要"],
+    },
+    {
+      id: "plain-metric-grid",
+      title: "简洁指标组",
+      description: "用于轻量展示配置摘要。",
+      metaName: "简洁指标组",
+      props: {
+        title: "配置摘要",
+        description: "用于运营静态说明。",
+        columns: 2,
+        tone: "neutral",
+        variant: "plain",
+        items: [
+          { id: "metric_1", label: "已配置", value: "3", suffix: "项", helperText: "本地展示" },
+          { id: "metric_2", label: "待确认", value: "1", suffix: "项", helperText: "人工维护" },
+        ],
+      },
+      keywords: ["metric", "summary", "摘要", "配置"],
+    },
+  ],
   BasicForm: [
     {
       id: "lead-form",
@@ -2475,6 +2518,7 @@ export const LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES: Record<string, LowcodeE
   BasicStateBlock: { layer: "generic", family: "feedback", recommendedUse: "用于静态空态、加载态、错误态和成功反馈。", boundary: "不承载远程状态流、接口重试、错误码翻译或全局 toast。" },
   BasicProgress: { layer: "generic", family: "feedback", recommendedUse: "用于静态进度、达成率和完成度展示。", boundary: "不承载远程进度、自动刷新、服务端计算、订单状态或审批流。" },
   BasicMetric: { layer: "generic", family: "content", recommendedUse: "用于静态数字指标、配置摘要和轻量数据展示。", boundary: "不承载远程统计、实时刷新、库存计算、销量计算或埋点聚合。" },
+  BasicMetricGrid: { layer: "generic", family: "content", recommendedUse: "用于多项静态数字指标和配置摘要成组展示。", boundary: "不承载远程统计、实时刷新、库存计算、销量计算、人数计算或埋点聚合。" },
   NoticeBar: { layer: "generic", family: "feedback", recommendedUse: "用于公告条和运营提醒。", boundary: "不承载远程公告流、跑马灯、关闭记忆或曝光统计。" },
   BasicModal: { layer: "generic", family: "feedback", recommendedUse: "用于基础弹窗和静态说明。", boundary: "不承载远程内容、表单提交、登录、领券或弹窗内低代码编排。" },
   ActivityHero: { layer: "generic", family: "marketing", recommendedUse: "用于活动首屏、主题氛围和头图信息。", boundary: "不承载活动规则、库存、权益或服务端时间语义。" },
@@ -5094,6 +5138,9 @@ export function createLowcodeDefaultListItem(
   if (propName === "items" && options.componentName === "BasicTimeline") {
     return { id, title: "新时间线节点", description: "请输入节点说明", timeText: "新节点", badgeText: "节点", status: "pending" };
   }
+  if (propName === "items" && options.componentName === "BasicMetricGrid") {
+    return { id, label: "新指标", value: "0", suffix: "", helperText: "请输入说明" };
+  }
   if (propName === "items" && options.componentName === "StoreExpertSection") {
     return { id, typeText: "推荐", title: "新推荐项", subtitle: "请输入推荐说明", metricText: "", desc: "", imageUrl: "", buttonText: "查看" };
   }
@@ -6238,6 +6285,7 @@ function getLowcodeDefaultListFieldNames(
   if (propName === "items" && componentName === "BasicList") return ["id", "title", "description", "badgeText", "metaText"];
   if (propName === "items" && componentName === "BasicAccordion") return ["id", "title", "content", "badgeText"];
   if (propName === "items" && componentName === "BasicTimeline") return ["id", "title", "description", "timeText", "badgeText", "status"];
+  if (propName === "items" && componentName === "BasicMetricGrid") return ["id", "label", "value", "prefix", "suffix", "helperText"];
   if (propName === "items" && componentName === "StoreExpertSection") {
     return ["id", "typeText", "title", "subtitle", "metricText", "desc", "imageUrl", "buttonText"];
   }

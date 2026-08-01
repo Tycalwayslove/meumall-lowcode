@@ -979,7 +979,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
-  log("检查基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础指标、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框通用物料");
+  log("检查基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础指标、基础指标组、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框通用物料");
   const nodeCountBeforeBasicButton = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础按钮");
@@ -1051,6 +1051,17 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("(() => { const items = Array.from(document.querySelectorAll('.phone-frame .mlc-basic-metric')); const latest = items.at(-1); return Boolean(latest && latest.innerText.includes('参与人数') && latest.innerText.includes('1280') && latest.innerText.includes('人') && latest.className.includes('mlc-basic-metric--brand') && latest.className.includes('mlc-basic-metric--card')); })()");
   await page.clickByText(".toolbar button", "源码");
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicMetric\"') && item.value.includes('\"tone\": \"brand\"') && item.value.includes('\"value\": \"1280\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  const nodeCountBeforeBasicMetricGrid = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础指标组");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础指标组')");
+  await page.clickByText(".command-palette-item", "添加物料：基础指标组");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicMetricGrid)}`);
+  await page.waitForExpression("(() => { const items = Array.from(document.querySelectorAll('.phone-frame .mlc-basic-metric-grid')); const latest = items.at(-1); return Boolean(latest && latest.innerText.includes('活动指标') && latest.innerText.includes('参与人数') && latest.innerText.includes('1280') && latest.innerText.includes('今日上新') && latest.className.includes('mlc-basic-metric-grid--brand') && latest.className.includes('mlc-basic-metric-grid--card')); })()");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicMetricGrid\"') && item.value.includes('\"columns\": 3') && item.value.includes('\"label\": \"参与人数\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicInput = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1126,7 +1137,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicCheckbox\"') && item.value.includes('\"defaultChecked\": false') && item.value.includes('\"checkedColor\": \"#0f766e\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础指标、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
+  log("通过：基础按钮、基础链接、基础提示、基础状态块、基础进度条、基础指标、基础指标组、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查基础文本和分割线通用物料");
   const nodeCountBeforeBasicText = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1784,6 +1795,7 @@ async function main() {
       { label: "基础状态块物料存在", expression: "document.body.innerText.includes('基础状态块')" },
       { label: "基础进度条物料存在", expression: "document.body.innerText.includes('基础进度条')" },
       { label: "基础指标物料存在", expression: "document.body.innerText.includes('基础指标')" },
+      { label: "基础指标组物料存在", expression: "document.body.innerText.includes('基础指标组')" },
       { label: "基础输入框物料存在", expression: "document.body.innerText.includes('基础输入框')" },
       { label: "基础多行输入物料存在", expression: "document.body.innerText.includes('基础多行输入')" },
       { label: "基础选择框物料存在", expression: "document.body.innerText.includes('基础选择框')" },
@@ -1824,6 +1836,7 @@ async function main() {
       { label: "默认大促模板包含基础状态块", expression: "(() => { const block = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_state_block\"] .mlc-basic-state-block'); return Boolean(block && block.innerText.includes('基础状态块示例') && block.innerText.includes('不接远程状态协议') && block.innerText.includes('刷新状态') && block.className.includes('mlc-basic-state-block--empty')); })()" },
       { label: "默认大促模板包含基础进度条", expression: "(() => { const progress = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_progress\"] .mlc-basic-progress'); return Boolean(progress && progress.innerText.includes('基础进度条示例') && progress.innerText.includes('不接远程进度协议') && progress.innerText.includes('72%') && progress.className.includes('mlc-basic-progress--success') && progress.querySelector('[role=\"progressbar\"][aria-valuenow=\"72\"]')); })()" },
       { label: "默认大促模板包含基础指标", expression: "(() => { const metric = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_metric\"] .mlc-basic-metric'); return Boolean(metric && metric.innerText.includes('基础指标示例') && metric.innerText.includes('1280') && metric.innerText.includes('不接远程统计协议') && metric.className.includes('mlc-basic-metric--brand')); })()" },
+      { label: "默认大促模板包含基础指标组", expression: "(() => { const grid = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_metric_grid\"] .mlc-basic-metric-grid'); return Boolean(grid && grid.innerText.includes('基础指标组示例') && grid.innerText.includes('参与人数') && grid.innerText.includes('1280') && grid.innerText.includes('今日上新') && grid.className.includes('mlc-basic-metric-grid--brand')); })()" },
       { label: "默认大促模板包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && Array.from(document.querySelectorAll('.phone-frame input')).some((item) => item.getAttribute('placeholder') === '请输入想看的活动品类')" },
       { label: "默认大促模板包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && Array.from(document.querySelectorAll('.phone-frame textarea')).some((item) => item.getAttribute('placeholder') === '请输入活动备注或补充说明')" },
       { label: "默认大促模板包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('.phone-frame select')).some((item) => item.querySelector('option[value=\"women\"]') && item.querySelector('option[value=\"accessories\"]'))" },
@@ -1892,6 +1905,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础状态块", expression: "(() => { const block = document.querySelector('[data-lowcode-node-id=\"summer_basic_state_block\"] .mlc-basic-state-block'); return Boolean(block && block.innerText.includes('基础状态块示例') && block.innerText.includes('刷新状态') && block.className.includes('mlc-basic-state-block--empty')); })()" },
       { label: "编辑器内置 runtime 包含基础进度条", expression: "(() => { const progress = document.querySelector('[data-lowcode-node-id=\"summer_basic_progress\"] .mlc-basic-progress'); return Boolean(progress && progress.innerText.includes('基础进度条示例') && progress.innerText.includes('72%') && progress.querySelector('[role=\"progressbar\"][aria-valuenow=\"72\"]')); })()" },
       { label: "编辑器内置 runtime 包含基础指标", expression: "(() => { const metric = document.querySelector('[data-lowcode-node-id=\"summer_basic_metric\"] .mlc-basic-metric'); return Boolean(metric && metric.innerText.includes('基础指标示例') && metric.innerText.includes('1280') && metric.className.includes('mlc-basic-metric--brand')); })()" },
+      { label: "编辑器内置 runtime 包含基础指标组", expression: "(() => { const grid = document.querySelector('[data-lowcode-node-id=\"summer_basic_metric_grid\"] .mlc-basic-metric-grid'); return Boolean(grid && grid.innerText.includes('基础指标组示例') && grid.innerText.includes('参与人数') && grid.innerText.includes('今日上新') && grid.className.includes('mlc-basic-metric-grid--brand')); })()" },
       { label: "编辑器内置 runtime 包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
       { label: "编辑器内置 runtime 包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "编辑器内置 runtime 包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
@@ -1943,6 +1957,7 @@ async function main() {
       { label: "React H5 基础状态块已渲染", expression: "(() => { const block = document.querySelector('[data-lowcode-node-id=\"node_basic_state_block\"] .mlc-basic-state-block'); return Boolean(block && block.innerText.includes('React H5 基础状态块示例') && block.innerText.includes('记录状态点击') && block.className.includes('mlc-basic-state-block--success')); })()" },
       { label: "React H5 基础进度条已渲染", expression: "(() => { const progress = document.querySelector('[data-lowcode-node-id=\"node_basic_progress\"] .mlc-basic-progress'); return Boolean(progress && progress.innerText.includes('React H5 基础进度条示例') && progress.innerText.includes('72%') && progress.querySelector('[role=\"progressbar\"][aria-valuenow=\"72\"]')); })()" },
       { label: "React H5 基础指标已渲染", expression: "(() => { const metric = document.querySelector('[data-lowcode-node-id=\"node_basic_metric\"] .mlc-basic-metric'); return Boolean(metric && metric.innerText.includes('React H5 基础指标示例') && metric.innerText.includes('1280') && metric.className.includes('mlc-basic-metric--brand')); })()" },
+      { label: "React H5 基础指标组已渲染", expression: "(() => { const grid = document.querySelector('[data-lowcode-node-id=\"node_basic_metric_grid\"] .mlc-basic-metric-grid'); return Boolean(grid && grid.innerText.includes('React H5 基础指标组示例') && grid.innerText.includes('参与人数') && grid.innerText.includes('今日上新') && grid.className.includes('mlc-basic-metric-grid--brand')); })()" },
       { label: "React H5 基础输入框已渲染", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
       { label: "React H5 基础多行输入已渲染", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "React H5 基础选择框已渲染", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
@@ -2039,6 +2054,7 @@ async function main() {
       { label: "React H5 pageId 渲染基础状态块", expression: "document.querySelector('.mlc-basic-state-block') && document.body.innerText.includes('React H5 基础状态块示例')" },
       { label: "React H5 pageId 渲染基础进度条", expression: "document.querySelector('.mlc-basic-progress') && document.body.innerText.includes('React H5 基础进度条示例')" },
       { label: "React H5 pageId 渲染基础指标", expression: "document.querySelector('.mlc-basic-metric') && document.body.innerText.includes('React H5 基础指标示例')" },
+      { label: "React H5 pageId 渲染基础指标组", expression: "document.querySelector('.mlc-basic-metric-grid') && document.body.innerText.includes('React H5 基础指标组示例')" },
       { label: "React H5 pageId 渲染基础列表", expression: "document.querySelector('.mlc-basic-list') && document.body.innerText.includes('React H5 基础列表示例')" },
       { label: "React H5 pageId 渲染基础折叠面板", expression: "document.querySelector('.mlc-basic-accordion') && document.body.innerText.includes('React H5 基础折叠面板示例')" },
       { label: "React H5 pageId 渲染基础视频", expression: "document.querySelector('.mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },

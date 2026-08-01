@@ -16,6 +16,7 @@ import {
   BasicLink,
   BasicList,
   BasicMetric,
+  BasicMetricGrid,
   BasicModal,
   BasicPrice,
   BasicProgress,
@@ -135,6 +136,9 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicMetric", "tone", ["brand", "success", "warning", "danger", "neutral"]],
       ["BasicMetric", "variant", ["card", "plain"]],
       ["BasicMetric", "align", ["left", "center", "right"]],
+      ["BasicMetricGrid", "tone", ["brand", "success", "warning", "danger", "neutral"]],
+      ["BasicMetricGrid", "variant", ["card", "plain"]],
+      ["BasicMetricGrid", "align", ["left", "center", "right"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -214,6 +218,20 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicMetric", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicMetric", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicMetric", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
+      ["BasicMetricGrid", "valueSize", { min: 16, max: 64, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "labelSize", { min: 10, max: 24, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "helperSize", { min: 10, max: 20, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "itemGap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "metricGap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "itemRadius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicMetricGrid", "itemBorderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -334,6 +352,18 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicMetric", "suffixColor"],
       ["BasicMetric", "helperColor"],
       ["BasicMetric", "borderColor"],
+      ["BasicMetricGrid", "wrapperBackgroundColor"],
+      ["BasicMetricGrid", "backgroundColor"],
+      ["BasicMetricGrid", "itemBackgroundColor"],
+      ["BasicMetricGrid", "titleColor"],
+      ["BasicMetricGrid", "descriptionColor"],
+      ["BasicMetricGrid", "labelColor"],
+      ["BasicMetricGrid", "valueColor"],
+      ["BasicMetricGrid", "prefixColor"],
+      ["BasicMetricGrid", "suffixColor"],
+      ["BasicMetricGrid", "helperColor"],
+      ["BasicMetricGrid", "borderColor"],
+      ["BasicMetricGrid", "itemBorderColor"],
       ["BasicLink", "backgroundColor"],
       ["BasicLink", "textColor"],
       ["BasicLink", "subtitleColor"],
@@ -543,6 +573,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicStateBlock, ["MlcStateBlock", "MlcButton"]);
     functionSourceIncludes(BasicProgress, ["MlcProgress"]);
     functionSourceIncludes(BasicMetric, ["MlcMetric"]);
+    functionSourceIncludes(BasicMetricGrid, ["MlcMetric", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -1014,6 +1045,55 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(metric.props.label, "今日上新");
     assert.equal(metric.props.value, "24");
     assert.equal(metric.props.suffix, "款");
+    assert.equal(metric.props.align, "center");
+  });
+
+  it("registers the basic metric grid material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicMetricGrid");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础指标组");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.title, "活动指标");
+    assert.equal(material.manifest.defaultProps.columns, 3);
+    assert.equal(material.manifest.propsSchema.items.type, "array");
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.tone.setter, "select");
+    assert.equal(material.manifest.propsSchema.variant.setter, "select");
+    assert.equal(material.manifest.propsSchema.columns.setter, "number");
+    assert.equal(material.manifest.propsSchema.itemBackgroundColor.setter, "color");
+  });
+
+  it("renders basic metric grid props in React H5", () => {
+    const element = BasicMetricGrid({
+      node: { id: "metric_grid_1", componentName: "BasicMetricGrid", props: {} },
+      props: {
+        title: "活动指标",
+        description: "静态展示",
+        items: [
+          { id: "metric_1", label: "参与人数", value: "1280", suffix: "人", helperText: "静态" },
+          { id: "metric_2", label: "上新", value: "24", suffix: "款", helperText: "配置" },
+        ],
+        tone: "success",
+        variant: "card",
+        columns: 2,
+        align: "center",
+      },
+    });
+
+    assert.equal(element.props.className.includes("mlc-basic-metric-grid--success"), true);
+    assert.equal(element.props.className.includes("mlc-basic-metric-grid--card"), true);
+    const card = element.props.children;
+    assert.equal(card.props.className, "mlc-basic-metric-grid__card");
+    const grid = card.props.children[1];
+    assert.equal(grid.props.className, "mlc-basic-metric-grid__items");
+    assert.equal(grid.props.style.gridTemplateColumns, "repeat(2, minmax(0, 1fr))");
+    assert.equal(grid.props.children.length, 2);
+    const metric = grid.props.children[0].props.children;
+    assert.equal(metric.type.name, "MlcMetric");
+    assert.equal(metric.props.label, "参与人数");
+    assert.equal(metric.props.value, "1280");
+    assert.equal(metric.props.suffix, "人");
     assert.equal(metric.props.align, "center");
   });
 

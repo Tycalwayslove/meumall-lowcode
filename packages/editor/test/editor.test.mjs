@@ -771,6 +771,19 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(metricProfile.family, "content");
     assert.ok(metricProfile.boundary.includes("远程统计"));
 
+    const metricGridProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
+      componentName: "BasicMetricGrid",
+      materialVersion: "1.0.0",
+      title: "基础指标组",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {},
+      defaultProps: {},
+    }));
+    assert.equal(metricGridProfile.layer, "generic");
+    assert.equal(metricGridProfile.family, "content");
+    assert.ok(metricGridProfile.boundary.includes("实时刷新"));
+
     const customProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
       componentName: "PartnerWidget",
       materialVersion: "1.0.0",
@@ -950,6 +963,22 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.deepEqual(createLowcodeMaterialInsertPresets(metric).map((preset) => [preset.id, preset.title]), [
       ["participant-metric", "参与人数"],
       ["new-arrival-metric", "上新数量"],
+    ]);
+
+    const metricGrid = createMaterialManifest({
+      componentName: "BasicMetricGrid",
+      materialVersion: "1.0.0",
+      title: "基础指标组",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        items: { label: "指标项", type: "array", setter: "textarea", defaultValue: [] },
+      },
+      defaultProps: { items: [] },
+    });
+    assert.deepEqual(createLowcodeMaterialInsertPresets(metricGrid).map((preset) => [preset.id, preset.title]), [
+      ["campaign-metric-grid", "活动指标组"],
+      ["plain-metric-grid", "简洁指标组"],
     ]);
 
     const customPresets = createLowcodeMaterialInsertPresets(button, {
@@ -2151,6 +2180,13 @@ describe("@meumall/lowcode-editor readiness", () => {
     });
     assert.deepEqual(carouselFields.map((field) => field.name), ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"]);
 
+    const metricGridFields = createLowcodeListEditorFields("items", {
+      componentName: "BasicMetricGrid",
+      items: [{ id: "metric_1", label: "参与人数", value: "1280", suffix: "人", helperText: "静态" }],
+    });
+    assert.deepEqual(metricGridFields.map((field) => field.name), ["id", "label", "value", "prefix", "suffix", "helperText"]);
+    assert.equal(metricGridFields.find((field) => field.name === "helperText")?.label, "辅助说明");
+
     assert.deepEqual(createLowcodeDefaultListItem("items", {
       componentName: "FloorAnchorNav",
       targetNodeId: "floor_1",
@@ -2160,6 +2196,10 @@ describe("@meumall/lowcode-editor readiness", () => {
       componentName: "BasicCarousel",
       id: "carousel_fixed",
     }), { id: "carousel_fixed", title: "新轮播图", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" });
+    assert.deepEqual(createLowcodeDefaultListItem("items", {
+      componentName: "BasicMetricGrid",
+      id: "metric_fixed",
+    }), { id: "metric_fixed", label: "新指标", value: "0", suffix: "", helperText: "请输入说明" });
     assert.deepEqual(createLowcodeDefaultListItem("coupons", { id: "coupon_fixed" }), {
       id: "coupon_fixed",
       title: "满 199 减 30",

@@ -317,6 +317,8 @@ type BasicStateBlockState = MlcStateBlockState;
 type BasicProgressTone = "brand" | "success" | "warning" | "danger" | "neutral";
 type BasicMetricTone = "brand" | "success" | "warning" | "danger" | "neutral";
 type BasicMetricVariant = "card" | "plain";
+type BasicMetricGridTone = BasicMetricTone;
+type BasicMetricGridVariant = BasicMetricVariant;
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
@@ -474,6 +476,8 @@ const BASIC_METRIC_VARIANT_OPTIONS = [
   { label: "简洁", value: "plain" },
 ];
 
+const BASIC_METRIC_GRID_VARIANT_OPTIONS = BASIC_METRIC_VARIANT_OPTIONS;
+
 const BASIC_ALERT_TONE_PALETTES = {
   info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", content: "#1d4ed8" },
   success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", content: "#0f766e" },
@@ -584,6 +588,12 @@ const BASIC_TIMELINE_FALLBACK_ITEMS: JsonObject[] = [
   { id: "timeline_1", title: "确认页面内容", description: "整理活动信息、素材和转化目标。", timeText: "第 1 步", badgeText: "准备", status: "done" },
   { id: "timeline_2", title: "搭建低代码页面", description: "使用通用物料配置页面结构和重点内容。", timeText: "第 2 步", badgeText: "编辑", status: "active" },
   { id: "timeline_3", title: "预览并提交发布", description: "检查 H5 展示效果和安全 action 后进入发布流程。", timeText: "第 3 步", badgeText: "交付", status: "pending" },
+];
+
+const BASIC_METRIC_GRID_FALLBACK_ITEMS: JsonObject[] = [
+  { id: "metric_1", label: "参与人数", value: "1280", suffix: "人", helperText: "静态展示" },
+  { id: "metric_2", label: "今日上新", value: "24", suffix: "款", helperText: "运营配置" },
+  { id: "metric_3", label: "优惠券", value: "6", suffix: "张", helperText: "权益摘要" },
 ];
 
 export const BasicButton = defineComponent({
@@ -1913,6 +1923,113 @@ export const BasicMetric = defineComponent({
             helperSize: number(runtimeProps.helperSize, 12),
             gap: number(runtimeProps.gap, 6),
           }),
+        ),
+      );
+    };
+  },
+});
+
+export const BasicMetricGrid = defineComponent({
+  name: "BasicMetricGrid",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const tone = option<BasicMetricGridTone>(runtimeProps.tone, ["brand", "success", "warning", "danger", "neutral"], "brand");
+      const variant = option<BasicMetricGridVariant>(runtimeProps.variant, ["card", "plain"], "card");
+      const align = option<BasicInlineAlign>(runtimeProps.align, ["left", "center", "right"], "center");
+      const palette = BASIC_METRIC_TONE_PALETTES[tone];
+      const columns = Math.min(3, Math.max(1, number(runtimeProps.columns, 3)));
+      const items = (list(runtimeProps.items).length ? list(runtimeProps.items) : BASIC_METRIC_GRID_FALLBACK_ITEMS).slice(0, 6);
+      const title = text(runtimeProps.title);
+      const description = text(runtimeProps.description);
+
+      return h(
+        "section",
+        {
+          class: `mlc-material mlc-basic-metric-grid mlc-basic-metric-grid--${tone} mlc-basic-metric-grid--${variant}`,
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-metric-grid__card",
+            style: {
+              display: "grid",
+              gap: `${number(runtimeProps.gap, 12)}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: `${number(runtimeProps.borderWidth, 1)}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}`,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              background: text(runtimeProps.backgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : "none",
+            } satisfies CSSProperties,
+          },
+          [
+            title || description
+              ? h(
+                  "header",
+                  {
+                    class: "mlc-basic-metric-grid__header",
+                    style: { display: "grid", gap: "4px", textAlign: align } satisfies CSSProperties,
+                  },
+                  [
+                    title
+                      ? h(MlcText, { as: "strong", size: 15, weight: 800, style: { color: text(runtimeProps.titleColor, "#111827") } }, () => title)
+                      : null,
+                    description
+                      ? h(MlcText, { as: "span", size: 12, style: { color: text(runtimeProps.descriptionColor, "#64748b") } }, () => description)
+                      : null,
+                  ],
+                )
+              : null,
+            h(
+              "div",
+              {
+                class: "mlc-basic-metric-grid__items",
+                style: {
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                  gap: `${number(runtimeProps.itemGap, 8)}px`,
+                } satisfies CSSProperties,
+              },
+              items.map((item, index) =>
+                h(
+                  "div",
+                  {
+                    key: text(item.id, `metric_${index}`),
+                    class: "mlc-basic-metric-grid__item",
+                    style: {
+                      minWidth: 0,
+                      padding: variant === "card" ? `${number(runtimeProps.itemPadding, 12)}px` : 0,
+                      border: variant === "card" ? `${number(runtimeProps.itemBorderWidth, 1)}px solid ${text(runtimeProps.itemBorderColor, palette.border)}` : "0 solid transparent",
+                      borderRadius: variant === "card" ? `${number(runtimeProps.itemRadius, 10)}px` : 0,
+                      background: variant === "card" ? text(runtimeProps.itemBackgroundColor, palette.background) : "transparent",
+                    } satisfies CSSProperties,
+                  },
+                  h(MlcMetric, {
+                    label: text(item.label, "指标"),
+                    value: text(item.value, "0"),
+                    prefix: text(item.prefix),
+                    suffix: text(item.suffix),
+                    helperText: text(item.helperText),
+                    align,
+                    labelColor: text(runtimeProps.labelColor, palette.label),
+                    valueColor: text(runtimeProps.valueColor, palette.value),
+                    prefixColor: text(runtimeProps.prefixColor, palette.helper),
+                    suffixColor: text(runtimeProps.suffixColor, palette.helper),
+                    helperColor: text(runtimeProps.helperColor, palette.helper),
+                    valueSize: number(runtimeProps.valueSize, 26),
+                    labelSize: number(runtimeProps.labelSize, 12),
+                    helperSize: number(runtimeProps.helperSize, 11),
+                    gap: number(runtimeProps.metricGap, 4),
+                  }),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     };
@@ -6209,6 +6326,86 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
         padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
         gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 6, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
+    }),
+  },
+  {
+    component: BasicMetricGrid,
+    manifest: createMaterialManifest({
+      componentName: "BasicMetricGrid",
+      materialVersion: "0.1.0",
+      title: "基础指标组",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "活动指标",
+        description: "用于展示多个静态数字指标或配置摘要。",
+        items: BASIC_METRIC_GRID_FALLBACK_ITEMS,
+        tone: "brand",
+        variant: "card",
+        columns: 3,
+        align: "center",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#ffffff",
+        itemBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        descriptionColor: "#64748b",
+        labelColor: "#475569",
+        valueColor: "#1d4ed8",
+        prefixColor: "#64748b",
+        suffixColor: "#64748b",
+        helperColor: "#64748b",
+        borderColor: "#e5e7eb",
+        itemBorderColor: "#dbeafe",
+        borderWidth: 1,
+        itemBorderWidth: 1,
+        radius: 12,
+        itemRadius: 10,
+        valueSize: 26,
+        labelSize: 12,
+        helperSize: 11,
+        paddingY: 14,
+        padding: 14,
+        itemPadding: 12,
+        gap: 12,
+        itemGap: 8,
+        metricGap: 4,
+        shadow: true,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "活动指标" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于展示多个静态数字指标或配置摘要。" },
+        items: { label: "指标项", type: "array", setter: "textarea", defaultValue: BASIC_METRIC_GRID_FALLBACK_ITEMS },
+        tone: { label: "语气", type: "string", setter: "select", defaultValue: "brand", options: BASIC_METRIC_TONE_OPTIONS },
+        variant: { label: "指标样式", type: "string", setter: "select", defaultValue: "card", options: BASIC_METRIC_GRID_VARIANT_OPTIONS },
+        columns: { label: "列数", type: "number", setter: "number", defaultValue: 3, ...NUMBER_COLUMNS_1_TO_3_META },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "center", options: INLINE_ALIGN_OPTIONS },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "组背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        itemBackgroundColor: { label: "指标背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        descriptionColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#475569", ...COLOR_SWATCHES_META },
+        valueColor: { label: "数值色", type: "string", setter: "color", defaultValue: "#1d4ed8", ...COLOR_SWATCHES_META },
+        prefixColor: { label: "前缀色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        suffixColor: { label: "后缀色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        helperColor: { label: "指标说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        borderColor: { label: "组边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        itemBorderColor: { label: "指标边框色", type: "string", setter: "color", defaultValue: "#dbeafe", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "组边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        itemBorderWidth: { label: "指标边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "组圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        itemRadius: { label: "指标圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        valueSize: { label: "数值字号", type: "number", setter: "number", defaultValue: 26, ...NUMBER_METRIC_VALUE_SIZE_META },
+        labelSize: { label: "标签字号", type: "number", setter: "number", defaultValue: 12, ...NUMBER_METRIC_LABEL_SIZE_META },
+        helperSize: { label: "指标说明字号", type: "number", setter: "number", defaultValue: 11, ...NUMBER_METRIC_HELPER_SIZE_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "组内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        itemPadding: { label: "指标内边距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "组内容间距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        itemGap: { label: "指标间距", type: "number", setter: "number", defaultValue: 8, ...NUMBER_PIXEL_SIZE_META },
+        metricGap: { label: "指标内容间距", type: "number", setter: "number", defaultValue: 4, ...NUMBER_PIXEL_SIZE_META },
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
       },
     }),
