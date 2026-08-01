@@ -10,6 +10,7 @@ import {
   BasicInput,
   BasicTag,
   BasicText,
+  BasicVideo,
   BrandFeatureSection,
   CouponBundle,
   CouponSection,
@@ -135,6 +136,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicCard", "buttonRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicCarousel", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicCarousel", "interval", { min: 1000, max: 10000, step: 500, unit: "ms" }],
+      ["BasicVideo", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicVideo", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
     ];
@@ -161,6 +164,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTag", "backgroundColor"],
       ["BasicCard", "accentColor"],
       ["BasicCarousel", "indicatorColor"],
+      ["BasicVideo", "accentColor"],
       ["SectionTitle", "accentColor"],
       ["ImageCardGrid", "cardBackgroundColor"],
     ];
@@ -181,6 +185,7 @@ describe("MeuMall H5 material manifests", () => {
     const imageProps = [
       ["BasicImage", "imageUrl"],
       ["BasicCard", "imageUrl"],
+      ["BasicVideo", "posterUrl"],
       ["BrandFeatureSection", "coverImageUrl"],
       ["LiveEntry", "coverImageUrl"],
     ];
@@ -284,12 +289,27 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicTag, ["MlcTag"]);
     functionSourceIncludes(BasicCard, ["MlcImage", "MlcTag", "MlcText", "MlcButton"]);
     functionSourceIncludes(BasicCarousel, ["MlcImage", "MlcTag", "MlcText"]);
+    functionSourceIncludes(BasicVideo, ["MlcImage", "MlcTag", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
     assert.equal(flashSaleTypes.has("MlcText"), true);
     assert.equal(flashSaleTypes.has("MlcPrice"), true);
     functionSourceIncludes(LeadFormBlock, ["MlcInput", "MlcTextarea", "MlcSwitch", "MlcStepper", "MlcButton", "MlcText"]);
+  });
+
+  it("registers the basic video material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicVideo");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础视频");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.controls, true);
+    assert.equal(material.manifest.defaultProps.muted, true);
+    assert.equal(material.manifest.propsSchema.videoUrl.setter, "input");
+    assert.equal(material.manifest.propsSchema.posterUrl.setter, "image");
+    assert.equal(material.manifest.propsSchema.autoPlay.setter, "switch");
+    assert.equal(material.manifest.events?.[0]?.name, "onPlay");
   });
 
   it("registers the activity rule modal material", () => {

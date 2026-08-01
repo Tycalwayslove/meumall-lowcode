@@ -920,7 +920,18 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicCarousel\"') && item.value.includes('\"indicator\": \"dots\"') && item.value.includes('\"autoPlay\": true'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：基础图片、基础标签、基础图文卡片和基础图片轮播可从快捷命令添加并在 Vue H5 画布渲染");
+  const nodeCountBeforeBasicVideo = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础视频");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础视频')");
+  await page.clickByText(".command-palette-item", "添加物料：基础视频");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicVideo)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-video video') && document.body.innerText.includes('基础视频')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicVideo\"') && item.value.includes('\"posterUrl\"') && item.value.includes('\"controls\": true'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：基础图片、基础标签、基础图文卡片、基础图片轮播和基础视频可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查留资表单通用物料");
   const nodeCountBeforeLeadForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1368,6 +1379,7 @@ async function main() {
       { label: "基础图片物料存在", expression: "document.body.innerText.includes('基础图片')" },
       { label: "基础标签物料存在", expression: "document.body.innerText.includes('基础标签')" },
       { label: "基础图文卡片物料存在", expression: "document.body.innerText.includes('基础图文卡片')" },
+      { label: "基础视频物料存在", expression: "document.body.innerText.includes('基础视频')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
@@ -1382,6 +1394,7 @@ async function main() {
       { label: "默认大促模板包含基础图片", expression: "document.querySelector('.phone-frame .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "默认大促模板包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "默认大促模板包含基础图文卡片", expression: "document.querySelector('.phone-frame .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "默认大促模板包含基础视频", expression: "document.querySelector('.phone-frame .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "默认大促模板包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "默认大促模板包含间距块", expression: "document.querySelector('.phone-frame .mlc-spacer-block')" },
@@ -1425,6 +1438,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础图片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "编辑器内置 runtime 包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "编辑器内置 runtime 包含基础图文卡片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "编辑器内置 runtime 包含基础视频", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('夏日穿搭视频')" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "编辑器内置 runtime 包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "编辑器内置 runtime 包含间距块", expression: "document.querySelector('.mlc-spacer-block')" },
@@ -1452,6 +1466,7 @@ async function main() {
       { label: "React H5 基础图片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "React H5 基础标签已渲染", expression: "document.body.innerText.includes('基础标签示例')" },
       { label: "React H5 基础图文卡片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-card') && document.body.innerText.includes('基础图文卡片示例') && document.body.innerText.includes('周末轻旅行穿搭')" },
+      { label: "React H5 基础视频已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "React H5 倒计时已渲染", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
@@ -1517,6 +1532,7 @@ async function main() {
       { label: "React H5 pageId 命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('summer-campaign-demo')" },
       { label: "React H5 pageId 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
       { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
+      { label: "React H5 pageId 渲染基础视频", expression: "document.querySelector('.mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
     ]);
 
     await assertPage(page, h5RuntimeReleaseIdUrl, [

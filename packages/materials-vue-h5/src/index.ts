@@ -832,6 +832,141 @@ export const BasicCarousel = defineComponent({
   },
 });
 
+const BASIC_VIDEO_SAMPLE_VIDEO_URL = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+const BASIC_VIDEO_SAMPLE_POSTER_URL = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80";
+
+export const BasicVideo = defineComponent({
+  name: "BasicVideo",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const videoUrl = text(runtimeProps.videoUrl);
+      const posterUrl = text(runtimeProps.posterUrl);
+      const radius = number(runtimeProps.radius, 12);
+      const onPlay = runtimeProps.onPlay;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-video",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            "article",
+            {
+              class: "mlc-basic-video__card",
+              style: {
+                overflow: "hidden",
+                borderRadius: `${radius}px`,
+                background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+                border: `1px solid ${text(runtimeProps.borderColor, "#e5e7eb")}`,
+                boxShadow: boolean(runtimeProps.shadow, true) ? "0 12px 30px rgba(15, 23, 42, 0.12)" : undefined,
+              } satisfies CSSProperties,
+            },
+            [
+              videoUrl
+                ? h("video", {
+                    class: "mlc-basic-video__media",
+                    src: videoUrl,
+                    poster: posterUrl || undefined,
+                    controls: boolean(runtimeProps.controls, true),
+                    autoplay: boolean(runtimeProps.autoPlay),
+                    muted: boolean(runtimeProps.muted, true),
+                    loop: boolean(runtimeProps.loop),
+                    playsinline: boolean(runtimeProps.playsInline, true),
+                    preload: "metadata",
+                    style: {
+                      display: "block",
+                      width: "100%",
+                      aspectRatio: text(runtimeProps.ratio, "16 / 9"),
+                      objectFit: "cover",
+                      background: text(runtimeProps.mediaBackgroundColor, "#0f172a"),
+                    } satisfies CSSProperties,
+                    onPlay: () => {
+                      if (typeof onPlay === "function") onPlay();
+                    },
+                  })
+                : h(
+                    "div",
+                    {
+                      style: {
+                        background: text(runtimeProps.mediaBackgroundColor, "#0f172a"),
+                      } satisfies CSSProperties,
+                    },
+                    [
+                      h(MlcImage, {
+                        src: posterUrl,
+                        alt: text(runtimeProps.title, "基础视频"),
+                        ratio: text(runtimeProps.ratio, "16 / 9"),
+                        fit: "cover",
+                        radius: 0,
+                        fallback: "请配置视频地址",
+                      }),
+                    ],
+                  ),
+              h(
+                "div",
+                {
+                  class: "mlc-basic-video__body",
+                  style: {
+                    display: "grid",
+                    gap: "8px",
+                    padding: `${number(runtimeProps.contentPadding, 12)}px`,
+                  } satisfies CSSProperties,
+                },
+                [
+                  text(runtimeProps.badgeText)
+                    ? h(
+                        MlcTag,
+                        {
+                          radius: 999,
+                          style: {
+                            width: "fit-content",
+                            color: text(runtimeProps.accentColor, "#0f766e"),
+                            background: text(runtimeProps.badgeBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+                          } satisfies CSSProperties,
+                        },
+                        () => text(runtimeProps.badgeText),
+                      )
+                    : null,
+                  h(
+                    MlcText,
+                    {
+                      as: "strong",
+                      size: number(runtimeProps.titleSize, 18),
+                      weight: 900,
+                      lineHeight: 1.3,
+                      style: { color: text(runtimeProps.titleColor, "#111827") } satisfies CSSProperties,
+                    },
+                    () => text(runtimeProps.title, "基础视频"),
+                  ),
+                  text(runtimeProps.description)
+                    ? h(
+                        MlcText,
+                        {
+                          as: "p",
+                          size: 13,
+                          lineHeight: 1.55,
+                          style: { color: text(runtimeProps.textColor, "#64748b") } satisfies CSSProperties,
+                        },
+                        () => text(runtimeProps.description),
+                      )
+                    : null,
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const SectionTitle = defineComponent({
   name: "SectionTitle",
   props: materialPropOptions,
@@ -3163,6 +3298,69 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
       },
       events: [{ name: "onItemClick", title: "点击轮播图" }],
+    }),
+  },
+  {
+    component: BasicVideo as VueH5MaterialComponent,
+    manifest: createMaterialManifest({
+      componentName: "BasicVideo",
+      materialVersion: "0.1.0",
+      title: "基础视频",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        videoUrl: BASIC_VIDEO_SAMPLE_VIDEO_URL,
+        posterUrl: BASIC_VIDEO_SAMPLE_POSTER_URL,
+        badgeText: "VIDEO",
+        title: "基础视频",
+        description: "用于展示短视频、品牌宣传片或导购内容，后续可由素材中心注入视频地址。",
+        ratio: "16 / 9",
+        radius: 12,
+        controls: true,
+        autoPlay: false,
+        muted: true,
+        loop: false,
+        playsInline: true,
+        wrapperBackgroundColor: "transparent",
+        cardBackgroundColor: "#ffffff",
+        mediaBackgroundColor: "#0f172a",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        borderColor: "#e5e7eb",
+        titleSize: 18,
+        paddingY: 12,
+        contentPadding: 12,
+        shadow: true,
+      },
+      propsSchema: {
+        videoUrl: { label: "视频地址", type: "string", setter: "input", defaultValue: BASIC_VIDEO_SAMPLE_VIDEO_URL },
+        posterUrl: { label: "封面图", type: "string", setter: "image", defaultValue: BASIC_VIDEO_SAMPLE_POSTER_URL },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "VIDEO" },
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "基础视频" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于展示短视频、品牌宣传片或导购内容，后续可由素材中心注入视频地址。" },
+        ratio: { label: "视频比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        controls: { label: "播放控件", type: "boolean", setter: "switch", defaultValue: true },
+        autoPlay: { label: "自动播放", type: "boolean", setter: "switch", defaultValue: false },
+        muted: { label: "静音", type: "boolean", setter: "switch", defaultValue: true },
+        loop: { label: "循环播放", type: "boolean", setter: "switch", defaultValue: false },
+        playsInline: { label: "行内播放", type: "boolean", setter: "switch", defaultValue: true },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        mediaBackgroundColor: { label: "视频底色", type: "string", setter: "color", defaultValue: "#0f172a", ...COLOR_SWATCHES_META },
+        badgeBackgroundColor: { label: "角标背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 18, ...NUMBER_FONT_SIZE_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        contentPadding: { label: "内容内边距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
+      events: [{ name: "onPlay", title: "开始播放" }],
     }),
   },
   {

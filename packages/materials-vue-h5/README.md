@@ -35,6 +35,7 @@ Currently migrated materials:
 - `BasicImage`
 - `BasicTag`
 - `BasicCarousel`
+- `BasicVideo`
 - `ActionButton`
 - `ImageBanner`
 - `SectionTitle`
@@ -68,6 +69,7 @@ Current materials:
 - `BasicTag`
 - `BasicCard`
 - `BasicCarousel`
+- `BasicVideo`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`
