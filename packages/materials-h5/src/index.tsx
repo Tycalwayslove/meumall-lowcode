@@ -64,6 +64,8 @@ function createBasicFormHiddenField(
   value: string | number | boolean,
   type: BasicFormFieldType,
   disabled: boolean,
+  required = false,
+  requiredMessage = "",
 ): React.ReactElement {
   return (
     <input
@@ -74,32 +76,59 @@ function createBasicFormHiddenField(
       data-mlc-form-field="true"
       data-mlc-form-field-label={label}
       data-mlc-form-field-type={type}
+      data-mlc-form-field-required={required ? "true" : "false"}
+      data-mlc-form-field-required-message={requiredMessage}
     />
   );
+}
+
+function isBasicFormFieldEmpty(value: string, type: BasicFormFieldType): boolean {
+  if (type === "boolean") return value !== "true";
+  if (type === "number") return value.trim() === "" || !Number.isFinite(Number(value));
+  return value.trim() === "";
 }
 
 function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode, childCount: number): JsonObject {
   const values: JsonObject = {};
   const fieldLabels: JsonObject = {};
   const fieldTypes: JsonObject = {};
+  const errors: JsonObject = {};
   const fields = Array.from(form.querySelectorAll<HTMLInputElement>("[data-mlc-form-field='true']"));
 
   for (const field of fields) {
     if (field.disabled || !field.name) continue;
     const fieldType = option<BasicFormFieldType>(field.dataset.mlcFormFieldType, ["string", "number", "boolean"], "string");
+    const fieldLabel = field.dataset.mlcFormFieldLabel ?? field.name;
     values[field.name] = parseBasicFormFieldValue(field.value, fieldType);
-    fieldLabels[field.name] = field.dataset.mlcFormFieldLabel ?? field.name;
+    fieldLabels[field.name] = fieldLabel;
     fieldTypes[field.name] = fieldType;
+    if (field.dataset.mlcFormFieldRequired === "true" && isBasicFormFieldEmpty(field.value, fieldType)) {
+      errors[field.name] = field.dataset.mlcFormFieldRequiredMessage || `请填写${fieldLabel}`;
+    }
   }
+  const errorCount = Object.keys(errors).length;
 
   return {
     formId: node.id,
     childCount,
     fieldCount: Object.keys(values).length,
+    valid: errorCount === 0,
+    errorCount,
+    errors,
     values,
     fieldLabels,
     fieldTypes,
   };
+}
+
+function getBasicFormErrorMessages(payload: JsonObject): string[] {
+  const errors = payload.errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return [];
+  return Object.values(errors).filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
+function getBasicFormRequiredMessage(props: Record<string, unknown>, label: string, verb: "填写" | "选择" | "确认"): string {
+  return text(props.requiredMessage, `请${verb}${label || "该字段"}`);
 }
 
 function ruleList(value: unknown): Array<Record<string, unknown> | string> {
@@ -586,6 +615,7 @@ export function BasicModal({ props }: MaterialProps) {
 
 export function BasicForm({ props, node, children }: MaterialProps) {
   const [submitted, setSubmitted] = React.useState(false);
+  const [validationMessages, setValidationMessages] = React.useState<string[]>([]);
   const title = text(props.title, "基础表单");
   const description = text(props.description);
   const handler = props.onSubmit;
@@ -609,9 +639,13 @@ export function BasicForm({ props, node, children }: MaterialProps) {
         onSubmit={(event) => {
           event.preventDefault();
           if (disabled || loading) return;
-          setSubmitted(true);
+          const payload = createBasicFormSubmitPayload(event.currentTarget, node, React.Children.count(children));
+          const messages = getBasicFormErrorMessages(payload);
+          setValidationMessages(messages);
+          setSubmitted(messages.length === 0);
+          if (messages.length > 0) return;
           if (typeof handler === "function") {
-            handler(createBasicFormSubmitPayload(event.currentTarget, node, React.Children.count(children)));
+            handler(payload);
           }
         }}
         style={{
@@ -661,6 +695,28 @@ export function BasicForm({ props, node, children }: MaterialProps) {
             {text(props.emptyText, "向表单中添加输入物料")}
           </MlcText>
         )}
+        {validationMessages.length ? (
+          <div
+            className="mlc-basic-form__errors"
+            role="alert"
+            style={{
+              display: "grid",
+              gap: 4,
+              padding: "10px 12px",
+              border: `1px solid ${text(props.errorBorderColor, "#fecaca")}`,
+              borderRadius: 8,
+              color: text(props.errorColor, "#b91c1c"),
+              background: text(props.errorBackgroundColor, "#fef2f2"),
+              fontSize: 12,
+              lineHeight: 1.5,
+            }}
+          >
+            <strong>{text(props.validationErrorText, "请完善必填项后再提交")}</strong>
+            {validationMessages.map((message) => (
+              <span key={message}>{message}</span>
+            ))}
+          </div>
+        ) : null}
         <MlcButton
           type="submit"
           block
@@ -1339,7 +1395,15 @@ export function BasicInput({ props, node }: MaterialProps) {
           background: text(props.inputBackgroundColor, "#ffffff"),
         }}
       />
-      {createBasicFormHiddenField(node, label, value, inputType === "number" ? "number" : "string", boolean(props.disabled))}
+      {createBasicFormHiddenField(
+        node,
+        label,
+        value,
+        inputType === "number" ? "number" : "string",
+        boolean(props.disabled),
+        boolean(props.required),
+        getBasicFormRequiredMessage(props, label, "填写"),
+      )}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1391,7 +1455,7 @@ export function BasicTextarea({ props, node }: MaterialProps) {
           background: text(props.textareaBackgroundColor, "#ffffff"),
         }}
       />
-      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "填写"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1448,7 +1512,7 @@ export function BasicSelect({ props, node }: MaterialProps) {
           background: text(props.selectBackgroundColor, "#ffffff"),
         }}
       />
-      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "选择"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1503,7 +1567,7 @@ export function BasicRadioGroup({ props, node }: MaterialProps) {
           if (typeof handler === "function") handler(nextValue);
         }}
       />
-      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "选择"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1556,7 +1620,7 @@ export function BasicStepper({ props, node }: MaterialProps) {
           if (typeof handler === "function") handler(nextValue);
         }}
       />
-      {createBasicFormHiddenField(node, label, value, "number", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, value, "number", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "填写"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1608,7 +1672,7 @@ export function BasicSwitch({ props, node }: MaterialProps) {
           </span>
         }
       />
-      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "确认"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", marginTop: 6, color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1654,7 +1718,7 @@ export function BasicCheckbox({ props, node }: MaterialProps) {
           </MlcText>
         }
       />
-      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled))}
+      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled), boolean(props.required), getBasicFormRequiredMessage(props, label, "确认"))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", margin: "6px 0 0 32px", color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -4055,6 +4119,10 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         buttonColor: "#111827",
         buttonTextColor: "#ffffff",
         successColor: "#0f766e",
+        validationErrorText: "请完善必填项后再提交",
+        errorColor: "#b91c1c",
+        errorBackgroundColor: "#fef2f2",
+        errorBorderColor: "#fecaca",
         borderColor: "#e5e7eb",
         borderWidth: 1,
         radius: 12,
@@ -4080,6 +4148,10 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         buttonColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
         buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
         successColor: { label: "成功文案色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        validationErrorText: { label: "校验错误文案", type: "string", setter: "input", defaultValue: "请完善必填项后再提交" },
+        errorColor: { label: "错误文字色", type: "string", setter: "color", defaultValue: "#b91c1c", ...COLOR_SWATCHES_META },
+        errorBackgroundColor: { label: "错误背景色", type: "string", setter: "color", defaultValue: "#fef2f2", ...COLOR_SWATCHES_META },
+        errorBorderColor: { label: "错误边框色", type: "string", setter: "color", defaultValue: "#fecaca", ...COLOR_SWATCHES_META },
         borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
         borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
@@ -4402,6 +4474,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: "用于收集单行文本，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         type: "text",
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         inputBackgroundColor: "#ffffff",
@@ -4418,6 +4492,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
         type: { label: "输入类型", type: "string", setter: "select", defaultValue: "text", options: BASIC_INPUT_TYPE_OPTIONS },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         inputBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
@@ -4445,6 +4521,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         rows: 3,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         textareaBackgroundColor: "#ffffff",
@@ -4461,6 +4539,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "textarea", defaultValue: "" },
         rows: { label: "显示行数", type: "number", setter: "number", defaultValue: 3, ...NUMBER_TEXTAREA_ROWS_META },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         textareaBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
@@ -4488,6 +4568,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: "用于静态选项单选，远程业务字典请通过后续数据源能力接入。",
         defaultValue: "",
         options: BASIC_SELECT_FALLBACK_OPTIONS,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         selectBackgroundColor: "#ffffff",
@@ -4504,6 +4586,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于静态选项单选，远程业务字典请通过后续数据源能力接入。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
         options: { label: "选项列表", type: "array", setter: "textarea", defaultValue: BASIC_SELECT_FALLBACK_OPTIONS },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         selectBackgroundColor: { label: "选择框背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
@@ -4530,6 +4614,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: "用于少量静态选项单选，远程业务字典请通过后续数据源能力接入。",
         defaultValue: "women",
         options: BASIC_SELECT_FALLBACK_OPTIONS,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         optionBackgroundColor: "#ffffff",
@@ -4546,6 +4632,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于少量静态选项单选，远程业务字典请通过后续数据源能力接入。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "women" },
         options: { label: "选项列表", type: "array", setter: "textarea", defaultValue: BASIC_SELECT_FALLBACK_OPTIONS },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         optionBackgroundColor: { label: "选项背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
@@ -4575,6 +4663,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         min: 0,
         max: 10,
         step: 1,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         buttonBackgroundColor: "#ffffff",
@@ -4593,6 +4683,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         min: { label: "最小值", type: "number", setter: "number", defaultValue: 0, ...NUMBER_STEPPER_VALUE_META },
         max: { label: "最大值", type: "number", setter: "number", defaultValue: 10, ...NUMBER_STEPPER_VALUE_META },
         step: { label: "步长", type: "number", setter: "number", defaultValue: 1, ...NUMBER_STEPPER_STEP_META },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         buttonBackgroundColor: { label: "按钮背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
@@ -4621,6 +4713,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         uncheckedText: "已关闭",
         helperText: "用于布尔状态切换，放入基础表单后可随提交携带当前值。",
         defaultChecked: true,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         labelColor: "#111827",
@@ -4637,6 +4731,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         uncheckedText: { label: "关闭文案", type: "string", setter: "input", defaultValue: "已关闭" },
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于布尔状态切换，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认开启", type: "boolean", setter: "switch", defaultValue: true },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
@@ -4662,6 +4758,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         label: "基础复选框",
         helperText: "用于勾选状态展示，放入基础表单后可随提交携带当前值。",
         defaultChecked: false,
+        required: false,
+        requiredMessage: "",
         disabled: false,
         wrapperBackgroundColor: "transparent",
         labelColor: "#111827",
@@ -4676,6 +4774,8 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础复选框" },
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于勾选状态展示，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认勾选", type: "boolean", setter: "switch", defaultValue: false },
+        required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+        requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },

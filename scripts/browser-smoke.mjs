@@ -768,6 +768,25 @@ async function assertBasicFormSubmitValues(page) {
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
     const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
+    if (!form || !input) return false;
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    valueSetter?.call(input, '');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  })()`);
+  await page.wait(100);
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
+    const submit = Array.from(form?.querySelectorAll('button') ?? []).find((button) => button.innerText.includes('提交表单'));
+    if (!submit) return false;
+    submit.click();
+    return true;
+  })()`);
+  await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form__errors[role=\"alert\"]') && document.body.innerText.includes('请完善必填项后再提交') && document.body.innerText.includes('请填写表单内输入框') && document.body.innerText.includes('请确认同意接收活动通知') && !document.body.innerText.includes('表单值：')");
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
+    const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
     const checkbox = form?.querySelector('.mlc-basic-checkbox [role="checkbox"]');
     if (!form || !input || !checkbox) return false;
     const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
@@ -792,6 +811,25 @@ async function assertBasicFormSubmitValues(page) {
 async function assertReactRuntimeBasicFormSubmitValues(page) {
   log("检查 React H5 基础表单字段值提交");
   await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form')");
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
+    const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
+    if (!form || !input) return false;
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    valueSetter?.call(input, '');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  })()`);
+  await page.wait(100);
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
+    const submit = Array.from(form?.querySelectorAll('button') ?? []).find((button) => button.innerText.includes('提交表单'));
+    if (!submit) return false;
+    submit.click();
+    return true;
+  })()`);
+  await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form__errors[role=\"alert\"]') && document.body.innerText.includes('请完善必填项后再提交') && document.body.innerText.includes('请填写表单内输入框') && document.body.innerText.includes('请确认同意接收活动通知') && !document.body.innerText.includes('模拟埋点：basic_form_submit')");
   await page.evaluate(`(() => {
     const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
     const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');

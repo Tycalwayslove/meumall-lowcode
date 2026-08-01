@@ -1057,6 +1057,29 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 
+  it("keeps basic form required validation props aligned", () => {
+    const components = ["BasicInput", "BasicTextarea", "BasicSelect", "BasicRadioGroup", "BasicStepper", "BasicSwitch", "BasicCheckbox"];
+
+    for (const componentName of components) {
+      const reactMaterial = findMaterial(h5Materials, componentName);
+      const vueMaterial = findMaterial(h5VueMaterials, componentName);
+
+      assert.equal(reactMaterial?.manifest.defaultProps.required, false, `${componentName} React required default`);
+      assert.equal(vueMaterial?.manifest.defaultProps.required, false, `${componentName} Vue required default`);
+      assert.equal(reactMaterial?.manifest.propsSchema.required.setter, "switch", `${componentName} React required setter`);
+      assert.equal(vueMaterial?.manifest.propsSchema.required.setter, "switch", `${componentName} Vue required setter`);
+      assert.equal(reactMaterial?.manifest.propsSchema.requiredMessage.setter, "input", `${componentName} React requiredMessage setter`);
+      assert.equal(vueMaterial?.manifest.propsSchema.requiredMessage.setter, "input", `${componentName} Vue requiredMessage setter`);
+    }
+
+    const reactForm = findMaterial(h5Materials, "BasicForm");
+    const vueForm = findMaterial(h5VueMaterials, "BasicForm");
+    assert.equal(reactForm?.manifest.propsSchema.validationErrorText.setter, "input");
+    assert.equal(vueForm?.manifest.propsSchema.validationErrorText.setter, "input");
+    assert.equal(reactForm?.manifest.propsSchema.errorColor.setter, "color");
+    assert.equal(vueForm?.manifest.propsSchema.errorColor.setter, "color");
+  });
+
   it("registers the basic text material", () => {
     const material = h5Materials.find((item) => item.manifest.componentName === "BasicText");
 
