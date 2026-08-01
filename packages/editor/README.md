@@ -225,11 +225,11 @@ These helpers do not read users, create approval instances, call Java approval o
 
 The prop editor model helpers keep inspector field behavior reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
 
-`getLowcodePropEditorControl(propSchema)` returns the recommended control model: `text`, `number`, `color`, `switch`, `textarea`, `json`, or `list`. `isLowcodeListPropEditor` and `isLowcodeStructuredPropEditor` expose the common list and JSON editor predicates.
+`getLowcodePropEditorControl(propSchema)` returns the recommended control model: `text`, `number`, `color`, `switch`, `select`, `textarea`, `json`, or `list`. `isLowcodeListPropEditor` and `isLowcodeStructuredPropEditor` expose the common list and JSON editor predicates.
 
 `createLowcodeListEditorFields(propName, options)` derives stable list-item field metadata from the prop name, component name, and current list items. `createLowcodeDefaultListItem(propName, options)` creates common starter rows for rule, coupon, navigation, image card, floor anchor, and store/expert list props.
 
-`toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels.
+`toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels. Number values are normalized as real numbers and clamped to optional manifest `min`/`max` bounds when present.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
 

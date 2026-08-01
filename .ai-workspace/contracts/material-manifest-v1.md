@@ -80,6 +80,10 @@ interface LowcodePropSchema {
   required?: boolean;
   defaultValue?: JsonValue;
   options?: Array<{ label: string; value: JsonValue }>;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
   description?: string;
 }
 ```
@@ -144,6 +148,7 @@ interface LowcodeDataSourceSlotManifest {
 - `type` 决定最终写入 Page Schema 的基础值类型。
 - `setter` 决定编辑器推荐控件。
 - `defaultValue` 应与 `type` 保持一致。
+- 对 `number` 类型，`min`、`max`、`step` 和 `unit` 是可选编辑元数据，用于生成范围、步长和单位提示；这些字段不写入 Page Schema 节点 props。
 - 对 `array` 或 `object` 类型，编辑器必须保留 JSON 兜底编辑能力。
 
 ### `defaultProps`
@@ -213,6 +218,7 @@ interface LowcodeValidationResult {
 - 属性面板按 `propsSchema` 渲染控件。
 - `switch` 或 `boolean` 字段必须写入真实 boolean。
 - `select` 字段应按 `options` 渲染选择控件，写回 `options[].value`；历史 schema 中的未知值不得导致属性面板崩溃，运行时仍按物料 fallback 处理。
+- `number` 字段应按 `min/max/step/unit` 渲染范围、步长和单位提示，并在写回时保持真实 number；超出范围的编辑值应夹取到 manifest 声明范围内。
 - `array` 和 `object` 字段必须保留 JSON 兜底编辑。
 - `events` 用于展示动作绑定。
 - `dataSourceSlots` 用于限制数据源绑定入口。
@@ -255,6 +261,7 @@ pnpm test
 - `validateLowcodeMaterialManifest` 校验 manifest。
 - React/Vue H5 manifest `componentName` 列表保持一致。
 - React/Vue H5 同名物料的枚举 props `setter` 和 `options` 语义保持一致。
+- React/Vue H5 同名物料的数值 props `min`、`max`、`step` 和 `unit` 语义保持一致。
 - 新增物料的核心 props、events、dataSourceSlots 有单元测试。
 - 编辑器新增节点时 defaultProps 可正常落入 schema。
 - renderer 遇到未知物料时显示 fallback。

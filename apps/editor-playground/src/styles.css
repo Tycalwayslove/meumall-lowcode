@@ -2235,6 +2235,41 @@ button:focus-visible {
   height: 38px;
 }
 
+.number-field {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.number-field button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--mlc-editor-border-strong, #cbd5e1);
+  border-radius: var(--mlc-editor-radius-sm, 8px);
+  color: var(--mlc-editor-text, #111827);
+  background: var(--mlc-editor-surface, #ffffff);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.number-field button:hover {
+  border-color: var(--mlc-editor-primary, #2563eb);
+  color: var(--mlc-editor-primary, #2563eb);
+}
+
+.number-field input {
+  min-width: 0;
+}
+
+.number-field em {
+  color: var(--mlc-editor-text-muted, #64748b);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .field textarea {
   resize: vertical;
   min-height: 90px;

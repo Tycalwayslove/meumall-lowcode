@@ -3549,8 +3549,12 @@ export function toLowcodePropInputBoolean(value: unknown): boolean {
 
 export function normalizeLowcodePropInputValue(propSchema: LowcodePropSchema, value: unknown): JsonValue {
   if (propSchema.type === "number") {
-    const nextValue = Number(value);
-    return Number.isFinite(nextValue) ? nextValue : 0;
+    const fallback = typeof propSchema.defaultValue === "number" ? propSchema.defaultValue : 0;
+    const rawValue = Number(value);
+    const min = typeof propSchema.min === "number" ? propSchema.min : Number.NEGATIVE_INFINITY;
+    const max = typeof propSchema.max === "number" ? propSchema.max : Number.POSITIVE_INFINITY;
+    const nextValue = Number.isFinite(rawValue) ? rawValue : fallback;
+    return Math.min(max, Math.max(min, nextValue));
   }
   if (propSchema.type === "boolean") {
     return toLowcodePropInputBoolean(value);

@@ -496,6 +496,19 @@ class CdpPage {
     if (!selected) fail(`未找到标签为 ${label} 的下拉字段`);
   }
 
+  async clickNumberStepperByLabel(label, action) {
+    const ariaPrefix = action === "decrease" ? "减少" : "增加";
+    const expression = `(() => {
+      const field = Array.from(document.querySelectorAll('.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
+      const button = field?.querySelector(\`.number-field button[aria-label^="${ariaPrefix}"]\`);
+      if (!button) return false;
+      button.click();
+      return true;
+    })()`;
+    const clicked = await this.evaluate(expression);
+    if (!clicked) fail(`未找到标签为 ${label} 的数值步进按钮`);
+  }
+
   async setSwitchByText(text, checked) {
     const expression = `(() => {
       const field = Array.from(document.querySelectorAll('label.switch-field')).find((item) => (item.innerText || '').includes(${jsString(text)}));
@@ -736,8 +749,10 @@ async function assertEditorWorkflow(page) {
   await page.evaluate("Array.from(document.querySelectorAll('.property-group.collapsed .property-group-head')).forEach((button) => button.click())");
   await page.waitForExpression("Array.from(document.querySelectorAll('.inspector .field')).some((item) => item.innerText.includes('样式') && item.querySelector('select option[value=\"ghost\"]'))");
   await page.selectFieldByLabel("样式", "ghost");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.inspector .field')).some((item) => item.innerText.includes('圆角') && item.innerText.includes('px') && item.querySelector('.number-field button[aria-label^=\"增加\"]'))");
+  await page.clickNumberStepperByLabel("圆角", "increase");
   await page.clickByText(".toolbar button", "源码");
-  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicButton\"') && item.value.includes('\"variant\": \"ghost\"'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicButton\"') && item.value.includes('\"variant\": \"ghost\"') && item.value.includes('\"radius\": 9'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicInput = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");

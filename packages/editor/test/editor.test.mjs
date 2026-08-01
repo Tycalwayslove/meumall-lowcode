@@ -1480,6 +1480,7 @@ describe("@meumall/lowcode-editor readiness", () => {
   it("creates reusable property editor field models and input values", () => {
     const textSchema = { label: "标题", type: "string", setter: "input", defaultValue: "" };
     const numberSchema = { label: "列数", type: "number", setter: "number", defaultValue: 2 };
+    const constrainedNumberSchema = { label: "圆角", type: "number", setter: "number", defaultValue: 8, min: 0, max: 48, step: 1, unit: "px" };
     const colorSchema = { label: "颜色", type: "string", setter: "color", defaultValue: "#111827" };
     const switchSchema = { label: "开启", type: "boolean", setter: "switch", defaultValue: false };
     const selectSchema = {
@@ -1537,7 +1538,10 @@ describe("@meumall/lowcode-editor readiness", () => {
     });
 
     assert.equal(normalizeLowcodePropInputValue(numberSchema, "3"), 3);
-    assert.equal(normalizeLowcodePropInputValue(numberSchema, "abc"), 0);
+    assert.equal(normalizeLowcodePropInputValue(numberSchema, "abc"), 2);
+    assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "-1"), 0);
+    assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "80"), 48);
+    assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "abc"), 8);
     assert.equal(normalizeLowcodePropInputValue(switchSchema, "false"), false);
     assert.deepEqual(normalizeLowcodePropInputValue(listSchema, "[{\"id\":\"item_1\"}]"), [{ id: "item_1" }]);
     assert.equal(normalizeLowcodePropInputValue(jsonSchema, "{bad json"), "{bad json");

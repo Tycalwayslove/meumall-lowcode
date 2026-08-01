@@ -42,6 +42,15 @@ function optionValues(propSchema) {
   return (propSchema.options ?? []).map((option) => option.value);
 }
 
+function numberMeta(propSchema) {
+  return {
+    min: propSchema?.min,
+    max: propSchema?.max,
+    step: propSchema?.step,
+    unit: propSchema?.unit,
+  };
+}
+
 function elementTypeNames(element, names = new Set()) {
   if (!element || typeof element !== "object") return names;
 
@@ -105,6 +114,30 @@ describe("MeuMall H5 material manifests", () => {
       assert.equal(vueProp?.setter, "select", `${componentName}.${propName} should use select in Vue manifest`);
       assert.deepEqual(optionValues(reactProp), values);
       assert.deepEqual(optionValues(vueProp), values);
+    }
+  });
+
+  it("keeps generic material number prop constraints aligned", () => {
+    const numberProps = [
+      ["SectionContainer", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["SectionContainer", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
+      ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicTag", "fontWeight", { min: 100, max: 900, step: 100, unit: undefined }],
+      ["BasicCard", "buttonRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
+    ];
+
+    for (const [componentName, propName, meta] of numberProps) {
+      const reactProp = findMaterial(h5Materials, componentName)?.manifest.propsSchema[propName];
+      const vueProp = findMaterial(h5VueMaterials, componentName)?.manifest.propsSchema[propName];
+
+      assert.equal(reactProp?.setter, "number", `${componentName}.${propName} should use number in React manifest`);
+      assert.equal(vueProp?.setter, "number", `${componentName}.${propName} should use number in Vue manifest`);
+      assert.deepEqual(numberMeta(reactProp), meta);
+      assert.deepEqual(numberMeta(vueProp), meta);
     }
   });
 

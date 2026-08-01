@@ -118,6 +118,38 @@ function asBoolean(value: unknown): boolean {
   return toLowcodePropInputBoolean(value);
 }
 
+function numberStep(propSchema: LowcodePropSchema): number {
+  return typeof propSchema.step === "number" && propSchema.step > 0 ? propSchema.step : 1;
+}
+
+function numberMin(propSchema: LowcodePropSchema): number | undefined {
+  return typeof propSchema.min === "number" ? propSchema.min : undefined;
+}
+
+function numberMax(propSchema: LowcodePropSchema): number | undefined {
+  return typeof propSchema.max === "number" ? propSchema.max : undefined;
+}
+
+function roundNumber(value: number, step: number): number {
+  const decimals = String(step).split(".")[1]?.length ?? 0;
+  return Number(value.toFixed(Math.min(6, decimals)));
+}
+
+function clampNumber(propSchema: LowcodePropSchema, value: number): number {
+  let nextValue = value;
+  if (typeof propSchema.min === "number") nextValue = Math.max(propSchema.min, nextValue);
+  if (typeof propSchema.max === "number") nextValue = Math.min(propSchema.max, nextValue);
+  return nextValue;
+}
+
+function adjustNumber(propName: string, propSchema: LowcodePropSchema, offset: -1 | 1): void {
+  const currentValue = Number(props.selectedProps[propName] ?? propSchema.defaultValue ?? 0);
+  const baseValue = Number.isFinite(currentValue) ? currentValue : typeof propSchema.defaultValue === "number" ? propSchema.defaultValue : 0;
+  const step = numberStep(propSchema);
+  const nextValue = clampNumber(propSchema, roundNumber(baseValue + step * offset, step));
+  emit("update-prop", propName, propSchema, nextValue);
+}
+
 function isActiveListAssetTarget(propName: string, itemIndex: number, fieldName: string): boolean {
   const target = props.listAssetTarget;
   return Boolean(target && target.propName === propName && target.itemIndex === itemIndex && target.fieldName === fieldName);
@@ -359,9 +391,37 @@ function canUseProductQuickActions(propName: string): boolean {
             :value="asText(selectedProps[entry.name]) || '#111827'"
             @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
           />
+          <div
+            v-else-if="entry.schema.type === 'number'"
+            class="number-field"
+          >
+            <button
+              type="button"
+              :aria-label="`减少${entry.schema.label}`"
+              @click="adjustNumber(entry.name, entry.schema, -1)"
+            >
+              -
+            </button>
+            <input
+              type="number"
+              :min="numberMin(entry.schema)"
+              :max="numberMax(entry.schema)"
+              :step="numberStep(entry.schema)"
+              :value="asText(selectedProps[entry.name])"
+              @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
+            />
+            <button
+              type="button"
+              :aria-label="`增加${entry.schema.label}`"
+              @click="adjustNumber(entry.name, entry.schema, 1)"
+            >
+              +
+            </button>
+            <em v-if="entry.schema.unit">{{ entry.schema.unit }}</em>
+          </div>
           <input
             v-else
-            :type="entry.schema.type === 'number' ? 'number' : 'text'"
+            type="text"
             :value="asText(selectedProps[entry.name])"
             @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
           />

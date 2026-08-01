@@ -150,6 +150,10 @@ export interface LowcodePropSchema {
   required?: boolean;
   defaultValue?: JsonValue;
   options?: Array<{ label: string; value: JsonValue }>;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
   description?: string;
 }
 
