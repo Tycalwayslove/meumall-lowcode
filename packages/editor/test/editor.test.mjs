@@ -722,12 +722,26 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodeMaterialCategoryMeta("unknown").description, "自定义物料分类，具体业务边界以物料详情和 manifest 为准。");
     assert.equal(getLowcodeMaterialLayerMeta("business").label, "业务物料");
     assert.equal(getLowcodeMaterialFamilyMeta("input").primitiveHint.includes("Input"), true);
+    assert.equal(getLowcodeMaterialFamilyMeta("feedback").primitiveHint.includes("StateBlock"), true);
 
     const productProfile = createLowcodeMaterialArchitectureProfile(manifests[1]);
     assert.equal(productProfile.layer, "business");
     assert.equal(productProfile.layerLabel, "业务物料");
     assert.equal(productProfile.family, "commerce");
     assert.ok(productProfile.boundary.includes("价格"));
+
+    const stateBlockProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
+      componentName: "BasicStateBlock",
+      materialVersion: "1.0.0",
+      title: "基础状态块",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {},
+      defaultProps: {},
+    }));
+    assert.equal(stateBlockProfile.layer, "generic");
+    assert.equal(stateBlockProfile.family, "feedback");
+    assert.ok(stateBlockProfile.boundary.includes("远程状态流"));
 
     const customProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
       componentName: "PartnerWidget",
@@ -861,6 +875,22 @@ describe("@meumall/lowcode-editor readiness", () => {
     ]);
     assert.equal(findLowcodeMaterialInsertPreset(button, "outline-action")?.title, "描边按钮");
     assert.deepEqual(createLowcodeMaterialInsertPresets(button, { componentPresets: { BasicButton: false } }), []);
+
+    const stateBlock = createMaterialManifest({
+      componentName: "BasicStateBlock",
+      materialVersion: "1.0.0",
+      title: "基础状态块",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        state: { label: "状态类型", type: "string", setter: "select", defaultValue: "empty" },
+      },
+      defaultProps: { state: "empty" },
+    });
+    assert.deepEqual(createLowcodeMaterialInsertPresets(stateBlock).map((preset) => [preset.id, preset.title]), [
+      ["empty-state", "空态提示"],
+      ["error-state", "错误状态"],
+    ]);
 
     const customPresets = createLowcodeMaterialInsertPresets(button, {
       includeDefaultPresets: false,

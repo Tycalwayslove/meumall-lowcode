@@ -7,9 +7,11 @@ type ButtonSize = "sm" | "md" | "lg";
 type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
+type StateBlockAlign = "left" | "center";
 
 export type MlcFormFieldType = "string" | "number" | "boolean";
 export type MlcFormRequiredVerb = "填写" | "选择" | "确认";
+export type MlcStateBlockState = "empty" | "loading" | "error" | "success" | "info";
 
 export interface MlcSelectOption {
   label?: string;
@@ -781,6 +783,121 @@ export function MlcModal({
         {footer ? <div>{footer}</div> : null}
       </div>
     </MlcOverlay>
+  );
+}
+
+const MLC_STATE_BLOCK_PALETTES = {
+  empty: { icon: "○", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", description: "#64748b" },
+  loading: { icon: "...", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+  error: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", description: "#b91c1c" },
+  success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", description: "#0f766e" },
+  info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+} satisfies Record<MlcStateBlockState, { icon: string; accent: string; background: string; border: string; title: string; description: string }>;
+
+export interface MlcStateBlockProps {
+  state?: MlcStateBlockState;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  iconText?: React.ReactNode;
+  action?: React.ReactNode;
+  showIcon?: boolean;
+  align?: StateBlockAlign;
+  backgroundColor?: string;
+  borderColor?: string;
+  titleColor?: string;
+  descriptionColor?: string;
+  accentColor?: string;
+  iconColor?: string;
+  iconBackgroundColor?: string;
+  radius?: number;
+  borderWidth?: number;
+  padding?: number;
+  gap?: number;
+  minHeight?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export function MlcStateBlock({
+  state = "empty",
+  title,
+  description,
+  iconText,
+  action,
+  showIcon = true,
+  align = "center",
+  backgroundColor,
+  borderColor,
+  titleColor,
+  descriptionColor,
+  accentColor,
+  iconColor = h5Tokens.color.inverseText,
+  iconBackgroundColor,
+  radius = h5Tokens.radius.lg,
+  borderWidth = 1,
+  padding = 20,
+  gap = 10,
+  minHeight = 148,
+  className,
+  style,
+}: MlcStateBlockProps): React.ReactElement {
+  const palette = MLC_STATE_BLOCK_PALETTES[state];
+  const resolvedAccentColor = accentColor ?? palette.accent;
+  const contentAlign = align === "left" ? "left" : "center";
+  return (
+    <section
+      role={state === "error" ? "alert" : "status"}
+      aria-busy={state === "loading" ? true : undefined}
+      className={className}
+      style={{
+        boxSizing: "border-box",
+        display: "grid",
+        justifyItems: align === "left" ? "start" : "center",
+        gap,
+        minHeight,
+        padding,
+        border: `${borderWidth}px solid ${borderColor ?? palette.border}`,
+        borderRadius: radius,
+        color: titleColor ?? palette.title,
+        background: backgroundColor ?? palette.background,
+        textAlign: contentAlign,
+        ...style,
+      }}
+    >
+      {showIcon ? (
+        <span
+          aria-hidden="true"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 42,
+            height: 42,
+            borderRadius: h5Tokens.radius.pill,
+            color: iconColor,
+            background: iconBackgroundColor ?? resolvedAccentColor,
+            fontSize: 18,
+            fontWeight: 900,
+            lineHeight: 1,
+          }}
+        >
+          {iconText ?? palette.icon}
+        </span>
+      ) : null}
+      <div style={{ display: "grid", gap: 6, minWidth: 0 }}>
+        {title ? (
+          <MlcText as="strong" size={16} weight={900} lineHeight={1.45} style={{ color: titleColor ?? palette.title }}>
+            {title}
+          </MlcText>
+        ) : null}
+        {description ? (
+          <MlcText as="p" size={13} lineHeight={1.65} style={{ color: descriptionColor ?? palette.description, whiteSpace: "pre-line" }}>
+            {description}
+          </MlcText>
+        ) : null}
+      </div>
+      {action ? <div style={{ display: "flex", justifyContent: align === "left" ? "flex-start" : "center" }}>{action}</div> : null}
+    </section>
   );
 }
 

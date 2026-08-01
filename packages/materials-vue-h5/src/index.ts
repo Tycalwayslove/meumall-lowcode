@@ -20,6 +20,7 @@ import {
   MlcRichText,
   MlcSelect,
   MlcSpacer,
+  MlcStateBlock,
   MlcStepper,
   MlcSwitch,
   MlcTabs,
@@ -28,6 +29,7 @@ import {
   MlcTextarea,
   parseMlcFormFieldValue,
   type MlcFormFieldType,
+  type MlcStateBlockState,
 } from "@meumall/lowcode-primitives-vue-h5";
 
 type RuntimeProps = Record<string, unknown>;
@@ -309,11 +311,13 @@ type BasicTimelineMarker = "dot" | "number" | "badge";
 type BasicTimelineStatus = "done" | "active" | "pending";
 type BasicAlertTone = "info" | "success" | "warning" | "danger" | "neutral";
 type BasicAlertVariant = "soft" | "outline" | "solid";
+type BasicStateBlockState = MlcStateBlockState;
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
 type BasicTimelineItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAlertActionHandler = () => void;
+type BasicStateBlockActionHandler = (payload: { state: BasicStateBlockState }) => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -364,6 +368,11 @@ const INLINE_ALIGN_OPTIONS = [
   { label: "左对齐", value: "left" },
   { label: "居中", value: "center" },
   { label: "右对齐", value: "right" },
+];
+
+const STATE_BLOCK_ALIGN_OPTIONS = [
+  { label: "左对齐", value: "left" },
+  { label: "居中", value: "center" },
 ];
 
 const DIVIDER_LINE_STYLE_OPTIONS = [
@@ -431,6 +440,14 @@ const BASIC_ALERT_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
 ];
 
+const BASIC_STATE_BLOCK_STATE_OPTIONS = [
+  { label: "空态", value: "empty" },
+  { label: "加载", value: "loading" },
+  { label: "错误", value: "error" },
+  { label: "成功", value: "success" },
+  { label: "信息", value: "info" },
+];
+
 const BASIC_ALERT_TONE_PALETTES = {
   info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", content: "#1d4ed8" },
   success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", content: "#0f766e" },
@@ -438,6 +455,14 @@ const BASIC_ALERT_TONE_PALETTES = {
   danger: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", content: "#b91c1c" },
   neutral: { icon: "•", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", content: "#64748b" },
 } satisfies Record<BasicAlertTone, { icon: string; accent: string; background: string; border: string; title: string; content: string }>;
+
+const BASIC_STATE_BLOCK_PALETTES = {
+  empty: { icon: "○", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", description: "#64748b" },
+  loading: { icon: "...", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+  error: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", description: "#b91c1c" },
+  success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", description: "#0f766e" },
+  info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+} satisfies Record<BasicStateBlockState, { icon: string; accent: string; background: string; border: string; title: string; description: string }>;
 
 const BASIC_TIMELINE_STATUS_PALETTES = {
   done: { marker: "#0f766e", text: "#0f766e", line: "#99f6e4" },
@@ -1657,6 +1682,77 @@ export const BasicAlert = defineComponent({
                 : null,
             ]),
           ],
+        ),
+      );
+    };
+  },
+});
+
+export const BasicStateBlock = defineComponent({
+  name: "BasicStateBlock",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const state = option<BasicStateBlockState>(runtimeProps.state, ["empty", "loading", "error", "success", "info"], "empty");
+      const palette = BASIC_STATE_BLOCK_PALETTES[state];
+      const actionText = text(runtimeProps.actionText);
+      const showAction = boolean(runtimeProps.showAction, Boolean(actionText));
+      const onActionClick = typeof runtimeProps.onActionClick === "function" ? runtimeProps.onActionClick as BasicStateBlockActionHandler : undefined;
+
+      return h(
+        "section",
+        {
+          class: `mlc-material mlc-basic-state-block mlc-basic-state-block--${state}`,
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          MlcStateBlock,
+          {
+            state,
+            title: text(runtimeProps.title, "暂无内容"),
+            description: text(runtimeProps.description, "可以用它展示空态、加载态、错误态或成功反馈。"),
+            iconText: text(runtimeProps.iconText, palette.icon),
+            showIcon: boolean(runtimeProps.showIcon, true),
+            align: option<"left" | "center">(runtimeProps.align, ["left", "center"], "center"),
+            backgroundColor: text(runtimeProps.backgroundColor, palette.background),
+            borderColor: text(runtimeProps.borderColor, palette.border),
+            titleColor: text(runtimeProps.titleColor, palette.title),
+            descriptionColor: text(runtimeProps.descriptionColor, palette.description),
+            accentColor: text(runtimeProps.accentColor, palette.accent),
+            iconColor: text(runtimeProps.iconColor, "#ffffff"),
+            iconBackgroundColor: text(runtimeProps.iconBackgroundColor, palette.accent),
+            radius: number(runtimeProps.radius, 14),
+            borderWidth: number(runtimeProps.borderWidth, 1),
+            padding: number(runtimeProps.padding, 22),
+            gap: number(runtimeProps.gap, 10),
+            minHeight: number(runtimeProps.minHeight, 148),
+          },
+          {
+            action: showAction && actionText
+              ? () =>
+                  h(
+                    MlcButton,
+                    {
+                      size: "sm",
+                      variant: "solid",
+                      radius: number(runtimeProps.actionRadius, 999),
+                      style: {
+                        color: text(runtimeProps.actionTextColor, "#ffffff"),
+                        background: text(runtimeProps.actionBackgroundColor, palette.accent),
+                        borderColor: text(runtimeProps.actionBackgroundColor, palette.accent),
+                      } satisfies CSSProperties,
+                      onClick: () => {
+                        onActionClick?.({ state });
+                      },
+                    },
+                    () => actionText,
+                  )
+              : undefined,
+          },
         ),
       );
     };
@@ -5766,6 +5862,71 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
       },
       events: [{ name: "onActionClick", title: "点击提示按钮" }],
+    }),
+  },
+  {
+    component: BasicStateBlock,
+    manifest: createMaterialManifest({
+      componentName: "BasicStateBlock",
+      materialVersion: "0.1.0",
+      title: "基础状态块",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        state: "empty",
+        title: "暂无内容",
+        description: "用于展示空态、加载态、错误态或成功反馈。",
+        actionText: "刷新重试",
+        showIcon: true,
+        showAction: true,
+        iconText: "○",
+        align: "center",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#f8fafc",
+        titleColor: "#111827",
+        descriptionColor: "#64748b",
+        accentColor: "#64748b",
+        borderColor: "#e2e8f0",
+        iconColor: "#ffffff",
+        iconBackgroundColor: "#64748b",
+        actionBackgroundColor: "#64748b",
+        actionTextColor: "#ffffff",
+        borderWidth: 1,
+        radius: 14,
+        actionRadius: 999,
+        paddingY: 14,
+        padding: 22,
+        gap: 10,
+        minHeight: 148,
+      },
+      propsSchema: {
+        state: { label: "状态类型", type: "string", setter: "select", defaultValue: "empty", options: BASIC_STATE_BLOCK_STATE_OPTIONS },
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "暂无内容" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于展示空态、加载态、错误态或成功反馈。" },
+        actionText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "刷新重试" },
+        showIcon: { label: "显示图标", type: "boolean", setter: "switch", defaultValue: true },
+        showAction: { label: "显示按钮", type: "boolean", setter: "switch", defaultValue: true },
+        iconText: { label: "图标文案", type: "string", setter: "input", defaultValue: "○" },
+        align: { label: "内容对齐", type: "string", setter: "select", defaultValue: "center", options: STATE_BLOCK_ALIGN_OPTIONS },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#f8fafc", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        descriptionColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e2e8f0", ...COLOR_SWATCHES_META },
+        iconColor: { label: "图标文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        iconBackgroundColor: { label: "图标背景", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        actionBackgroundColor: { label: "按钮背景", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        actionTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 14, ...NUMBER_RADIUS_META },
+        actionRadius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "内容留白", type: "number", setter: "number", defaultValue: 22, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        minHeight: { label: "最小高度", type: "number", setter: "number", defaultValue: 148, min: 80, max: 360, step: 1, unit: "px" },
+      },
+      events: [{ name: "onActionClick", title: "点击状态按钮" }],
     }),
   },
   {

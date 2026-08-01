@@ -10,6 +10,7 @@ import {
   MlcButton,
   MlcImage,
   MlcInput,
+  MlcStateBlock,
   MlcText,
   parseMlcFormFieldValue,
 } from "../dist/index.js";
@@ -18,13 +19,16 @@ test("exports React H5 primitives as components", () => {
   assert.equal(typeof MlcButton, "function");
   assert.equal(typeof MlcImage, "function");
   assert.equal(typeof MlcInput, "function");
+  assert.equal(typeof MlcStateBlock, "function");
   assert.equal(typeof MlcText, "function");
 });
 
 test("creates React elements without material manifest coupling", () => {
   assert.equal(React.isValidElement(React.createElement(MlcButton, null, "提交")), true);
   assert.equal(React.isValidElement(React.createElement(MlcInput, { value: "hello" })), true);
+  assert.equal(React.isValidElement(React.createElement(MlcStateBlock, { title: "暂无内容" })), true);
   assert.equal("manifest" in MlcButton, false);
+  assert.equal("manifest" in MlcStateBlock, false);
 });
 
 test("normalizes React primitive form field metadata", () => {

@@ -9,6 +9,7 @@ import {
   MlcButton,
   MlcImage,
   MlcInput,
+  MlcStateBlock,
   MlcText,
   parseMlcFormFieldValue,
 } from "../dist/index.js";
@@ -17,11 +18,13 @@ test("exports Vue H5 primitives as components", () => {
   assert.equal(MlcButton.name, "MlcButton");
   assert.equal(MlcImage.name, "MlcImage");
   assert.equal(MlcInput.name, "MlcInput");
+  assert.equal(MlcStateBlock.name, "MlcStateBlock");
   assert.equal(MlcText.name, "MlcText");
 });
 
 test("keeps Vue primitives outside material manifest semantics", () => {
   assert.equal("manifest" in MlcButton, false);
+  assert.equal("manifest" in MlcStateBlock, false);
   assert.equal("props" in MlcButton, true);
 });
 

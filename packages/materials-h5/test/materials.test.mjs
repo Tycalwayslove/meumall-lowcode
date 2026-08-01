@@ -19,6 +19,7 @@ import {
   BasicPrice,
   BasicRadioGroup,
   BasicSelect,
+  BasicStateBlock,
   BasicStepper,
   BasicSwitch,
   BasicTag,
@@ -126,6 +127,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAlert", "tone", ["info", "success", "warning", "danger", "neutral"]],
       ["BasicAlert", "variant", ["soft", "outline", "solid"]],
       ["BasicAlert", "actionAlign", ["left", "center", "right"]],
+      ["BasicStateBlock", "state", ["empty", "loading", "error", "success", "info"]],
+      ["BasicStateBlock", "align", ["left", "center"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -181,6 +184,13 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAlert", "badgeRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicAlert", "actionRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicAlert", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
+      ["BasicStateBlock", "paddingY", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicStateBlock", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicStateBlock", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicStateBlock", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicStateBlock", "actionRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicStateBlock", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
+      ["BasicStateBlock", "minHeight", { min: 80, max: 360, step: 1, unit: "px" }],
       ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -275,6 +285,16 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAlert", "accentColor"],
       ["BasicAlert", "borderColor"],
       ["BasicAlert", "actionBackgroundColor"],
+      ["BasicStateBlock", "wrapperBackgroundColor"],
+      ["BasicStateBlock", "backgroundColor"],
+      ["BasicStateBlock", "titleColor"],
+      ["BasicStateBlock", "descriptionColor"],
+      ["BasicStateBlock", "accentColor"],
+      ["BasicStateBlock", "borderColor"],
+      ["BasicStateBlock", "iconColor"],
+      ["BasicStateBlock", "iconBackgroundColor"],
+      ["BasicStateBlock", "actionBackgroundColor"],
+      ["BasicStateBlock", "actionTextColor"],
       ["BasicLink", "backgroundColor"],
       ["BasicLink", "textColor"],
       ["BasicLink", "subtitleColor"],
@@ -481,6 +501,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicAccordion, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicTimeline, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicAlert, ["MlcButton", "MlcText", "MlcTag"]);
+    functionSourceIncludes(BasicStateBlock, ["MlcStateBlock", "MlcButton"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -826,6 +847,52 @@ describe("MeuMall H5 material manifests", () => {
     const button = action.props.children;
     button.props.onClick();
     assert.equal(clicks, 1);
+  });
+
+  it("registers the basic state block material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicStateBlock");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础状态块");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.state, "empty");
+    assert.equal(material.manifest.defaultProps.showIcon, true);
+    assert.equal(material.manifest.defaultProps.showAction, true);
+    assert.equal(material.manifest.propsSchema.description.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.state.setter, "select");
+    assert.equal(material.manifest.propsSchema.align.setter, "select");
+    assert.equal(material.manifest.propsSchema.showAction.setter, "switch");
+    assert.equal(material.manifest.propsSchema.accentColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.minHeight.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onActionClick");
+  });
+
+  it("renders basic state block props and action clicks in React H5", () => {
+    const clicks = [];
+    const element = BasicStateBlock({
+      node: { id: "state_1", componentName: "BasicStateBlock", props: {} },
+      props: {
+        state: "error",
+        title: "加载失败",
+        description: "请稍后重试",
+        actionText: "重试",
+        align: "left",
+        onActionClick: (payload) => {
+          clicks.push(payload);
+        },
+      },
+    });
+
+    assert.equal(element.props.className.includes("mlc-basic-state-block--error"), true);
+    const stateBlock = element.props.children;
+    assert.equal(stateBlock.type.name, "MlcStateBlock");
+    assert.equal(stateBlock.props.state, "error");
+    assert.equal(stateBlock.props.title, "加载失败");
+    assert.equal(stateBlock.props.align, "left");
+    const button = stateBlock.props.action;
+    assert.equal(button.type.name, "MlcButton");
+    button.props.onClick();
+    assert.deepEqual(clicks, [{ state: "error" }]);
   });
 
   it("renders section container layout props in React H5", () => {

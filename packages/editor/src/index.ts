@@ -2161,6 +2161,24 @@ export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly Low
       keywords: ["alert", "success", "成功"],
     },
   ],
+  BasicStateBlock: [
+    {
+      id: "empty-state",
+      title: "空态提示",
+      description: "用于暂无内容、列表为空等静态空态。",
+      metaName: "空态状态块",
+      props: { state: "empty", title: "暂无内容", description: "当前没有可展示内容。", actionText: "刷新重试", showAction: true },
+      keywords: ["state", "empty", "空态", "暂无"],
+    },
+    {
+      id: "error-state",
+      title: "错误状态",
+      description: "用于加载失败、配置异常等静态错误反馈。",
+      metaName: "错误状态块",
+      props: { state: "error", title: "加载失败", description: "请稍后重试或联系页面负责人。", actionText: "重试", showAction: true },
+      keywords: ["state", "error", "错误", "失败"],
+    },
+  ],
   BasicForm: [
     {
       id: "lead-form",
@@ -2347,7 +2365,7 @@ export const LOWCODE_EDITOR_MATERIAL_FAMILY_META: Record<string, LowcodeEditorMa
   feedback: {
     label: "反馈提示",
     description: "负责公告、提示、弹窗和轻量反馈。",
-    primitiveHint: "优先复用 NoticeBar、Modal、Text、Button。",
+    primitiveHint: "优先复用 NoticeBar、Modal、StateBlock、Text、Button。",
   },
   list: {
     label: "列表结构",
@@ -2400,7 +2418,7 @@ export const LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES: Record<string, LowcodeE
   BasicStepper: { layer: "generic", family: "input", recommendedUse: "用于业务无关的数字步进配置。", boundary: "不承载库存、限购、价格联动或购买数量规则。" },
   BasicSwitch: { layer: "generic", family: "input", recommendedUse: "用于业务无关的布尔开关。", boundary: "不承载活动状态、配置保存或审批规则。" },
   BasicCheckbox: { layer: "generic", family: "input", recommendedUse: "用于业务无关的复选确认。", boundary: "不承载协议确认、表单校验或多选数组协议。" },
-  BasicForm: { layer: "generic", family: "form", recommendedUse: "用于组合基础输入物料和提交入口。", boundary: "不自动采集子字段值，不承载校验、验证码、风控或远程提交。" },
+  BasicForm: { layer: "generic", family: "form", recommendedUse: "用于组合基础输入物料和提交入口。", boundary: "只采集基础子字段值并做本地 required 校验，不承载复杂校验、验证码、风控或远程提交。" },
   LeadFormBlock: { layer: "generic", family: "form", recommendedUse: "用于轻量留资和报名展示。", boundary: "真实提交、校验和风控由宿主 action 或后端服务承接。" },
   BasicText: { layer: "generic", family: "content", recommendedUse: "用于普通文本、标题和强调文案。", boundary: "不承载 CMS、内容审核或富文本编辑。" },
   SectionTitle: { layer: "generic", family: "content", recommendedUse: "用于区块标题、角标和说明。", boundary: "不承载商品、活动或远程栏目语义。" },
@@ -2418,6 +2436,7 @@ export const LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES: Record<string, LowcodeE
   BasicAccordion: { layer: "generic", family: "list", recommendedUse: "用于静态 FAQ、规则说明和折叠内容。", boundary: "不承载远程 FAQ、富文本编辑或嵌套低代码节点。" },
   BasicTimeline: { layer: "generic", family: "list", recommendedUse: "用于静态时间线和流程说明。", boundary: "不承载订单、审批、履约或活动状态接口。" },
   BasicAlert: { layer: "generic", family: "feedback", recommendedUse: "用于静态提示、警示和说明。", boundary: "不承载系统消息、错误码、已读状态或内容审核。" },
+  BasicStateBlock: { layer: "generic", family: "feedback", recommendedUse: "用于静态空态、加载态、错误态和成功反馈。", boundary: "不承载远程状态流、接口重试、错误码翻译或全局 toast。" },
   NoticeBar: { layer: "generic", family: "feedback", recommendedUse: "用于公告条和运营提醒。", boundary: "不承载远程公告流、跑马灯、关闭记忆或曝光统计。" },
   BasicModal: { layer: "generic", family: "feedback", recommendedUse: "用于基础弹窗和静态说明。", boundary: "不承载远程内容、表单提交、登录、领券或弹窗内低代码编排。" },
   ActivityHero: { layer: "generic", family: "marketing", recommendedUse: "用于活动首屏、主题氛围和头图信息。", boundary: "不承载活动规则、库存、权益或服务端时间语义。" },

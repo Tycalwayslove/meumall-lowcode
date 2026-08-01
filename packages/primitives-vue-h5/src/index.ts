@@ -9,9 +9,11 @@ type ImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
 type DividerLineStyle = "solid" | "dashed" | "dotted";
+type StateBlockAlign = "left" | "center";
 
 export type MlcFormFieldType = "string" | "number" | "boolean";
 export type MlcFormRequiredVerb = "填写" | "选择" | "确认";
+export type MlcStateBlockState = "empty" | "loading" | "error" | "success" | "info";
 
 export interface MlcSelectOption {
   label?: string;
@@ -719,6 +721,109 @@ export const MlcModal = defineComponent({
             ],
           ),
       );
+  },
+});
+
+const MLC_STATE_BLOCK_PALETTES = {
+  empty: { icon: "○", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", description: "#64748b" },
+  loading: { icon: "...", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+  error: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", description: "#b91c1c" },
+  success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", description: "#0f766e" },
+  info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", description: "#1d4ed8" },
+} satisfies Record<MlcStateBlockState, { icon: string; accent: string; background: string; border: string; title: string; description: string }>;
+
+export const MlcStateBlock = defineComponent({
+  name: "MlcStateBlock",
+  props: {
+    state: { type: String as PropType<MlcStateBlockState>, default: "empty" },
+    title: { type: String, default: "" },
+    description: { type: String, default: "" },
+    iconText: { type: String, default: "" },
+    showIcon: { type: Boolean, default: true },
+    align: { type: String as PropType<StateBlockAlign>, default: "center" },
+    backgroundColor: { type: String, default: "" },
+    borderColor: { type: String, default: "" },
+    titleColor: { type: String, default: "" },
+    descriptionColor: { type: String, default: "" },
+    accentColor: { type: String, default: "" },
+    iconColor: { type: String, default: h5Tokens.color.inverseText },
+    iconBackgroundColor: { type: String, default: "" },
+    radius: { type: Number, default: h5Tokens.radius.lg },
+    borderWidth: { type: Number, default: 1 },
+    padding: { type: Number, default: 20 },
+    gap: { type: Number, default: 10 },
+    minHeight: { type: Number, default: 148 },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+  },
+  setup(props, { slots }) {
+    return () => {
+      const palette = MLC_STATE_BLOCK_PALETTES[props.state];
+      const resolvedAccentColor = props.accentColor || palette.accent;
+      return h(
+        "section",
+        {
+          role: props.state === "error" ? "alert" : "status",
+          "aria-busy": props.state === "loading" ? true : undefined,
+          class: props.class,
+          style: {
+            boxSizing: "border-box",
+            display: "grid",
+            justifyItems: props.align === "left" ? "start" : "center",
+            gap: `${props.gap}px`,
+            minHeight: `${props.minHeight}px`,
+            padding: `${props.padding}px`,
+            border: `${props.borderWidth}px solid ${props.borderColor || palette.border}`,
+            borderRadius: `${props.radius}px`,
+            color: props.titleColor || palette.title,
+            background: props.backgroundColor || palette.background,
+            textAlign: props.align === "left" ? "left" : "center",
+            ...props.style,
+          } satisfies CSSProperties,
+        },
+        [
+          props.showIcon
+            ? h(
+                "span",
+                {
+                  "aria-hidden": "true",
+                  style: {
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "42px",
+                    height: "42px",
+                    borderRadius: `${h5Tokens.radius.pill}px`,
+                    color: props.iconColor,
+                    background: props.iconBackgroundColor || resolvedAccentColor,
+                    fontSize: "18px",
+                    fontWeight: 900,
+                    lineHeight: 1,
+                  } satisfies CSSProperties,
+                },
+                props.iconText || palette.icon,
+              )
+            : null,
+          h("div", { style: { display: "grid", gap: "6px", minWidth: 0 } satisfies CSSProperties }, [
+            props.title
+              ? h(
+                  MlcText,
+                  { as: "strong", size: 16, weight: 900, lineHeight: 1.45, style: { color: props.titleColor || palette.title } },
+                  () => props.title,
+                )
+              : null,
+            props.description
+              ? h(
+                  MlcText,
+                  { as: "p", size: 13, lineHeight: 1.65, style: { color: props.descriptionColor || palette.description, whiteSpace: "pre-line" } },
+                  () => props.description,
+                )
+              : null,
+          ]),
+          slots.action ? h("div", { style: { display: "flex", justifyContent: props.align === "left" ? "flex-start" : "center" } }, slots.action()) : null,
+        ],
+      );
+    };
   },
 });
 
