@@ -1257,7 +1257,7 @@ function createPreviewDemoSchema(): LowcodePageSchema {
   if (heroNode) {
     heroNode.props = {
       ...heroNode.props,
-      subtitle: "React H5 runtime 正在通过 releaseId 加载预览版本。",
+      subtitle: "React H5 runtime 正在通过 previewToken 或 releaseId 加载预览版本。",
     };
   }
   return schema;
@@ -1271,6 +1271,7 @@ const previewDemoRelease: ConfigPlatformPageRelease = {
   pageId: previewDemoSchema.pageId,
   pageVersion: previewDemoSchema.pageVersion,
   title: previewDemoSchema.title,
+  previewToken: "preview_demo_token",
   createdAt: "2026-08-01T00:00:00.000Z",
   schema: previewDemoSchema,
 };
@@ -1313,6 +1314,9 @@ const localRuntimeConfigPlatformClient: LowcodeConfigPlatformClient = {
     }
     return undefined;
   },
+  getPreviewByToken(previewToken) {
+    return previewToken === previewDemoRelease.previewToken ? previewDemoRelease : undefined;
+  },
   getDraft() {
     return undefined;
   },
@@ -1351,10 +1355,11 @@ interface RuntimeSchemaSource {
   error?: string;
 }
 
-type RuntimeRequestedSource = "schema" | "releaseId" | "pageId" | "emptyDemo" | "brokenDemo" | "none";
+type RuntimeRequestedSource = "schema" | "previewToken" | "releaseId" | "pageId" | "emptyDemo" | "brokenDemo" | "none";
 
 interface RuntimeSchemaInputInfo {
   encodedSchema?: string;
+  previewToken?: string;
   releaseId?: string;
   pageId?: string;
   requestedSource: RuntimeRequestedSource;
@@ -1366,6 +1371,7 @@ interface RuntimeSchemaInputInfo {
 function getRuntimeSchemaInputInfo(): RuntimeSchemaInputInfo {
   const params = new URLSearchParams(window.location.search);
   const encodedSchema = params.get("schema") ?? undefined;
+  const previewToken = params.get("previewToken") ?? undefined;
   const releaseId = params.get("releaseId") ?? undefined;
   const pageId = params.get("pageId") ?? undefined;
   const demo = params.get("demo");
@@ -1391,6 +1397,15 @@ function getRuntimeSchemaInputInfo(): RuntimeSchemaInputInfo {
       requestedSource: "schema",
       requestedLabel: "schema url",
       requestedValue: "schema 参数",
+      fallbackSchema: sampleSchema,
+    };
+  }
+  if (previewToken) {
+    return {
+      previewToken,
+      requestedSource: "previewToken",
+      requestedLabel: "previewToken",
+      requestedValue: previewToken,
       fallbackSchema: sampleSchema,
     };
   }
@@ -1423,6 +1438,7 @@ function getRuntimeSchemaInputInfo(): RuntimeSchemaInputInfo {
 function formatRuntimeSource(source: RuntimeSchemaSourceType): string {
   const sourceLabel: Record<RuntimeSchemaSourceType, string> = {
     encoded: "schema URL",
+    preview: "preview token",
     release: "release schema",
     published: "published schema",
     fallback: "fallback schema",
@@ -1446,6 +1462,7 @@ function createRuntimeSourceNote(input: RuntimeSchemaInputInfo, runtimeSchema: R
   if (input.requestedSource === "emptyDemo") return "当前使用空页面演示 schema，用于验证 H5 runtime 空态不白屏。";
   if (input.requestedSource === "brokenDemo") return "当前使用异常兜底演示 schema，用于验证未知物料和组件异常不白屏。";
   if (runtimeSchema.source === "encoded") return "当前 schema 来自编辑器 URL handoff，仅适合本地演示和排障。";
+  if (runtimeSchema.source === "preview") return "当前 schema 来自配置平台 previewToken，适合预览验收但不作为正式线上入口。";
   return "当前 schema 已按请求入口加载。";
 }
 
@@ -1481,6 +1498,7 @@ export function App() {
   const runtimeEntryLinks = [
     { label: "Sample", href: "/", desc: "无参数 fallback 演示" },
     { label: "PageId", href: "/?pageId=summer-campaign-demo", desc: "模拟生产 pageId 入口" },
+    { label: "PreviewToken", href: "/?previewToken=preview_demo_token", desc: "模拟 Java 预览 token 入口" },
     { label: "ReleaseId", href: "/?releaseId=preview_demo", desc: "模拟预览 release 入口" },
     { label: "Empty", href: "/?demo=empty", desc: "空页面降级演示" },
     { label: "Broken", href: "/?demo=broken", desc: "未知物料和渲染异常演示" },

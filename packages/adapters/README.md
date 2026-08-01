@@ -17,6 +17,7 @@ Utilities:
 - `createStaticTemplateLibraryClient`
 - `encodePageSchemaToUrlParam`
 - `decodePageSchemaFromUrlParam`
+- `loadLowcodeRuntimeSchema`
 
 ## Data Source Resolver
 
@@ -77,7 +78,7 @@ The endpoint is provided by host code, not by Page Schema. This keeps operators 
 
 ## Config Platform Client
 
-`LowcodeConfigPlatformClient` describes the editor-facing draft, preview, publish, release-list, draft-query, and published-query API.
+`LowcodeConfigPlatformClient` describes the editor-facing draft, preview, publish, release-list, preview-token-query, draft-query, and published-query API.
 
 `saveDraft(schema, metadata)`, `createPreview(schema, metadata)`, and `publishPage(schema, metadata)` accept optional release metadata. The current metadata shape is intentionally small and backwards-compatible:
 
@@ -99,6 +100,8 @@ It also contains optional editor draft snapshot methods for autosave recovery. T
 - `saveEditorDraftSnapshot(input)`
 - `getEditorDraftSnapshot(pageId)`
 
+For H5 preview runtime integration, the client can expose `getPreviewByToken(previewToken)`. This returns a preview `PageRelease` for preview validation links and must not be treated as the active published page.
+
 `createHttpConfigPlatformClient` is a reference HTTP implementation for the Java config platform contract:
 
 - `POST /api/lowcode/pages/drafts`
@@ -106,6 +109,7 @@ It also contains optional editor draft snapshot methods for autosave recovery. T
 - `POST /api/lowcode/pages/releases`
 - `GET /api/lowcode/pages/releases`
 - `GET /api/lowcode/pages/releases/{releaseId}`
+- `GET /api/lowcode/pages/previews/{previewToken}`
 - `GET /api/lowcode/pages/{pageId}/draft`
 - `GET /api/lowcode/pages/{pageId}/published`
 - `GET /api/lowcode/pages/{pageId}/workflow`
@@ -126,6 +130,18 @@ The Vue editor playground can also switch to the HTTP implementation by setting:
 - `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` (optional)
 
 Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells should map `ConfigPlatformEditorWorkflowState.lock` into `createLowcodeEditorCollaborationState` and `ConfigPlatformEditorWorkflowState.approval` into `createLowcodeEditorApprovalState`, then merge those permission options with role/menu permissions.
+
+## Runtime Schema Loader
+
+`loadLowcodeRuntimeSchema(input)` keeps H5 schema loading in the adapter layer instead of the renderer. It currently resolves sources in this order:
+
+1. `encodedSchema`
+2. `previewToken`
+3. `releaseId`
+4. `pageId`
+5. `fallbackSchema`
+
+The result contains `schema`, `source`, and optional `error`. `source = "preview"` means the schema was loaded through `getPreviewByToken`. Production H5 routes should use `previewToken` only for preview validation; normal activity pages should still load the active published schema by `pageId`.
 
 ## Resource Library Client
 

@@ -27,6 +27,7 @@ const h5RuntimeUrl = `http://${host}:${h5Port}/`;
 const h5RuntimeHttpUrl = `http://${host}:${h5HttpPort}/?pageId=smoke-http-page`;
 const configPlatformSmokeUrl = `http://${host}:${configPlatformPort}`;
 const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
+const h5RuntimePreviewTokenUrl = `${h5RuntimeUrl}?previewToken=preview_demo_token`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
 const h5RuntimeMissingPageUrl = `${h5RuntimeUrl}?pageId=missing-page`;
 const h5RuntimeEmptyUrl = `${h5RuntimeUrl}?demo=empty`;
@@ -172,6 +173,7 @@ function createSmokeEditorRelease(kind, body) {
     pageVersion: schema.pageVersion,
     title: schema.title,
     note: body.note,
+    previewToken: kind === "preview" ? `pt_${kind}_smoke_${editorHttpReleases.length + 1}` : undefined,
     createdAt: now,
     schema,
   };
@@ -313,6 +315,11 @@ async function startConfigPlatformSmokeServer(port) {
         ? editorHttpReleases.filter((release) => release.pageId === pageId)
         : editorHttpReleases;
       writeJsonResponse(response, 200, releases);
+      return;
+    }
+    if (request.method === "GET" && request.url?.startsWith("/api/lowcode/pages/previews/")) {
+      const previewToken = decodeURIComponent(request.url.split("/").pop() ?? "");
+      writeJsonResponse(response, 200, editorHttpReleases.find((release) => release.previewToken === previewToken) ?? null);
       return;
     }
     if (request.method === "GET" && request.url?.startsWith("/api/lowcode/pages/releases/")) {
@@ -1369,6 +1376,7 @@ async function assertEditorHttpConfigPlatform(page) {
       && request.body?.operator?.id === "operator-me",
     "Vue3 编辑器 HTTP 模式生成预览 release",
   );
+  await page.waitForExpression("Array.from(document.querySelectorAll('.preview-link-card input')).some((item) => item.value.includes('runtime=1') && item.value.includes('previewToken=pt_preview_smoke_'))");
 
   await page.clickByText(".toolbar button", "发布");
   await page.waitForExpression("document.body.innerText.includes('已发布')");
@@ -1694,6 +1702,12 @@ async function main() {
       { label: "React H5 pageId 渲染增强公告条", expression: "document.querySelector('[data-lowcode-page] .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
       { label: "React H5 pageId 渲染基础视频", expression: "document.querySelector('.mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
+    ]);
+
+    await assertPage(page, h5RuntimePreviewTokenUrl, [
+      { label: "React H5 previewToken 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('previewToken')" },
+      { label: "React H5 previewToken 命中 preview schema", expression: "document.body.innerText.includes('preview token') && document.body.innerText.includes('preview_demo_token')" },
+      { label: "React H5 previewToken 渲染预览版本", expression: "document.body.innerText.includes('夏日好物节预览') && document.body.innerText.includes('preview-20260801-demo')" },
     ]);
 
     await assertPage(page, h5RuntimeReleaseIdUrl, [

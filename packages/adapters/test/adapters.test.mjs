@@ -665,6 +665,7 @@ describe("@meumall/lowcode-adapters", () => {
       pageVersion: schema.pageVersion,
       title: schema.title,
       note: "首版草稿",
+      previewToken: "preview_token_001",
       createdAt: "2026-07-31T00:00:00.000Z",
       schema,
     };
@@ -702,6 +703,9 @@ describe("@meumall/lowcode-adapters", () => {
       if (input.includes("/releases?")) {
         return { ok: true, status: 200, json: async () => [release] };
       }
+      if (input.includes("/previews/")) {
+        return { ok: true, status: 200, json: async () => release };
+      }
       return { ok: true, status: 200, json: async () => release };
     };
     const client = createHttpConfigPlatformClient({
@@ -718,6 +722,7 @@ describe("@meumall/lowcode-adapters", () => {
       release,
     );
     assert.deepEqual(await client.listReleases("platform_page"), [release]);
+    assert.deepEqual(await client.getPreviewByToken?.("preview_token_001"), release);
     assert.deepEqual(await client.getDraft("platform_page"), schema);
     assert.deepEqual(await client.getEditorWorkflowState("platform_page"), workflow);
     assert.deepEqual(
@@ -753,17 +758,18 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(JSON.parse(calls[0].init.body).note, "首版草稿");
     assert.equal(JSON.parse(calls[0].init.body).operator.id, "op_001");
     assert.equal(calls[1].input, "https://platform.example.com/api/lowcode/pages/releases?pageId=platform_page");
-    assert.equal(calls[2].input, "https://platform.example.com/api/lowcode/pages/platform_page/draft");
-    assert.equal(calls[3].input, "https://platform.example.com/api/lowcode/pages/platform_page/workflow");
-    assert.equal(calls[4].input, "https://platform.example.com/api/lowcode/pages/platform_page/locks/acquire");
-    assert.equal(JSON.parse(calls[4].init.body).ttlSeconds, 120);
-    assert.equal(calls[5].input, "https://platform.example.com/api/lowcode/pages/platform_page/approval/submit");
-    assert.equal(JSON.parse(calls[5].init.body).comment, "活动页待审核");
-    assert.equal(calls[6].input, "https://platform.example.com/api/lowcode/pages/platform_page/editor-draft-snapshot");
-    assert.equal(calls[6].init.method, "PUT");
-    assert.equal(JSON.parse(calls[6].init.body).schema.pageId, "platform_page");
+    assert.equal(calls[2].input, "https://platform.example.com/api/lowcode/pages/previews/preview_token_001");
+    assert.equal(calls[3].input, "https://platform.example.com/api/lowcode/pages/platform_page/draft");
+    assert.equal(calls[4].input, "https://platform.example.com/api/lowcode/pages/platform_page/workflow");
+    assert.equal(calls[5].input, "https://platform.example.com/api/lowcode/pages/platform_page/locks/acquire");
+    assert.equal(JSON.parse(calls[5].init.body).ttlSeconds, 120);
+    assert.equal(calls[6].input, "https://platform.example.com/api/lowcode/pages/platform_page/approval/submit");
+    assert.equal(JSON.parse(calls[6].init.body).comment, "活动页待审核");
     assert.equal(calls[7].input, "https://platform.example.com/api/lowcode/pages/platform_page/editor-draft-snapshot");
-    assert.equal(calls[7].init.method, "GET");
+    assert.equal(calls[7].init.method, "PUT");
+    assert.equal(JSON.parse(calls[7].init.body).schema.pageId, "platform_page");
+    assert.equal(calls[8].input, "https://platform.example.com/api/lowcode/pages/platform_page/editor-draft-snapshot");
+    assert.equal(calls[8].init.method, "GET");
   });
 
   it("surfaces config platform HTTP errors", async () => {
@@ -792,7 +798,11 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(result.error, undefined);
   });
 
-  it("loads runtime schema from releaseId or pageId through config platform client", async () => {
+  it("loads runtime schema from previewToken, releaseId or pageId through config platform client", async () => {
+    const previewSchema = createLowcodePageSchema({
+      pageId: "preview_page",
+      title: "Token 预览页面",
+    });
     const releaseSchema = createLowcodePageSchema({
       pageId: "release_page",
       title: "预览页面",
@@ -821,13 +831,26 @@ describe("@meumall/lowcode-adapters", () => {
         createdAt: "2026-07-31T00:00:00.000Z",
         schema: releaseSchema,
       }),
+      getPreviewByToken: async (previewToken) => ({
+        id: "rel_preview_token",
+        kind: "preview",
+        pageId: previewSchema.pageId,
+        pageVersion: previewSchema.pageVersion,
+        title: previewSchema.title,
+        previewToken,
+        createdAt: "2026-07-31T00:00:00.000Z",
+        schema: previewSchema,
+      }),
       getDraft: async () => undefined,
       getPublished: async () => publishedSchema,
     };
 
+    const previewResult = await loadLowcodeRuntimeSchema({ previewToken: "preview_token_001", configPlatformClient: client });
     const releaseResult = await loadLowcodeRuntimeSchema({ releaseId: "rel_preview", configPlatformClient: client });
     const publishedResult = await loadLowcodeRuntimeSchema({ pageId: "published_page", configPlatformClient: client });
 
+    assert.equal(previewResult.source, "preview");
+    assert.equal(previewResult.schema.pageId, "preview_page");
     assert.equal(releaseResult.source, "release");
     assert.equal(releaseResult.schema.pageId, "release_page");
     assert.equal(publishedResult.source, "published");

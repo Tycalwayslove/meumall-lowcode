@@ -69,6 +69,7 @@ Java 配置平台。
   "pageVersion": "draft-20260731T083000Z",
   "title": "夏日好物节",
   "note": "首版草稿",
+  "previewToken": "pt_20260731_0001",
   "createdAt": "2026-07-31T08:30:00.000Z",
   "schema": {}
 }
@@ -81,6 +82,7 @@ Java 配置平台。
 - `pageId`：页面稳定 id。
 - `pageVersion`：页面版本号，建议由 Java 配置平台生成。
 - `note`：运营填写的版本备注，可选。
+- `previewToken`：预览 token，可选；仅 `kind = preview` 时建议返回，用于 H5 runtime 打开预览入口。
 - `schema`：完整 `LowcodePageSchema`。
 
 ### EditorDraftSnapshot
@@ -163,10 +165,25 @@ Content-Type: application/json
 
 说明：
 
-- 预览 release 可被 H5 runtime 使用 `releaseId` 打开。
+- 预览 release 可被 H5 runtime 使用 `previewToken` 或 `releaseId` 打开。
 - 预览 release 不影响线上 active published release。
-- 后续可增加 `expireAt` 和 `previewToken`。
+- 建议返回 `previewToken`，后续可增加 `expireAt`、签名、权限和审计字段。
 - `note` 和 `operator` 均可选；如传入，Java 配置平台应写入预览版本备注和审计上下文。
+
+### 查询 previewToken 预览
+
+```http
+GET /api/lowcode/pages/previews/{previewToken}
+```
+
+响应：`PageRelease | null`
+
+说明：
+
+- H5 runtime 预览页可通过该接口按 `previewToken` 获取 preview release schema。
+- `previewToken` 只用于预览验收，不作为正式线上页面入口。
+- Java 配置平台负责 token 生成、过期、权限、签名、防枚举和审计策略。
+- 若 token 不存在、过期或无权限，可返回 `null`、`404 LOWCODE_PREVIEW_NOT_FOUND` 或 `403 LOWCODE_PREVIEW_FORBIDDEN`。
 
 ### 发布页面
 

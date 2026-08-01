@@ -2,7 +2,7 @@
 
 ## P0
 
-- 确认 npm registry、scope、access、token、linked group 版本结果和 release/tag 策略；当前已具备 11 个可发布包的 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler`、`@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已有 pending changeset，但尚未执行真实 npm 发布。
+- 确认 npm registry、scope、access、token、linked group 版本结果和 release/tag 策略；当前已具备 11 个可发布包的 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-editor` demo checklist API、`@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已有 pending changeset，但尚未执行真实 npm 发布。
 
 ## P1
 
@@ -11,7 +11,7 @@
 - 基于 Template Library Client 将本地页面模板库和本地自定义模板升级为 Java 配置平台模板市场，补充模板版本、上下架、权限、审核和缩略图。
 - 推动 Java 配置平台 API 草案确认：响应包装、鉴权、编辑锁 TTL、抢锁策略、审批、分页、previewToken、note/operator 审计字段和错误码。
 - 在 `hybird-meumall` 真实业务仓库创建低代码 H5 路由，并按 `.ai-workspace/contracts/h5-runtime-integration-v1.md` 接入 npm 包。
-- 将编辑器侧本地 URL schema handoff 的生产入口替换为 Java 配置平台 previewToken/releaseId/pageId 查询协议；React H5 runtime playground 已支持通过 env 切换 HTTP config platform client。
+- 将编辑器侧本地 URL schema handoff 的生产入口替换为 Java 配置平台 previewToken/releaseId/pageId 查询协议；当前 adapters、Vue3 editor playground 和 React H5 runtime playground 已支持 previewToken 链路与 HTTP config platform client，真实 Java token 生成/过期/鉴权/审计和 `hybird-meumall` H5 业务路由仍待接入。
 - 将 Vue3 编辑器 HTTP config platform client 从本地 smoke mock 切换为真实 Java 配置平台，并补齐统一响应解包、错误提示、权限、服务端发布校验、审批和审计。
 - 基于 playground HTTP 数据源演示链路，将真实 H5 宿主的 data source resolver 切到 Java/BFF 白名单 HTTP 数据源，并补齐真实鉴权、缓存、重试、分页和字段校验策略。
 - 基于 adapters HTTP action handler 和 H5 runtime playground 演示链路，将真实 H5 宿主 action handler 接入跳转桥、领券接口、埋点平台、权限和风控策略，并补齐登录态刷新、幂等、防重复点击和业务错误展示。

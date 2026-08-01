@@ -34,13 +34,14 @@ Vue3 编辑器可以通过 URL handoff 打开 React H5 runtime：
 http://localhost:5174/?schema={base64url-page-schema}&source=editor
 ```
 
-本地 handoff 使用 `@meumall/lowcode-adapters` 提供的 `encodePageSchemaToUrlParam` 编码，并在 H5 runtime 侧统一通过 `loadLowcodeRuntimeSchema` 读取 `schema`、`releaseId`、`pageId` 或 fallback schema。该方式只适合本地 demo 和中小型 schema；正式环境应由 Java 配置平台返回 `releaseId` 或 `pageId`，H5 runtime 再通过 API 拉取 schema。
+本地 handoff 使用 `@meumall/lowcode-adapters` 提供的 `encodePageSchemaToUrlParam` 编码，并在 H5 runtime 侧统一通过 `loadLowcodeRuntimeSchema` 读取 `schema`、`previewToken`、`releaseId`、`pageId` 或 fallback schema。该方式只适合本地 demo 和中小型 schema；正式环境建议由 Java 配置平台返回 `previewToken`、`releaseId` 或 `pageId`，H5 runtime 再通过 API 拉取 schema。
 
 ## Suggested Routes
 
 ```text
 /activity/lowcode/[pageId]
 /promotion/lowcode/[pageId]
+/preview/lowcode/token/[previewToken]
 /preview/lowcode/[releaseId]
 ```
 
@@ -48,6 +49,7 @@ http://localhost:5174/?schema={base64url-page-schema}&source=editor
 
 ```text
 GET /api/lowcode/pages/{pageId}/published
+GET /api/lowcode/pages/previews/{previewToken}
 GET /api/lowcode/releases/{releaseId}
 POST /api/lowcode/pages/{pageId}/track
 ```
@@ -59,7 +61,7 @@ POST /api/lowcode/pages/{pageId}/track
 - `saveDraft(schema)`：保存草稿版本，并更新 pageId -> draft release 索引。
 - `saveEditorDraftSnapshot({ pageId, schema, operator })`：保存编辑器自动草稿恢复点，不生成 release，不进入版本历史。
 - `getEditorDraftSnapshot(pageId)`：读取编辑器自动草稿恢复点；编辑器初始化后会优先通过 provider 异步恢复，旧 `STORAGE_KEY` localStorage 草稿仅作为迁移兜底。
-- `createPreview(schema)`：生成一次性预览版本，编辑器可打开 `?runtime=1&releaseId=...`。
+- `createPreview(schema)`：生成一次性预览版本，编辑器可打开 `?runtime=1&previewToken=...`，缺少 token 时可回退 `?runtime=1&releaseId=...`。
 - `publishPage(schema)`：生成 published 版本，并更新 pageId -> published release 索引。
 - `getPublished(pageId)`：模拟 H5 运行态读取已发布页面。
 
@@ -67,15 +69,17 @@ POST /api/lowcode/pages/{pageId}/track
 
 ```text
 /?runtime=1&pageId=summer-campaign-demo
+/?runtime=1&previewToken=preview_demo_token
 /?runtime=1&releaseId=preview_xxx
 http://localhost:5174/?schema=encoded_schema
+http://localhost:5174/?previewToken=preview_demo_token
 http://localhost:5174/?pageId=summer-campaign-demo
 http://localhost:5174/?releaseId=preview_demo
 http://localhost:5174/?pageId=missing-page
 http://localhost:5174/?demo=empty
 ```
 
-`apps/h5-runtime-playground` 内置一个本地 `LowcodeConfigPlatformClient` mock：`?pageId=summer-campaign-demo` 会加载本地 published schema，`?releaseId=preview_demo` 会加载本地 preview release schema；未知 `pageId` 或 `releaseId` 会回落到 sample schema 并展示 fallback 原因。左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
+`apps/h5-runtime-playground` 内置一个本地 `LowcodeConfigPlatformClient` mock：`?pageId=summer-campaign-demo` 会加载本地 published schema，`?previewToken=preview_demo_token` 和 `?releaseId=preview_demo` 会加载本地 preview release schema；未知 `previewToken`、`pageId` 或 `releaseId` 会回落到 sample schema 并展示 fallback 原因。左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
 
 H5 runtime playground 可通过环境变量切换为 Java HTTP client：
 
@@ -85,7 +89,7 @@ VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION="Bearer token" \
 pnpm --filter @meumall/lowcode-h5-runtime-playground dev
 ```
 
-不配置时仍使用本地 mock；配置后左侧诊断面板会展示 `配置平台: http <baseUrl>`，并通过 `createHttpConfigPlatformClient` 加载 `pageId` 或 `releaseId`。
+不配置时仍使用本地 mock；配置后左侧诊断面板会展示 `配置平台: http <baseUrl>`，并通过 `createHttpConfigPlatformClient` 加载 `previewToken`、`pageId` 或 `releaseId`。
 
 H5 runtime playground 也可通过环境变量切换 `product.byIds` 数据源为 HTTP BFF handler：
 

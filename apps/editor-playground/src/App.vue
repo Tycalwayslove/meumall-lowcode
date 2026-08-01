@@ -1137,6 +1137,9 @@ const releaseListSummary = computed(() =>
 const latestPublishedRelease = computed<EditorPageRelease | undefined>(() =>
   releases.value.find((release) => release.kind === "published"),
 );
+const latestPreviewRelease = computed<EditorPageRelease | undefined>(() =>
+  releases.value.find((release) => release.kind === "preview" && release.previewToken),
+);
 const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
   selectedRelease.value ? createLowcodeVersionDiffItems(editorState.value.schema, selectedRelease.value.schema) : [],
 );
@@ -1163,6 +1166,17 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() =>
       title: "页面草稿/最新版本 H5",
       description: `按 pageId 读取配置平台：${configPlatformBinding.label}`,
       url: createRuntimeUrl({ pageId: editorState.value.schema.pageId }),
+    },
+    latestPreviewRelease.value?.previewToken ? {
+      id: "preview-token-runtime",
+      title: "当前预览 token H5",
+      description: `${latestPreviewRelease.value.pageVersion} / ${formatLowcodeReleaseTime(latestPreviewRelease.value.createdAt)}`,
+      url: createRuntimeUrl({ previewToken: latestPreviewRelease.value.previewToken }),
+    } : {
+      id: "preview-token-runtime",
+      title: "当前预览 token H5",
+      description: "生成预览后可用，更接近正式 Java 预览入口。",
+      disabledReason: "暂无 previewToken",
     },
     latestPublishedRelease.value ? {
       id: "published-runtime",
@@ -3526,6 +3540,14 @@ async function refreshReleases(): Promise<void> {
 }
 
 async function resolveRuntimeSchema(): Promise<LowcodePageSchema | undefined> {
+  const previewToken = runtimeQuery.get("previewToken");
+  if (previewToken && configPlatformClient.getPreviewByToken) {
+    try {
+      return (await Promise.resolve(configPlatformClient.getPreviewByToken(previewToken)))?.schema;
+    } catch {
+      return undefined;
+    }
+  }
   const releaseId = runtimeQuery.get("releaseId");
   if (releaseId) {
     try {
@@ -3556,17 +3578,18 @@ async function refreshRuntimeSchema(): Promise<void> {
   runtimeSchema.value = await resolveRuntimeSchema() ?? editorState.value.schema;
 }
 
-function createRuntimeUrl(params: { pageId?: string; releaseId?: string }): string {
+function createRuntimeUrl(params: { pageId?: string; releaseId?: string; previewToken?: string }): string {
   const url = new URL(window.location.href);
   url.hash = "";
   url.search = "";
   url.searchParams.set("runtime", "1");
+  if (params.previewToken) url.searchParams.set("previewToken", params.previewToken);
   if (params.releaseId) url.searchParams.set("releaseId", params.releaseId);
   if (params.pageId) url.searchParams.set("pageId", params.pageId);
   return url.toString();
 }
 
-function openRuntime(params: { pageId?: string; releaseId?: string } = { pageId: editorState.value.schema.pageId }): void {
+function openRuntime(params: { pageId?: string; releaseId?: string; previewToken?: string } = { pageId: editorState.value.schema.pageId }): void {
   window.open(createRuntimeUrl(params), "_blank", "noopener,noreferrer");
 }
 
@@ -3847,7 +3870,7 @@ async function createPreviewRelease(): Promise<void> {
     releaseNoteDraft.value = "";
     await refreshReleases();
     setReleaseMessage(release, "已生成预览");
-    openRuntime({ releaseId: release.id });
+    openRuntime(release.previewToken ? { previewToken: release.previewToken } : { releaseId: release.id });
   } catch (error) {
     releaseMessage.value = `生成预览失败：${formatConfigPlatformError(error)}`;
     recordAuditMessage("release.action", "生成预览失败", releaseMessage.value, "error");

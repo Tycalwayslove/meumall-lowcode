@@ -35,6 +35,7 @@ export interface LocalPageRelease {
   pageVersion: string;
   title: string;
   note?: string;
+  previewToken?: string;
   createdAt: string;
   schema: LowcodePageSchema;
 }
@@ -71,6 +72,10 @@ function writeJson(key: string, value: unknown): void {
 
 function createReleaseId(kind: LocalReleaseKind): string {
   return `${kind}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function createPreviewToken(releaseId: string): string {
+  return `pt_${releaseId.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
 }
 
 function formatVersion(kind: LocalReleaseKind, schema: LowcodePageSchema): string {
@@ -113,13 +118,15 @@ function writeReleases(releases: LocalPageRelease[]): void {
 
 function saveRelease(schema: LowcodePageSchema, kind: LocalReleaseKind, pageStatus: LowcodePageStatus, options: LocalReleaseOptions = {}): LocalPageRelease {
   const releaseSchema = createSchemaForRelease(schema, kind, pageStatus);
+  const releaseId = createReleaseId(kind);
   const release: LocalPageRelease = {
-    id: createReleaseId(kind),
+    id: releaseId,
     kind,
     pageId: releaseSchema.pageId,
     pageVersion: releaseSchema.pageVersion,
     title: releaseSchema.title,
     note: options.note?.trim() || undefined,
+    previewToken: kind === "preview" ? createPreviewToken(releaseId) : undefined,
     createdAt: new Date().toISOString(),
     schema: releaseSchema,
   };
@@ -328,12 +335,17 @@ export function listReleases(pageId?: string): LocalPageRelease[] {
   const normalizedReleases = releases.map((release) => ({
     ...release,
     note: typeof release.note === "string" ? release.note : undefined,
+    previewToken: typeof release.previewToken === "string" ? release.previewToken : undefined,
   }));
   return pageId ? normalizedReleases.filter((release) => release.pageId === pageId) : normalizedReleases;
 }
 
 export function getRelease(releaseId: string): LocalPageRelease | undefined {
   return readReleases().find((release) => release.id === releaseId);
+}
+
+export function getPreviewByToken(previewToken: string): LocalPageRelease | undefined {
+  return readReleases().find((release) => release.kind === "preview" && release.previewToken === previewToken);
 }
 
 export function getDraft(pageId: string): LowcodePageSchema | undefined {
@@ -361,6 +373,9 @@ export const localConfigPlatformClient = {
   },
   getRelease(releaseId: string) {
     return getRelease(releaseId);
+  },
+  getPreviewByToken(previewToken: string) {
+    return getPreviewByToken(previewToken);
   },
   getDraft(pageId: string) {
     return getDraft(pageId);

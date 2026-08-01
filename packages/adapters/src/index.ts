@@ -72,6 +72,7 @@ export interface ConfigPlatformPageRelease {
   pageVersion: string;
   title: string;
   note?: string;
+  previewToken?: string;
   createdAt: string;
   schema: LowcodePageSchema;
 }
@@ -151,6 +152,7 @@ export interface LowcodeConfigPlatformClient {
   publishPage(schema: LowcodePageSchema, metadata?: ConfigPlatformReleaseMetadata): MaybePromise<ConfigPlatformPageRelease>;
   listReleases(pageId?: string): MaybePromise<ConfigPlatformPageRelease[]>;
   getRelease(releaseId: string): MaybePromise<ConfigPlatformPageRelease | undefined>;
+  getPreviewByToken?(previewToken: string): MaybePromise<ConfigPlatformPageRelease | undefined>;
   getDraft(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
   getPublished(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
   getEditorWorkflowState?(pageId: string): MaybePromise<ConfigPlatformEditorWorkflowState | undefined>;
@@ -226,10 +228,11 @@ export interface CreateHttpConfigPlatformClientOptions {
   headers?: Record<string, string>;
 }
 
-export type RuntimeSchemaSourceType = "encoded" | "release" | "published" | "fallback";
+export type RuntimeSchemaSourceType = "encoded" | "preview" | "release" | "published" | "fallback";
 
 export interface LoadRuntimeSchemaInput {
   encodedSchema?: string;
+  previewToken?: string;
   releaseId?: string;
   pageId?: string;
   configPlatformClient?: LowcodeConfigPlatformClient;
@@ -910,6 +913,10 @@ export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatform
       const payload = await request(`/api/lowcode/pages/releases/${encodePath(releaseId)}`);
       return payload == null ? undefined : assertPageRelease(payload);
     },
+    async getPreviewByToken(previewToken) {
+      const payload = await request(`/api/lowcode/pages/previews/${encodePath(previewToken)}`);
+      return payload == null ? undefined : assertPageRelease(payload);
+    },
     async getDraft(pageId) {
       return assertPageSchemaOrUndefined(await request(`/api/lowcode/pages/${encodePath(pageId)}/draft`));
     },
@@ -1002,6 +1009,24 @@ export async function loadLowcodeRuntimeSchema(input: LoadRuntimeSchemaInput): P
       return {
         schema: decodePageSchemaFromUrlParam(input.encodedSchema),
         source: "encoded",
+      };
+    } catch (error) {
+      return fallbackRuntimeSchema(input.fallbackSchema, error);
+    }
+  }
+
+  if (input.previewToken) {
+    if (!input.configPlatformClient?.getPreviewByToken) {
+      return fallbackRuntimeSchema(input.fallbackSchema, new Error("Config platform client with getPreviewByToken is required for previewToken"));
+    }
+    try {
+      const release = await input.configPlatformClient.getPreviewByToken(input.previewToken);
+      if (!release?.schema) {
+        throw new Error(`Lowcode preview not found: ${input.previewToken}`);
+      }
+      return {
+        schema: release.schema,
+        source: "preview",
       };
     } catch (error) {
       return fallbackRuntimeSchema(input.fallbackSchema, error);

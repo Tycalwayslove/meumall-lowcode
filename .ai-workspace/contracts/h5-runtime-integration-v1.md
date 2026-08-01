@@ -20,7 +20,7 @@ MeuMall Lowcode H5 Runtime Integration v1
 
 ## 集成目标
 
-`hybird-meumall` 通过 npm 引入低代码 renderer、materials、schema/core/adapters，在 H5 路由中按 `pageId` 或 `releaseId` 拉取 Page Schema 并渲染，不复制低代码平台源码。
+`hybird-meumall` 通过 npm 引入低代码 renderer、materials、schema/core/adapters，在 H5 路由中按 `pageId`、`previewToken` 或 `releaseId` 拉取 Page Schema 并渲染，不复制低代码平台源码。
 
 ## 需要安装的包
 
@@ -39,12 +39,14 @@ pnpm add @meumall/lowcode-schema @meumall/lowcode-core @meumall/lowcode-renderer
 ```text
 /activity/lowcode/:pageId
 /promotion/lowcode/:pageId
+/preview/lowcode/token/:previewToken
 /preview/lowcode/:releaseId
 ```
 
 路由职责：
 
 - `pageId`：读取 Java 配置平台 active published schema。
+- `previewToken`：读取 Java 配置平台 preview release schema，仅用于预览验收。
 - `releaseId`：读取 Java 配置平台 preview 或历史 release schema。
 - `schema` URL 参数：仅用于本地 demo 或排障，不作为生产入口。
 
@@ -67,6 +69,7 @@ const configPlatformClient = createHttpConfigPlatformClient({
 
 const result = await loadLowcodeRuntimeSchema({
   encodedSchema: query.schema,
+  previewToken: route.params.previewToken,
   releaseId: route.params.releaseId,
   pageId: route.params.pageId,
   configPlatformClient,
@@ -77,15 +80,16 @@ const result = await loadLowcodeRuntimeSchema({
 优先级：
 
 1. `encodedSchema`
-2. `releaseId`
-3. `pageId`
-4. `fallbackSchema`
+2. `previewToken`
+3. `releaseId`
+4. `pageId`
+5. `fallbackSchema`
 
 生产环境建议禁用或限制 `encodedSchema`，避免 URL 过长和绕过配置平台审计。
 
 ## H5 runtime playground 环境开关
 
-`apps/h5-runtime-playground` 默认使用本地 mock `LowcodeConfigPlatformClient`，用于离线验证 `pageId=summer-campaign-demo`、`releaseId=preview_demo`、empty demo 和 broken demo。需要联调 Java 配置平台时，可以通过环境变量切换为 HTTP client：
+`apps/h5-runtime-playground` 默认使用本地 mock `LowcodeConfigPlatformClient`，用于离线验证 `pageId=summer-campaign-demo`、`previewToken=preview_demo_token`、`releaseId=preview_demo`、empty demo 和 broken demo。需要联调 Java 配置平台时，可以通过环境变量切换为 HTTP client：
 
 ```bash
 VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL=http://localhost:8080 \
@@ -163,7 +167,7 @@ const { data, records } = await resolveLowcodeDataSources(schema.dataSources ?? 
 - 不允许运营配置任意 JavaScript。
 - `navigate` 需要接 H5 路由或 App WebView bridge。
 - `coupon.receive` 需要登录态校验和业务接口错误提示。
-- `tracking.click` 必须带 pageId、nodeId、actionId、releaseId 或 pageVersion。
+- `tracking.click` 必须带 pageId、nodeId、actionId、previewToken、releaseId 或 pageVersion。
 - 未注册 action type 不得导致整页白屏。
 
 ## 降级策略
@@ -195,6 +199,7 @@ const { data, records } = await resolveLowcodeDataSources(schema.dataSources ?? 
 
 - `pageId`
 - `pageVersion`
+- `previewToken`
 - `releaseId`
 - `schemaVersion`
 - `componentName`
