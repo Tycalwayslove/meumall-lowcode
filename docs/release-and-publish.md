@@ -35,6 +35,8 @@ pnpm version-packages
 pnpm publish-packages
 ```
 
+Current `.changeset/config.json` links all 8 publishable packages in one version group. A changeset may name a single package, but a later `pnpm version-packages` can still align versions across the linked group. Do not run `pnpm version-packages` until the release owner confirms the intended multi-package version result.
+
 ## Local Dry Run
 
 Before publishing, build packages and verify the actual npm package contents:

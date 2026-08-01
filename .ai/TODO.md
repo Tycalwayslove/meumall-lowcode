@@ -2,7 +2,7 @@
 
 ## P0
 
-- 确认 npm registry、scope、access 和 token；当前已具备 `pnpm pack:dry-run` 包内容预检，但尚未执行真实 npm 发布。
+- 确认 npm registry、scope、access、token、linked group 版本结果和 release/tag 策略；当前已具备 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler` 已有 pending minor changeset，但尚未执行真实 npm 发布。
 
 ## P1
 

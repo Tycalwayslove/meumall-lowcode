@@ -26,7 +26,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - TypeScript project references。
 - 可发布 npm 包结构。
 - npm pack dry-run 发布预检：根级 `pnpm pack:dry-run` 会自动发现 8 个可发布包，逐包执行 `npm pack --dry-run --json`，并校验实际包内容包含 `package.json`、`README.md`、`dist/index.js` 和 `dist/index.d.ts`。
-- Changesets 基础配置。
+- Changesets 基础配置；`createHttpActionHandler` 已有 pending minor changeset，真实发布前仍需统一确认 linked group 版本结果。
 - GitHub Actions CI 基础配置。
 - H5 renderer 初始实现。
 - H5 materials 初始实现，已包含容器、公告条、区块标题、图片卡片宫格、标签内容切换、基础按钮、基础输入框、基础文本、分割线、基础图片、基础标签、基础图文卡片、留资表单、活动头图、图片 Banner、行动按钮、底部转化条、商品列表、商品榜单、品牌专题、门店/达人推荐、直播入口、优惠券区块、组合券包、活动规则弹窗、间距块、倒计时、导航宫格、楼层锚点、秒杀商品组和富文本。
@@ -177,7 +177,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐、静态直播入口、静态商品榜单、静态品牌专题、静态底部转化条和 mock 商品数据，尚未对接真实活动、库存、价格、排行口径、品牌中心、规则中心、楼层配置中心、优惠券中心、门店中心、达人中心和直播中心。
 - 素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，本地自定义模板仍是 localStorage 原型；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
-- 尚未配置 npm registry/token；当前已具备本地 `pnpm pack:dry-run` 包内容预检，但真实发布仍需确认 registry、access、token 和 changeset 版本。
+- 尚未配置 npm registry/token；当前已具备本地 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler` 已补 pending minor changeset，但真实发布仍需确认 registry、access、token、linked group 版本结果和 release/tag 策略。
 - 已建立浏览器级 smoke check、可视化截图 smoke check、renderer fallback 单测和架构边界 check，并覆盖基础挂载、模板应用、模式切换、编辑器首页、published H5 入口、preview H5 入口、empty/broken runtime 降级、包结构、依赖方向和物料 manifest 对齐；但更完整的组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E，完整循环依赖分析，以及带基线比对和阈值判断的 visual regression 尚未建立。
 
 ## 最近变更
