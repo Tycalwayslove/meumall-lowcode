@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   ActivityRuleModal,
   BasicButton,
+  BasicCard,
   BasicImage,
   BasicInput,
   BasicTag,
@@ -159,6 +160,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     functionSourceIncludes(BasicImage, ["MlcImage"]);
     functionSourceIncludes(BasicTag, ["MlcTag"]);
+    functionSourceIncludes(BasicCard, ["MlcImage", "MlcTag", "MlcText", "MlcButton"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -310,6 +312,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.text, "基础标签");
     assert.equal(material.manifest.propsSchema.textColor.setter, "color");
     assert.equal(material.manifest.propsSchema.fontSize.setter, "number");
+  });
+
+  it("registers the basic card material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicCard");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础图文卡片");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.title, "基础图文卡片");
+    assert.equal(material.manifest.defaultProps.showButton, true);
+    assert.equal(material.manifest.propsSchema.imageUrl.setter, "image");
+    assert.equal(material.manifest.propsSchema.description.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.showButton.setter, "switch");
+    assert.equal(material.manifest.propsSchema.shadow.setter, "switch");
+    assert.equal(material.manifest.events?.[0]?.name, "onClick");
   });
 
   it("registers the image card grid material", () => {

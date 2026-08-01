@@ -222,6 +222,39 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_card",
+      componentName: "BasicCard",
+      materialVersion: "0.1.0",
+      props: {
+        imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+        alt: "基础图文卡片示例",
+        ratio: "16 / 9",
+        fit: "cover",
+        badgeText: "基础图文卡片示例",
+        title: "周末轻旅行穿搭",
+        description: "把图片、标签、标题、说明和按钮组合成一个通用卡片，适合活动入口和内容推荐。",
+        buttonText: "查看搭配",
+        showButton: true,
+        wrapperBackgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        buttonTextColor: "#ffffff",
+        radius: 12,
+        buttonRadius: 999,
+        borderColor: "#d1d5db",
+        borderWidth: 1,
+        shadow: true,
+        paddingY: 8,
+        contentPadding: 12,
+      },
+      events: {
+        onClick: { actionId: "track_basic_card_click" },
+      },
+    },
+    {
       id: "node_rules",
       componentName: "ActivityRuleModal",
       materialVersion: "0.1.0",
@@ -730,6 +763,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_input_change",
+      },
+    },
+    {
+      id: "track_basic_card_click",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_card_click",
       },
     },
     {

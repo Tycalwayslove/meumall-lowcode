@@ -117,6 +117,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `DividerBlock`
 - `BasicImage`
 - `BasicTag`
+- `BasicCard`
 - `ActionButton`
 - `RichTextBlock`
 - `SpacerBlock`
@@ -126,6 +127,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - 后续可增加 `VideoBlock`、`FormSubmitButton`，复杂表单字段应优先复用 `BasicInput` 再组合。
 
 `SectionContainer` 是当前编辑器唯一默认识别的嵌套容器物料，负责运营分组、基础留白、子节点间距、边框和阴影等单列布局能力。新增多列或栅格前，应优先确认是否能通过增强 `SectionContainer` 满足。
+
+`BasicCard` 是通用图文单卡片物料，负责组合图片、角标、标题、说明和行动按钮；它不承载商品、优惠券、直播或门店达人等业务模型，卡片列表能力应继续使用 `ImageCardGrid` 或后续单独设计。
 
 通用物料允许处理：
 
@@ -269,6 +272,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `DividerBlock`
 - `BasicImage`
 - `BasicTag`
+- `BasicCard`
 - `ActionButton`
 - `ImageCardGrid`
 - `TabsBlock`

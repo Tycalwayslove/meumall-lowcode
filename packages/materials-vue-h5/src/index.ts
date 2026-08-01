@@ -412,6 +412,132 @@ export const BasicTag = defineComponent({
   },
 });
 
+export const BasicCard = defineComponent({
+  name: "BasicCard",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const imageUrl = text(runtimeProps.imageUrl);
+      const fit = option<BasicImageFit>(runtimeProps.fit, ["cover", "contain", "fill", "none", "scale-down"], "cover");
+      const badgeText = text(runtimeProps.badgeText);
+      const description = text(runtimeProps.description);
+      const buttonText = text(runtimeProps.buttonText);
+      const accentColor = text(runtimeProps.accentColor, "#0f766e");
+      const radius = number(runtimeProps.radius, 12);
+      const borderWidth = number(runtimeProps.borderWidth, 1);
+      const handler = runtimeProps.onClick;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-card",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            "article",
+            {
+              class: "mlc-basic-card__inner",
+              style: {
+                overflow: "hidden",
+                color: text(runtimeProps.textColor, "#64748b"),
+                background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+                border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+                borderRadius: `${radius}px`,
+                boxShadow: boolean(runtimeProps.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : undefined,
+              } satisfies CSSProperties,
+            },
+            [
+              imageUrl
+                ? h(MlcImage, {
+                    src: imageUrl,
+                    alt: text(runtimeProps.alt),
+                    ratio: text(runtimeProps.ratio, "16 / 9"),
+                    fit,
+                    radius: 0,
+                  })
+                : null,
+              h(
+                "div",
+                {
+                  style: {
+                    display: "grid",
+                    gap: "8px",
+                    padding: `${number(runtimeProps.contentPadding, 12)}px`,
+                  } satisfies CSSProperties,
+                },
+                [
+                  badgeText
+                    ? h(
+                        MlcTag,
+                        {
+                          radius: 999,
+                          style: {
+                            width: "fit-content",
+                            color: accentColor,
+                            background: text(runtimeProps.badgeBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+                          } satisfies CSSProperties,
+                        },
+                        () => badgeText,
+                      )
+                    : null,
+                  h(
+                    MlcText,
+                    {
+                      as: "strong",
+                      size: number(runtimeProps.titleSize, 16),
+                      weight: 800,
+                      lineHeight: 1.35,
+                      style: { color: text(runtimeProps.titleColor, "#111827") } satisfies CSSProperties,
+                    },
+                    () => text(runtimeProps.title, "基础图文卡片"),
+                  ),
+                  description
+                    ? h(
+                        MlcText,
+                        {
+                          as: "p",
+                          size: 13,
+                          tone: "muted",
+                          lineHeight: 1.55,
+                          style: { color: text(runtimeProps.textColor, "#64748b") } satisfies CSSProperties,
+                        },
+                        () => description,
+                      )
+                    : null,
+                  buttonText && boolean(runtimeProps.showButton, true)
+                    ? h(
+                        MlcButton,
+                        {
+                          size: "sm",
+                          radius: number(runtimeProps.buttonRadius, 999),
+                          style: {
+                            width: "fit-content",
+                            borderColor: accentColor,
+                            color: text(runtimeProps.buttonTextColor, "#ffffff"),
+                            background: accentColor,
+                          } satisfies CSSProperties,
+                          onClick: () => {
+                            if (typeof handler === "function") handler();
+                          },
+                        },
+                        () => buttonText,
+                      )
+                    : null,
+                ],
+              ),
+            ],
+          ),
+        ],
+      );
+    };
+  },
+});
+
 export const SectionTitle = defineComponent({
   name: "SectionTitle",
   props: materialPropOptions,
@@ -2635,6 +2761,67 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 800 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
       },
+    }),
+  },
+  {
+    component: BasicCard,
+    manifest: createMaterialManifest({
+      componentName: "BasicCard",
+      materialVersion: "0.1.0",
+      title: "基础图文卡片",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+        alt: "基础图文卡片",
+        ratio: "16 / 9",
+        fit: "cover",
+        badgeText: "精选",
+        title: "基础图文卡片",
+        description: "用于组合图片、标题、说明和按钮，适合活动入口、内容推荐和轻量导购。",
+        buttonText: "查看详情",
+        showButton: true,
+        wrapperBackgroundColor: "transparent",
+        cardBackgroundColor: "#ffffff",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        buttonTextColor: "#ffffff",
+        radius: 12,
+        buttonRadius: 999,
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        shadow: false,
+        paddingY: 12,
+        contentPadding: 12,
+      },
+      propsSchema: {
+        imageUrl: { label: "图片地址", type: "string", setter: "image", defaultValue: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
+        alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "基础图文卡片" },
+        ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "基础图文卡片" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于组合图片、标题、说明和按钮，适合活动入口、内容推荐和轻量导购。" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看详情" },
+        showButton: { label: "显示按钮", type: "boolean", setter: "switch", defaultValue: true },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        badgeBackgroundColor: { label: "角标背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 12 },
+        buttonRadius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 999 },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1 },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+        contentPadding: { label: "内容内边距", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
     }),
   },
   {

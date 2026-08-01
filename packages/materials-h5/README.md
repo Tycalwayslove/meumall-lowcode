@@ -67,6 +67,7 @@ Current materials:
 - `DividerBlock`
 - `BasicImage`
 - `BasicTag`
+- `BasicCard`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`

@@ -299,6 +299,95 @@ export function BasicTag({ props }: MaterialProps) {
   );
 }
 
+export function BasicCard({ props }: MaterialProps) {
+  const imageUrl = text(props.imageUrl);
+  const fit = option<BasicImageFit>(props.fit, ["cover", "contain", "fill", "none", "scale-down"], "cover");
+  const badgeText = text(props.badgeText);
+  const description = text(props.description);
+  const buttonText = text(props.buttonText);
+  const accentColor = text(props.accentColor, "#0f766e");
+  const radius = number(props.radius, 12);
+  const borderWidth = number(props.borderWidth, 1);
+  const handler = props.onClick;
+
+  return (
+    <section
+      className="mlc-material mlc-basic-card"
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      <article
+        className="mlc-basic-card__inner"
+        style={{
+          overflow: "hidden",
+          color: text(props.textColor, "#64748b"),
+          background: text(props.cardBackgroundColor, "#ffffff"),
+          border: borderWidth > 0 ? `${borderWidth}px solid ${text(props.borderColor, "#e5e7eb")}` : undefined,
+          borderRadius: radius,
+          boxShadow: boolean(props.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : undefined,
+        }}
+      >
+        {imageUrl ? (
+          <MlcImage
+            src={imageUrl}
+            alt={text(props.alt)}
+            ratio={text(props.ratio, "16 / 9")}
+            fit={fit}
+            radius={0}
+          />
+        ) : null}
+        <div style={{ display: "grid", gap: 8, padding: number(props.contentPadding, 12) }}>
+          {badgeText ? (
+            <MlcTag
+              radius={999}
+              style={{
+                width: "fit-content",
+                color: accentColor,
+                background: text(props.badgeBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+              }}
+            >
+              {badgeText}
+            </MlcTag>
+          ) : null}
+          <MlcText
+            as="strong"
+            size={number(props.titleSize, 16)}
+            weight={800}
+            lineHeight={1.35}
+            style={{ color: text(props.titleColor, "#111827") }}
+          >
+            {text(props.title, "基础图文卡片")}
+          </MlcText>
+          {description ? (
+            <MlcText as="p" size={13} tone="muted" lineHeight={1.55} style={{ color: text(props.textColor, "#64748b") }}>
+              {description}
+            </MlcText>
+          ) : null}
+          {buttonText && boolean(props.showButton, true) ? (
+            <MlcButton
+              size="sm"
+              radius={number(props.buttonRadius, 999)}
+              onClick={() => {
+                if (typeof handler === "function") handler();
+              }}
+              style={{
+                width: "fit-content",
+                borderColor: accentColor,
+                color: text(props.buttonTextColor, "#ffffff"),
+                background: accentColor,
+              }}
+            >
+              {buttonText}
+            </MlcButton>
+          ) : null}
+        </div>
+      </article>
+    </section>
+  );
+}
+
 export function SectionTitle({ props }: MaterialProps) {
   const alignValue = text(props.align, "left");
   const align = alignValue === "center" || alignValue === "right" ? alignValue : "left";
@@ -1974,6 +2063,67 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 800 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
       },
+    }),
+  },
+  {
+    component: BasicCard,
+    manifest: createMaterialManifest({
+      componentName: "BasicCard",
+      materialVersion: "0.1.0",
+      title: "基础图文卡片",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+        alt: "基础图文卡片",
+        ratio: "16 / 9",
+        fit: "cover",
+        badgeText: "精选",
+        title: "基础图文卡片",
+        description: "用于组合图片、标题、说明和按钮，适合活动入口、内容推荐和轻量导购。",
+        buttonText: "查看详情",
+        showButton: true,
+        wrapperBackgroundColor: "transparent",
+        cardBackgroundColor: "#ffffff",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        titleColor: "#111827",
+        textColor: "#64748b",
+        accentColor: "#0f766e",
+        buttonTextColor: "#ffffff",
+        radius: 12,
+        buttonRadius: 999,
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        shadow: false,
+        paddingY: 12,
+        contentPadding: 12,
+      },
+      propsSchema: {
+        imageUrl: { label: "图片地址", type: "string", setter: "image", defaultValue: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
+        alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "基础图文卡片" },
+        ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
+        title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "基础图文卡片" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于组合图片、标题、说明和按钮，适合活动入口、内容推荐和轻量导购。" },
+        buttonText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看详情" },
+        showButton: { label: "显示按钮", type: "boolean", setter: "switch", defaultValue: true },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        badgeBackgroundColor: { label: "角标背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)" },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e" },
+        buttonTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        radius: { label: "卡片圆角", type: "number", setter: "number", defaultValue: 12 },
+        buttonRadius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 999 },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1 },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+        contentPadding: { label: "内容内边距", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
     }),
   },
   {
