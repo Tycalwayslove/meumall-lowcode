@@ -1035,6 +1035,20 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.querySelector('.phone-frame')");
   log("通过：基础列表可从快捷命令添加并写入静态列表项");
 
+  log("检查基础折叠面板通用物料");
+  const nodeCountBeforeBasicAccordion = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础折叠面板");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础折叠面板')");
+  await page.clickByText(".command-palette-item", "添加物料：基础折叠面板");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicAccordion)}`);
+  await page.waitForExpression("(() => { const accordions = Array.from(document.querySelectorAll('.phone-frame .mlc-basic-accordion')); const latest = accordions.at(-1); return Boolean(latest && latest.innerText.includes('基础折叠面板') && latest.innerText.includes('活动什么时候开始？') && latest.innerText.includes('请以页面配置的活动时间为准') && latest.querySelectorAll('.mlc-basic-accordion__item').length === 3 && latest.querySelector('.mlc-basic-accordion__trigger[aria-expanded=\"true\"]')); })()");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicAccordion\"') && item.value.includes('\"mode\": \"single\"') && item.value.includes('\"items\"') && item.value.includes('\"活动什么时候开始？\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：基础折叠面板可从快捷命令添加并写入静态折叠项");
+
   log("检查基础图片和基础标签通用物料");
   const nodeCountBeforeBasicImage = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1587,6 +1601,7 @@ async function main() {
       { label: "基础弹窗物料存在", expression: "document.body.innerText.includes('基础弹窗')" },
       { label: "基础表单物料存在", expression: "document.body.innerText.includes('基础表单')" },
       { label: "基础列表物料存在", expression: "document.body.innerText.includes('基础列表')" },
+      { label: "基础折叠面板物料存在", expression: "document.body.innerText.includes('基础折叠面板')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "发布风险摘要存在", expression: "document.querySelector('.publish-risk-summary') && (document.body.innerText.includes('发布检查已通过') || document.body.innerText.includes('可以生成预览，仍有提醒') || document.body.innerText.includes('发布前需要处理阻塞项'))" },
@@ -1619,6 +1634,7 @@ async function main() {
       { label: "默认大促模板包含基础弹窗", expression: "document.querySelector('.phone-frame .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "默认大促模板包含基础表单", expression: "(() => { const form = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form'); return Boolean(form && form.querySelector('.mlc-basic-form__fields .mlc-basic-input') && form.querySelector('.mlc-basic-form__fields .mlc-basic-checkbox') && form.innerText.includes('基础表单示例') && form.innerText.includes('提交表单')); })()" },
       { label: "默认大促模板包含基础列表", expression: "(() => { const list = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_list\"] .mlc-basic-list'); return Boolean(list && list.innerText.includes('基础列表示例') && list.innerText.includes('确认页面主题') && list.querySelectorAll('.mlc-basic-list__item').length === 3); })()" },
+      { label: "默认大促模板包含基础折叠面板", expression: "(() => { const accordion = document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_accordion\"] .mlc-basic-accordion'); return Boolean(accordion && accordion.innerText.includes('基础折叠面板示例') && accordion.innerText.includes('什么时候适合使用？') && accordion.innerText.includes('当页面内容较长') && accordion.querySelectorAll('.mlc-basic-accordion__item').length === 3 && accordion.querySelector('.mlc-basic-accordion__trigger[aria-expanded=\"true\"]')); })()" },
       { label: "默认大促模板包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "默认大促模板包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "默认大促模板包含间距块", expression: "document.querySelector('.phone-frame .mlc-spacer-block')" },
@@ -1680,6 +1696,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础弹窗", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看基础弹窗')" },
       { label: "编辑器内置 runtime 包含基础表单", expression: "(() => { const form = document.querySelector('[data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form'); return Boolean(form && form.querySelector('.mlc-basic-form__fields .mlc-basic-input') && form.querySelector('.mlc-basic-form__fields .mlc-basic-checkbox') && form.innerText.includes('基础表单示例') && form.innerText.includes('提交表单')); })()" },
       { label: "编辑器内置 runtime 包含基础列表", expression: "(() => { const list = document.querySelector('[data-lowcode-node-id=\"summer_basic_list\"] .mlc-basic-list'); return Boolean(list && list.innerText.includes('基础列表示例') && list.innerText.includes('预览并提交发布') && list.querySelectorAll('.mlc-basic-list__item').length === 3); })()" },
+      { label: "编辑器内置 runtime 包含基础折叠面板", expression: "(() => { const accordion = document.querySelector('[data-lowcode-node-id=\"summer_basic_accordion\"] .mlc-basic-accordion'); return Boolean(accordion && accordion.innerText.includes('基础折叠面板示例') && accordion.innerText.includes('点击可以埋点吗？') && accordion.querySelectorAll('.mlc-basic-accordion__item').length === 3 && accordion.querySelector('.mlc-basic-accordion__trigger[aria-expanded=\"true\"]')); })()" },
       { label: "编辑器内置 runtime 包含标签内容切换", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "编辑器内置 runtime 包含倒计时", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "编辑器内置 runtime 包含间距块", expression: "document.querySelector('.mlc-spacer-block')" },
@@ -1725,6 +1742,7 @@ async function main() {
       { label: "React H5 基础弹窗已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-modal') && document.body.innerText.includes('查看 React H5 基础弹窗')" },
       { label: "React H5 基础表单已渲染", expression: "(() => { const form = document.querySelector('[data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form'); return Boolean(form && form.querySelector('.mlc-basic-form__fields .mlc-basic-input') && form.querySelector('.mlc-basic-form__fields .mlc-basic-checkbox') && form.innerText.includes('React H5 基础表单示例') && form.innerText.includes('提交表单')); })()" },
       { label: "React H5 基础列表已渲染", expression: "(() => { const list = document.querySelector('[data-lowcode-node-id=\"node_basic_list\"] .mlc-basic-list'); return Boolean(list && list.innerText.includes('React H5 基础列表示例') && list.innerText.includes('组件保持通用') && list.querySelectorAll('.mlc-basic-list__item').length === 3); })()" },
+      { label: "React H5 基础折叠面板已渲染", expression: "(() => { const accordion = document.querySelector('[data-lowcode-node-id=\"node_basic_accordion\"] .mlc-basic-accordion'); return Boolean(accordion && accordion.innerText.includes('React H5 基础折叠面板示例') && accordion.innerText.includes('基础层负责什么？') && accordion.innerText.includes('基础折叠面板只负责静态内容') && accordion.querySelectorAll('.mlc-basic-accordion__item').length === 3 && accordion.querySelector('.mlc-basic-accordion__trigger[aria-expanded=\"true\"]')); })()" },
       { label: "React H5 标签内容切换已渲染", expression: "document.body.innerText.includes('活动信息') && document.body.innerText.includes('活动亮点')" },
       { label: "React H5 倒计时已渲染", expression: "document.body.innerText.includes('大促限时抢') && document.body.innerText.includes('距离本轮活动结束') && document.body.innerText.includes('08') && document.body.innerText.includes('30')" },
       { label: "React H5 留资表单已渲染", expression: "document.body.innerText.includes('预约专属搭配顾问') && document.body.innerText.includes('提交预约')" },
@@ -1797,6 +1815,7 @@ async function main() {
       { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
       { label: "React H5 pageId 渲染基础链接", expression: "document.querySelector('.mlc-basic-link') && document.body.innerText.includes('React H5 基础链接示例')" },
       { label: "React H5 pageId 渲染基础列表", expression: "document.querySelector('.mlc-basic-list') && document.body.innerText.includes('React H5 基础列表示例')" },
+      { label: "React H5 pageId 渲染基础折叠面板", expression: "document.querySelector('.mlc-basic-accordion') && document.body.innerText.includes('React H5 基础折叠面板示例')" },
       { label: "React H5 pageId 渲染基础视频", expression: "document.querySelector('.mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
     ]);
 

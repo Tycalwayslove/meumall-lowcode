@@ -37,6 +37,10 @@ function list(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 }
 
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 function basicStepperRange(props: RuntimeProps) {
   const rawMin = number(props.min, 0);
   const rawMax = number(props.max, 99);
@@ -153,8 +157,11 @@ type BasicInlineAlign = "left" | "center" | "right";
 type BasicCarouselIndicator = "dots" | "counter" | "none";
 type BasicModalPlacement = "center" | "bottom";
 type BasicListMarker = "dot" | "number" | "badge" | "none";
+type BasicAccordionMode = "single" | "multiple";
+type BasicAccordionIcon = "chevron" | "plus" | "none";
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
+type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -241,6 +248,17 @@ const BASIC_LIST_MARKER_OPTIONS = [
   { label: "隐藏", value: "none" },
 ];
 
+const BASIC_ACCORDION_MODE_OPTIONS = [
+  { label: "单开", value: "single" },
+  { label: "多开", value: "multiple" },
+];
+
+const BASIC_ACCORDION_ICON_OPTIONS = [
+  { label: "箭头", value: "chevron" },
+  { label: "加号", value: "plus" },
+  { label: "隐藏", value: "none" },
+];
+
 const NUMBER_PIXEL_SIZE_META = { min: 0, max: 80, step: 1, unit: "px" };
 const NUMBER_RADIUS_META = { min: 0, max: 48, step: 1, unit: "px" };
 const NUMBER_PILL_RADIUS_META = { min: 0, max: 999, step: 1, unit: "px" };
@@ -295,6 +313,12 @@ const BASIC_LIST_FALLBACK_ITEMS: JsonObject[] = [
   { id: "step_1", title: "领取活动权益", description: "先查看页面权益和活动说明。", badgeText: "1", metaText: "必看" },
   { id: "step_2", title: "选择心仪内容", description: "根据运营配置进入对应会场或专题。", badgeText: "2", metaText: "可选" },
   { id: "step_3", title: "完成转化动作", description: "后续可通过安全 action 接入跳转或埋点。", badgeText: "3", metaText: "完成" },
+];
+
+const BASIC_ACCORDION_FALLBACK_ITEMS: JsonObject[] = [
+  { id: "faq_1", title: "活动什么时候开始？", content: "请以页面配置的活动时间为准，具体时间可由运营在内容中维护。", badgeText: "Q1" },
+  { id: "faq_2", title: "如何查看更多说明？", content: "可以在折叠内容中配置规则、注意事项或 FAQ 文案，不请求业务接口。", badgeText: "Q2" },
+  { id: "faq_3", title: "点击后会做什么？", content: "当前只做本地展开收起，并可触发安全 action 交给宿主处理。", badgeText: "Q3" },
 ];
 
 export const BasicButton = defineComponent({
@@ -836,6 +860,207 @@ export const BasicList = defineComponent({
                         ? h(MlcText, { as: "p", size: 13, lineHeight: 1.55, style: { color: text(runtimeProps.itemDescriptionColor, "#64748b") } }, () => text(item.description))
                         : null,
                     ]),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
+      );
+    };
+  },
+});
+
+export const BasicAccordion = defineComponent({
+  name: "BasicAccordion",
+  props: materialPropOptions,
+  setup(props) {
+    const openIds = ref<string[]>([]);
+
+    watch(
+      () => [props.props?.items, props.props?.defaultOpenIds, props.props?.defaultOpenFirst, props.node?.id],
+      () => {
+        const runtimeProps = props.props ?? {};
+        const items = list(runtimeProps.items).length ? list(runtimeProps.items) : BASIC_ACCORDION_FALLBACK_ITEMS;
+        const defaultOpenIds = stringList(runtimeProps.defaultOpenIds);
+        const firstItemId = items[0] ? text(items[0].id, "0") : "";
+        openIds.value = defaultOpenIds.length ? defaultOpenIds : boolean(runtimeProps.defaultOpenFirst, true) && firstItemId ? [firstItemId] : [];
+      },
+      { immediate: true },
+    );
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = list(runtimeProps.items).length ? list(runtimeProps.items) : BASIC_ACCORDION_FALLBACK_ITEMS;
+      const title = text(runtimeProps.title, "基础折叠面板");
+      const subtitle = text(runtimeProps.subtitle);
+      const mode = option<BasicAccordionMode>(runtimeProps.mode, ["single", "multiple"], "single");
+      const icon = option<BasicAccordionIcon>(runtimeProps.icon, ["chevron", "plus", "none"], "chevron");
+      const gap = number(runtimeProps.gap, 8);
+      const borderWidth = number(runtimeProps.borderWidth, 1);
+      const onItemToggle = typeof runtimeProps.onItemToggle === "function" ? runtimeProps.onItemToggle as BasicAccordionToggleHandler : undefined;
+
+      const renderIcon = (open: boolean) => {
+        if (icon === "none") return null;
+        const iconText = icon === "plus" ? (open ? "−" : "+") : "⌄";
+
+        return h(
+          "span",
+          {
+            class: `mlc-basic-accordion__icon mlc-basic-accordion__icon--${icon}${open ? " mlc-basic-accordion__icon--open" : ""}`,
+            "aria-hidden": "true",
+            style: {
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flex: "0 0 auto",
+              width: "22px",
+              height: "22px",
+              borderRadius: "999px",
+              color: text(runtimeProps.iconColor, "#64748b"),
+              background: text(runtimeProps.iconBackgroundColor, "transparent"),
+              fontSize: icon === "plus" ? "18px" : "20px",
+              fontWeight: 900,
+              lineHeight: 1,
+              transform: icon === "chevron" && open ? "rotate(180deg)" : undefined,
+              transition: "transform 160ms ease",
+            } satisfies CSSProperties,
+          },
+          iconText,
+        );
+      };
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-accordion",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 14)}px 12px`,
+            background: text(runtimeProps.backgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-accordion__card",
+            style: {
+              display: "grid",
+              gap: `${gap}px`,
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              background: text(runtimeProps.cardBackgroundColor, "#ffffff"),
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+            } satisfies CSSProperties,
+          },
+          [
+            title || subtitle
+              ? h("div", { class: "mlc-basic-accordion__header", style: { display: "grid", gap: "4px" } }, [
+                  title
+                    ? h(MlcText, { as: "strong", size: 18, weight: 900, style: { color: text(runtimeProps.titleColor, "#111827") } }, () => title)
+                    : null,
+                  subtitle
+                    ? h(MlcText, { as: "p", size: 13, lineHeight: 1.6, style: { color: text(runtimeProps.subtitleColor, "#64748b") } }, () => subtitle)
+                    : null,
+                ])
+              : null,
+            h(
+              "div",
+              { class: "mlc-basic-accordion__items", style: { display: "grid", gap: `${gap}px` } },
+              items.map((item, index) => {
+                const itemId = text(item.id, `${index}`);
+                const open = openIds.value.includes(itemId);
+                const contentId = `${props.node?.id ?? "accordion"}-${itemId}-accordion-panel`;
+
+                return h(
+                  "article",
+                  {
+                    key: itemId,
+                    class: `mlc-basic-accordion__item${open ? " mlc-basic-accordion__item--open" : ""}`,
+                    style: {
+                      overflow: "hidden",
+                      borderRadius: `${number(runtimeProps.itemRadius, 10)}px`,
+                      border: `1px solid ${text(runtimeProps.itemBorderColor, "#e5e7eb")}`,
+                      background: text(runtimeProps.itemBackgroundColor, "#ffffff"),
+                    } satisfies CSSProperties,
+                  },
+                  [
+                    h(
+                      "button",
+                      {
+                        type: "button",
+                        class: "mlc-basic-accordion__trigger",
+                        "aria-expanded": open,
+                        "aria-controls": contentId,
+                        style: {
+                          width: "100%",
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: `${number(runtimeProps.itemPadding, 12)}px`,
+                          border: 0,
+                          color: text(runtimeProps.itemTitleColor, "#111827"),
+                          background: "transparent",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        } satisfies CSSProperties,
+                        onClick: () => {
+                          const nextOpen = !open;
+                          if (!nextOpen) {
+                            openIds.value = openIds.value.filter((id) => id !== itemId);
+                          } else if (mode === "single") {
+                            openIds.value = [itemId];
+                          } else if (!openIds.value.includes(itemId)) {
+                            openIds.value = [...openIds.value, itemId];
+                          }
+                          onItemToggle?.({ item, index, open: nextOpen });
+                        },
+                      },
+                      [
+                        h("span", { style: { display: "flex", alignItems: "center", gap: "8px", minWidth: 0 } }, [
+                          text(item.badgeText)
+                            ? h(
+                                MlcTag,
+                                {
+                                  tone: "accent",
+                                  radius: number(runtimeProps.badgeRadius, 999),
+                                  class: "mlc-basic-accordion__badge",
+                                  style: {
+                                    color: text(runtimeProps.badgeColor, "#0f766e"),
+                                    background: text(runtimeProps.badgeBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+                                  },
+                                },
+                                () => text(item.badgeText),
+                              )
+                            : null,
+                          h(
+                            MlcText,
+                            { as: "strong", size: 14, weight: 800, lineHeight: 1.45, style: { color: text(runtimeProps.itemTitleColor, "#111827") } },
+                            () => text(item.title, `折叠项 ${index + 1}`),
+                          ),
+                        ]),
+                        renderIcon(open),
+                      ],
+                    ),
+                    open
+                      ? h(
+                          "div",
+                          {
+                            id: contentId,
+                            class: "mlc-basic-accordion__panel",
+                            style: {
+                              padding: `0 ${number(runtimeProps.itemPadding, 12)}px ${number(runtimeProps.itemPadding, 12)}px`,
+                              color: text(runtimeProps.contentColor, "#64748b"),
+                            } satisfies CSSProperties,
+                          },
+                          h(
+                            MlcText,
+                            { as: "p", size: 13, lineHeight: 1.65, style: { color: text(runtimeProps.contentColor, "#64748b"), whiteSpace: "pre-line" } },
+                            () => text(item.content, text(item.description)),
+                          ),
+                        )
+                      : null,
                   ],
                 );
               }),
@@ -4594,6 +4819,79 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
       },
       events: [{ name: "onItemClick", title: "点击列表项" }],
+    }),
+  },
+  {
+    component: BasicAccordion,
+    manifest: createMaterialManifest({
+      componentName: "BasicAccordion",
+      materialVersion: "0.1.0",
+      title: "基础折叠面板",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础折叠面板",
+        subtitle: "适合配置 FAQ、规则说明、注意事项或可展开内容。",
+        items: BASIC_ACCORDION_FALLBACK_ITEMS,
+        mode: "single",
+        icon: "chevron",
+        defaultOpenFirst: true,
+        defaultOpenIds: [],
+        backgroundColor: "#f3f4f6",
+        cardBackgroundColor: "#ffffff",
+        itemBackgroundColor: "#ffffff",
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        itemTitleColor: "#111827",
+        contentColor: "#64748b",
+        badgeColor: "#0f766e",
+        badgeBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        iconColor: "#64748b",
+        iconBackgroundColor: "transparent",
+        borderColor: "#e5e7eb",
+        itemBorderColor: "#e5e7eb",
+        borderWidth: 1,
+        radius: 12,
+        itemRadius: 10,
+        badgeRadius: 999,
+        paddingY: 14,
+        padding: 14,
+        itemPadding: 12,
+        gap: 8,
+        shadow: false,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础折叠面板" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "适合配置 FAQ、规则说明、注意事项或可展开内容。" },
+        items: { label: "折叠项", type: "array", setter: "textarea", defaultValue: BASIC_ACCORDION_FALLBACK_ITEMS },
+        mode: { label: "展开模式", type: "string", setter: "select", defaultValue: "single", options: BASIC_ACCORDION_MODE_OPTIONS },
+        icon: { label: "图标样式", type: "string", setter: "select", defaultValue: "chevron", options: BASIC_ACCORDION_ICON_OPTIONS },
+        defaultOpenFirst: { label: "默认展开首项", type: "boolean", setter: "switch", defaultValue: true },
+        defaultOpenIds: { label: "默认展开 ID", type: "array", setter: "textarea", defaultValue: [] },
+        backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        cardBackgroundColor: { label: "卡片背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        itemBackgroundColor: { label: "折叠项背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        itemTitleColor: { label: "折叠标题色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        contentColor: { label: "内容色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        badgeColor: { label: "标签文字色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        badgeBackgroundColor: { label: "标签背景色", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)", ...COLOR_SWATCHES_META },
+        iconColor: { label: "图标色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        iconBackgroundColor: { label: "图标背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        itemBorderColor: { label: "折叠项边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        itemRadius: { label: "折叠项圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        badgeRadius: { label: "标签圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "卡片内边距", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        itemPadding: { label: "折叠项留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "折叠项间距", type: "number", setter: "number", defaultValue: 8, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+      },
+      events: [{ name: "onItemToggle", title: "切换折叠项" }],
     }),
   },
   {

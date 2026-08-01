@@ -54,6 +54,7 @@ Currently migrated materials:
 - `BasicVideo`
 - `BasicForm`
 - `BasicList`
+- `BasicAccordion`
 - `SectionContainer`
 - `GridContainer`
 - `ActionButton`
@@ -103,6 +104,7 @@ Current materials:
 - `BasicVideo`
 - `BasicForm`
 - `BasicList`
+- `BasicAccordion`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`
@@ -126,6 +128,6 @@ Current materials:
 - `FlashSaleList`
 - `RichTextBlock`
 
-`SectionContainer`, `GridContainer`, and `BasicForm` are the current nested entries for editor canvas operations. They keep the Page Schema `children` shape unchanged. `BasicForm` provides a generic submit container and `onSubmit` event, but it does not automatically collect child field values or implement validation/remote submit protocols. `BasicList` provides a business-neutral static content list and `onItemClick` event; remote data, pagination, search, sorting, FAQ expansion, and business-specific list models should be added through later dedicated protocols or business materials. `BasicLink` provides a lightweight H5 link entry and `onClick` event; business routing, App bridge, login, permission checks, tracking, and risk control remain host responsibilities.
+`SectionContainer`, `GridContainer`, and `BasicForm` are the current nested entries for editor canvas operations. They keep the Page Schema `children` shape unchanged. `BasicForm` provides a generic submit container and `onSubmit` event, but it does not automatically collect child field values or implement validation/remote submit protocols. `BasicList` provides a business-neutral static content list and `onItemClick` event; remote data, pagination, search, sorting, FAQ expansion, and business-specific list models should be added through later dedicated protocols or business materials. `BasicAccordion` provides a business-neutral static accordion and `onItemToggle` event; remote FAQ, activity rule APIs, content approval, permissions, rich text editing, and nested low-code content remain dedicated protocol or business material concerns. `BasicLink` provides a lightweight H5 link entry and `onClick` event; business routing, App bridge, login, permission checks, tracking, and risk control remain host responsibilities.
 
 These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-vue-h5` so the editor preview schema can be rendered by the H5 runtime package.

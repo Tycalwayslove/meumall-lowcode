@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import {
   ActivityHero,
   ActivityRuleModal,
+  BasicAccordion,
   BasicButton,
   BasicCard,
   BasicCarousel,
@@ -118,6 +119,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicButton", "variant", ["solid", "outline", "ghost"]],
       ["BasicButton", "size", ["sm", "md", "lg"]],
       ["BasicLink", "variant", ["plain", "bar", "card"]],
+      ["BasicAccordion", "mode", ["single", "multiple"]],
+      ["BasicAccordion", "icon", ["chevron", "plus", "none"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -158,6 +161,10 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicList", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicList", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicList", "markerRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicAccordion", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicAccordion", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicAccordion", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicAccordion", "badgeRadius", { min: 0, max: 999, step: 1, unit: "px" }],
       ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -232,6 +239,13 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicList", "itemBackgroundColor"],
       ["BasicList", "itemTitleColor"],
       ["BasicList", "markerColor"],
+      ["BasicAccordion", "backgroundColor"],
+      ["BasicAccordion", "cardBackgroundColor"],
+      ["BasicAccordion", "itemBackgroundColor"],
+      ["BasicAccordion", "itemTitleColor"],
+      ["BasicAccordion", "contentColor"],
+      ["BasicAccordion", "badgeColor"],
+      ["BasicAccordion", "iconColor"],
       ["BasicLink", "backgroundColor"],
       ["BasicLink", "textColor"],
       ["BasicLink", "subtitleColor"],
@@ -435,6 +449,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(GridContainer, ["MlcText"]);
     functionSourceIncludes(BasicForm, ["MlcButton", "MlcText"]);
     functionSourceIncludes(BasicList, ["MlcText", "MlcTag"]);
+    functionSourceIncludes(BasicAccordion, ["MlcText", "MlcTag"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -660,6 +675,26 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(clicks.length, 1);
     assert.equal(clicks[0].index, 1);
     assert.equal(clicks[0].item.title, "第二项");
+  });
+
+  it("registers the basic accordion material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicAccordion");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础折叠面板");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.mode, "single");
+    assert.equal(material.manifest.defaultProps.icon, "chevron");
+    assert.equal(material.manifest.defaultProps.defaultOpenFirst, true);
+    assert.equal(material.manifest.defaultProps.items.length, 3);
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.mode.setter, "select");
+    assert.equal(material.manifest.propsSchema.icon.setter, "select");
+    assert.equal(material.manifest.propsSchema.defaultOpenFirst.setter, "switch");
+    assert.equal(material.manifest.propsSchema.defaultOpenIds.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.itemPadding.setter, "number");
+    assert.equal(material.manifest.propsSchema.badgeColor.setter, "color");
+    assert.equal(material.manifest.events?.[0]?.name, "onItemToggle");
   });
 
   it("renders section container layout props in React H5", () => {
