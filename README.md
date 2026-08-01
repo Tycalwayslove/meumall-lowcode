@@ -86,6 +86,8 @@ pnpm smoke:browser
 pnpm smoke:visual
 ```
 
+`pnpm smoke:visual` writes a local report under `.ai/test-reports/latest-visual/` and checks screenshot PNG size, sampled colors, and luma range to catch blank editor or H5 renders.
+
 ## Release
 
 See [docs/release-and-publish.md](docs/release-and-publish.md).

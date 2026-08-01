@@ -2,11 +2,12 @@
 
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createServer } from "node:net";
+import { inflateSync } from "node:zlib";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const editorPort = Number(process.env.EDITOR_VISUAL_PORT ?? 5293);
@@ -21,6 +22,9 @@ const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
 const reportDir = path.join(rootDir, ".ai/test-reports/latest-visual");
 const screenshotDir = path.join(reportDir, "screenshots");
+const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const minSampledColors = 16;
+const minLumaRange = 24;
 
 const children = [];
 let chromeUserDataDir;
@@ -39,6 +43,146 @@ function delay(ms) {
 
 function jsString(value) {
   return JSON.stringify(value);
+}
+
+function assertPngSignature(buffer, filePath) {
+  if (buffer.length < pngSignature.length || !buffer.subarray(0, pngSignature.length).equals(pngSignature)) {
+    fail(`截图不是有效 PNG：${path.relative(rootDir, filePath)}`);
+  }
+}
+
+function parsePng(filePath) {
+  const buffer = readFileSync(filePath);
+  assertPngSignature(buffer, filePath);
+
+  let offset = pngSignature.length;
+  let header;
+  const idatChunks = [];
+  while (offset < buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString("ascii", offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
+    const data = buffer.subarray(dataStart, dataEnd);
+    offset = dataEnd + 4;
+
+    if (type === "IHDR") {
+      header = {
+        width: data.readUInt32BE(0),
+        height: data.readUInt32BE(4),
+        bitDepth: data.readUInt8(8),
+        colorType: data.readUInt8(9),
+      };
+    } else if (type === "IDAT") {
+      idatChunks.push(data);
+    } else if (type === "IEND") {
+      break;
+    }
+  }
+
+  if (!header) fail(`截图缺少 PNG IHDR：${path.relative(rootDir, filePath)}`);
+  if (!idatChunks.length) fail(`截图缺少 PNG IDAT：${path.relative(rootDir, filePath)}`);
+  if (header.bitDepth !== 8 || ![2, 6].includes(header.colorType)) {
+    fail(
+      `暂不支持的 PNG 格式：${path.relative(rootDir, filePath)} bitDepth=${header.bitDepth} colorType=${header.colorType}`,
+    );
+  }
+
+  const channels = header.colorType === 6 ? 4 : 3;
+  const bytesPerPixel = channels;
+  const stride = header.width * bytesPerPixel;
+  const inflated = inflateSync(Buffer.concat(idatChunks));
+  const expectedLength = (stride + 1) * header.height;
+  if (inflated.length < expectedLength) {
+    fail(`PNG 像素数据长度异常：${path.relative(rootDir, filePath)}`);
+  }
+
+  const rows = new Uint8Array(stride * header.height);
+  let sourceOffset = 0;
+  for (let y = 0; y < header.height; y += 1) {
+    const filter = inflated[sourceOffset];
+    sourceOffset += 1;
+    const rowOffset = y * stride;
+    const previousRowOffset = y > 0 ? (y - 1) * stride : -1;
+
+    for (let x = 0; x < stride; x += 1) {
+      const raw = inflated[sourceOffset + x];
+      const left = x >= bytesPerPixel ? rows[rowOffset + x - bytesPerPixel] : 0;
+      const up = previousRowOffset >= 0 ? rows[previousRowOffset + x] : 0;
+      const upLeft = previousRowOffset >= 0 && x >= bytesPerPixel ? rows[previousRowOffset + x - bytesPerPixel] : 0;
+      let value;
+      if (filter === 0) {
+        value = raw;
+      } else if (filter === 1) {
+        value = raw + left;
+      } else if (filter === 2) {
+        value = raw + up;
+      } else if (filter === 3) {
+        value = raw + Math.floor((left + up) / 2);
+      } else if (filter === 4) {
+        const predictor = left + up - upLeft;
+        const pa = Math.abs(predictor - left);
+        const pb = Math.abs(predictor - up);
+        const pc = Math.abs(predictor - upLeft);
+        value = raw + (pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft);
+      } else {
+        fail(`暂不支持的 PNG filter：${filter}`);
+      }
+      rows[rowOffset + x] = value & 0xff;
+    }
+    sourceOffset += stride;
+  }
+
+  return { ...header, channels, pixels: rows };
+}
+
+function analyzePng(filePath) {
+  const png = parsePng(filePath);
+  const colors = new Set();
+  let minLuma = 255;
+  let maxLuma = 0;
+  let sampleCount = 0;
+  const stepX = Math.max(1, Math.floor(png.width / 80));
+  const stepY = Math.max(1, Math.floor(png.height / 80));
+
+  for (let y = 0; y < png.height; y += stepY) {
+    for (let x = 0; x < png.width; x += stepX) {
+      const offset = (y * png.width + x) * png.channels;
+      const r = png.pixels[offset];
+      const g = png.pixels[offset + 1];
+      const b = png.pixels[offset + 2];
+      const luma = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+      colors.add(`${r},${g},${b}`);
+      minLuma = Math.min(minLuma, luma);
+      maxLuma = Math.max(maxLuma, luma);
+      sampleCount += 1;
+    }
+  }
+
+  return {
+    width: png.width,
+    height: png.height,
+    sampleCount,
+    sampledColors: colors.size,
+    lumaRange: maxLuma - minLuma,
+  };
+}
+
+function assertVisualStats(scene, filePath, stats) {
+  if (stats.width < scene.minWidth || stats.height < scene.minHeight) {
+    fail(
+      `${scene.title} 截图尺寸异常：${stats.width}x${stats.height}，期望至少 ${scene.minWidth}x${scene.minHeight}`,
+    );
+  }
+  if (stats.sampledColors < minSampledColors) {
+    fail(`${scene.title} 截图采样颜色过少：${stats.sampledColors}，可能为空白或未渲染`);
+  }
+  if (stats.lumaRange < minLumaRange) {
+    fail(`${scene.title} 截图亮度范围过小：${stats.lumaRange}，可能为空白或单色渲染`);
+  }
+  log(
+    `视觉指标：${path.relative(rootDir, filePath)} ${stats.width}x${stats.height} colors=${stats.sampledColors} lumaRange=${stats.lumaRange}`,
+  );
 }
 
 function findChromeBinary() {
@@ -266,13 +410,18 @@ async function captureScene(page, scene) {
   const fileName = `${scene.id}.png`;
   const filePath = path.join(screenshotDir, fileName);
   await page.captureScreenshot(filePath);
+  const stats = analyzePng(filePath);
+  assertVisualStats(scene, filePath, stats);
   log(`已生成：${path.relative(rootDir, filePath)}`);
-  return { ...scene, fileName };
+  return { ...scene, fileName, stats };
 }
 
 function writeReport(results) {
   const rows = results
-    .map((result) => `| ${result.title} | \`${result.url}\` | [${result.fileName}](screenshots/${result.fileName}) |`)
+    .map(
+      (result) =>
+        `| ${result.title} | \`${result.url}\` | ${result.stats.width}x${result.stats.height} | ${result.stats.sampledColors} | ${result.stats.lumaRange} | [${result.fileName}](screenshots/${result.fileName}) |`,
+    )
     .join("\n");
   const report = `# MeuMall Lowcode Visual Smoke Report
 
@@ -286,14 +435,14 @@ pnpm smoke:visual
 
 ## Screenshots
 
-| Scene | URL | Screenshot |
-| --- | --- | --- |
+| Scene | URL | Size | Sampled Colors | Luma Range | Screenshot |
+| --- | --- | --- | --- | --- | --- |
 ${rows}
 
 ## Notes
 
 - This report is generated locally and is intentionally not committed.
-- It only verifies that the main editor and H5 runtime entries are visually renderable in the current local Chrome environment.
+- It verifies that the main editor and H5 runtime entries are visually renderable in the current local Chrome environment, and checks PNG size, sampled color count, and luma range to catch blank screenshots.
 - DOM-level interaction coverage remains in \`pnpm smoke:browser\`.
 `;
   const reportPath = path.join(reportDir, "index.md");
@@ -339,6 +488,8 @@ async function main() {
         url: editorUrl,
         width: 1440,
         height: 1100,
+        minWidth: 1200,
+        minHeight: 900,
         waitFor: "document.querySelector('.editor-shell') && document.body.innerText.includes('MeuMall Lowcode') && document.querySelector('.phone-frame [data-lowcode-page]')",
       }),
     );
@@ -349,6 +500,8 @@ async function main() {
         url: h5RuntimePageIdUrl,
         width: 900,
         height: 1100,
+        minWidth: 760,
+        minHeight: 900,
         waitFor:
           "document.querySelector('[data-lowcode-page=\"summer-campaign-demo\"]') && document.body.innerText.includes('published schema') && document.body.innerText.includes('React H5 Runtime')",
       }),
@@ -360,6 +513,8 @@ async function main() {
         url: h5RuntimeReleaseIdUrl,
         width: 900,
         height: 1100,
+        minWidth: 760,
+        minHeight: 900,
         waitFor:
           "document.querySelector('[data-lowcode-page=\"summer-campaign-demo\"]') && document.body.innerText.includes('release schema') && document.body.innerText.includes('夏日好物节预览')",
       }),

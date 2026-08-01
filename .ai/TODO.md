@@ -15,10 +15,10 @@
 - 将 Vue3 编辑器 HTTP config platform client 从本地 smoke mock 切换为真实 Java 配置平台，并补齐统一响应解包、错误提示、权限、服务端发布校验、审批和审计。
 - 基于 playground HTTP 数据源演示链路，将真实 H5 宿主的 data source resolver 切到 Java/BFF 白名单 HTTP 数据源，并补齐真实鉴权、缓存、重试、分页和字段校验策略。
 - 基于 adapters HTTP action handler 和 H5 runtime playground 演示链路，将真实 H5 宿主 action handler 接入跳转桥、领券接口、埋点平台、权限和风控策略，并补齐登录态刷新、幂等、防重复点击和业务错误展示。
-- 在已有 renderer fallback 单测和 browser broken demo 基础上，继续扩展组件级 DOM 测试、物料搜索/拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和 visual regression。
+- 在已有 renderer fallback 单测、browser broken demo 和 visual smoke PNG 健康断言基础上，继续扩展组件级 DOM 测试、物料搜索/拖拽/属性编辑/发布等更完整浏览器交互 E2E 场景和带基线图 diff 的 visual regression。
 
 ## P2
 
 - 规划小程序 renderer/materials。
 - 增加 schema migration 工具。
-- 增加 visual regression 或 preview smoke check。
+- 增加带基线图 diff 的 visual regression，或继续扩展 preview smoke check 场景。
