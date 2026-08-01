@@ -209,7 +209,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 待提交 | 新增 BasicAccordion 基础折叠面板通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
+| 2026-08-01 | e779bdd | 新增 BasicAccordion 基础折叠面板通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
 | 2026-08-01 | 53dbd57 | 新增 BasicLink 基础链接入口通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
 | 2026-08-01 | 39076fd | 新增 BasicList 基础列表通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
 | 2026-08-01 | 99e3a5f | 新增 BasicForm 基础表单容器通用物料，并扩展 editor 默认容器名单。 |
