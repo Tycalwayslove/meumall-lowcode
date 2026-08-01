@@ -3372,6 +3372,116 @@ button:focus-visible {
   width: 100%;
 }
 
+.demo-checklist-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.demo-checklist-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.demo-checklist-title em {
+  margin-left: auto;
+  color: #475569;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.demo-checklist-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo-checklist-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+  padding: 7px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.demo-check-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.demo-checklist-item[data-check-status="done"] .demo-check-dot {
+  background: #16a34a;
+}
+
+.demo-checklist-item[data-check-status="active"] .demo-check-dot {
+  background: #2563eb;
+}
+
+.demo-checklist-item[data-check-status="pending"] .demo-check-dot {
+  background: #94a3b8;
+}
+
+.demo-checklist-item[data-check-status="blocked"] .demo-check-dot {
+  background: #dc2626;
+}
+
+.demo-checklist-item strong,
+.demo-checklist-item small {
+  display: block;
+  min-width: 0;
+}
+
+.demo-checklist-item strong {
+  color: #111827;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.demo-checklist-item small {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.demo-checklist-item em {
+  color: #475569;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.demo-checklist-item[data-check-status="done"] em {
+  color: #15803d;
+}
+
+.demo-checklist-item[data-check-status="active"] em {
+  color: #1d4ed8;
+}
+
+.demo-checklist-item[data-check-status="blocked"] em {
+  color: #b91c1c;
+}
+
 .audit-trail-panel {
   display: grid;
   gap: 10px;

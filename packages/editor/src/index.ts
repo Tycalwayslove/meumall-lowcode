@@ -311,6 +311,35 @@ export interface LowcodeEditorPreviewLinkSummary {
   readyTitles: string[];
 }
 
+export type LowcodeEditorDemoChecklistStatus = "done" | "active" | "pending" | "blocked";
+
+export interface LowcodeEditorDemoChecklistItem {
+  id: string;
+  title: string;
+  description: string;
+  status: LowcodeEditorDemoChecklistStatus;
+  statusText: string;
+}
+
+export interface CreateLowcodeEditorDemoChecklistOptions {
+  nodeCount?: number;
+  validationValid?: boolean;
+  hasBasicMaterial?: boolean;
+  hasPreviewLink?: boolean;
+  hasReactH5RuntimeLink?: boolean;
+  releaseCount?: number;
+  dirty?: boolean;
+}
+
+export interface LowcodeEditorDemoChecklistSummary {
+  total: number;
+  done: number;
+  active: number;
+  pending: number;
+  blocked: number;
+  statusText: string;
+}
+
 export interface CreateLowcodePublishChecksOptions {
   materialManifests?: Iterable<LowcodeMaterialManifest>;
   dataSourceRecords?: LowcodeEditorDataSourceResolutionRecord[];
@@ -1669,6 +1698,81 @@ export function summarizeLowcodePreviewLinks(
     disabled,
     statusText: disabled ? `${readyItems.length} 个可用 / ${disabled} 个不可用` : `${readyItems.length} 个可用入口`,
     readyTitles: readyItems.map((item) => item.title),
+  };
+}
+
+export function createLowcodeEditorDemoChecklist(
+  options: CreateLowcodeEditorDemoChecklistOptions = {},
+): LowcodeEditorDemoChecklistItem[] {
+  const nodeCount = Math.max(0, Math.floor(options.nodeCount ?? 0));
+  const validationValid = options.validationValid ?? false;
+  const hasBasicMaterial = options.hasBasicMaterial ?? false;
+  const hasPreviewLink = options.hasPreviewLink ?? false;
+  const hasReactH5RuntimeLink = options.hasReactH5RuntimeLink ?? false;
+  const releaseCount = Math.max(0, Math.floor(options.releaseCount ?? 0));
+  const dirty = options.dirty ?? false;
+  const savedOrReleased = releaseCount > 0 || !dirty;
+
+  return [
+    {
+      id: "page-content",
+      title: "页面有内容",
+      description: nodeCount > 0 ? `当前 ${nodeCount} 个节点` : "画布暂无节点",
+      status: nodeCount > 0 ? "done" : "active",
+      statusText: nodeCount > 0 ? "已就绪" : "待添加",
+    },
+    {
+      id: "basic-material",
+      title: "基础物料可用",
+      description: hasBasicMaterial ? "已包含基础物料节点" : "尚未识别到基础物料节点",
+      status: hasBasicMaterial ? "done" : nodeCount > 0 ? "active" : "pending",
+      statusText: hasBasicMaterial ? "已加入" : "待验证",
+    },
+    {
+      id: "schema-validation",
+      title: "Schema 校验通过",
+      description: validationValid ? "当前 Page Schema 可被 renderer 消费" : "需要先处理校验异常",
+      status: validationValid ? "done" : "blocked",
+      statusText: validationValid ? "通过" : "阻塞",
+    },
+    {
+      id: "h5-preview",
+      title: "H5 预览入口可用",
+      description: hasPreviewLink ? "已有可打开的 H5 预览入口" : "暂无可打开的 H5 预览入口",
+      status: hasPreviewLink ? "done" : validationValid ? "active" : "pending",
+      statusText: hasPreviewLink ? "可预览" : "待生成",
+    },
+    {
+      id: "draft-or-release",
+      title: "草稿保存或发布记录",
+      description: savedOrReleased ? "当前状态已有保存或版本记录" : "当前变更尚未保存为草稿或版本",
+      status: savedOrReleased ? "done" : "active",
+      statusText: savedOrReleased ? "已记录" : "未保存",
+    },
+    {
+      id: "react-h5-runtime",
+      title: "React H5 渲染可验证",
+      description: hasReactH5RuntimeLink ? "React H5 runtime 链接已就绪" : "React H5 runtime 链接尚不可用",
+      status: hasReactH5RuntimeLink && nodeCount > 0 ? "done" : hasPreviewLink ? "active" : "pending",
+      statusText: hasReactH5RuntimeLink && nodeCount > 0 ? "可验证" : "待验证",
+    },
+  ];
+}
+
+export function summarizeLowcodeEditorDemoChecklist(
+  items: readonly LowcodeEditorDemoChecklistItem[],
+): LowcodeEditorDemoChecklistSummary {
+  const done = items.filter((item) => item.status === "done").length;
+  const active = items.filter((item) => item.status === "active").length;
+  const pending = items.filter((item) => item.status === "pending").length;
+  const blocked = items.filter((item) => item.status === "blocked").length;
+  return {
+    total: items.length,
+    done,
+    active,
+    pending,
+    blocked,
+    statusText: blocked > 0 ? `${done}/${items.length} 已就绪 / ${blocked} 项阻塞` : `${done}/${items.length} 已就绪`,
   };
 }
 

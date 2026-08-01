@@ -29,6 +29,7 @@ import {
   createLowcodeEditorAuditEvent,
   createLowcodeEditorAuditListItems,
   createLowcodeEditorAuditTrail,
+  createLowcodeEditorDemoChecklist,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
   createLowcodeEditorCollaborationPermissionOptions,
@@ -153,6 +154,7 @@ import {
   setLowcodeActionType,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
+  summarizeLowcodeEditorDemoChecklist,
   summarizeLowcodePreviewLinks,
   summarizeLowcodeReleaseList,
   summarizeLowcodePublishChecks,
@@ -539,6 +541,54 @@ describe("@meumall/lowcode-editor readiness", () => {
       readyTitles: ["当前草稿 React H5"],
     });
     assert.equal(summarizeLowcodePreviewLinks(createLowcodePreviewLinkItems(sources, { includeDisabled: false })).statusText, "1 个可用入口");
+  });
+
+  it("creates reusable editor demo checklist summaries", () => {
+    const readyItems = createLowcodeEditorDemoChecklist({
+      nodeCount: 6,
+      validationValid: true,
+      hasBasicMaterial: true,
+      hasPreviewLink: true,
+      hasReactH5RuntimeLink: true,
+      releaseCount: 1,
+      dirty: false,
+    });
+
+    assert.deepEqual(readyItems.map((item) => [item.id, item.status, item.statusText]), [
+      ["page-content", "done", "已就绪"],
+      ["basic-material", "done", "已加入"],
+      ["schema-validation", "done", "通过"],
+      ["h5-preview", "done", "可预览"],
+      ["draft-or-release", "done", "已记录"],
+      ["react-h5-runtime", "done", "可验证"],
+    ]);
+    assert.deepEqual(summarizeLowcodeEditorDemoChecklist(readyItems), {
+      total: 6,
+      done: 6,
+      active: 0,
+      pending: 0,
+      blocked: 0,
+      statusText: "6/6 已就绪",
+    });
+
+    const blockedItems = createLowcodeEditorDemoChecklist({
+      nodeCount: 0,
+      validationValid: false,
+      hasPreviewLink: false,
+      dirty: true,
+    });
+    assert.equal(blockedItems.find((item) => item.id === "page-content")?.status, "active");
+    assert.equal(blockedItems.find((item) => item.id === "basic-material")?.status, "pending");
+    assert.equal(blockedItems.find((item) => item.id === "schema-validation")?.status, "blocked");
+    assert.equal(blockedItems.find((item) => item.id === "react-h5-runtime")?.status, "pending");
+    assert.deepEqual(summarizeLowcodeEditorDemoChecklist(blockedItems), {
+      total: 6,
+      done: 0,
+      active: 2,
+      pending: 3,
+      blocked: 1,
+      statusText: "0/6 已就绪 / 1 项阻塞",
+    });
   });
 
   it("creates reusable workspace status summaries", () => {

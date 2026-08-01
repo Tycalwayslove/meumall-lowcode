@@ -1476,6 +1476,7 @@ async function main() {
       { label: "编辑器审批状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('无需审批')" },
       { label: "编辑器顶部发布检查状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"publish-check\"]')?.textContent?.includes('发布检查')" },
       { label: "编辑器宿主顶部扩展位存在", expression: "document.querySelector('[data-testid=\"host-toolbar-status\"]')?.textContent?.includes('审计已启用') && document.querySelector('[data-testid=\"host-audit-button\"]')?.textContent?.includes('审计日志')" },
+      { label: "编辑器实操清单存在", expression: "document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('实操清单') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('页面有内容') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('H5 预览入口') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('React H5 渲染可验证')" },
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },

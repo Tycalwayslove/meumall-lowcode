@@ -326,13 +326,14 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 职责：
 
 - 展示右侧状态面板、节点数、历史 past/future 数、校验状态、最近操作和重置示例按钮。
-- 接收节点数、历史 past 数、历史 future 数、校验是否通过和 audit trail API 派生后的最近操作展示项。
+- 展示 editor demo checklist API 派生后的实操清单，作为运营演示验收路径的状态入口。
+- 接收节点数、历史 past 数、历史 future 数、校验是否通过、demo checklist API 派生后的实操清单和 audit trail API 派生后的最近操作展示项。
 - 通过 emits 抛出重置示例事件。
-- 复用现有 `.state-list`、`.panel-section`、`.panel-title`、`.reset-button` 和 `.audit-trail-*` 样式，保持当前视觉与 smoke check DOM 语义。
+- 复用现有 `.state-list`、`.panel-section`、`.panel-title`、`.reset-button`、`.demo-checklist-*` 和 `.audit-trail-*` 样式，保持当前视觉与 smoke check DOM 语义。
 
 不负责：
 
-- 不派生节点数、历史数、校验状态或审计事件。
+- 不派生节点数、历史数、校验状态、实操清单状态或审计事件。
 - 不执行真实 `resetSchema`。
 - 不写入 Page Schema。
 - 不读取或写入 localStorage。

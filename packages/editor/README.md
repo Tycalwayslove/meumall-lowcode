@@ -225,6 +225,25 @@ Each item includes `id`, `label`, `value`, and a tone of `neutral`, `success`, `
 
 This helper does not render UI, inspect DOM, run server publish checks, enforce permissions, or mutate editor state. Host shells remain responsible for layout, icons, click handlers, live collaboration locks, permissions, and server-side review/approval state.
 
+## Demo Checklist API
+
+The demo checklist helpers keep the operator-facing editor and H5 runtime validation path reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeEditorDemoChecklist(options)` returns a stable list of checklist items for:
+
+- Page content.
+- Basic material availability.
+- Page Schema validation.
+- H5 preview entry readiness.
+- Draft save or release history.
+- React H5 runtime validation.
+
+Each item includes `id`, `title`, `description`, `status`, and `statusText`. Status values are `done`, `active`, `pending`, and `blocked`.
+
+`summarizeLowcodeEditorDemoChecklist(items)` returns total, done, active, pending, blocked, and a compact `statusText` such as `6/6 已就绪`.
+
+These helpers do not render UI, build preview URLs, save drafts, publish pages, call Java APIs, inspect renderer internals, enforce permissions, or mutate Page Schema. Host shells remain responsible for deriving the input options from their own preview links, release records, save state, permission state, and runtime integration.
+
 ## Permission, Approval And Collaboration API
 
 The permission helpers keep editor operation availability reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.

@@ -50,6 +50,7 @@ import {
   createLowcodeEditorAuditTrail,
   createLowcodeEditorApprovalState,
   createLowcodeEditorCapabilityState,
+  createLowcodeEditorDemoChecklist,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCollaborationState,
   createLowcodeEventBindingItems,
@@ -141,6 +142,7 @@ import {
   setLowcodeActionType,
   setEditorViewportPreset,
   sliceLowcodeTemplateTags,
+  summarizeLowcodeEditorDemoChecklist,
   summarizeLowcodePublishChecks,
   summarizeLowcodeReleaseList,
   summarizeLowcodePreviewLinks,
@@ -170,6 +172,8 @@ import {
   type LowcodeEditorAuditEventResult as AuditEventResult,
   type LowcodeEditorAuditEventType as AuditEventType,
   type LowcodeEditorAuditListItem as AuditListItem,
+  type LowcodeEditorDemoChecklistItem as DemoChecklistItem,
+  type LowcodeEditorDemoChecklistSummary as DemoChecklistSummary,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorMode,
   type LowcodeEditorOutlineRow as OutlineRow,
@@ -695,6 +699,7 @@ const outlineRows = computed(() =>
     materialManifests: materials.map((material) => material.manifest),
   }),
 );
+const hasBasicMaterialNode = computed(() => outlineRows.value.some((row) => row.node.componentName.startsWith("Basic")));
 const selectedOutlineRow = computed(() => outlineRows.value.find((row) => row.node.id === editorState.value.selectedNodeId));
 const collapsedOutlineNodeIdSet = computed(() => new Set(collapsedOutlineNodeIds.value));
 const outlineVisibility = computed(() =>
@@ -1173,6 +1178,20 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() =>
   ], { includeDisabled: false }),
 );
 const previewLinkSummary = computed(() => summarizeLowcodePreviewLinks(previewLinkItems.value));
+const demoChecklistItems = computed<DemoChecklistItem[]>(() =>
+  createLowcodeEditorDemoChecklist({
+    nodeCount: outlineRows.value.length,
+    validationValid: validation.value.valid,
+    hasBasicMaterial: hasBasicMaterialNode.value,
+    hasPreviewLink: previewLinkItems.value.some((item) => item.openable),
+    hasReactH5RuntimeLink: previewLinkItems.value.some((item) => item.id === "react-current" && item.openable),
+    releaseCount: releases.value.length,
+    dirty: editorState.value.dirty,
+  }),
+);
+const demoChecklistSummary = computed<DemoChecklistSummary>(() =>
+  summarizeLowcodeEditorDemoChecklist(demoChecklistItems.value),
+);
 const deliverySummary = computed(() => createLowcodeDeliverySummary(editorState.value.schema, { checks: publishChecks.value }));
 const deliverySchemaJson = computed(() => deliverySummary.value.schemaJson);
 const deliveryStatusText = computed(() => deliverySummary.value.statusText);
@@ -4603,6 +4622,8 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :history-past-count="editorState.history.past.length"
         :history-future-count="editorState.history.future.length"
         :validation-valid="validation.valid"
+        :demo-checklist-items="demoChecklistItems"
+        :demo-checklist-summary="demoChecklistSummary"
         :audit-items="auditListItems"
         @reset-schema="resetSchema"
       />
