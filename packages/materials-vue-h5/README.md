@@ -43,6 +43,7 @@ Currently migrated materials:
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
+- `BasicPrice`
 - `DividerBlock`
 - `BasicImage`
 - `BasicTag`
@@ -85,6 +86,7 @@ Current materials:
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
+- `BasicPrice`
 - `DividerBlock`
 - `BasicImage`
 - `BasicTag`

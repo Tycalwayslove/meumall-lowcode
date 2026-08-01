@@ -957,6 +957,17 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：基础文本");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicText)}`);
   await page.waitForExpression("document.body.innerText.includes('这是一段基础文本')");
+  const nodeCountBeforeBasicPrice = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础价格");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础价格')");
+  await page.clickByText(".command-palette-item", "添加物料：基础价格");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicPrice)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-price') && document.body.innerText.includes('¥99起')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicPrice\"') && item.value.includes('\"amountText\": \"99\"') && item.value.includes('\"size\": 24'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeDivider = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   const dividerCountBefore = await page.evaluate("document.querySelectorAll('.phone-frame .mlc-divider-block').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -965,7 +976,7 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：分割线");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeDivider)}`);
   await page.waitForExpression(`document.querySelectorAll('.phone-frame .mlc-divider-block').length > ${Number(dividerCountBefore)}`);
-  log("通过：基础文本和分割线可从快捷命令添加并在 Vue H5 画布渲染");
+  log("通过：基础文本、基础价格和分割线可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查基础图片和基础标签通用物料");
   const nodeCountBeforeBasicImage = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1508,6 +1519,7 @@ async function main() {
       { label: "基础开关物料存在", expression: "document.body.innerText.includes('基础开关')" },
       { label: "基础复选框物料存在", expression: "document.body.innerText.includes('基础复选框')" },
       { label: "基础文本物料存在", expression: "document.body.innerText.includes('基础文本')" },
+      { label: "基础价格物料存在", expression: "document.body.innerText.includes('基础价格')" },
       { label: "分割线物料存在", expression: "document.body.innerText.includes('分割线')" },
       { label: "基础图片物料存在", expression: "document.body.innerText.includes('基础图片')" },
       { label: "基础标签物料存在", expression: "document.body.innerText.includes('基础标签')" },
@@ -1535,6 +1547,7 @@ async function main() {
       { label: "默认大促模板包含基础开关", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('.phone-frame .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "默认大促模板包含基础复选框", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('.phone-frame .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "默认大促模板包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "默认大促模板包含基础价格", expression: "document.querySelector('.phone-frame .mlc-basic-price') && document.body.innerText.includes('¥199起')" },
       { label: "默认大促模板包含分割线", expression: "document.querySelector('.phone-frame .mlc-divider-block')" },
       { label: "默认大促模板包含基础图片", expression: "document.querySelector('.phone-frame .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "默认大促模板包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
@@ -1591,6 +1604,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础开关", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('[data-lowcode-page] .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "编辑器内置 runtime 包含基础复选框", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('[data-lowcode-page] .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "编辑器内置 runtime 包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "编辑器内置 runtime 包含基础价格", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-price') && document.body.innerText.includes('¥199起')" },
       { label: "编辑器内置 runtime 包含分割线", expression: "document.querySelector('[data-lowcode-page] .mlc-divider-block')" },
       { label: "编辑器内置 runtime 包含基础图片", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "编辑器内置 runtime 包含基础标签", expression: "document.body.innerText.includes('基础标签示例')" },
@@ -1631,6 +1645,7 @@ async function main() {
       { label: "React H5 基础开关已渲染", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('[data-lowcode-page] .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "React H5 基础复选框已渲染", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('[data-lowcode-page] .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "React H5 基础文本已渲染", expression: "document.body.innerText.includes('基础文本示例')" },
+      { label: "React H5 基础价格已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-price') && document.body.innerText.includes('¥199起')" },
       { label: "React H5 分割线已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-divider-block')" },
       { label: "React H5 基础图片已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-basic-image img[alt=\"基础图片示例\"]')" },
       { label: "React H5 基础标签已渲染", expression: "document.body.innerText.includes('基础标签示例')" },

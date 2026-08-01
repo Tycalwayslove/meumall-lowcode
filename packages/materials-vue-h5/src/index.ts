@@ -1037,6 +1037,38 @@ export const BasicText = defineComponent({
   },
 });
 
+export const BasicPrice = defineComponent({
+  name: "BasicPrice",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const align = option<BasicInlineAlign>(runtimeProps.align, ["left", "center", "right"], "left");
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-price",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 10)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+            textAlign: align,
+          } satisfies CSSProperties,
+        },
+        [
+          h(MlcPrice, {
+            amountText: text(runtimeProps.amountText, "99"),
+            prefix: text(runtimeProps.prefix, "¥"),
+            suffix: text(runtimeProps.suffix),
+            size: number(runtimeProps.size, 24),
+            style: { color: text(runtimeProps.color, "#dc2626") } satisfies CSSProperties,
+          }),
+        ],
+      );
+    };
+  },
+});
+
 export const DividerBlock = defineComponent({
   name: "DividerBlock",
   props: materialPropOptions,
@@ -4159,6 +4191,36 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
         color: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+      },
+    }),
+  },
+  {
+    component: BasicPrice,
+    manifest: createMaterialManifest({
+      componentName: "BasicPrice",
+      materialVersion: "0.1.0",
+      title: "基础价格",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        amountText: "99",
+        prefix: "¥",
+        suffix: "起",
+        align: "left",
+        size: 24,
+        color: "#dc2626",
+        wrapperBackgroundColor: "transparent",
+        paddingY: 10,
+      },
+      propsSchema: {
+        amountText: { label: "价格内容", type: "string", setter: "input", required: true, defaultValue: "99" },
+        prefix: { label: "前缀", type: "string", setter: "input", defaultValue: "¥" },
+        suffix: { label: "后缀", type: "string", setter: "input", defaultValue: "起" },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
+        size: { label: "字号", type: "number", setter: "number", defaultValue: 24, ...NUMBER_FONT_SIZE_META },
+        color: { label: "价格色", type: "string", setter: "color", defaultValue: "#dc2626", ...COLOR_SWATCHES_META },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
       },
     }),

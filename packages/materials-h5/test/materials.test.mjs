@@ -11,6 +11,7 @@ import {
   BasicImage,
   BasicInput,
   BasicModal,
+  BasicPrice,
   BasicRadioGroup,
   BasicSelect,
   BasicStepper,
@@ -115,6 +116,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
+      ["BasicPrice", "align", ["left", "center", "right"]],
       ["DividerBlock", "lineStyle", ["solid", "dashed", "dotted"]],
       ["BasicImage", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
       ["BasicTag", "tone", ["neutral", "accent", "danger", "inverse"]],
@@ -151,6 +153,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicStepper", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicCheckbox", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
+      ["BasicPrice", "size", { min: 10, max: 48, step: 1, unit: "px" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicTag", "fontWeight", { min: 100, max: 900, step: 100, unit: undefined }],
       ["BasicCard", "buttonRadius", { min: 0, max: 999, step: 1, unit: "px" }],
@@ -206,6 +209,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicSwitch", "activeColor"],
       ["BasicCheckbox", "checkedColor"],
       ["BasicText", "backgroundColor"],
+      ["BasicPrice", "color"],
+      ["BasicPrice", "wrapperBackgroundColor"],
       ["DividerBlock", "color"],
       ["BasicTag", "backgroundColor"],
       ["BasicCard", "accentColor"],
@@ -377,6 +382,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicSwitch, ["MlcSwitch", "MlcText"]);
     functionSourceIncludes(BasicCheckbox, ["MlcCheckbox", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
+    functionSourceIncludes(BasicPrice, ["MlcPrice"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     functionSourceIncludes(BasicImage, ["MlcImage"]);
     functionSourceIncludes(BasicTag, ["MlcTag"]);
@@ -712,6 +718,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.category, "basic");
     assert.equal(material.manifest.defaultProps.as, "p");
     assert.equal(material.manifest.propsSchema.text.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.color.setter, "color");
+  });
+
+  it("registers the basic price material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicPrice");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础价格");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.amountText, "99");
+    assert.equal(material.manifest.defaultProps.prefix, "¥");
+    assert.equal(material.manifest.defaultProps.suffix, "起");
+    assert.equal(material.manifest.propsSchema.amountText.setter, "input");
+    assert.equal(material.manifest.propsSchema.align.setter, "select");
+    assert.equal(material.manifest.propsSchema.size.setter, "number");
     assert.equal(material.manifest.propsSchema.color.setter, "color");
   });
 

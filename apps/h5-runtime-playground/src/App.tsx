@@ -333,6 +333,21 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_price",
+      componentName: "BasicPrice",
+      materialVersion: "0.1.0",
+      props: {
+        amountText: "199",
+        prefix: "¥",
+        suffix: "起",
+        align: "left",
+        size: 26,
+        color: "#dc2626",
+        wrapperBackgroundColor: "#f3f4f6",
+        paddingY: 8,
+      },
+    },
+    {
       id: "node_divider",
       componentName: "DividerBlock",
       materialVersion: "0.1.0",

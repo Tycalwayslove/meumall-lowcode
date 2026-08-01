@@ -302,6 +302,21 @@ export const pageTemplates: PageTemplate[] = [
           },
         },
         {
+          id: "summer_basic_price",
+          componentName: "BasicPrice",
+          materialVersion: "0.1.0",
+          props: {
+            amountText: "199",
+            prefix: "¥",
+            suffix: "起",
+            align: "left",
+            size: 26,
+            color: "#dc2626",
+            wrapperBackgroundColor: "#f3f4f6",
+            paddingY: 8,
+          },
+        },
+        {
           id: "summer_divider",
           componentName: "DividerBlock",
           materialVersion: "0.1.0",
