@@ -162,6 +162,33 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_select",
+      componentName: "BasicSelect",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础选择框示例",
+        placeholder: "请选择偏好的会场",
+        helperText: "静态单选可作为后续表单和筛选物料的基础单元。",
+        defaultValue: "",
+        options: [
+          { label: "女装会场", value: "women" },
+          { label: "鞋包配饰", value: "accessories" },
+          { label: "直播专场", value: "live" },
+        ],
+        wrapperBackgroundColor: "#f3f4f6",
+        selectBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#d1d5db",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_select_change" },
+      },
+    },
+    {
       id: "node_basic_text",
       componentName: "BasicText",
       materialVersion: "0.1.0",
@@ -840,6 +867,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_input_change",
+      },
+    },
+    {
+      id: "track_basic_select_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_select_change",
       },
     },
     {

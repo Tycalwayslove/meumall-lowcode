@@ -36,6 +36,12 @@ type TextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
 
+export interface MlcSelectOption {
+  label?: string;
+  value?: string;
+  disabled?: boolean;
+}
+
 function toneColor(tone: Tone): string {
   if (tone === "accent") return h5Tokens.color.accent;
   if (tone === "danger") return h5Tokens.color.danger;
@@ -680,6 +686,65 @@ export function MlcInput({
         ...style,
       }}
     />
+  );
+}
+
+export interface MlcSelectProps {
+  value?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  options?: MlcSelectOption[];
+  radius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  onChange?: (value: string) => void;
+}
+
+export function MlcSelect({
+  value,
+  placeholder = "",
+  disabled = false,
+  options = [],
+  radius = h5Tokens.radius.md,
+  className,
+  style,
+  onChange,
+}: MlcSelectProps): React.ReactElement {
+  return (
+    <select
+      className={className}
+      value={value ?? ""}
+      disabled={disabled}
+      onChange={(event) => onChange?.(event.currentTarget.value)}
+      style={{
+        boxSizing: "border-box",
+        width: "100%",
+        minHeight: h5Tokens.touch.minHeight,
+        border: `1px solid ${h5Tokens.color.border}`,
+        borderRadius: radius,
+        padding: "0 34px 0 12px",
+        color: h5Tokens.color.text,
+        background: h5Tokens.color.surface,
+        fontSize: h5Tokens.fontSize.body,
+        outline: "none",
+        opacity: disabled ? 0.56 : 1,
+        ...style,
+      }}
+    >
+      {placeholder ? (
+        <option value="" disabled>
+          {placeholder}
+        </option>
+      ) : null}
+      {options.map((item, index) => {
+        const optionValue = item.value ?? "";
+        return (
+          <option key={`${optionValue}-${index}`} value={optionValue} disabled={Boolean(item.disabled)}>
+            {item.label ?? optionValue}
+          </option>
+        );
+      })}
+    </select>
   );
 }
 

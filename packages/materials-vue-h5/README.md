@@ -14,6 +14,7 @@ Current internal primitives:
 - `MlcText`
 - `MlcPrice`
 - `MlcInput`
+- `MlcSelect`
 - `MlcTextarea`
 - `MlcSwitch`
 - `MlcStepper`
@@ -30,6 +31,7 @@ Currently migrated materials:
 
 - `BasicButton`
 - `BasicInput`
+- `BasicSelect`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`
@@ -63,6 +65,7 @@ Current materials:
 - `NoticeBar`
 - `BasicButton`
 - `BasicInput`
+- `BasicSelect`
 - `BasicText`
 - `DividerBlock`
 - `BasicImage`

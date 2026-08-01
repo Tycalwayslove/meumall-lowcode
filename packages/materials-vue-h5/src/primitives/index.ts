@@ -38,6 +38,12 @@ type InputType = "text" | "tel" | "email" | "number";
 type OverlayPlacement = "center" | "bottom";
 type DividerLineStyle = "solid" | "dashed" | "dotted";
 
+export interface MlcSelectOption {
+  label?: string;
+  value?: string;
+  disabled?: boolean;
+}
+
 function toneColor(tone: Tone): string {
   if (tone === "accent") return h5Tokens.color.accent;
   if (tone === "danger") return h5Tokens.color.danger;
@@ -635,6 +641,53 @@ export const MlcInput = defineComponent({
         } satisfies CSSProperties,
         onInput: (event: Event) => props.onChange?.((event.target as HTMLInputElement).value),
       });
+  },
+});
+
+export const MlcSelect = defineComponent({
+  name: "MlcSelect",
+  props: {
+    value: { type: String, default: "" },
+    placeholder: { type: String, default: "" },
+    disabled: { type: Boolean, default: false },
+    options: { type: Array as PropType<MlcSelectOption[]>, default: () => [] },
+    radius: { type: Number, default: h5Tokens.radius.md },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onChange: { type: Function as PropType<(value: string) => void>, default: undefined },
+  },
+  setup(props) {
+    return () =>
+      h(
+        "select",
+        {
+          class: props.class,
+          value: props.value,
+          disabled: props.disabled,
+          style: {
+            boxSizing: "border-box",
+            width: "100%",
+            minHeight: `${h5Tokens.touch.minHeight}px`,
+            border: `1px solid ${h5Tokens.color.border}`,
+            borderRadius: `${props.radius}px`,
+            padding: "0 34px 0 12px",
+            color: h5Tokens.color.text,
+            background: h5Tokens.color.surface,
+            fontSize: `${h5Tokens.fontSize.body}px`,
+            outline: "none",
+            opacity: props.disabled ? 0.56 : 1,
+            ...props.style,
+          } satisfies CSSProperties,
+          onChange: (event: Event) => props.onChange?.((event.target as HTMLSelectElement).value),
+        },
+        [
+          props.placeholder ? h("option", { value: "", disabled: true }, props.placeholder) : null,
+          ...props.options.map((item, index) => {
+            const optionValue = item.value ?? "";
+            return h("option", { key: `${optionValue}-${index}`, value: optionValue, disabled: Boolean(item.disabled) }, item.label ?? optionValue);
+          }),
+        ],
+      );
   },
 });
 

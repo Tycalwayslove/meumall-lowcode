@@ -8,6 +8,7 @@ import {
   BasicCarousel,
   BasicImage,
   BasicInput,
+  BasicSelect,
   BasicTag,
   BasicText,
   BasicVideo,
@@ -130,6 +131,7 @@ describe("MeuMall H5 material manifests", () => {
       ["SectionContainer", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["SectionContainer", "borderWidth", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicSelect", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicTag", "fontWeight", { min: 100, max: 900, step: 100, unit: undefined }],
@@ -159,6 +161,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
+      ["BasicSelect", "borderColor"],
       ["BasicText", "backgroundColor"],
       ["DividerBlock", "color"],
       ["BasicTag", "backgroundColor"],
@@ -219,6 +222,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcText",
       "MlcPrice",
       "MlcInput",
+      "MlcSelect",
       "MlcTextarea",
       "MlcSwitch",
       "MlcStepper",
@@ -293,6 +297,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
     functionSourceIncludes(BasicButton, ["MlcButton"]);
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
+    functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
     functionSourceIncludes(DividerBlock, ["MlcDivider"]);
     functionSourceIncludes(BasicImage, ["MlcImage"]);
@@ -420,6 +425,19 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.placeholder, "请输入内容");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.propsSchema.helperText.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic select material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicSelect");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础选择框");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.placeholder, "请选择");
+    assert.equal(material.manifest.defaultProps.options[0].value, "women");
+    assert.equal(material.manifest.propsSchema.options.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 
