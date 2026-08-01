@@ -211,7 +211,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 待提交 | 新增 editor 物料插入预设 API，并接入 Vue3 物料面板与快捷命令 smoke。 |
+| 2026-08-01 | 7361240 | 新增 editor 物料插入预设 API，并接入 Vue3 物料面板与快捷命令 smoke。 |
 | 2026-08-01 | af61380 | 新增 editor 物料分层总览和基础能力族 profile API，并接入 Vue3 物料面板与 smoke。 |
 | 2026-08-01 | 9106994 | 增强 editor 物料目录分类说明和数量摘要，并接入 Vue3 物料面板与 smoke。 |
 | 2026-08-01 | 6d88041 | 新增 BasicTimeline 基础时间线通用物料，接入 React/Vue H5、Vue3 编辑器、React H5 runtime、测试、smoke 和 changeset。 |
