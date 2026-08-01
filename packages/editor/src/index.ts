@@ -422,6 +422,31 @@ export interface LowcodeEditorMaterialCatalogOverview {
   categories: LowcodeEditorMaterialCategorySummary[];
 }
 
+export interface LowcodeEditorMaterialInsertPresetInput {
+  id: string;
+  title: string;
+  description?: string;
+  props?: JsonObject;
+  metaName?: string;
+  keywords?: readonly string[];
+}
+
+export interface LowcodeEditorMaterialInsertPreset {
+  id: string;
+  title: string;
+  description: string;
+  props: JsonObject;
+  metaName: string;
+  keywords: string[];
+}
+
+export interface CreateLowcodeMaterialInsertPresetsOptions {
+  includeDefaultPresets?: boolean;
+  componentPresets?: Record<string, readonly LowcodeEditorMaterialInsertPresetInput[] | false | undefined>;
+}
+
+export type CreateLowcodeMaterialNodeInputFromPresetOptions = CreateLowcodeMaterialNodeInputOptions;
+
 export type LowcodeEditorMaterialLayer = "generic" | "business" | "custom";
 
 export interface LowcodeEditorMaterialLayerMeta {
@@ -1950,6 +1975,331 @@ export function getLowcodeMaterialCategoryMeta(
   };
 }
 
+export const LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS: Record<string, readonly LowcodeEditorMaterialInsertPresetInput[]> = {
+  SectionContainer: [
+    {
+      id: "clean-section",
+      title: "清爽分组",
+      description: "白底、轻留白的单列内容分组。",
+      metaName: "清爽分组",
+      props: { title: "活动分组", subtitle: "用于承载图文、按钮或商品模块", backgroundColor: "#ffffff", paddingY: 16, gap: 12 },
+      keywords: ["section", "container", "分组", "容器"],
+    },
+    {
+      id: "emphasis-section",
+      title: "强调分组",
+      description: "浅色背景和边框，适合突出重点内容。",
+      metaName: "强调分组",
+      props: { title: "重点区域", subtitle: "突出展示活动重点", backgroundColor: "#f8fafc", borderColor: "#dbeafe", radius: 12, paddingY: 18, gap: 12 },
+      keywords: ["highlight", "emphasis", "重点"],
+    },
+  ],
+  GridContainer: [
+    {
+      id: "two-column-grid",
+      title: "双列宫格",
+      description: "适合图片、卡片或入口的双列排布。",
+      metaName: "双列宫格",
+      props: { columns: 2, gap: 10, backgroundColor: "#ffffff", paddingY: 12 },
+      keywords: ["grid", "2", "双列"],
+    },
+    {
+      id: "three-column-grid",
+      title: "三列宫格",
+      description: "适合轻量频道入口的三列排布。",
+      metaName: "三列宫格",
+      props: { columns: 3, gap: 8, backgroundColor: "#ffffff", paddingY: 12 },
+      keywords: ["grid", "3", "三列"],
+    },
+  ],
+  BasicButton: [
+    {
+      id: "primary-action",
+      title: "主按钮",
+      description: "适合页面主行动入口。",
+      metaName: "主按钮",
+      props: { text: "立即参与", variant: "solid", size: "lg", block: true, backgroundColor: "#111827", textColor: "#ffffff", borderColor: "#111827", radius: 10 },
+      keywords: ["primary", "button", "主按钮"],
+    },
+    {
+      id: "outline-action",
+      title: "描边按钮",
+      description: "适合次级行动或辅助跳转。",
+      metaName: "描边按钮",
+      props: { text: "查看详情", variant: "outline", size: "md", block: true, backgroundColor: "#ffffff", textColor: "#111827", borderColor: "#111827", radius: 10 },
+      keywords: ["outline", "secondary", "描边"],
+    },
+    {
+      id: "ghost-action",
+      title: "文字按钮",
+      description: "适合轻量操作和说明链接。",
+      metaName: "文字按钮",
+      props: { text: "了解更多", variant: "ghost", size: "md", block: false, backgroundColor: "transparent", textColor: "#2563eb", borderColor: "transparent", radius: 8 },
+      keywords: ["ghost", "link", "文字"],
+    },
+  ],
+  BasicLink: [
+    {
+      id: "card-link",
+      title: "卡片链接",
+      description: "带说明的独立跳转入口。",
+      metaName: "卡片链接",
+      props: { text: "查看活动攻略", description: "了解会场玩法和优惠说明", tagText: "指南", variant: "card", showArrow: true },
+      keywords: ["link", "card", "卡片"],
+    },
+    {
+      id: "bar-link",
+      title: "横条链接",
+      description: "适合页面内轻量导流。",
+      metaName: "横条链接",
+      props: { text: "更多精选内容", description: "点击查看完整清单", variant: "bar", showArrow: true },
+      keywords: ["bar", "横条"],
+    },
+  ],
+  BasicInput: [
+    {
+      id: "text-input",
+      title: "文本输入",
+      description: "普通单行文本输入。",
+      metaName: "文本输入",
+      props: { label: "姓名", placeholder: "请输入姓名", type: "text", helperText: "仅用于页面展示或本地交互" },
+      keywords: ["input", "text", "姓名"],
+    },
+    {
+      id: "phone-input",
+      title: "手机号输入",
+      description: "手机号输入框展示。",
+      metaName: "手机号输入",
+      props: { label: "手机号", placeholder: "请输入手机号", type: "tel", helperText: "真实校验和提交由宿主承接" },
+      keywords: ["input", "phone", "tel", "手机号"],
+    },
+  ],
+  BasicTextarea: [
+    {
+      id: "remark-textarea",
+      title: "备注输入",
+      description: "多行备注或补充说明。",
+      metaName: "备注输入",
+      props: { label: "备注", placeholder: "请输入补充说明", rows: 4, helperText: "可用于活动备注或需求收集" },
+      keywords: ["textarea", "备注"],
+    },
+  ],
+  BasicSelect: [
+    {
+      id: "category-select",
+      title: "品类选择",
+      description: "静态活动品类选择。",
+      metaName: "品类选择",
+      props: {
+        label: "关注品类",
+        placeholder: "请选择关注品类",
+        options: [
+          { label: "女装会场", value: "women" },
+          { label: "鞋包配饰", value: "accessories" },
+          { label: "直播专场", value: "live" },
+        ],
+      },
+      keywords: ["select", "品类"],
+    },
+  ],
+  BasicText: [
+    {
+      id: "section-heading",
+      title: "区块标题",
+      description: "适合作为内容区标题。",
+      metaName: "区块标题文本",
+      props: { text: "精选活动", as: "h2", align: "left", fontSize: 20, fontWeight: 800, color: "#111827", paddingY: 8 },
+      keywords: ["title", "heading", "标题"],
+    },
+    {
+      id: "body-copy",
+      title: "正文说明",
+      description: "适合普通说明文案。",
+      metaName: "正文说明",
+      props: { text: "这里填写活动说明或页面补充文案。", as: "p", align: "left", fontSize: 14, fontWeight: 400, color: "#475569", lineHeight: 1.6, paddingY: 6 },
+      keywords: ["body", "copy", "正文"],
+    },
+  ],
+  BasicImage: [
+    {
+      id: "rounded-image",
+      title: "圆角图片",
+      description: "适合运营单图展示。",
+      metaName: "圆角图片",
+      props: { imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80", alt: "运营图片", radius: 12, fit: "cover" },
+      keywords: ["image", "图片", "圆角"],
+    },
+  ],
+  BasicTag: [
+    {
+      id: "accent-tag",
+      title: "强调标签",
+      description: "适合角标、卖点和提示标签。",
+      metaName: "强调标签",
+      props: { text: "限时", tone: "accent", size: "md", radius: 999 },
+      keywords: ["tag", "标签", "角标"],
+    },
+  ],
+  BasicAlert: [
+    {
+      id: "warning-alert",
+      title: "提醒提示",
+      description: "用于活动说明和注意事项。",
+      metaName: "提醒提示",
+      props: { title: "温馨提示", content: "活动规则以页面展示和平台说明为准。", tone: "warning", variant: "soft", actionText: "查看规则" },
+      keywords: ["alert", "warning", "提示"],
+    },
+    {
+      id: "success-alert",
+      title: "成功提示",
+      description: "用于正向反馈说明。",
+      metaName: "成功提示",
+      props: { title: "配置完成", content: "当前模块已完成基础配置。", tone: "success", variant: "soft" },
+      keywords: ["alert", "success", "成功"],
+    },
+  ],
+  BasicForm: [
+    {
+      id: "lead-form",
+      title: "留资表单",
+      description: "带标题和提交按钮的表单容器。",
+      metaName: "留资表单容器",
+      props: { title: "提交信息", description: "填写信息后提交，真实提交由宿主 action 承接。", submitText: "提交信息", successText: "已提交" },
+      keywords: ["form", "lead", "表单"],
+    },
+  ],
+  BasicList: [
+    {
+      id: "rule-list",
+      title: "规则列表",
+      description: "适合静态规则和步骤说明。",
+      metaName: "规则列表",
+      props: {
+        title: "活动规则",
+        description: "请按页面说明参与活动",
+        marker: "number",
+        items: [
+          { title: "选择心仪商品", description: "浏览页面中的精选商品和活动会场。" },
+          { title: "按提示完成操作", description: "点击按钮或链接进入对应活动。" },
+          { title: "关注活动时间", description: "具体权益以平台展示为准。" },
+        ],
+      },
+      keywords: ["list", "rules", "规则"],
+    },
+  ],
+  BasicAccordion: [
+    {
+      id: "faq-accordion",
+      title: "FAQ 折叠",
+      description: "适合常见问题和活动说明。",
+      metaName: "FAQ 折叠面板",
+      props: {
+        title: "常见问题",
+        description: "运营可按需修改问题和答案",
+        mode: "single",
+        items: [
+          { title: "活动什么时候开始？", content: "请以页面展示时间为准。", tag: "时间" },
+          { title: "优惠如何使用？", content: "具体权益以结算页和平台规则为准。", tag: "权益" },
+        ],
+      },
+      keywords: ["faq", "accordion", "折叠"],
+    },
+  ],
+  BasicTimeline: [
+    {
+      id: "activity-timeline",
+      title: "活动时间线",
+      description: "适合活动节奏和流程说明。",
+      metaName: "活动时间线",
+      props: {
+        title: "活动节奏",
+        description: "展示活动关键阶段",
+        marker: "dot",
+        items: [
+          { title: "预热", description: "浏览活动内容并提前收藏。", time: "10:00", status: "done" },
+          { title: "开抢", description: "按页面提示参与限时活动。", time: "20:00", status: "active" },
+          { title: "返场", description: "关注后续补贴和返场信息。", time: "次日", status: "pending" },
+        ],
+      },
+      keywords: ["timeline", "时间线"],
+    },
+  ],
+  BasicModal: [
+    {
+      id: "rule-modal",
+      title: "规则弹窗",
+      description: "静态规则说明弹窗。",
+      metaName: "规则弹窗",
+      props: { triggerText: "查看规则", title: "活动规则", description: "请阅读活动说明", content: "活动权益、参与门槛和时间以平台展示为准。", confirmText: "我知道了", placement: "center" },
+      keywords: ["modal", "rules", "弹窗"],
+    },
+  ],
+  BasicCarousel: [
+    {
+      id: "hero-carousel",
+      title: "头图轮播",
+      description: "适合首屏多图横幅展示。",
+      metaName: "头图轮播",
+      props: {
+        aspectRatio: "16 / 9",
+        indicator: "dots",
+        radius: 12,
+        items: [
+          { title: "夏日上新", description: "精选新品限时上新", imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80", tag: "NEW" },
+          { title: "直播专场", description: "今晚 8 点开播", imageUrl: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80", tag: "LIVE" },
+        ],
+      },
+      keywords: ["carousel", "banner", "轮播"],
+    },
+  ],
+  ActivityHero: [
+    {
+      id: "campaign-hero",
+      title: "活动头图",
+      description: "首屏活动标题和主视觉。",
+      metaName: "活动头图",
+      props: { title: "夏日好物节", subtitle: "精选好物限时补贴", imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80", backgroundColor: "#ffffff", titleSize: 26, imageRadius: 12 },
+      keywords: ["hero", "activity", "头图"],
+    },
+  ],
+};
+
+function normalizeLowcodeMaterialInsertPreset(
+  manifest: LowcodeMaterialManifest,
+  input: LowcodeEditorMaterialInsertPresetInput,
+): LowcodeEditorMaterialInsertPreset {
+  return {
+    id: input.id,
+    title: input.title,
+    description: input.description ?? `使用 ${manifest.title} 的常用配置。`,
+    props: cloneJson(input.props ?? {}),
+    metaName: input.metaName ?? input.title,
+    keywords: [...(input.keywords ?? [])],
+  };
+}
+
+export function createLowcodeMaterialInsertPresets(
+  manifest: LowcodeMaterialManifest,
+  options: CreateLowcodeMaterialInsertPresetsOptions = {},
+): LowcodeEditorMaterialInsertPreset[] {
+  const custom = options.componentPresets?.[manifest.componentName];
+  if (custom === false) return [];
+  const defaultPresets = options.includeDefaultPresets === false
+    ? []
+    : LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS[manifest.componentName] ?? [];
+  return [...defaultPresets, ...(custom ?? [])]
+    .filter((preset) => preset.id.trim() && preset.title.trim())
+    .map((preset) => normalizeLowcodeMaterialInsertPreset(manifest, preset));
+}
+
+export function findLowcodeMaterialInsertPreset(
+  manifest: LowcodeMaterialManifest,
+  presetId: string,
+  options: CreateLowcodeMaterialInsertPresetsOptions = {},
+): LowcodeEditorMaterialInsertPreset | undefined {
+  return createLowcodeMaterialInsertPresets(manifest, options).find((preset) => preset.id === presetId);
+}
+
 export const LOWCODE_EDITOR_MATERIAL_LAYER_META: Record<LowcodeEditorMaterialLayer, LowcodeEditorMaterialLayerMeta> = {
   generic: {
     label: "通用物料",
@@ -2273,6 +2623,25 @@ export function createLowcodeMaterialNodeInput(
     props: cloneJson(manifest.defaultProps),
     ...(dataBinding ? { dataBinding } : {}),
     meta: { name: options.metaName ?? manifest.title },
+  };
+}
+
+export function createLowcodeMaterialNodeInputFromPreset(
+  manifest: LowcodeMaterialManifest,
+  preset: LowcodeEditorMaterialInsertPresetInput | LowcodeEditorMaterialInsertPreset,
+  options: CreateLowcodeMaterialNodeInputFromPresetOptions = {},
+): LowcodeEditorNodeInput {
+  const normalizedPreset = normalizeLowcodeMaterialInsertPreset(manifest, preset);
+  const baseInput = createLowcodeMaterialNodeInput(manifest, {
+    ...options,
+    metaName: options.metaName ?? normalizedPreset.metaName,
+  });
+  return {
+    ...baseInput,
+    props: {
+      ...(baseInput.props ?? {}),
+      ...cloneJson(normalizedPreset.props),
+    },
   };
 }
 

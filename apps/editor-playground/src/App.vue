@@ -60,7 +60,9 @@ import {
   createLowcodeMaterialDetailSummary,
   createLowcodeMaterialInsertTargets,
   createLowcodeMaterialFavoriteMessage,
+  createLowcodeMaterialInsertPresets,
   createLowcodeMaterialNodeInput,
+  createLowcodeMaterialNodeInputFromPreset,
   createLowcodeMaterialPreviewSchema,
   createLowcodeMaterialArchitectureOverview,
   createLowcodeMaterialCatalogOverview,
@@ -200,6 +202,7 @@ import {
   type LowcodeEditorNodeOperationAction as NodeContextAction,
   type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
   type LowcodeEditorPermissionAction,
+  type LowcodeEditorMaterialInsertPreset,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
 import { LowcodeVueRenderer } from "@meumall/lowcode-renderer-vue-h5";
@@ -1398,6 +1401,17 @@ const commandPaletteItems = computed<CommandPaletteItem[]>(() => [
       addMaterial(material.manifest);
     },
   })),
+  ...materials.flatMap((material) => createLowcodeMaterialInsertPresets(material.manifest).map((preset): CommandPaletteItem => ({
+    id: `material-preset-${material.manifest.componentName}-${preset.id}`,
+    title: `添加预设：${preset.title}`,
+    group: "物料预设",
+    description: createPermissionAwareDescription("material.insert", `${material.manifest.title} / ${preset.description}`),
+    keywords: [material.manifest.title, material.manifest.componentName, material.manifest.category, preset.title, preset.description, ...preset.keywords],
+    disabled: isCommandActionDisabled("material.insert") || isEditorActionDisabled("node.insert"),
+    run: () => {
+      addMaterialPreset(material.manifest, preset);
+    },
+  }))),
   ...getAllPageTemplates().map((template): CommandPaletteItem => ({
     id: `template-${template.id}`,
     title: `应用模板：${template.title}`,
@@ -1973,10 +1987,13 @@ function getParamBoolean(params: JsonObject | undefined, key: string, fallback: 
   return typeof value === "boolean" ? value : fallback;
 }
 
-function createNodeInput(manifest: LowcodeMaterialManifest) {
-  return createLowcodeMaterialNodeInput(manifest, {
+function createNodeInput(manifest: LowcodeMaterialManifest, preset?: LowcodeEditorMaterialInsertPreset) {
+  const options = {
     dataBindingByComponentName: materialPreviewDataBindings,
-  });
+  };
+  return preset
+    ? createLowcodeMaterialNodeInputFromPreset(manifest, preset, options)
+    : createLowcodeMaterialNodeInput(manifest, options);
 }
 
 function isFavoriteMaterial(componentName: string): boolean {
@@ -2011,21 +2028,29 @@ function showMaterialInsertDisabledMessage(): void {
   materialPreferenceMessage.value = materialInsertDisabledReason.value ?? "当前不可插入物料。";
 }
 
-function addMaterial(manifest: LowcodeMaterialManifest): boolean {
+function addMaterial(manifest: LowcodeMaterialManifest, preset?: LowcodeEditorMaterialInsertPreset): boolean {
   if (!canInsertMaterial()) {
     showMaterialInsertDisabledMessage();
     return false;
   }
-  editorState.value = appendNode(editorState.value, createNodeInput(manifest));
+  editorState.value = appendNode(editorState.value, createNodeInput(manifest, preset));
   recordRecentMaterial(manifest);
   recordAuditEvent({
     type: "material.insert",
     title: "添加物料",
-    description: `已追加物料：${manifest.title}`,
+    description: preset ? `已追加预设：${preset.title}（${manifest.title}）` : `已追加物料：${manifest.title}`,
     target: { id: manifest.componentName, type: "material", title: manifest.title },
-    metadata: { componentName: manifest.componentName },
+    metadata: {
+      componentName: manifest.componentName,
+      ...(preset ? { presetId: preset.id } : {}),
+    },
   });
   return true;
+}
+
+function addMaterialPreset(manifest: LowcodeMaterialManifest, preset: LowcodeEditorMaterialInsertPreset): void {
+  if (!addMaterial(manifest, preset)) return;
+  materialPreferenceMessage.value = `已添加预设：${preset.title}`;
 }
 
 function addStarterMaterial(manifest: LowcodeMaterialManifest): void {
@@ -4250,6 +4275,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :insert-disabled-reason="materialInsertDisabledReason"
         :selected-container-title="selectedNodeIsContainer ? selectedManifest?.title : undefined"
         @add="addMaterial"
+        @add-preset="addMaterialPreset"
         @add-to-container="addMaterialToSelectedContainer"
         @toggle-favorite="toggleFavoriteMaterial"
         @open-detail="openMaterialDetail"

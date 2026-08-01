@@ -53,9 +53,11 @@ import {
   createLowcodeMaterialDetailPropEntries,
   createLowcodeMaterialDetailSummary,
   createLowcodeMaterialFavoriteMessage,
+  createLowcodeMaterialInsertPresets,
   createLowcodeMaterialInsertTarget,
   createLowcodeMaterialInsertTargets,
   createLowcodeMaterialNodeInput,
+  createLowcodeMaterialNodeInputFromPreset,
   createLowcodeMaterialPreviewSchema,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
@@ -109,6 +111,7 @@ import {
   groupLowcodeEditorCommands,
   getLowcodeEditorActionDisabledReason,
   getLowcodeMaterialFamilyMeta,
+  findLowcodeMaterialInsertPreset,
   getLowcodeMaterialLayerMeta,
   getLowcodeMaterialCategoryMeta,
   getLowcodePropGroupKey,
@@ -832,6 +835,61 @@ describe("@meumall/lowcode-editor readiness", () => {
     }), ["ImageBanner"]);
     assert.equal(createLowcodeMaterialFavoriteMessage(actionButton, true), "已收藏物料：行动按钮");
     assert.equal(createLowcodeMaterialFavoriteMessage(actionButton, false), "已取消收藏：行动按钮");
+  });
+
+  it("creates reusable material insert presets and node inputs", () => {
+    const button = createMaterialManifest({
+      componentName: "BasicButton",
+      materialVersion: "1.0.0",
+      title: "基础按钮",
+      category: "basic",
+      platforms: ["h5"],
+      propsSchema: {
+        text: { label: "文案", type: "string", setter: "input", defaultValue: "默认按钮" },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "solid" },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 6 },
+      },
+      defaultProps: { text: "默认按钮", variant: "solid", block: false, paddingY: 6 },
+    });
+
+    const presets = createLowcodeMaterialInsertPresets(button);
+    assert.deepEqual(presets.slice(0, 3).map((preset) => [preset.id, preset.title]), [
+      ["primary-action", "主按钮"],
+      ["outline-action", "描边按钮"],
+      ["ghost-action", "文字按钮"],
+    ]);
+    assert.equal(findLowcodeMaterialInsertPreset(button, "outline-action")?.title, "描边按钮");
+    assert.deepEqual(createLowcodeMaterialInsertPresets(button, { componentPresets: { BasicButton: false } }), []);
+
+    const customPresets = createLowcodeMaterialInsertPresets(button, {
+      includeDefaultPresets: false,
+      componentPresets: {
+        BasicButton: [
+          { id: "custom", title: "自定义按钮", props: { text: "自定义", variant: "ghost" }, keywords: ["custom"] },
+        ],
+      },
+    });
+    assert.deepEqual(customPresets.map((preset) => [preset.id, preset.title, preset.keywords.join(",")]), [
+      ["custom", "自定义按钮", "custom"],
+    ]);
+
+    const presetInput = createLowcodeMaterialNodeInputFromPreset(button, presets[0], {
+      id: "button_primary",
+    });
+    assert.equal(presetInput.id, "button_primary");
+    assert.equal(presetInput.componentName, "BasicButton");
+    assert.equal(presetInput.meta?.name, "主按钮");
+    assert.deepEqual(presetInput.props, {
+      text: "立即参与",
+      variant: "solid",
+      block: true,
+      paddingY: 6,
+      size: "lg",
+      backgroundColor: "#111827",
+      textColor: "#ffffff",
+      borderColor: "#111827",
+      radius: 10,
+    });
   });
 
   it("creates reusable material detail models and preview schemas", () => {

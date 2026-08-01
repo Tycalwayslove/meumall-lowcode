@@ -1267,6 +1267,8 @@ button:focus-visible {
 }
 
 .material-item {
+  flex-wrap: wrap;
+  gap: 0;
   padding: 0;
   overflow: hidden;
 }
@@ -1331,6 +1333,39 @@ button:focus-visible {
 .material-detail-button:focus-visible {
   color: #1d4ed8;
   background: #eff6ff;
+}
+
+.material-preset-row {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid #e2e8f0;
+  padding: 7px 10px 9px;
+  background: #f8fafc;
+}
+
+.material-preset-row button {
+  height: 26px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0 8px;
+  color: #334155;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.material-preset-row button:hover:not(:disabled),
+.material-preset-row button:focus-visible:not(:disabled) {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.material-preset-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.54;
 }
 
 .material-detail-overlay {

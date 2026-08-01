@@ -856,6 +856,23 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("(() => { const summary = document.querySelector('[data-testid=\"material-architecture-summary\"]'); return Boolean(summary && summary.innerText.includes('通用物料') && summary.innerText.includes('业务物料')); })()");
   log("通过：物料分类说明、数量摘要和架构分层可随分类筛选切换");
 
+  log("检查物料插入预设");
+  const nodeCountBeforeMaterialPreset = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-item')).some((item) => item.innerText.includes('基础按钮') && item.innerText.includes('主按钮') && item.innerText.includes('描边按钮'))");
+  await page.evaluate(`(() => {
+    const item = Array.from(document.querySelectorAll('.material-item')).find((element) => element.innerText.includes('基础按钮'));
+    const button = Array.from(item?.querySelectorAll('.material-preset-row button') ?? []).find((element) => element.textContent?.trim() === '主按钮');
+    button?.click();
+    return Boolean(button);
+  })()`);
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreset)}`);
+  await page.waitForExpression("document.body.innerText.includes('已添加预设：主按钮')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"text\": \"立即参与\"') && item.value.includes('\"backgroundColor\": \"#111827\"') && item.value.includes('\"name\": \"主按钮\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：物料预设可一键插入并写入预设 props");
+
   log("检查快捷命令面板");
   const nodeCountBeforeCommand = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1641,6 +1658,7 @@ async function main() {
       { label: "基础折叠面板物料存在", expression: "document.body.innerText.includes('基础折叠面板')" },
       { label: "基础时间线物料存在", expression: "document.body.innerText.includes('基础时间线')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
+      { label: "物料插入预设存在", expression: "Array.from(document.querySelectorAll('.material-item')).some((item) => item.innerText.includes('基础按钮') && item.innerText.includes('主按钮') && item.innerText.includes('描边按钮'))" },
       { label: "物料分类说明存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-category-summary\"]'); return Boolean(summary && summary.innerText.includes('全部物料') && summary.innerText.includes('全部可拖拽物料') && summary.innerText.includes('全部')); })()" },
       { label: "物料架构分层存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-architecture-summary\"]'); return Boolean(summary && summary.innerText.includes('物料分层') && summary.innerText.includes('通用物料') && summary.innerText.includes('业务物料')); })()" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },

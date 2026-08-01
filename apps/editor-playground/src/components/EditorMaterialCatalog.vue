@@ -4,10 +4,12 @@ import { Eye, Plus, Search, Star } from "@lucide/vue";
 import {
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialArchitectureProfile,
+  createLowcodeMaterialInsertPresets,
   formatLowcodeMaterialCatalogSummary,
   type LowcodeEditorMaterialArchitectureOverview,
   type LowcodeEditorMaterialCatalogOverview,
   type LowcodeEditorMaterialEntry,
+  type LowcodeEditorMaterialInsertPreset,
 } from "@meumall/lowcode-editor";
 import type { LowcodeMaterialManifest } from "@meumall/lowcode-schema";
 
@@ -31,6 +33,7 @@ const emit = defineEmits<{
   "update:keyword": [value: string];
   "update:category": [value: string];
   add: [manifest: LowcodeMaterialManifest];
+  "add-preset": [manifest: LowcodeMaterialManifest, preset: LowcodeEditorMaterialInsertPreset];
   "add-to-container": [manifest: LowcodeMaterialManifest];
   "toggle-favorite": [manifest: LowcodeMaterialManifest];
   "open-detail": [manifest: LowcodeMaterialManifest];
@@ -63,6 +66,10 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
 function materialArchitectureTitle(manifest: LowcodeMaterialManifest): string {
   const profile = createLowcodeMaterialArchitectureProfile(manifest);
   return `${profile.layerLabel} / ${profile.familyLabel}：${profile.recommendedUse} ${profile.boundary}`;
+}
+
+function materialInsertPresets(manifest: LowcodeMaterialManifest): LowcodeEditorMaterialInsertPreset[] {
+  return createLowcodeMaterialInsertPresets(manifest).slice(0, 3);
 }
 </script>
 
@@ -207,6 +214,19 @@ function materialArchitectureTitle(manifest: LowcodeMaterialManifest): string {
         <Eye :size="15" />
         <span>详情</span>
       </button>
+      <div v-if="materialInsertPresets(material.manifest).length" class="material-preset-row">
+        <button
+          v-for="preset in materialInsertPresets(material.manifest)"
+          :key="`${material.manifest.componentName}-${preset.id}`"
+          type="button"
+          :title="insertDisabledReason ?? `${material.manifest.title}：${preset.description}`"
+          :disabled="Boolean(insertDisabledReason)"
+          @pointerdown.stop
+          @click.stop="emit('add-preset', material.manifest, preset)"
+        >
+          {{ preset.title }}
+        </button>
+      </div>
     </article>
     <div v-if="!visibleMaterials.length" class="mini-empty">没有匹配物料</div>
     <div v-if="selectedContainerTitle" class="container-target">

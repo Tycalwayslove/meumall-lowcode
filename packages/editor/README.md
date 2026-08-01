@@ -24,10 +24,14 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `LOWCODE_EDITOR_MATERIAL_LAYER_META`
 - `LOWCODE_EDITOR_MATERIAL_FAMILY_META`
 - `LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES`
+- `LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS`
 - `getLowcodeMaterialLayerMeta`
 - `getLowcodeMaterialFamilyMeta`
 - `createLowcodeMaterialArchitectureProfile`
 - `createLowcodeMaterialArchitectureOverview`
+- `createLowcodeMaterialInsertPresets`
+- `findLowcodeMaterialInsertPreset`
+- `createLowcodeMaterialNodeInputFromPreset`
 - `createLowcodeMaterialCategories`
 - `filterLowcodeMaterialCatalog`
 - `pickLowcodeMaterialEntriesByComponentNames`
@@ -500,6 +504,8 @@ The material catalog helpers keep material-library search, category filters, qui
 `LOWCODE_EDITOR_MATERIAL_CATEGORY_META`, `getLowcodeMaterialCategoryMeta`, `createLowcodeMaterialCategorySummaries`, and `createLowcodeMaterialCatalogOverview` provide category labels, descriptions, active-category summaries, and count metadata for material panels.
 
 `LOWCODE_EDITOR_MATERIAL_LAYER_META`, `LOWCODE_EDITOR_MATERIAL_FAMILY_META`, `LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES`, `getLowcodeMaterialLayerMeta`, `getLowcodeMaterialFamilyMeta`, `createLowcodeMaterialArchitectureProfile`, and `createLowcodeMaterialArchitectureOverview` provide the editor-side material architecture model. They classify existing manifests into generic, business, or custom material layers and into capability families such as action, input, media, form, list, feedback, marketing, and commerce. This is editor metadata only; runtime primitives still stay outside material registries.
+
+`LOWCODE_EDITOR_MATERIAL_INSERT_PRESETS`, `createLowcodeMaterialInsertPresets`, `findLowcodeMaterialInsertPreset`, and `createLowcodeMaterialNodeInputFromPreset` provide common insert variants for base materials. Presets merge `manifest.defaultProps` with preset props and can set a node `meta.name`; they do not change Page Schema or Material Manifest structure. Host shells can disable defaults per component with `componentPresets: { ComponentName: false }` or provide custom presets through the options object.
 
 `createLowcodeMaterialCategories(manifests, allCategoryLabel)` returns a stable category list with `全部` by default.
 
