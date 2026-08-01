@@ -208,6 +208,7 @@ import {
   type LowcodePageType,
   type LowcodePropSchema,
 } from "@meumall/lowcode-schema";
+import EditorAuditPanel from "./components/EditorAuditPanel.vue";
 import EditorCanvasContextToolbar from "./components/EditorCanvasContextToolbar.vue";
 import EditorCanvasToolbar from "./components/EditorCanvasToolbar.vue";
 import EditorCommandPalette, { type EditorCommandPaletteItem } from "./components/EditorCommandPalette.vue";
@@ -539,6 +540,7 @@ const outlineRenameDraft = ref("");
 const commandPaletteOpen = ref(false);
 const commandKeyword = ref("");
 const pageStartWizardOpen = ref(false);
+const auditPanelOpen = ref(false);
 const nodeContextMenu = ref<NodeContextMenuState | undefined>();
 const selectedMaterialDetailManifest = ref<LowcodeMaterialManifest>();
 const visiblePageTemplates = ref<TemplateListItem[]>([]);
@@ -3693,7 +3695,14 @@ function setReleaseMessage(release: EditorPageRelease, action: string): void {
 }
 
 function showHostAuditLog(): void {
-  releaseMessage.value = "已打开宿主审计日志入口，本地示例不请求外部系统。";
+  auditPanelOpen.value = true;
+  releaseMessage.value = "已打开本地审计日志面板，真实管理台可替换为 Java 审计服务。";
+  recordAuditMessage(
+    "system.message",
+    "打开审计日志",
+    "已打开本地审计日志面板。",
+    "info",
+  );
 }
 
 function showHostReleasePolicy(): void {
@@ -3994,6 +4003,12 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       @update-keyword="(value) => { commandKeyword = value; }"
       @execute-first="executeFirstCommandPaletteItem"
       @execute="executeCommandPaletteItem"
+    />
+
+    <EditorAuditPanel
+      :open="auditPanelOpen"
+      :items="auditListItems"
+      @close="auditPanelOpen = false"
     />
 
     <div

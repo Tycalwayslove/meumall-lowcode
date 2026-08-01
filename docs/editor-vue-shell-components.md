@@ -338,9 +338,29 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不读取或写入 localStorage。
 - 不执行保存、预览、发布、权限、协作锁定、审批、审计或服务端保存。
 
+### `EditorAuditPanel`
+
+路径：`apps/editor-playground/src/components/EditorAuditPanel.vue`
+
+职责：
+
+- 展示顶部宿主审计入口打开后的审计日志抽屉。
+- 接收 audit trail API 派生后的审计展示项。
+- 展示审计标题、时间、操作者、目标、描述和结果状态。
+- 通过 emits 抛出关闭事件。
+- 复用 `.audit-panel-*` 样式，暴露 `data-testid="audit-log-panel"` 和 `data-testid="audit-log-close"` 供 smoke check 验证。
+
+不负责：
+
+- 不创建审计事件。
+- 不查询、持久化、分页、筛选、导出或清空审计日志。
+- 不读取或写入 localStorage。
+- 不调用 Java 审计服务。
+- 不处理权限、协作锁定、审批或服务端保存。
+
 ## 后续拆分顺序
 
-当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀，顶部工具栏已改为消费 capability status items，顶部工具栏和发布面板已提供首批管理台宿主扩展插槽。后续优先继续治理剩余硬编码样式、权限插槽、真实协作锁服务、真实审批流和更多管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
+当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀，顶部工具栏已改为消费 capability status items，顶部工具栏和发布面板已提供首批管理台宿主扩展插槽，审计日志入口已拆为独立 shell 面板。后续优先继续治理剩余硬编码样式、权限插槽、真实协作锁服务、真实审批流、真实审计服务和更多管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
 
 ## 抽 npm 包判断
 
