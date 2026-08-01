@@ -17,6 +17,10 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeEditorViewportFromPreset`
 - `formatLowcodeEditorViewportTitle`
 - `createLowcodeMaterialCatalogItem`
+- `LOWCODE_EDITOR_MATERIAL_CATEGORY_META`
+- `getLowcodeMaterialCategoryMeta`
+- `createLowcodeMaterialCategorySummaries`
+- `createLowcodeMaterialCatalogOverview`
 - `createLowcodeMaterialCategories`
 - `filterLowcodeMaterialCatalog`
 - `pickLowcodeMaterialEntriesByComponentNames`

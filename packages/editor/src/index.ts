@@ -383,6 +383,8 @@ export interface LowcodeEditorMaterialCatalogItem {
   componentName: string;
   title: string;
   category: string;
+  categoryLabel: string;
+  categoryDescription: string;
   materialVersion: string;
   platforms: LowcodePlatform[];
   propCount: number;
@@ -390,6 +392,30 @@ export interface LowcodeEditorMaterialCatalogItem {
   dataSourceSlotCount: number;
   summary: string;
   searchText: string;
+}
+
+export interface LowcodeEditorMaterialCategoryMeta {
+  label: string;
+  description: string;
+}
+
+export interface LowcodeEditorMaterialCategorySummary extends LowcodeEditorMaterialCategoryMeta {
+  value: string;
+  count: number;
+  visibleCount: number;
+  active: boolean;
+  summaryText: string;
+}
+
+export interface LowcodeEditorMaterialCatalogOverview {
+  totalCount: number;
+  visibleCount: number;
+  activeCategory: string;
+  activeLabel: string;
+  activeDescription: string;
+  activeCount: number;
+  summaryText: string;
+  categories: LowcodeEditorMaterialCategorySummary[];
 }
 
 export interface LowcodeEditorMaterialDetailPropEntry {
@@ -464,6 +490,10 @@ export interface FilterLowcodeMaterialCatalogOptions {
   keyword?: string;
   category?: string;
   allCategoryLabel?: string;
+}
+
+export interface LowcodeMaterialCategorySummaryOptions extends FilterLowcodeMaterialCatalogOptions {
+  categoryMeta?: Record<string, Partial<LowcodeEditorMaterialCategoryMeta>>;
 }
 
 export interface LowcodeEditorCommandEntry {
@@ -1804,6 +1834,55 @@ export function summarizeLowcodeEditorDemoChecklist(
   };
 }
 
+export const LOWCODE_EDITOR_MATERIAL_CATEGORY_META: Record<string, LowcodeEditorMaterialCategoryMeta> = {
+  basic: {
+    label: "基础物料",
+    description: "业务无关的通用展示、输入、反馈和轻交互物料，适合优先组合页面基础内容。",
+  },
+  layout: {
+    label: "布局容器",
+    description: "承载页面结构、分组和子节点排布的容器类物料，适合先搭页面骨架。",
+  },
+  content: {
+    label: "内容展示",
+    description: "面向图文、公告、富文本、导航等内容表达的通用物料。",
+  },
+  form: {
+    label: "表单留资",
+    description: "面向留资、报名和轻量收集的表单物料，真实提交和校验由宿主 action 承接。",
+  },
+  marketing: {
+    label: "营销活动",
+    description: "面向活动、直播、品牌、规则和转化入口的场景物料，适合搭建推广页面。",
+  },
+  commerce: {
+    label: "商品交易",
+    description: "面向商品、榜单、优惠券等电商表达的物料，真实价格、库存和权益由业务系统承接。",
+  },
+};
+
+export function getLowcodeMaterialCategoryMeta(
+  category: string,
+  options: Pick<LowcodeMaterialCategorySummaryOptions, "allCategoryLabel" | "categoryMeta"> = {},
+): LowcodeEditorMaterialCategoryMeta {
+  const allCategoryLabel = options.allCategoryLabel ?? "全部";
+  const fallback = category === allCategoryLabel
+    ? {
+        label: "全部物料",
+        description: "展示当前物料库里的全部可拖拽物料，可通过搜索和分类快速缩小范围。",
+      }
+    : {
+        label: category,
+        description: "自定义物料分类，具体业务边界以物料详情和 manifest 为准。",
+      };
+  const preset = LOWCODE_EDITOR_MATERIAL_CATEGORY_META[category] ?? {};
+  const custom = options.categoryMeta?.[category] ?? {};
+  return {
+    label: custom.label ?? preset.label ?? fallback.label,
+    description: custom.description ?? preset.description ?? fallback.description,
+  };
+}
+
 export function createLowcodeMaterialCatalogItem(
   manifest: LowcodeMaterialManifest,
 ): LowcodeEditorMaterialCatalogItem {
@@ -1812,10 +1891,13 @@ export function createLowcodeMaterialCatalogItem(
   const dataSourceSlotCount = manifest.dataSourceSlots?.length ?? 0;
   const platforms = manifest.platforms.slice();
   const summary = formatLowcodeMaterialCatalogSummary(manifest);
+  const categoryMeta = getLowcodeMaterialCategoryMeta(manifest.category);
   return {
     componentName: manifest.componentName,
     title: manifest.title,
     category: manifest.category,
+    categoryLabel: categoryMeta.label,
+    categoryDescription: categoryMeta.description,
     materialVersion: manifest.materialVersion,
     platforms,
     propCount,
@@ -1826,6 +1908,7 @@ export function createLowcodeMaterialCatalogItem(
       manifest.title,
       manifest.componentName,
       manifest.category,
+      categoryMeta.label,
       manifest.materialVersion,
       ...platforms,
     ].join(" ").toLowerCase(),
@@ -1943,6 +2026,57 @@ export function createLowcodeMaterialCategories(
   allCategoryLabel = "全部",
 ): string[] {
   return [allCategoryLabel, ...Array.from(new Set(Array.from(manifests, (manifest) => manifest.category)))];
+}
+
+export function createLowcodeMaterialCategorySummaries(
+  manifests: Iterable<LowcodeMaterialManifest>,
+  options: LowcodeMaterialCategorySummaryOptions = {},
+): LowcodeEditorMaterialCategorySummary[] {
+  const manifestList = Array.from(manifests);
+  const allCategoryLabel = options.allCategoryLabel ?? "全部";
+  const activeCategory = options.category ?? allCategoryLabel;
+  const categoryValues = createLowcodeMaterialCategories(manifestList, allCategoryLabel);
+  const values = categoryValues.includes(activeCategory) ? categoryValues : [...categoryValues, activeCategory];
+
+  return values.map((value) => {
+    const meta = getLowcodeMaterialCategoryMeta(value, options);
+    const scopedManifests = value === allCategoryLabel ? manifestList : manifestList.filter((manifest) => manifest.category === value);
+    const visibleCount = filterLowcodeMaterialCatalog(scopedManifests.map((manifest) => ({ manifest })), {
+      keyword: options.keyword,
+      category: allCategoryLabel,
+      allCategoryLabel,
+    }).length;
+    const keyword = options.keyword?.trim();
+    return {
+      value,
+      label: meta.label,
+      description: meta.description,
+      count: scopedManifests.length,
+      visibleCount,
+      active: value === activeCategory,
+      summaryText: keyword ? `匹配 ${visibleCount}/${scopedManifests.length} 个物料` : `${scopedManifests.length} 个物料`,
+    };
+  });
+}
+
+export function createLowcodeMaterialCatalogOverview(
+  manifests: Iterable<LowcodeMaterialManifest>,
+  options: LowcodeMaterialCategorySummaryOptions = {},
+): LowcodeEditorMaterialCatalogOverview {
+  const allCategoryLabel = options.allCategoryLabel ?? "全部";
+  const categories = createLowcodeMaterialCategorySummaries(manifests, options);
+  const allCategory = categories.find((item) => item.value === allCategoryLabel) ?? categories[0];
+  const activeCategory = categories.find((item) => item.active) ?? allCategory;
+  return {
+    totalCount: allCategory?.count ?? 0,
+    visibleCount: activeCategory?.visibleCount ?? 0,
+    activeCategory: activeCategory?.value ?? allCategoryLabel,
+    activeLabel: activeCategory?.label ?? allCategoryLabel,
+    activeDescription: activeCategory?.description ?? "",
+    activeCount: activeCategory?.count ?? 0,
+    summaryText: activeCategory?.summaryText ?? "0 个物料",
+    categories,
+  };
 }
 
 export function filterLowcodeMaterialCatalog<T extends LowcodeEditorMaterialEntry>(

@@ -845,6 +845,14 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('最近使用') && Array.from(document.querySelectorAll('.material-quick-chip')).some((item) => item.innerText.includes('图片 Banner'))");
   log("通过：物料可收藏、最近使用可更新并持久化");
 
+  log("检查物料分类说明");
+  await page.evaluate("(() => { const select = document.querySelector('select[aria-label=\"物料分类\"]'); select.value = 'basic'; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()");
+  await page.waitForExpression("(() => { const summary = document.querySelector('[data-testid=\"material-category-summary\"]'); return Boolean(summary && summary.innerText.includes('基础物料') && summary.innerText.includes('业务无关') && summary.innerText.includes('物料')); })()");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.material-item')).every((item) => item.innerText.includes('basic'))");
+  await page.evaluate("(() => { const select = document.querySelector('select[aria-label=\"物料分类\"]'); select.value = '全部'; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()");
+  await page.waitForExpression("document.querySelector('[data-testid=\"material-category-summary\"]')?.innerText.includes('全部物料')");
+  log("通过：物料分类说明和数量摘要可随分类筛选切换");
+
   log("检查快捷命令面板");
   const nodeCountBeforeCommand = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1630,6 +1638,7 @@ async function main() {
       { label: "基础折叠面板物料存在", expression: "document.body.innerText.includes('基础折叠面板')" },
       { label: "基础时间线物料存在", expression: "document.body.innerText.includes('基础时间线')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
+      { label: "物料分类说明存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-category-summary\"]'); return Boolean(summary && summary.innerText.includes('全部物料') && summary.innerText.includes('全部可拖拽物料') && summary.innerText.includes('全部')); })()" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
       { label: "发布风险摘要存在", expression: "document.querySelector('.publish-risk-summary') && (document.body.innerText.includes('发布检查已通过') || document.body.innerText.includes('可以生成预览，仍有提醒') || document.body.innerText.includes('发布前需要处理阻塞项'))" },
       { label: "编辑器发布面板宿主扩展位存在", expression: "document.querySelector('[data-testid=\"host-delivery-policy\"]') && document.querySelector('[data-testid=\"host-approval-policy\"]') && document.querySelector('[data-testid=\"host-publish-check-policy\"]') && document.querySelector('[data-testid=\"host-release-policy-button\"]')" },

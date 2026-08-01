@@ -4,6 +4,7 @@ import { Eye, Plus, Search, Star } from "@lucide/vue";
 import {
   createLowcodeMaterialCatalogItem,
   formatLowcodeMaterialCatalogSummary,
+  type LowcodeEditorMaterialCatalogOverview,
   type LowcodeEditorMaterialEntry,
 } from "@meumall/lowcode-editor";
 import type { LowcodeMaterialManifest } from "@meumall/lowcode-schema";
@@ -15,6 +16,7 @@ const props = defineProps<{
   recentMaterials: readonly LowcodeEditorMaterialEntry[];
   favoriteComponentNames: readonly string[];
   categories: readonly string[];
+  categoryOverview?: LowcodeEditorMaterialCatalogOverview;
   keyword: string;
   category: string;
   preferenceMessage?: string;
@@ -36,6 +38,15 @@ const emit = defineEmits<{
 }>();
 
 const favoriteComponentNameSet = computed(() => new Set(props.favoriteComponentNames));
+const categoryOptions = computed(() => props.categoryOverview?.categories ?? props.categories.map((category) => ({
+  value: category,
+  label: category,
+  description: "",
+  count: 0,
+  visibleCount: 0,
+  active: category === props.category,
+  summaryText: "",
+})));
 
 function isFavoriteMaterial(componentName: string): boolean {
   return favoriteComponentNameSet.value.has(componentName);
@@ -68,10 +79,17 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         aria-label="物料分类"
         @change="emit('update:category', ($event.target as HTMLSelectElement).value)"
       >
-        <option v-for="item in categories" :key="item" :value="item">
-          {{ item }}
+        <option v-for="item in categoryOptions" :key="item.value" :value="item.value">
+          {{ item.label }}（{{ item.visibleCount }}/{{ item.count }}）
         </option>
       </select>
+    </div>
+    <div v-if="categoryOverview" class="material-category-summary" data-testid="material-category-summary">
+      <div>
+        <strong>{{ categoryOverview.activeLabel }}</strong>
+        <small>{{ categoryOverview.summaryText }} · 全部 {{ categoryOverview.totalCount }} 个</small>
+      </div>
+      <span>{{ categoryOverview.activeDescription }}</span>
     </div>
     <p v-if="preferenceMessage" class="material-preference-message">{{ preferenceMessage }}</p>
     <p v-if="insertDisabledReason" class="material-insert-lock">{{ insertDisabledReason }}</p>

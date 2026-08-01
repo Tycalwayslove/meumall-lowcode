@@ -62,7 +62,7 @@ import {
   createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
-  createLowcodeMaterialCategories,
+  createLowcodeMaterialCatalogOverview,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
   createLowcodeNodeSelectionModel,
@@ -1011,7 +1011,11 @@ const approvalReviewDisabledReason = computed(() => editorCapabilityState.value.
 const canSubmitApproval = computed(() => editorCapabilityState.value.submittable);
 const canCancelApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.cancel"]);
 const canReviewApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.review"]);
-const materialCategories = computed(() => createLowcodeMaterialCategories(materials.map((item) => item.manifest)));
+const materialCatalogOverview = computed(() => createLowcodeMaterialCatalogOverview(materials.map((item) => item.manifest), {
+  keyword: materialKeyword.value,
+  category: materialCategory.value,
+}));
+const materialCategories = computed(() => materialCatalogOverview.value.categories.map((item) => item.value));
 const favoriteMaterials = computed(() => materialItemsFromComponentNames(favoriteMaterialComponentNames.value));
 const recentMaterials = computed(() => materialItemsFromComponentNames(recentMaterialComponentNames.value));
 const visibleMaterials = computed(() => filterLowcodeMaterialCatalog(materials, {
@@ -4235,6 +4239,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :recent-materials="recentMaterials"
         :favorite-component-names="favoriteMaterialComponentNames"
         :categories="materialCategories"
+        :category-overview="materialCatalogOverview"
         :preference-message="materialPreferenceMessage"
         :insert-disabled-reason="materialInsertDisabledReason"
         :selected-container-title="selectedNodeIsContainer ? selectedManifest?.title : undefined"
