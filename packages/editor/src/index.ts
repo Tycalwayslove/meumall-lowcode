@@ -445,6 +445,28 @@ export interface CreateLowcodeMaterialInsertPresetsOptions {
   componentPresets?: Record<string, readonly LowcodeEditorMaterialInsertPresetInput[] | false | undefined>;
 }
 
+export interface LowcodeEditorMaterialInsertPresetValidationIssue {
+  componentName: string;
+  presetId: string;
+  presetTitle: string;
+  propName: string;
+  message: string;
+}
+
+export interface LowcodeEditorMaterialInsertPresetValidationResult {
+  componentName: string;
+  title: string;
+  presetCount: number;
+  knownPropNames: string[];
+  valid: boolean;
+  issues: LowcodeEditorMaterialInsertPresetValidationIssue[];
+}
+
+export interface ValidateLowcodeMaterialInsertPresetsOptions extends CreateLowcodeMaterialInsertPresetsOptions {
+  allowedPropNames?: readonly string[];
+  componentAllowedPropNames?: Record<string, readonly string[] | undefined>;
+}
+
 export type CreateLowcodeMaterialNodeInputFromPresetOptions = CreateLowcodeMaterialNodeInputOptions;
 
 export type LowcodeEditorMaterialLayer = "generic" | "business" | "custom";
@@ -2398,6 +2420,42 @@ export function findLowcodeMaterialInsertPreset(
   options: CreateLowcodeMaterialInsertPresetsOptions = {},
 ): LowcodeEditorMaterialInsertPreset | undefined {
   return createLowcodeMaterialInsertPresets(manifest, options).find((preset) => preset.id === presetId);
+}
+
+export function validateLowcodeMaterialInsertPresets(
+  manifest: LowcodeMaterialManifest,
+  options: ValidateLowcodeMaterialInsertPresetsOptions = {},
+): LowcodeEditorMaterialInsertPresetValidationResult {
+  const knownPropNames = new Set([
+    ...Object.keys(manifest.propsSchema),
+    ...Object.keys(manifest.defaultProps),
+    ...(options.allowedPropNames ?? []),
+    ...(options.componentAllowedPropNames?.[manifest.componentName] ?? []),
+  ]);
+  const presets = createLowcodeMaterialInsertPresets(manifest, options);
+  const issues: LowcodeEditorMaterialInsertPresetValidationIssue[] = [];
+
+  presets.forEach((preset) => {
+    Object.keys(preset.props).forEach((propName) => {
+      if (knownPropNames.has(propName)) return;
+      issues.push({
+        componentName: manifest.componentName,
+        presetId: preset.id,
+        presetTitle: preset.title,
+        propName,
+        message: `物料 ${manifest.componentName} 的预设 ${preset.id} 写入了 manifest 未声明的 props.${propName}。`,
+      });
+    });
+  });
+
+  return {
+    componentName: manifest.componentName,
+    title: manifest.title,
+    presetCount: presets.length,
+    knownPropNames: [...knownPropNames].sort(),
+    valid: issues.length === 0,
+    issues,
+  };
 }
 
 export const LOWCODE_EDITOR_MATERIAL_LAYER_META: Record<LowcodeEditorMaterialLayer, LowcodeEditorMaterialLayerMeta> = {

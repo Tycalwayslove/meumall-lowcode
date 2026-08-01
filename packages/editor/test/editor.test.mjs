@@ -188,6 +188,7 @@ import {
   updateLowcodePageType,
   updateLowcodePublishEnvironment,
   upsertLowcodeDataSourceConfigs,
+  validateLowcodeMaterialInsertPresets,
   recordLowcodeRecentMaterial,
   moveLowcodeCanvasNodeByHint,
   moveLowcodeCanvasNodeGroupByHint,
@@ -927,8 +928,10 @@ describe("@meumall/lowcode-editor readiness", () => {
         text: { label: "链接文案", type: "string", setter: "input", defaultValue: "查看详情" },
         subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "" },
         prefixText: { label: "前置标签", type: "string", setter: "input", defaultValue: "" },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "bar" },
+        showArrow: { label: "显示箭头", type: "boolean", setter: "switch", defaultValue: true },
       },
-      defaultProps: { text: "查看详情", subtitle: "", prefixText: "" },
+      defaultProps: { text: "查看详情", subtitle: "", prefixText: "", variant: "bar", showArrow: true },
     });
     const linkPresets = createLowcodeMaterialInsertPresets(link);
     assert.deepEqual(linkPresets.map((preset) => [preset.id, preset.title]), [
@@ -941,6 +944,37 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(linkPresets[0].props.tagText, undefined);
     assert.equal(linkPresets[1].props.subtitle, "点击查看完整清单");
     assert.equal(linkPresets[1].props.description, undefined);
+    const validLinkPresetResult = validateLowcodeMaterialInsertPresets(link);
+    assert.equal(validLinkPresetResult.valid, true);
+    assert.equal(validLinkPresetResult.presetCount, 2);
+    assert.deepEqual(validLinkPresetResult.issues, []);
+    assert.deepEqual(validLinkPresetResult.knownPropNames, ["prefixText", "showArrow", "subtitle", "text", "variant"]);
+
+    const invalidLinkPresetResult = validateLowcodeMaterialInsertPresets(link, {
+      includeDefaultPresets: false,
+      componentPresets: {
+        BasicLink: [
+          { id: "legacy", title: "旧字段链接", props: { text: "查看", description: "旧说明", tagText: "旧标签" } },
+        ],
+      },
+    });
+    assert.equal(invalidLinkPresetResult.valid, false);
+    assert.deepEqual(invalidLinkPresetResult.issues.map((issue) => [issue.presetId, issue.propName]), [
+      ["legacy", "description"],
+      ["legacy", "tagText"],
+    ]);
+    assert.equal(invalidLinkPresetResult.issues[0].componentName, "BasicLink");
+    assert.match(invalidLinkPresetResult.issues[0].message, /props\.description/);
+    const allowedLinkPresetResult = validateLowcodeMaterialInsertPresets(link, {
+      includeDefaultPresets: false,
+      componentAllowedPropNames: { BasicLink: ["description", "tagText"] },
+      componentPresets: {
+        BasicLink: [
+          { id: "legacy", title: "旧字段链接", props: { text: "查看", description: "旧说明", tagText: "旧标签" } },
+        ],
+      },
+    });
+    assert.equal(allowedLinkPresetResult.valid, true);
 
     const stateBlock = createMaterialManifest({
       componentName: "BasicStateBlock",

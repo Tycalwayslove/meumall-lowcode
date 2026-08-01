@@ -14,6 +14,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - React/Vue H5 primitives 新增业务无关 `MlcMetric`，React/Vue materials 新增 `BasicMetric` 通用静态指标物料，支持指标标签、数值、前缀、后缀、说明、语气、对齐和卡片样式；它只承载静态指标展示，不接远程统计、实时刷新、库存计算、销量计算、人数计算或埋点聚合。
 - React/Vue materials 新增 `BasicMetricGrid` 通用静态指标组物料，继续复用 `MlcMetric`，支持标题、说明、多项指标数组、列数、语气、对齐和卡片/简洁样式；它只承载静态指标组展示，不接远程统计、实时刷新、库存计算、销量计算、人数计算或埋点聚合。
 - `@meumall/lowcode-editor` 属性分组 API 新增 `validation` 分组，`required`、`requiredMessage` 等校验类 props 会进入“表单校验”分组；Vue3 `EditorPropGroupsPanel` 会展示 BasicForm 提交前校验提示，帮助运营理解必填配置与 H5 runtime 字段错误态的关系。Page Schema v1、Material Manifest v1、renderer 和 materials runtime 协议不变。
+- `@meumall/lowcode-editor` 新增物料插入预设校验 API `validateLowcodeMaterialInsertPresets`，用于检查内置或自定义 preset props 是否存在于目标 manifest 的 `propsSchema/defaultProps`，并返回 preset 数量、已知字段、有效状态和问题列表；该能力只做字段名一致性校验，不改变 Page Schema v1、Material Manifest v1、renderer、materials 或 runtime 行为。
 
 ## 当前维护范围
 
@@ -222,7 +223,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 本次提交 | 修正 BasicLink 编辑器插入预设字段。 |
+| 2026-08-01 | 本次提交 | 新增 editor 物料插入预设校验 API。 |
+| 2026-08-01 | 4429764 | 修正 BasicLink 编辑器插入预设字段。 |
 | 2026-08-01 | 28eceea | 新增基础指标组通用物料。 |
 | 2026-08-01 | 3eb828a | 支持 editor 物料预设按插入目标写入，并在 Vue3 编辑器容器快捷区加入常用预设。 |
 | 2026-08-01 | 7361240 | 新增 editor 物料插入预设 API，并接入 Vue3 物料面板与快捷命令 smoke。 |

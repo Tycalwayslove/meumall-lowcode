@@ -512,6 +512,8 @@ The material catalog helpers keep material-library search, category filters, qui
 
 Built-in presets must write props that the target material manifest actually consumes. For example, `BasicLink` presets use `subtitle` and `prefixText` for helper copy and prefix labels, matching the runtime material contract.
 
+`validateLowcodeMaterialInsertPresets(manifest, options)` checks whether built-in or custom preset props are declared by the target manifest's `propsSchema` or `defaultProps`. It returns the preset count, known prop names, validity, and issue list. Hosts can pass `allowedPropNames` or `componentAllowedPropNames` for deliberate extensions. This is a preset authoring check only; value validation, routing safety, permissions, and remote preset approval remain host or server responsibilities.
+
 `createLowcodeMaterialCategories(manifests, allCategoryLabel)` returns a stable category list with `全部` by default.
 
 `filterLowcodeMaterialCatalog(materials, options)` filters entries that contain a `manifest` field by category and keyword. Keyword matching covers title, component name, category, category label, architecture layer label, capability family label, version, and platforms.
