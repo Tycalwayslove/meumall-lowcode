@@ -354,6 +354,9 @@ export interface FilterLowcodeEditorCommandsOptions {
 }
 
 export type LowcodeEditorPermissionAction =
+  | "approval.submit"
+  | "approval.cancel"
+  | "approval.review"
   | "page.create"
   | "draft.save"
   | "schema.import"
@@ -432,6 +435,51 @@ export interface CreateLowcodeEditorCollaborationStateOptions {
   now?: Date | string;
   readonlyReason?: string;
   lockReason?: string;
+}
+
+export type LowcodeEditorApprovalStatus =
+  | "none"
+  | "draft"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "published";
+
+export type LowcodeEditorApprovalTone = "neutral" | "success" | "warning" | "danger";
+
+export interface LowcodeEditorApprovalParticipant {
+  id?: string;
+  name?: string;
+  avatarUrl?: string;
+}
+
+export interface LowcodeEditorApprovalState {
+  status: LowcodeEditorApprovalStatus;
+  editable: boolean;
+  readonly: boolean;
+  submittable: boolean;
+  publishable: boolean;
+  tone: LowcodeEditorApprovalTone;
+  title: string;
+  description: string;
+  readonlyReason?: string;
+  submitDisabledReason?: string;
+  publishDisabledReason?: string;
+  submitter?: LowcodeEditorApprovalParticipant;
+  reviewer?: LowcodeEditorApprovalParticipant;
+  submittedAt?: string;
+  reviewedAt?: string;
+  comment?: string;
+}
+
+export interface CreateLowcodeEditorApprovalStateOptions {
+  status?: LowcodeEditorApprovalStatus;
+  submitter?: LowcodeEditorApprovalParticipant;
+  reviewer?: LowcodeEditorApprovalParticipant;
+  submittedAt?: string;
+  reviewedAt?: string;
+  comment?: string;
+  reason?: string;
 }
 
 export type LowcodeEditorNodeOperationAction =
@@ -993,6 +1041,9 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
 
 export const LOWCODE_EDITOR_PERMISSION_ACTIONS = [
+  "approval.submit",
+  "approval.cancel",
+  "approval.review",
   "page.create",
   "draft.save",
   "schema.import",
@@ -2121,6 +2172,129 @@ export function createLowcodeEditorCollaborationPermissionOptions(
   return {
     readonly: state.readonly,
     readonlyReason: state.readonlyReason ?? state.description,
+  };
+}
+
+export function createLowcodeEditorApprovalState(
+  options: CreateLowcodeEditorApprovalStateOptions = {},
+): LowcodeEditorApprovalState {
+  const status = options.status ?? "none";
+  const common = {
+    status,
+    submitter: options.submitter,
+    reviewer: options.reviewer,
+    submittedAt: options.submittedAt,
+    reviewedAt: options.reviewedAt,
+    comment: options.comment,
+  };
+
+  if (status === "draft") {
+    const publishDisabledReason = options.reason ?? "页面需要先提交审批，通过后才能发布。";
+    return {
+      ...common,
+      editable: true,
+      readonly: false,
+      submittable: true,
+      publishable: false,
+      tone: "warning",
+      title: "待提交审批",
+      description: publishDisabledReason,
+      publishDisabledReason,
+    };
+  }
+
+  if (status === "pending") {
+    const readonlyReason = options.reason ?? "页面审批中，暂不可编辑或发布。";
+    return {
+      ...common,
+      editable: false,
+      readonly: true,
+      submittable: false,
+      publishable: false,
+      tone: "warning",
+      title: "审批中",
+      description: readonlyReason,
+      readonlyReason,
+      submitDisabledReason: "审批中不可重复提交。",
+      publishDisabledReason: readonlyReason,
+    };
+  }
+
+  if (status === "approved") {
+    return {
+      ...common,
+      editable: true,
+      readonly: false,
+      submittable: false,
+      publishable: true,
+      tone: "success",
+      title: "审批通过",
+      description: options.reason ?? "审批已通过，可以发布当前版本。",
+      submitDisabledReason: "当前版本已审批通过。",
+    };
+  }
+
+  if (status === "rejected") {
+    const publishDisabledReason = options.reason ?? "审批已驳回，请修改后重新提交审批。";
+    return {
+      ...common,
+      editable: true,
+      readonly: false,
+      submittable: true,
+      publishable: false,
+      tone: "danger",
+      title: "审批驳回",
+      description: publishDisabledReason,
+      publishDisabledReason,
+    };
+  }
+
+  if (status === "published") {
+    const publishDisabledReason = options.reason ?? "当前版本已发布，无需重复发布。";
+    return {
+      ...common,
+      editable: true,
+      readonly: false,
+      submittable: false,
+      publishable: false,
+      tone: "success",
+      title: "已发布",
+      description: publishDisabledReason,
+      submitDisabledReason: "当前版本已发布。",
+      publishDisabledReason,
+    };
+  }
+
+  return {
+    ...common,
+    status: "none",
+    editable: true,
+    readonly: false,
+    submittable: false,
+    publishable: true,
+    tone: "neutral",
+    title: "无需审批",
+    description: "当前页面未启用审批流程。",
+    submitDisabledReason: "当前页面未启用审批流程。",
+  };
+}
+
+export function createLowcodeEditorApprovalPermissionOptions(
+  state: LowcodeEditorApprovalState,
+): CreateLowcodeEditorPermissionStateOptions {
+  const decisions: CreateLowcodeEditorPermissionStateOptions["decisions"] = {
+    "approval.submit": state.submittable ? true : { allowed: false, reason: state.submitDisabledReason ?? state.description },
+    "publish.submit": state.publishable ? true : { allowed: false, reason: state.publishDisabledReason ?? state.description },
+  };
+
+  if (state.status === "pending") {
+    decisions["approval.cancel"] = true;
+  }
+
+  return {
+    readonly: state.readonly,
+    readonlyReason: state.readonlyReason ?? state.description,
+    decisions,
   };
 }
 

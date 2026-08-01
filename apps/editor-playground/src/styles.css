@@ -247,6 +247,39 @@ button:focus-visible {
   background: #fff5f5;
 }
 
+.approval-pill {
+  display: inline-grid;
+  place-items: center;
+  max-width: 150px;
+  min-height: 24px;
+  border: 1px solid #dbe3ef;
+  border-radius: 7px;
+  padding: 0 8px;
+  color: #475569;
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.approval-pill.is-success {
+  border-color: #bbf7d0;
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.approval-pill.is-warning {
+  border-color: #fed7aa;
+  color: #9a3412;
+  background: #fff7ed;
+}
+
+.approval-pill.is-danger {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff5f5;
+}
+
 .toolbar,
 .viewport-switch {
   display: flex;

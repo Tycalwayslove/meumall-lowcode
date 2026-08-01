@@ -30,6 +30,8 @@ import {
   createLowcodeEditorCommandSearchText,
   createLowcodeEditorCollaborationPermissionOptions,
   createLowcodeEditorCollaborationState,
+  createLowcodeEditorApprovalPermissionOptions,
+  createLowcodeEditorApprovalState,
   createLowcodeEditorPermissionState,
   createLowcodeActionOptions,
   createLowcodeEventBindingItems,
@@ -883,6 +885,62 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(expiredState.editable, false);
     assert.equal(expiredState.tone, "danger");
     assert.equal(createLowcodeEditorCollaborationPermissionOptions(expiredState).readonly, true);
+  });
+
+  it("creates reusable editor approval state", () => {
+    const noneState = createLowcodeEditorApprovalState();
+    assert.equal(noneState.status, "none");
+    assert.equal(noneState.editable, true);
+    assert.equal(noneState.publishable, true);
+    assert.equal(noneState.title, "无需审批");
+
+    const draftState = createLowcodeEditorApprovalState({ status: "draft" });
+    assert.equal(draftState.submittable, true);
+    assert.equal(draftState.publishable, false);
+    assert.equal(draftState.publishDisabledReason, "页面需要先提交审批，通过后才能发布。");
+    const draftPermissionState = createLowcodeEditorPermissionState(
+      createLowcodeEditorApprovalPermissionOptions(draftState),
+    );
+    assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "approval.submit"), true);
+    assert.equal(isLowcodeEditorActionAllowed(draftPermissionState, "publish.submit"), false);
+
+    const pendingState = createLowcodeEditorApprovalState({
+      status: "pending",
+      submitter: { id: "op_1", name: "运营 A" },
+      submittedAt: "2026-08-01T10:00:00.000Z",
+    });
+    assert.equal(pendingState.readonly, true);
+    assert.equal(pendingState.title, "审批中");
+    const pendingPermissionState = createLowcodeEditorPermissionState(
+      createLowcodeEditorApprovalPermissionOptions(pendingState),
+    );
+    assert.equal(isLowcodeEditorActionAllowed(pendingPermissionState, "draft.save"), false);
+    assert.equal(getLowcodeEditorActionDisabledReason(pendingPermissionState, "draft.save"), "页面审批中，暂不可编辑或发布。");
+    assert.equal(isLowcodeEditorActionAllowed(pendingPermissionState, "approval.cancel"), true);
+
+    const approvedState = createLowcodeEditorApprovalState({
+      status: "approved",
+      reviewer: { id: "reviewer_1", name: "审核人" },
+      reviewedAt: "2026-08-01T11:00:00.000Z",
+    });
+    assert.equal(approvedState.publishable, true);
+    assert.equal(approvedState.tone, "success");
+    const approvedPermissionState = createLowcodeEditorPermissionState(
+      createLowcodeEditorApprovalPermissionOptions(approvedState),
+    );
+    assert.equal(isLowcodeEditorActionAllowed(approvedPermissionState, "publish.submit"), true);
+
+    const rejectedState = createLowcodeEditorApprovalState({
+      status: "rejected",
+      reason: "主图利益点不清晰，请调整后重提。",
+    });
+    assert.equal(rejectedState.submittable, true);
+    assert.equal(rejectedState.publishable, false);
+    assert.equal(rejectedState.description, "主图利益点不清晰，请调整后重提。");
+
+    const publishedState = createLowcodeEditorApprovalState({ status: "published" });
+    assert.equal(publishedState.publishable, false);
+    assert.equal(publishedState.title, "已发布");
   });
 
   it("creates reusable node operation models and shortcuts", () => {

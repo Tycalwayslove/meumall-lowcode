@@ -43,6 +43,8 @@ import {
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
+  createLowcodeEditorApprovalPermissionOptions,
+  createLowcodeEditorApprovalState,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCollaborationPermissionOptions,
   createLowcodeEditorCollaborationState,
@@ -177,6 +179,7 @@ import {
   type LowcodeEditorMaterialDetailSummary as MaterialDetailSummary,
   type LowcodeEditorNodeOperationAction as NodeContextAction,
   type LowcodeEditorNodeOperationItem as NodeContextMenuItem,
+  type LowcodeEditorApprovalStatus,
   type LowcodeEditorPermissionAction,
 } from "@meumall/lowcode-editor";
 import { h5VueMaterials } from "@meumall/lowcode-materials-vue-h5";
@@ -225,6 +228,7 @@ const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http:
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 const collaborationDemoMode = runtimeQuery.get("collaboration");
+const approvalDemoMode = runtimeQuery.get("approval") as LowcodeEditorApprovalStatus | null;
 const collaborationDemoExpiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
 const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
 const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
@@ -721,10 +725,51 @@ function createDemoCollaborationStateOptions(): Parameters<typeof createLowcodeE
   return {};
 }
 
+function createDemoApprovalStateOptions(): Parameters<typeof createLowcodeEditorApprovalState>[0] {
+  if (approvalDemoMode === "draft") {
+    return { status: "draft" };
+  }
+  if (approvalDemoMode === "pending") {
+    return {
+      status: "pending",
+      submitter: { id: "operator-me", name: "当前运营" },
+      submittedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+    };
+  }
+  if (approvalDemoMode === "approved") {
+    return {
+      status: "approved",
+      reviewer: { id: "reviewer-1", name: "审核人" },
+      reviewedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    };
+  }
+  if (approvalDemoMode === "rejected") {
+    return {
+      status: "rejected",
+      reviewer: { id: "reviewer-1", name: "审核人" },
+      reviewedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      reason: "审批驳回，请调整活动利益点后重新提交。",
+    };
+  }
+  if (approvalDemoMode === "published") {
+    return { status: "published" };
+  }
+  return {};
+}
+
 const editorCollaborationState = computed(() => createLowcodeEditorCollaborationState(createDemoCollaborationStateOptions()));
-const editorPermissionState = computed(() =>
-  createLowcodeEditorPermissionState(createLowcodeEditorCollaborationPermissionOptions(editorCollaborationState.value)),
-);
+const editorApprovalState = computed(() => createLowcodeEditorApprovalState(createDemoApprovalStateOptions()));
+const editorPermissionState = computed(() => {
+  const collaborationOptions = createLowcodeEditorCollaborationPermissionOptions(editorCollaborationState.value);
+  const approvalOptions = createLowcodeEditorApprovalPermissionOptions(editorApprovalState.value);
+  return createLowcodeEditorPermissionState({
+    readonly: Boolean(collaborationOptions.readonly || approvalOptions.readonly),
+    readonlyReason: collaborationOptions.readonlyReason ?? approvalOptions.readonlyReason,
+    decisions: {
+      ...(approvalOptions.decisions ?? {}),
+    },
+  });
+});
 const nodeContextMenuStyle = computed<CSSProperties>(() => {
   const menu = nodeContextMenu.value;
   if (!menu) return {};
@@ -3258,6 +3303,9 @@ function rollbackPublishSelectedRelease(): void {
       :collaboration-status-text="editorCollaborationState.title"
       :collaboration-status-tone="editorCollaborationState.tone"
       :collaboration-status-description="editorCollaborationState.description"
+      :approval-status-text="editorApprovalState.title"
+      :approval-status-tone="editorApprovalState.tone"
+      :approval-status-description="editorApprovalState.description"
       @open-command="openCommandPalette"
       @open-page-start="openPageStartWizard"
       @set-mode="applyEditorMode"

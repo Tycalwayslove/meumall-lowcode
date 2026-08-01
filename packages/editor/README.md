@@ -36,6 +36,8 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeEditorPermissionState`
 - `isLowcodeEditorActionAllowed`
 - `getLowcodeEditorActionDisabledReason`
+- `createLowcodeEditorApprovalState`
+- `createLowcodeEditorApprovalPermissionOptions`
 - `createLowcodeEditorCollaborationState`
 - `createLowcodeEditorCollaborationPermissionOptions`
 - `createLowcodeOutlineRows`
@@ -207,15 +209,17 @@ Each item includes `id`, `label`, `value`, and a tone of `neutral`, `success`, `
 
 This helper does not render UI, inspect DOM, run server publish checks, enforce permissions, or mutate editor state. Host shells remain responsible for layout, icons, click handlers, live collaboration locks, permissions, and server-side review/approval state.
 
-## Permission And Collaboration API
+## Permission, Approval And Collaboration API
 
 The permission helpers keep editor operation availability reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
 
 `createLowcodeEditorPermissionState(options)` returns stable decisions for editor actions such as draft saving, schema import/export, preview, publish, template operations, canvas clearing, material insertion, and node operations. The default state allows every action. `readonly` disables mutating actions while keeping view/export style actions available.
 
+`createLowcodeEditorApprovalState(options)` turns host-provided approval workflow data into a display model for `none`, `draft`, `pending`, `approved`, `rejected`, and `published` states. `createLowcodeEditorApprovalPermissionOptions(state)` bridges approval state into publish and approval action decisions, while keeping the default `none` state compatible with direct publishing.
+
 `createLowcodeEditorCollaborationState(options)` turns host-provided collaboration lock data into a display model for `unlocked`, `locked-by-me`, `locked-by-other`, `readonly`, and `expired` states. `createLowcodeEditorCollaborationPermissionOptions(state)` bridges that state into the permission helper's readonly baseline.
 
-These helpers do not read users, call Java lock APIs, renew locks, release locks, run approval flows, render UI, or mutate Page Schema. Host shells remain responsible for real lock services, approval state, audit logs, and persistence.
+These helpers do not read users, create approval instances, call Java approval or lock APIs, renew locks, release locks, render UI, or mutate Page Schema. Host shells remain responsible for real approval flows, lock services, audit logs, and persistence.
 
 ## Prop Editor Model API
 

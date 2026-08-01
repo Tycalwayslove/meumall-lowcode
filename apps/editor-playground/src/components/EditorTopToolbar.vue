@@ -13,6 +13,7 @@ import {
   Upload,
 } from "@lucide/vue";
 import type {
+  LowcodeEditorApprovalTone,
   LowcodeEditorCollaborationTone,
   LowcodeEditorMode,
   LowcodeEditorPermissionAction,
@@ -30,6 +31,9 @@ const props = defineProps<{
   collaborationStatusText?: string;
   collaborationStatusTone?: LowcodeEditorCollaborationTone;
   collaborationStatusDescription?: string;
+  approvalStatusText?: string;
+  approvalStatusTone?: LowcodeEditorApprovalTone;
+  approvalStatusDescription?: string;
 }>();
 
 const emit = defineEmits<{
@@ -69,6 +73,14 @@ const emit = defineEmits<{
         :title="props.collaborationStatusDescription"
       >
         {{ props.collaborationStatusText }}
+      </span>
+      <span
+        v-if="props.approvalStatusText"
+        class="approval-pill"
+        :class="`is-${props.approvalStatusTone ?? 'neutral'}`"
+        :title="props.approvalStatusDescription"
+      >
+        {{ props.approvalStatusText }}
       </span>
     </div>
 
