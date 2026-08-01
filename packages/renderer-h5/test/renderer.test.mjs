@@ -59,6 +59,56 @@ describe("@meumall/lowcode-renderer-h5 fallback", () => {
     assert.equal(matches[0].props["data-lowcode-node-id"], "node_missing");
   });
 
+  it("passes material event payloads into action executor context", () => {
+    function TestButton() {
+      return null;
+    }
+    const registry = createMaterialRegistry([
+      {
+        manifest: {
+          componentName: "TestButton",
+          materialVersion: "1.0.0",
+          title: "测试按钮",
+          category: "test",
+          platforms: ["h5"],
+          propsSchema: {},
+          defaultProps: {},
+        },
+        component: TestButton,
+      },
+    ]);
+    const schema = createLowcodePageSchema({
+      pageId: "event_payload_test",
+      title: "事件 payload",
+      nodes: [
+        {
+          id: "button_1",
+          componentName: "TestButton",
+          materialVersion: "1.0.0",
+          props: {},
+          events: { onTap: { actionId: "track_tap" } },
+        },
+      ],
+      actions: [{ id: "track_tap", type: "tracking.click", params: { eventName: "tap" } }],
+    });
+    const calls = [];
+    const rendered = LowcodeRenderer({
+      schema,
+      registry,
+      actionExecutor: {
+        execute(ref, context) {
+          calls.push({ ref, context });
+        },
+      },
+    });
+    const materialElements = collectElements(rendered, (element) => element.type === TestButton);
+
+    assert.equal(materialElements.length, 1);
+    materialElements[0].props.props.onTap({ values: { name: "MeuMall" } });
+    assert.equal(calls[0].ref.actionId, "track_tap");
+    assert.deepEqual(calls[0].context.event, { values: { name: "MeuMall" } });
+  });
+
   it("creates traceable missing and render-error fallback nodes", () => {
     const node = { id: "node_broken", componentName: "BrokenBlock", materialVersion: "0.1.0", props: {} };
 

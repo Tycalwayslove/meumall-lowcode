@@ -6,7 +6,7 @@ import {
   type LowcodeActionExecutor,
   type MaterialRegistry,
 } from "@meumall/lowcode-core";
-import type { JsonObject, LowcodeNode, LowcodePageSchema } from "@meumall/lowcode-schema";
+import type { JsonObject, JsonValue, LowcodeNode, LowcodePageSchema } from "@meumall/lowcode-schema";
 
 export type RuntimeMaterialProps = Record<string, unknown>;
 
@@ -94,7 +94,10 @@ function renderNode({
   const events = Object.fromEntries(
     Object.entries(node.events ?? {}).map(([eventName, actionRef]) => [
       eventName,
-      () => actionExecutor?.execute(actionRef, context),
+      (event?: JsonValue) => actionExecutor?.execute(
+        actionRef,
+        event === undefined ? context : createRuntimeContext(context.schema, context.data, event),
+      ),
     ]),
   );
   const children = node.children?.map((child) => (

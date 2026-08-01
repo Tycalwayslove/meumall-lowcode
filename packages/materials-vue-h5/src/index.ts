@@ -1,6 +1,6 @@
 import { defineComponent, h, onBeforeUnmount, ref, watch, type CSSProperties, type PropType } from "vue";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
-import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
+import { createMaterialManifest, type JsonObject, type JsonValue, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
 import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcRichText, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "@meumall/lowcode-primitives-vue-h5";
 
@@ -49,6 +49,64 @@ function basicStepperRange(props: RuntimeProps) {
   const step = Math.max(1, number(props.step, 1));
   const defaultValue = Math.min(max, Math.max(min, number(props.defaultValue, min)));
   return { min, max, step, defaultValue };
+}
+
+type BasicFormFieldType = "string" | "number" | "boolean";
+
+function formatBasicFormFieldValue(value: string | number | boolean): string {
+  return typeof value === "boolean" ? String(value) : String(value ?? "");
+}
+
+function parseBasicFormFieldValue(value: string, type: BasicFormFieldType): JsonValue {
+  if (type === "boolean") return value === "true";
+  if (type === "number") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return value;
+}
+
+function createBasicFormHiddenField(
+  node: LowcodeNode | undefined,
+  label: string,
+  value: string | number | boolean,
+  type: BasicFormFieldType,
+  disabled: boolean,
+) {
+  if (!node) return null;
+  return h("input", {
+    type: "hidden",
+    name: node.id,
+    value: formatBasicFormFieldValue(value),
+    disabled,
+    "data-mlc-form-field": "true",
+    "data-mlc-form-field-label": label,
+    "data-mlc-form-field-type": type,
+  });
+}
+
+function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode | undefined, childCount: number): JsonObject {
+  const values: JsonObject = {};
+  const fieldLabels: JsonObject = {};
+  const fieldTypes: JsonObject = {};
+  const fields = Array.from(form.querySelectorAll<HTMLInputElement>("[data-mlc-form-field='true']"));
+
+  for (const field of fields) {
+    if (field.disabled || !field.name) continue;
+    const fieldType = option<BasicFormFieldType>(field.dataset.mlcFormFieldType, ["string", "number", "boolean"], "string");
+    values[field.name] = parseBasicFormFieldValue(field.value, fieldType);
+    fieldLabels[field.name] = field.dataset.mlcFormFieldLabel ?? field.name;
+    fieldTypes[field.name] = fieldType;
+  }
+
+  return {
+    formId: node?.id ?? "unknown_form",
+    childCount,
+    fieldCount: Object.keys(values).length,
+    values,
+    fieldLabels,
+    fieldTypes,
+  };
 }
 
 function ruleList(value: unknown): Array<Record<string, unknown> | string> {
@@ -694,10 +752,7 @@ export const BasicForm = defineComponent({
               submitted.value = true;
               const onSubmit = runtimeProps.onSubmit;
               if (typeof onSubmit === "function") {
-                onSubmit({
-                  formId: props.node?.id ?? "",
-                  childCount: children?.length ?? 0,
-                });
+                onSubmit(createBasicFormSubmitPayload(event.currentTarget as HTMLFormElement, props.node, children?.length ?? 0));
               }
             },
           },
@@ -1529,6 +1584,7 @@ export const BasicInput = defineComponent({
               if (typeof handler === "function") handler(nextValue);
             },
           }),
+          createBasicFormHiddenField(props.node, label, value.value, inputType === "number" ? "number" : "string", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -1606,6 +1662,7 @@ export const BasicTextarea = defineComponent({
               if (typeof handler === "function") handler(nextValue);
             },
           }),
+          createBasicFormHiddenField(props.node, label, value.value, "string", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -1689,6 +1746,7 @@ export const BasicSelect = defineComponent({
               if (typeof handler === "function") handler(nextValue);
             },
           }),
+          createBasicFormHiddenField(props.node, label, value.value, "string", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -1770,6 +1828,7 @@ export const BasicRadioGroup = defineComponent({
               if (typeof handler === "function") handler(nextValue);
             },
           }),
+          createBasicFormHiddenField(props.node, label, value.value, "string", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -1848,6 +1907,7 @@ export const BasicStepper = defineComponent({
               if (typeof handler === "function") handler(nextValue);
             },
           }),
+          createBasicFormHiddenField(props.node, label, value.value, "number", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -1933,6 +1993,7 @@ export const BasicSwitch = defineComponent({
                 ),
               ]),
           ),
+          createBasicFormHiddenField(props.node, label, checked.value, "boolean", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -2006,6 +2067,7 @@ export const BasicCheckbox = defineComponent({
                 () => label,
               ),
           ),
+          createBasicFormHiddenField(props.node, label, checked.value, "boolean", boolean(runtimeProps.disabled)),
           helperText
             ? h(
                 MlcText,
@@ -5102,7 +5164,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       platforms: ["h5"],
       defaultProps: {
         title: "基础表单",
-        description: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。",
+        description: "可向表单中添加基础输入物料，提交时会携带基础控件当前值。",
         submitText: "提交",
         successText: "已触发表单提交事件",
         emptyText: "向表单中添加输入物料",
@@ -5127,7 +5189,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       },
       propsSchema: {
         title: { label: "标题", type: "string", setter: "input", defaultValue: "基础表单" },
-        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "可向表单中添加基础输入物料，提交时会携带基础控件当前值。" },
         submitText: { label: "提交按钮文案", type: "string", setter: "input", defaultValue: "提交" },
         successText: { label: "成功文案", type: "string", setter: "input", defaultValue: "已触发表单提交事件" },
         emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向表单中添加输入物料" },
@@ -5460,7 +5522,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       defaultProps: {
         label: "基础输入框",
         placeholder: "请输入内容",
-        helperText: "用于收集单行文本，本地示例不会提交数据。",
+        helperText: "用于收集单行文本，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         type: "text",
         disabled: false,
@@ -5476,7 +5538,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础输入框" },
         placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入内容" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，本地示例不会提交数据。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
         type: { label: "输入类型", type: "string", setter: "select", defaultValue: "text", options: BASIC_INPUT_TYPE_OPTIONS },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
@@ -5503,7 +5565,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       defaultProps: {
         label: "基础多行输入",
         placeholder: "请输入多行内容",
-        helperText: "用于收集备注、说明或活动需求，本地示例不会提交数据。",
+        helperText: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         rows: 3,
         disabled: false,
@@ -5519,7 +5581,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础多行输入" },
         placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入多行内容" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，本地示例不会提交数据。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "textarea", defaultValue: "" },
         rows: { label: "显示行数", type: "number", setter: "number", defaultValue: 3, ...NUMBER_TEXTAREA_ROWS_META },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
@@ -5680,7 +5742,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         label: "基础开关",
         checkedText: "已开启",
         uncheckedText: "已关闭",
-        helperText: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。",
+        helperText: "用于布尔状态切换，放入基础表单后可随提交携带当前值。",
         defaultChecked: true,
         disabled: false,
         wrapperBackgroundColor: "transparent",
@@ -5696,7 +5758,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础开关" },
         checkedText: { label: "开启文案", type: "string", setter: "input", defaultValue: "已开启" },
         uncheckedText: { label: "关闭文案", type: "string", setter: "input", defaultValue: "已关闭" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于布尔状态切换，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认开启", type: "boolean", setter: "switch", defaultValue: true },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
@@ -5721,7 +5783,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       platforms: ["h5"],
       defaultProps: {
         label: "基础复选框",
-        helperText: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。",
+        helperText: "用于勾选状态展示，放入基础表单后可随提交携带当前值。",
         defaultChecked: false,
         disabled: false,
         wrapperBackgroundColor: "transparent",
@@ -5735,7 +5797,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       },
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础复选框" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于勾选状态展示，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认勾选", type: "boolean", setter: "switch", defaultValue: false },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },

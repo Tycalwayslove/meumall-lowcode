@@ -41,6 +41,7 @@ export interface SafeActionExecutionContext {
   ref?: LowcodeActionRef;
   data?: JsonObject;
   schema?: LowcodePageSchema;
+  event?: JsonValue;
 }
 
 export interface SafeActionRegistry {
@@ -53,6 +54,7 @@ export interface RuntimeActionContextLike {
   schema: LowcodePageSchema;
   data: JsonObject;
   actions?: Record<string, LowcodeActionConfig>;
+  event?: JsonValue;
 }
 
 export interface SafeActionExecutor {
@@ -661,6 +663,7 @@ export function createSafeActionExecutor(
           ref,
           data: context.data,
           schema: context.schema,
+          event: context.event,
         });
         if (result && typeof (result as Promise<void>).then === "function") {
           return Promise.resolve(result).catch((error) => {
@@ -857,6 +860,7 @@ function createDefaultHttpActionPayload(
     type: config.type,
     params: config.params ?? {},
     refParams: context?.ref?.params ?? {},
+    ...(context?.event === undefined ? {} : { event: context.event }),
     pageId: context?.schema?.pageId ?? null,
   };
 }

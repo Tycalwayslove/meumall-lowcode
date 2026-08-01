@@ -440,17 +440,17 @@ describe("@meumall/lowcode-adapters", () => {
     const calls = [];
     const registry = createSafeActionRegistry({
       navigate(config, context) {
-        calls.push({ params: config.params, pageId: context?.schema?.pageId });
+        calls.push({ params: config.params, pageId: context?.schema?.pageId, event: context?.event });
       },
     });
 
     registry.register("noop", () => undefined);
     await registry.execute(
       { id: "go", type: "navigate", params: { url: "/topic" } },
-      { schema: createLowcodePageSchema({ pageId: "action_page", title: "动作页" }) },
+      { schema: createLowcodePageSchema({ pageId: "action_page", title: "动作页" }), event: { nodeId: "button_1" } },
     );
 
-    assert.deepEqual(calls, [{ params: { url: "/topic" }, pageId: "action_page" }]);
+    assert.deepEqual(calls, [{ params: { url: "/topic" }, pageId: "action_page", event: { nodeId: "button_1" } }]);
     assert.deepEqual(registry.listTypes(), ["navigate", "noop"]);
     assert.throws(() => registry.execute({ id: "bad", type: "unsafe" }), /action handler not found/);
   });
@@ -481,7 +481,7 @@ describe("@meumall/lowcode-adapters", () => {
 
     await executor.execute(
       { actionId: "track_button", params: { nodeId: "node_button" } },
-      { schema, data: { channel: "h5" } },
+      { schema, data: { channel: "h5" }, event: { values: { phone: "13800138000" } } },
     );
 
     assert.equal(calls[0].input, "https://bff.example.com/api/lowcode/actions/tracking-click");
@@ -492,6 +492,7 @@ describe("@meumall/lowcode-adapters", () => {
       type: "tracking.click",
       params: { eventName: "button_click" },
       refParams: { nodeId: "node_button" },
+      event: { values: { phone: "13800138000" } },
       pageId: "action_http_page",
     });
   });

@@ -102,13 +102,15 @@ export interface LowcodeRuntimeContext {
   schema: LowcodePageSchema;
   data: JsonObject;
   actions: Record<string, LowcodeActionConfig>;
+  event?: JsonValue;
 }
 
-export function createRuntimeContext(schema: LowcodePageSchema, data: JsonObject = {}): LowcodeRuntimeContext {
+export function createRuntimeContext(schema: LowcodePageSchema, data: JsonObject = {}, event?: JsonValue): LowcodeRuntimeContext {
   return {
     schema,
     data,
     actions: Object.fromEntries((schema.actions ?? []).map((action) => [action.id, action])),
+    ...(event === undefined ? {} : { event }),
   };
 }
 
@@ -133,4 +135,3 @@ export function createActionExecutor(
     },
   };
 }
-

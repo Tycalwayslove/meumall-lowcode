@@ -4,6 +4,12 @@ React renderer for H5 low-code pages.
 
 The renderer consumes a Page Schema and a material registry. It does not know Java config platform details.
 
+## Events
+
+Material event handlers are bridged to `actionExecutor.execute(actionRef, context)`. If a material calls an event handler with a JSON payload, the renderer forwards that payload as `context.event`.
+
+This keeps Page Schema event refs stable while allowing materials such as `BasicForm` to submit runtime values to safe action handlers.
+
 ## Fallbacks
 
 - Empty `schema.nodes` renders the caller-provided `fallback`.

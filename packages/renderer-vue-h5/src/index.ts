@@ -14,7 +14,7 @@ import {
   type LowcodeActionExecutor,
   type MaterialRegistry,
 } from "@meumall/lowcode-core";
-import type { JsonObject, LowcodeNode, LowcodePageSchema } from "@meumall/lowcode-schema";
+import type { JsonObject, JsonValue, LowcodeNode, LowcodePageSchema } from "@meumall/lowcode-schema";
 
 export type VueH5MaterialComponent = Component;
 export type RuntimeMaterialProps = Record<string, unknown>;
@@ -124,7 +124,10 @@ export const LowcodeVueRenderer = defineComponent({
       const events = Object.fromEntries(
         Object.entries(node.events ?? {}).map(([eventName, actionRef]) => [
           eventName,
-          () => props.actionExecutor?.execute(actionRef, runtimeContext),
+          (event?: JsonValue) => props.actionExecutor?.execute(
+            actionRef,
+            event === undefined ? runtimeContext : createRuntimeContext(runtimeContext.schema, runtimeContext.data, event),
+          ),
         ]),
       );
       const children = node.children?.map((child) => renderNode(child)) ?? [];

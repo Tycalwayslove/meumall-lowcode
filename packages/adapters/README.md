@@ -59,7 +59,7 @@ Recommended action types for the first integration stage:
 - `tracking.click`: controlled click tracking.
 - `noop`: explicit no-op for drafts and demos.
 
-Handlers receive the action config plus safe context containing the action ref, runtime data, and page schema. Unknown action ids or unknown action types throw controlled errors, which the host can capture through `onError`.
+Handlers receive the action config plus safe context containing the action ref, runtime data, page schema, and optional material event payload as `event`. Unknown action ids or unknown action types throw controlled errors, which the host can capture through `onError`.
 
 `createHttpActionHandler(options)` creates a reusable handler for whitelisted HTTP-backed action types.
 
@@ -73,7 +73,7 @@ const registry = createSafeActionRegistry({
 });
 ```
 
-For `POST` handlers, the default JSON body contains `actionId`, `type`, `params`, `refParams`, and `pageId`. For `GET` handlers, the same payload is converted to query parameters by default. Hosts can override request shape with `buildQuery` or `buildBody`, and can inspect successful responses with `transformResponse`.
+For `POST` handlers, the default JSON body contains `actionId`, `type`, `params`, `refParams`, `pageId`, and `event` when the runtime event payload exists. For `GET` handlers, the same payload is converted to query parameters by default. Hosts can override request shape with `buildQuery` or `buildBody`, and can inspect successful responses with `transformResponse`.
 
 The endpoint is provided by host code, not by Page Schema. This keeps operators from configuring arbitrary request URLs while still letting H5 hosts connect approved `action.type` values to route bridges, coupon APIs, tracking services, permission checks, or risk-control gateways. Async handler failures are reported through `createSafeActionExecutor(..., { onError })`.
 

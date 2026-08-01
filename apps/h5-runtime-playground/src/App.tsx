@@ -403,7 +403,7 @@ const sampleSchema = createLowcodePageSchema({
       materialVersion: "0.1.0",
       props: {
         title: "React H5 基础表单示例",
-        description: "表单容器复用 children 组合基础输入物料，当前只触发安全提交事件。",
+        description: "表单容器复用 children 组合基础输入物料，提交时会携带基础控件字段值。",
         submitText: "提交表单",
         successText: "React H5 已触发表单提交事件",
         emptyText: "向表单中添加输入物料",
@@ -435,7 +435,7 @@ const sampleSchema = createLowcodePageSchema({
           props: {
             label: "表单内输入框",
             placeholder: "请输入昵称",
-            helperText: "字段值采集和校验后续由表单协议扩展。",
+            helperText: "提交表单时会携带当前昵称字段。",
             type: "text",
             wrapperBackgroundColor: "transparent",
             inputBackgroundColor: "#ffffff",
@@ -453,7 +453,7 @@ const sampleSchema = createLowcodePageSchema({
           materialVersion: "0.1.0",
           props: {
             label: "同意接收活动通知",
-            helperText: "当前仅做本地交互展示。",
+            helperText: "提交表单时会携带当前勾选状态。",
             defaultChecked: false,
             wrapperBackgroundColor: "transparent",
             labelColor: "#111827",
@@ -1912,6 +1912,20 @@ function getParamString(params: JsonObject | undefined, key: string, fallback: s
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+function isJsonObject(value: JsonValue | undefined): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatActionEventValues(event: JsonValue | undefined): string | undefined {
+  if (!isJsonObject(event) || !isJsonObject(event.values)) return undefined;
+  const labels = isJsonObject(event.fieldLabels) ? event.fieldLabels : {};
+  const entries = Object.entries(event.values);
+  if (!entries.length) return undefined;
+  return entries
+    .map(([key, value]) => `${typeof labels[key] === "string" ? labels[key] : key}=${String(value)}`)
+    .join("，");
+}
+
 export function App() {
   const runtimeInput = useMemo(() => getRuntimeSchemaInputInfo(), []);
   const [actionLogs, setActionLogs] = useState<string[]>([]);
@@ -1931,11 +1945,14 @@ export function App() {
       "coupon.receive"(action) {
         setActionLogs((current) => [`模拟领券：${getParamString(action.params, "couponId", "coupon_demo")}`, ...current].slice(0, 5));
       },
-      "tracking.click"(action) {
-        setActionLogs((current) => [`模拟埋点：${getParamString(action.params, "eventName", "lowcode_click")}`, ...current].slice(0, 5));
+      "tracking.click"(action, context) {
+        const eventValuesText = formatActionEventValues(context?.event);
+        const baseMessage = `模拟埋点：${getParamString(action.params, "eventName", "lowcode_click")}`;
+        setActionLogs((current) => [eventValuesText ? `${baseMessage} / 事件值：${eventValuesText}` : baseMessage, ...current].slice(0, 5));
       },
-      noop(action) {
-        setActionLogs((current) => [`已执行空动作：${action.id}`, ...current].slice(0, 5));
+      noop(action, context) {
+        const eventValuesText = formatActionEventValues(context?.event);
+        setActionLogs((current) => [eventValuesText ? `已执行空动作：${action.id} / 事件值：${eventValuesText}` : `已执行空动作：${action.id}`, ...current].slice(0, 5));
       },
     });
     return {

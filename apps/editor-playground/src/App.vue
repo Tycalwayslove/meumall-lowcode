@@ -666,6 +666,20 @@ const materialPreviewDataBindings = {
   BrandFeatureSection: { items: "products" },
 };
 
+function isJsonObject(value: JsonValue | undefined): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function formatActionEventValues(event: JsonValue | undefined): string | undefined {
+  if (!isJsonObject(event) || !isJsonObject(event.values)) return undefined;
+  const labels = isJsonObject(event.fieldLabels) ? event.fieldLabels : {};
+  const entries = Object.entries(event.values);
+  if (!entries.length) return undefined;
+  return entries
+    .map(([key, value]) => `${typeof labels[key] === "string" ? labels[key] : key}=${String(value)}`)
+    .join("，");
+}
+
 const safeActionRegistry = createSafeActionRegistry({
   navigate(action) {
     const url = getParamString(action.params, "url", "/");
@@ -680,8 +694,9 @@ const safeActionRegistry = createSafeActionRegistry({
   "tracking.click"(action, context) {
     actionMessage.value = `模拟埋点：${getParamString(action.params, "eventName", "lowcode_click")} / ${context?.schema?.pageId ?? "-"}`;
   },
-  noop(action) {
-    actionMessage.value = `已执行空动作：${action.id}`;
+  noop(action, context) {
+    const eventValuesText = formatActionEventValues(context?.event);
+    actionMessage.value = eventValuesText ? `已执行空动作：${action.id} / 表单值：${eventValuesText}` : `已执行空动作：${action.id}`;
   },
 });
 const actionExecutor = createSafeActionExecutor(safeActionRegistry, {

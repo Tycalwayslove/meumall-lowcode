@@ -17,6 +17,12 @@ This package renders `LowcodePageSchema` with a Vue material registry. It is int
 
 These props are intended for editor preview selection, highlighting and canvas-level drag orchestration. The renderer only exposes generic node callbacks; editor packages or host apps decide how to move schema nodes.
 
+## Events
+
+Material event handlers are bridged to `actionExecutor.execute(actionRef, context)`. If a material calls an event handler with a JSON payload, the renderer forwards that payload as `context.event`.
+
+This keeps Page Schema event refs stable while allowing materials such as `BasicForm` to submit runtime values to safe action handlers.
+
 ## Fallbacks
 
 - Empty `schema.nodes` renders the caller-provided `fallback`.

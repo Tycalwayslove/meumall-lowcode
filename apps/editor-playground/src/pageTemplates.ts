@@ -366,7 +366,7 @@ export const pageTemplates: PageTemplate[] = [
           materialVersion: "0.1.0",
           props: {
             title: "基础表单示例",
-            description: "表单容器可以继续添加基础输入、选择、开关和复选物料。",
+            description: "表单容器可以继续添加基础输入、选择、开关和复选物料，提交时会携带字段值。",
             submitText: "提交表单",
             successText: "已触发表单提交事件",
             emptyText: "向表单中添加输入物料",
@@ -387,6 +387,9 @@ export const pageTemplates: PageTemplate[] = [
             gap: 8,
             shadow: true,
           },
+          events: {
+            onSubmit: { actionId: "summer_basic_form_submit" },
+          },
           children: [
             {
               id: "summer_basic_form_input",
@@ -395,8 +398,9 @@ export const pageTemplates: PageTemplate[] = [
               props: {
                 label: "表单内输入框",
                 placeholder: "请输入昵称",
-                helperText: "字段值采集和校验后续由表单协议扩展。",
+                helperText: "提交表单时会携带当前昵称字段。",
                 type: "text",
+                defaultValue: "MeuMall 用户",
                 wrapperBackgroundColor: "transparent",
                 inputBackgroundColor: "#ffffff",
                 labelColor: "#111827",
@@ -413,7 +417,7 @@ export const pageTemplates: PageTemplate[] = [
               materialVersion: "0.1.0",
               props: {
                 label: "同意接收活动通知",
-                helperText: "当前仅做本地交互展示。",
+                helperText: "提交表单时会携带当前勾选状态。",
                 defaultChecked: false,
                 wrapperBackgroundColor: "transparent",
                 labelColor: "#111827",
@@ -1248,6 +1252,15 @@ export const pageTemplates: PageTemplate[] = [
           cache: {
             ttlSeconds: 60,
             scope: "public",
+          },
+        },
+      ],
+      actions: [
+        {
+          id: "summer_basic_form_submit",
+          type: "noop",
+          params: {
+            source: "basic_form_demo",
           },
         },
       ],

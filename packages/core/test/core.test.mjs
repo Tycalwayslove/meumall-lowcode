@@ -99,7 +99,7 @@ describe("@meumall/lowcode-core", () => {
       actions: [{ id: "go", type: "navigate", params: { url: "/activity" } }],
       publishMeta: { environment: "test" },
     };
-    const context = createRuntimeContext(schema, { channel: "test" });
+    const context = createRuntimeContext(schema, { channel: "test" }, { values: { phone: "13800138000" } });
     const calls = [];
     const executor = createActionExecutor({
       navigate(action, runtimeContext, ref) {
@@ -112,6 +112,7 @@ describe("@meumall/lowcode-core", () => {
     assert.equal(calls.length, 1);
     assert.equal(calls[0].action.params.url, "/activity");
     assert.equal(calls[0].runtimeContext.data.channel, "test");
+    assert.deepEqual(calls[0].runtimeContext.event, { values: { phone: "13800138000" } });
     assert.throws(() => executor.execute({ actionId: "missing" }, context), /action not found/);
   });
 });

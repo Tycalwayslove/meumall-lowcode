@@ -1,6 +1,6 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
-import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
+import { createMaterialManifest, type JsonObject, type JsonValue, type LowcodeNode } from "@meumall/lowcode-schema";
 import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcNoticeBar, MlcPrice, MlcRadioGroup, MlcRichText, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "@meumall/lowcode-primitives-react-h5";
 
 type MaterialProps = {
@@ -41,6 +41,65 @@ function basicStepperRange(props: Record<string, unknown>) {
   const step = Math.max(1, number(props.step, 1));
   const defaultValue = Math.min(max, Math.max(min, number(props.defaultValue, min)));
   return { min, max, step, defaultValue };
+}
+
+type BasicFormFieldType = "string" | "number" | "boolean";
+
+function formatBasicFormFieldValue(value: string | number | boolean): string {
+  return typeof value === "boolean" ? String(value) : String(value ?? "");
+}
+
+function parseBasicFormFieldValue(value: string, type: BasicFormFieldType): JsonValue {
+  if (type === "boolean") return value === "true";
+  if (type === "number") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return value;
+}
+
+function createBasicFormHiddenField(
+  node: LowcodeNode,
+  label: string,
+  value: string | number | boolean,
+  type: BasicFormFieldType,
+  disabled: boolean,
+): React.ReactElement {
+  return (
+    <input
+      type="hidden"
+      name={node.id}
+      value={formatBasicFormFieldValue(value)}
+      disabled={disabled}
+      data-mlc-form-field="true"
+      data-mlc-form-field-label={label}
+      data-mlc-form-field-type={type}
+    />
+  );
+}
+
+function createBasicFormSubmitPayload(form: HTMLFormElement, node: LowcodeNode, childCount: number): JsonObject {
+  const values: JsonObject = {};
+  const fieldLabels: JsonObject = {};
+  const fieldTypes: JsonObject = {};
+  const fields = Array.from(form.querySelectorAll<HTMLInputElement>("[data-mlc-form-field='true']"));
+
+  for (const field of fields) {
+    if (field.disabled || !field.name) continue;
+    const fieldType = option<BasicFormFieldType>(field.dataset.mlcFormFieldType, ["string", "number", "boolean"], "string");
+    values[field.name] = parseBasicFormFieldValue(field.value, fieldType);
+    fieldLabels[field.name] = field.dataset.mlcFormFieldLabel ?? field.name;
+    fieldTypes[field.name] = fieldType;
+  }
+
+  return {
+    formId: node.id,
+    childCount,
+    fieldCount: Object.keys(values).length,
+    values,
+    fieldLabels,
+    fieldTypes,
+  };
 }
 
 function ruleList(value: unknown): Array<Record<string, unknown> | string> {
@@ -552,10 +611,7 @@ export function BasicForm({ props, node, children }: MaterialProps) {
           if (disabled || loading) return;
           setSubmitted(true);
           if (typeof handler === "function") {
-            handler({
-              formId: node.id,
-              childCount: React.Children.count(children),
-            });
+            handler(createBasicFormSubmitPayload(event.currentTarget, node, React.Children.count(children)));
           }
         }}
         style={{
@@ -1240,7 +1296,7 @@ export function BasicAlert({ props }: MaterialProps) {
   );
 }
 
-export function BasicInput({ props }: MaterialProps) {
+export function BasicInput({ props, node }: MaterialProps) {
   const [value, setValue] = React.useState(text(props.defaultValue));
   const inputType = option<BasicInputType>(props.type, ["text", "tel", "email", "number"], "text");
   const label = text(props.label, "基础输入框");
@@ -1283,6 +1339,7 @@ export function BasicInput({ props }: MaterialProps) {
           background: text(props.inputBackgroundColor, "#ffffff"),
         }}
       />
+      {createBasicFormHiddenField(node, label, value, inputType === "number" ? "number" : "string", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1292,7 +1349,7 @@ export function BasicInput({ props }: MaterialProps) {
   );
 }
 
-export function BasicTextarea({ props }: MaterialProps) {
+export function BasicTextarea({ props, node }: MaterialProps) {
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础多行输入");
   const helperText = text(props.helperText);
@@ -1334,6 +1391,7 @@ export function BasicTextarea({ props }: MaterialProps) {
           background: text(props.textareaBackgroundColor, "#ffffff"),
         }}
       />
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1343,7 +1401,7 @@ export function BasicTextarea({ props }: MaterialProps) {
   );
 }
 
-export function BasicSelect({ props }: MaterialProps) {
+export function BasicSelect({ props, node }: MaterialProps) {
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础选择框");
   const helperText = text(props.helperText);
@@ -1390,6 +1448,7 @@ export function BasicSelect({ props }: MaterialProps) {
           background: text(props.selectBackgroundColor, "#ffffff"),
         }}
       />
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1399,7 +1458,7 @@ export function BasicSelect({ props }: MaterialProps) {
   );
 }
 
-export function BasicRadioGroup({ props }: MaterialProps) {
+export function BasicRadioGroup({ props, node }: MaterialProps) {
   const [value, setValue] = React.useState(text(props.defaultValue));
   const label = text(props.label, "基础单选组");
   const helperText = text(props.helperText);
@@ -1444,6 +1503,7 @@ export function BasicRadioGroup({ props }: MaterialProps) {
           if (typeof handler === "function") handler(nextValue);
         }}
       />
+      {createBasicFormHiddenField(node, label, value, "string", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1453,7 +1513,7 @@ export function BasicRadioGroup({ props }: MaterialProps) {
   );
 }
 
-export function BasicStepper({ props }: MaterialProps) {
+export function BasicStepper({ props, node }: MaterialProps) {
   const range = basicStepperRange(props);
   const [value, setValue] = React.useState(range.defaultValue);
   const label = text(props.label, "基础步进器");
@@ -1496,6 +1556,7 @@ export function BasicStepper({ props }: MaterialProps) {
           if (typeof handler === "function") handler(nextValue);
         }}
       />
+      {createBasicFormHiddenField(node, label, value, "number", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1505,7 +1566,7 @@ export function BasicStepper({ props }: MaterialProps) {
   );
 }
 
-export function BasicSwitch({ props }: MaterialProps) {
+export function BasicSwitch({ props, node }: MaterialProps) {
   const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
   const label = text(props.label, "基础开关");
   const checkedText = text(props.checkedText, "已开启");
@@ -1547,6 +1608,7 @@ export function BasicSwitch({ props }: MaterialProps) {
           </span>
         }
       />
+      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", marginTop: 6, color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -1556,7 +1618,7 @@ export function BasicSwitch({ props }: MaterialProps) {
   );
 }
 
-export function BasicCheckbox({ props }: MaterialProps) {
+export function BasicCheckbox({ props, node }: MaterialProps) {
   const [checked, setChecked] = React.useState(boolean(props.defaultChecked));
   const label = text(props.label, "基础复选框");
   const helperText = text(props.helperText);
@@ -1592,6 +1654,7 @@ export function BasicCheckbox({ props }: MaterialProps) {
           </MlcText>
         }
       />
+      {createBasicFormHiddenField(node, label, checked, "boolean", boolean(props.disabled))}
       {helperText ? (
         <MlcText as="p" size={12} tone="muted" style={{ display: "block", margin: "6px 0 0 32px", color: text(props.helperColor, "#64748b") }}>
           {helperText}
@@ -3978,7 +4041,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       platforms: ["h5"],
       defaultProps: {
         title: "基础表单",
-        description: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。",
+        description: "可向表单中添加基础输入物料，提交时会携带基础控件当前值。",
         submitText: "提交",
         successText: "已触发表单提交事件",
         emptyText: "向表单中添加输入物料",
@@ -4003,7 +4066,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       },
       propsSchema: {
         title: { label: "标题", type: "string", setter: "input", defaultValue: "基础表单" },
-        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "可向表单中添加基础输入物料，当前只触发提交事件，不自动采集字段值。" },
+        description: { label: "说明", type: "string", setter: "textarea", defaultValue: "可向表单中添加基础输入物料，提交时会携带基础控件当前值。" },
         submitText: { label: "提交按钮文案", type: "string", setter: "input", defaultValue: "提交" },
         successText: { label: "成功文案", type: "string", setter: "input", defaultValue: "已触发表单提交事件" },
         emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向表单中添加输入物料" },
@@ -4336,7 +4399,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       defaultProps: {
         label: "基础输入框",
         placeholder: "请输入内容",
-        helperText: "用于收集单行文本，本地示例不会提交数据。",
+        helperText: "用于收集单行文本，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         type: "text",
         disabled: false,
@@ -4352,7 +4415,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础输入框" },
         placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入内容" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，本地示例不会提交数据。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
         type: { label: "输入类型", type: "string", setter: "select", defaultValue: "text", options: BASIC_INPUT_TYPE_OPTIONS },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
@@ -4379,7 +4442,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       defaultProps: {
         label: "基础多行输入",
         placeholder: "请输入多行内容",
-        helperText: "用于收集备注、说明或活动需求，本地示例不会提交数据。",
+        helperText: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。",
         defaultValue: "",
         rows: 3,
         disabled: false,
@@ -4395,7 +4458,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础多行输入" },
         placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入多行内容" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，本地示例不会提交数据。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集备注、说明或活动需求，放入基础表单后可随提交携带当前值。" },
         defaultValue: { label: "默认值", type: "string", setter: "textarea", defaultValue: "" },
         rows: { label: "显示行数", type: "number", setter: "number", defaultValue: 3, ...NUMBER_TEXTAREA_ROWS_META },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
@@ -4556,7 +4619,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         label: "基础开关",
         checkedText: "已开启",
         uncheckedText: "已关闭",
-        helperText: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。",
+        helperText: "用于布尔状态切换，放入基础表单后可随提交携带当前值。",
         defaultChecked: true,
         disabled: false,
         wrapperBackgroundColor: "transparent",
@@ -4572,7 +4635,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础开关" },
         checkedText: { label: "开启文案", type: "string", setter: "input", defaultValue: "已开启" },
         uncheckedText: { label: "关闭文案", type: "string", setter: "input", defaultValue: "已关闭" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地布尔状态切换，真实保存需通过后续业务动作接入。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于布尔状态切换，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认开启", type: "boolean", setter: "switch", defaultValue: true },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
@@ -4597,7 +4660,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       platforms: ["h5"],
       defaultProps: {
         label: "基础复选框",
-        helperText: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。",
+        helperText: "用于勾选状态展示，放入基础表单后可随提交携带当前值。",
         defaultChecked: false,
         disabled: false,
         wrapperBackgroundColor: "transparent",
@@ -4611,7 +4674,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
       },
       propsSchema: {
         label: { label: "标签", type: "string", setter: "input", defaultValue: "基础复选框" },
-        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于本地勾选状态展示，真实保存、校验和协议确认需通过后续业务动作接入。" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于勾选状态展示，放入基础表单后可随提交携带当前值。" },
         defaultChecked: { label: "默认勾选", type: "boolean", setter: "switch", defaultValue: false },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },

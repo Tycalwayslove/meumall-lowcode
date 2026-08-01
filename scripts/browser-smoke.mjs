@@ -762,6 +762,60 @@ async function assertTabsBlockSwitch(page, label) {
   log(`通过：${label} 可切换到参与方式标签`);
 }
 
+async function assertBasicFormSubmitValues(page) {
+  log("检查基础表单字段值提交");
+  await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_form\"] .mlc-basic-form')");
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
+    const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
+    const checkbox = form?.querySelector('.mlc-basic-checkbox [role="checkbox"]');
+    if (!form || !input || !checkbox) return false;
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    valueSetter?.call(input, '低代码测试用户');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    checkbox.click();
+    return true;
+  })()`);
+  await page.wait(100);
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="summer_basic_form"] .mlc-basic-form');
+    const submit = Array.from(form?.querySelectorAll('button') ?? []).find((button) => button.innerText.includes('提交表单'));
+    if (!submit) return false;
+    submit.click();
+    return true;
+  })()`);
+  await page.waitForExpression("document.body.innerText.includes('表单值：') && document.body.innerText.includes('表单内输入框=低代码测试用户') && document.body.innerText.includes('同意接收活动通知=true')");
+  log("通过：基础表单提交会把子级基础控件当前值透传到 action context");
+}
+
+async function assertReactRuntimeBasicFormSubmitValues(page) {
+  log("检查 React H5 基础表单字段值提交");
+  await page.waitForExpression("document.querySelector('.phone-frame [data-lowcode-node-id=\"node_basic_form\"] .mlc-basic-form')");
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
+    const input = form?.querySelector('.mlc-basic-input input:not([type="hidden"])');
+    const checkbox = form?.querySelector('.mlc-basic-checkbox [role="checkbox"]');
+    if (!form || !input || !checkbox) return false;
+    const valueSetter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
+    valueSetter?.call(input, 'React H5 测试用户');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    checkbox.click();
+    return true;
+  })()`);
+  await page.wait(100);
+  await page.evaluate(`(() => {
+    const form = document.querySelector('.phone-frame [data-lowcode-node-id="node_basic_form"] .mlc-basic-form');
+    const submit = Array.from(form?.querySelectorAll('button') ?? []).find((button) => button.innerText.includes('提交表单'));
+    if (!submit) return false;
+    submit.click();
+    return true;
+  })()`);
+  await page.waitForExpression("document.body.innerText.includes('模拟埋点：basic_form_submit') && document.body.innerText.includes('事件值：') && document.body.innerText.includes('表单内输入框=React H5 测试用户') && document.body.innerText.includes('同意接收活动通知=true')");
+  log("通过：React H5 基础表单提交会把子级基础控件当前值透传到 action context");
+}
+
 async function assertEditorViewportSwitch(page) {
   log("检查 Vue3 编辑器 H5 画布视口预设");
   await page.waitForExpression("Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '紧凑屏 360px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '标准屏 390px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '大屏 430px')");
@@ -1711,6 +1765,7 @@ async function main() {
       { label: "属性面板分组存在", expression: "document.body.innerText.includes('内容配置') && document.body.innerText.includes('样式配置')" },
       { label: "Vue H5 画布节点已渲染", expression: "document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length >= 3" },
     ]);
+    await assertBasicFormSubmitValues(page);
     await assertEditorViewportSwitch(page);
     await assertActivityRuleModal(page, "Vue3 编辑器内置画布");
     await assertBasicModal(page, "Vue3 编辑器内置画布", "查看基础弹窗", "基础弹窗示例");
@@ -1826,6 +1881,7 @@ async function main() {
     await assertActivityRuleModal(page, "React H5 runtime");
     await assertBasicModal(page, "React H5 runtime", "查看 React H5 基础弹窗", "React H5 基础弹窗");
     await assertTabsBlockSwitch(page, "React H5 runtime");
+    await assertReactRuntimeBasicFormSubmitValues(page);
 
     await assertPage(page, h5RuntimeHttpUrl, [
       { label: "React H5 HTTP 配置平台入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('配置平台')" },
