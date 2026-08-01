@@ -2102,7 +2102,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         backgroundColor: "transparent",
       },
       propsSchema: {
-        imageUrl: { label: "图片地址", type: "string", setter: "input", required: true, defaultValue: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
+        imageUrl: { label: "图片地址", type: "string", setter: "image", required: true, defaultValue: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
         alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "活动图片" },
         ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
         fit: { label: "填充模式", type: "string", setter: "select", defaultValue: "cover", options: BASIC_IMAGE_FIT_OPTIONS },

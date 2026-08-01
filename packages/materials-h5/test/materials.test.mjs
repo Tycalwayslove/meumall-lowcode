@@ -171,6 +171,25 @@ describe("MeuMall H5 material manifests", () => {
     }
   });
 
+  it("keeps generic material image props using asset picker setters", () => {
+    const imageProps = [
+      ["BasicImage", "imageUrl"],
+      ["BasicCard", "imageUrl"],
+      ["BrandFeatureSection", "coverImageUrl"],
+      ["LiveEntry", "coverImageUrl"],
+    ];
+
+    for (const [componentName, propName] of imageProps) {
+      const reactProp = findMaterial(h5Materials, componentName)?.manifest.propsSchema[propName];
+      const vueProp = findMaterial(h5VueMaterials, componentName)?.manifest.propsSchema[propName];
+
+      assert.equal(reactProp?.setter, "image", `${componentName}.${propName} should use image in React manifest`);
+      assert.equal(vueProp?.setter, "image", `${componentName}.${propName} should use image in Vue manifest`);
+      assert.equal(reactProp?.type, "string");
+      assert.equal(vueProp?.type, "string");
+    }
+  });
+
   it("keeps runtime primitives out of material registries", () => {
     const primitiveNames = [
       "MlcButton",
@@ -396,7 +415,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.title, "基础图片");
     assert.equal(material.manifest.category, "basic");
     assert.equal(material.manifest.defaultProps.ratio, "16 / 9");
-    assert.equal(material.manifest.propsSchema.imageUrl.setter, "input");
+    assert.equal(material.manifest.propsSchema.imageUrl.setter, "image");
     assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
   });
 

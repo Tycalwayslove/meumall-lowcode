@@ -804,6 +804,13 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：基础图片");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicImage)}`);
   await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-image img[alt=\"活动图片\"]')");
+  await page.waitForExpression("document.body.innerText.includes('素材库') && document.body.innerText.includes('新人券视觉')");
+  await page.clickByText(".asset-card", "新人券视觉");
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-image img[src*=\"1607083206869\"]')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicImage\"') && item.value.includes('1607083206869'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicTag = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础标签");
