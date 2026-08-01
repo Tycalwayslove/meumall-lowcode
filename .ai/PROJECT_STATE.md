@@ -205,7 +205,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | 待提交 | 新增 BasicPrice 基础价格通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
+| 2026-08-01 | `661bf25` | 新增 BasicPrice 基础价格通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
 | 2026-08-01 | `f69de27` | 新增 `@meumall/lowcode-runtime-react-h5` React H5 runtime host 包，并让 React H5 runtime playground 消费该包。 |
 | 2026-08-01 | `2414898` | 新增 adapters runtime health summary API，并在 React H5 runtime playground 展示运行态健康摘要和检查项。 |
 | 2026-08-01 | `b0c26a1` | 新增 editor publish risk summary API，并在 Vue3 发布面板展示发布风险摘要和优先处理项。 |
