@@ -71,6 +71,7 @@ export interface ConfigPlatformPageRelease {
   pageId: string;
   pageVersion: string;
   title: string;
+  note?: string;
   createdAt: string;
   schema: LowcodePageSchema;
 }
@@ -139,10 +140,15 @@ export interface ConfigPlatformEditorDraftSnapshotInput {
   operator?: ConfigPlatformOperatorInfo;
 }
 
+export interface ConfigPlatformReleaseMetadata {
+  note?: string;
+  operator?: ConfigPlatformOperatorInfo;
+}
+
 export interface LowcodeConfigPlatformClient {
-  saveDraft(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
-  createPreview(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
-  publishPage(schema: LowcodePageSchema): MaybePromise<ConfigPlatformPageRelease>;
+  saveDraft(schema: LowcodePageSchema, metadata?: ConfigPlatformReleaseMetadata): MaybePromise<ConfigPlatformPageRelease>;
+  createPreview(schema: LowcodePageSchema, metadata?: ConfigPlatformReleaseMetadata): MaybePromise<ConfigPlatformPageRelease>;
+  publishPage(schema: LowcodePageSchema, metadata?: ConfigPlatformReleaseMetadata): MaybePromise<ConfigPlatformPageRelease>;
   listReleases(pageId?: string): MaybePromise<ConfigPlatformPageRelease[]>;
   getRelease(releaseId: string): MaybePromise<ConfigPlatformPageRelease | undefined>;
   getDraft(pageId: string): MaybePromise<LowcodePageSchema | undefined>;
@@ -164,6 +170,7 @@ export interface ConfigPlatformRequestBody {
   operator?: ConfigPlatformOperatorInfo;
   ttlSeconds?: number;
   comment?: string;
+  note?: string;
   approved?: boolean;
   reason?: string;
 }
@@ -673,14 +680,29 @@ export function createHttpConfigPlatformClient(options: CreateHttpConfigPlatform
   }
 
   return {
-    async saveDraft(schema) {
-      return assertPageRelease(await request("/api/lowcode/pages/drafts", { method: "POST", body: { schema, pageStatus: "draft" } }));
+    async saveDraft(schema, metadata) {
+      return assertPageRelease(
+        await request("/api/lowcode/pages/drafts", {
+          method: "POST",
+          body: { schema, pageStatus: "draft", note: metadata?.note, operator: metadata?.operator },
+        }),
+      );
     },
-    async createPreview(schema) {
-      return assertPageRelease(await request("/api/lowcode/pages/previews", { method: "POST", body: { schema, pageStatus: "preview" } }));
+    async createPreview(schema, metadata) {
+      return assertPageRelease(
+        await request("/api/lowcode/pages/previews", {
+          method: "POST",
+          body: { schema, pageStatus: "preview", note: metadata?.note, operator: metadata?.operator },
+        }),
+      );
     },
-    async publishPage(schema) {
-      return assertPageRelease(await request("/api/lowcode/pages/releases", { method: "POST", body: { schema, pageStatus: "published" } }));
+    async publishPage(schema, metadata) {
+      return assertPageRelease(
+        await request("/api/lowcode/pages/releases", {
+          method: "POST",
+          body: { schema, pageStatus: "published", note: metadata?.note, operator: metadata?.operator },
+        }),
+      );
     },
     async listReleases(pageId) {
       const suffix = pageId ? `?pageId=${encodePath(pageId)}` : "";

@@ -10,6 +10,7 @@ import { createServer as createNetServer } from "node:net";
 
 const rootDir = path.resolve(new URL("..", import.meta.url).pathname);
 const editorPort = Number(process.env.EDITOR_SMOKE_PORT ?? 5193);
+const editorHttpPort = Number(process.env.EDITOR_HTTP_SMOKE_PORT ?? 5197);
 const h5Port = Number(process.env.H5_SMOKE_PORT ?? 5194);
 const h5HttpPort = Number(process.env.H5_HTTP_SMOKE_PORT ?? 5195);
 const configPlatformPort = Number(process.env.CONFIG_PLATFORM_SMOKE_PORT ?? 5196);
@@ -18,6 +19,7 @@ const host = "127.0.0.1";
 const timeoutMs = 30_000;
 
 const editorUrl = `http://${host}:${editorPort}/`;
+const editorHttpUrl = `http://${host}:${editorHttpPort}/`;
 const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
 const editorWorkflowDemoUrl = `${editorUrl}?collaboration=locked-other&approval=pending`;
 const editorApprovalActionsUrl = `${editorUrl}?collaboration=locked-me&approval=draft`;
@@ -33,6 +35,8 @@ const h5RuntimeBrokenUrl = `${h5RuntimeUrl}?demo=broken`;
 const children = [];
 const servers = [];
 const configPlatformRequests = [];
+const editorHttpReleases = [];
+let editorHttpDraftSnapshot;
 let chromeUserDataDir;
 
 const smokeHttpPageSchema = {
@@ -61,6 +65,47 @@ const smokeHttpPageSchema = {
     operator: "browser-smoke",
   },
 };
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function createSmokeWorkflow(pageId, overrides = {}) {
+  return {
+    pageId,
+    lock: {
+      status: "unlocked",
+      ...(overrides.lock ?? {}),
+    },
+    approval: {
+      status: "none",
+      ...(overrides.approval ?? {}),
+    },
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function createSmokeEditorRelease(kind, body) {
+  const schema = cloneJson(body.schema);
+  const now = new Date().toISOString();
+  schema.status = body.pageStatus ?? kind;
+  schema.pageVersion = `${kind}-smoke-${editorHttpReleases.length + 1}`;
+  schema.publishMeta = {
+    ...schema.publishMeta,
+    publishedAt: kind === "published" ? now : schema.publishMeta?.publishedAt,
+    operator: body.operator?.name ?? "browser-smoke",
+  };
+  return {
+    id: `${kind}_smoke_${editorHttpReleases.length + 1}`,
+    kind,
+    pageId: schema.pageId,
+    pageVersion: schema.pageVersion,
+    title: schema.title,
+    note: body.note,
+    createdAt: now,
+    schema,
+  };
+}
 
 function log(message) {
   process.stdout.write(`[browser-smoke] ${message}\n`);
@@ -150,20 +195,119 @@ function writeJsonResponse(response, statusCode, payload) {
   response.end(JSON.stringify(payload));
 }
 
+async function readRequestJson(request) {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(chunk);
+  }
+  if (!chunks.length) return {};
+  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+
 async function startConfigPlatformSmokeServer(port) {
   log(`启动 config platform HTTP mock: ${port}`);
-  const server = createHttpServer((request, response) => {
+  const server = createHttpServer(async (request, response) => {
     if (request.method === "OPTIONS") {
       writeJsonResponse(response, 204, null);
       return;
     }
+    const body = request.method === "GET" ? undefined : await readRequestJson(request);
     configPlatformRequests.push({
       method: request.method,
       url: request.url,
       authorization: request.headers.authorization,
+      body,
     });
     if (request.method === "GET" && request.url === "/api/lowcode/pages/smoke-http-page/published") {
       writeJsonResponse(response, 200, smokeHttpPageSchema);
+      return;
+    }
+    if (request.method === "GET" && request.url?.startsWith("/api/lowcode/pages/releases")) {
+      const url = new URL(request.url, configPlatformSmokeUrl);
+      const pageId = url.searchParams.get("pageId");
+      const releases = pageId
+        ? editorHttpReleases.filter((release) => release.pageId === pageId)
+        : editorHttpReleases;
+      writeJsonResponse(response, 200, releases);
+      return;
+    }
+    if (request.method === "GET" && request.url?.startsWith("/api/lowcode/pages/releases/")) {
+      const releaseId = decodeURIComponent(request.url.split("/").pop() ?? "");
+      writeJsonResponse(response, 200, editorHttpReleases.find((release) => release.id === releaseId) ?? null);
+      return;
+    }
+    if (request.method === "GET" && request.url?.endsWith("/workflow")) {
+      const pageId = decodeURIComponent(request.url.split("/").at(-2) ?? "unknown-page");
+      writeJsonResponse(response, 200, createSmokeWorkflow(pageId));
+      return;
+    }
+    if (request.method === "GET" && request.url?.endsWith("/editor-draft-snapshot")) {
+      writeJsonResponse(response, 200, editorHttpDraftSnapshot ?? null);
+      return;
+    }
+    if (request.method === "PUT" && request.url?.endsWith("/editor-draft-snapshot")) {
+      const pageId = decodeURIComponent(request.url.split("/").at(-2) ?? body?.pageId ?? "unknown-page");
+      editorHttpDraftSnapshot = {
+        pageId,
+        schema: body.schema,
+        updatedAt: new Date().toISOString(),
+        operator: body.operator,
+      };
+      writeJsonResponse(response, 200, editorHttpDraftSnapshot);
+      return;
+    }
+    if (request.method === "POST" && request.url === "/api/lowcode/pages/drafts") {
+      const release = createSmokeEditorRelease("draft", body);
+      editorHttpReleases.unshift(release);
+      writeJsonResponse(response, 200, release);
+      return;
+    }
+    if (request.method === "POST" && request.url === "/api/lowcode/pages/previews") {
+      const release = createSmokeEditorRelease("preview", body);
+      editorHttpReleases.unshift(release);
+      writeJsonResponse(response, 200, release);
+      return;
+    }
+    if (request.method === "POST" && request.url === "/api/lowcode/pages/releases") {
+      const release = createSmokeEditorRelease("published", body);
+      editorHttpReleases.unshift(release);
+      writeJsonResponse(response, 200, release);
+      return;
+    }
+    if (request.method === "POST" && request.url?.endsWith("/approval/submit")) {
+      const pageId = decodeURIComponent(request.url.split("/").at(-3) ?? "unknown-page");
+      writeJsonResponse(response, 200, createSmokeWorkflow(pageId, {
+        approval: {
+          status: "pending",
+          submitter: body.operator,
+          submittedAt: new Date().toISOString(),
+          comment: body.comment,
+        },
+      }));
+      return;
+    }
+    if (request.method === "POST" && request.url?.endsWith("/approval/cancel")) {
+      const pageId = decodeURIComponent(request.url.split("/").at(-3) ?? "unknown-page");
+      writeJsonResponse(response, 200, createSmokeWorkflow(pageId, {
+        approval: {
+          status: "draft",
+          submitter: body.operator,
+          comment: body.comment,
+        },
+      }));
+      return;
+    }
+    if (request.method === "POST" && request.url?.endsWith("/approval/review")) {
+      const pageId = decodeURIComponent(request.url.split("/").at(-3) ?? "unknown-page");
+      writeJsonResponse(response, 200, createSmokeWorkflow(pageId, {
+        approval: {
+          status: body.approved ? "approved" : "rejected",
+          reviewer: body.operator,
+          reviewedAt: new Date().toISOString(),
+          comment: body.comment,
+          reason: body.reason,
+        },
+      }));
       return;
     }
     writeJsonResponse(response, 404, null);
@@ -462,6 +606,19 @@ async function assertPage(page, url, checks) {
     await page.waitForExpression(check.expression, check.timeoutMs ?? timeoutMs);
     log(`通过：${check.label}`);
   }
+}
+
+async function waitForConfigPlatformRequest(predicate, label) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    const matched = configPlatformRequests.find(predicate);
+    if (matched) {
+      log(`通过：${label}`);
+      return matched;
+    }
+    await delay(250);
+  }
+  fail(`等待配置平台请求超时：${label}`);
 }
 
 async function assertActivityRuleModal(page, label) {
@@ -831,6 +988,82 @@ async function assertEditorApprovalActions(page) {
   log("通过：发布审批可提交、撤回、驳回、重新提交并审核通过");
 }
 
+async function assertEditorHttpConfigPlatform(page) {
+  await assertPage(page, editorHttpUrl, [
+    { label: "Vue3 编辑器 HTTP 配置平台 shell 已挂载", expression: "document.querySelector('.editor-shell')" },
+    { label: "Vue3 编辑器 HTTP 配置平台入口存在", expression: `document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})` },
+    { label: "Vue3 编辑器 HTTP 配置平台保留发布面板", expression: "document.body.innerText.includes('发布检查') && document.body.innerText.includes('本地版本')" },
+  ]);
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "GET"
+      && request.url === "/api/lowcode/pages/releases?pageId=summer-campaign-demo"
+      && request.authorization === "Bearer smoke-token",
+    "Vue3 编辑器 HTTP 模式拉取 release list 并透传 authorization",
+  );
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "GET"
+      && request.url === "/api/lowcode/pages/summer-campaign-demo/workflow"
+      && request.authorization === "Bearer smoke-token",
+    "Vue3 编辑器 HTTP 模式拉取 workflow 并透传 authorization",
+  );
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "GET"
+      && request.url === "/api/lowcode/pages/summer-campaign-demo/editor-draft-snapshot"
+      && request.authorization === "Bearer smoke-token",
+    "Vue3 编辑器 HTTP 模式读取 editor draft snapshot",
+  );
+
+  await page.fillFieldByLabel("标题", "HTTP 编辑器 Smoke 页面");
+  await page.waitForExpression("document.body.innerText.includes('HTTP 编辑器 Smoke 页面')");
+  await page.waitForExpression("document.body.innerText.includes('已自动保存')");
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "PUT"
+      && request.url === "/api/lowcode/pages/summer-campaign-demo/editor-draft-snapshot"
+      && request.authorization === "Bearer smoke-token"
+      && request.body?.schema?.title === "HTTP 编辑器 Smoke 页面"
+      && request.body?.operator?.id === "operator-me",
+    "Vue3 编辑器 HTTP 模式保存 editor draft snapshot",
+  );
+
+  await page.fillFieldByLabel("版本备注", "HTTP Smoke 草稿");
+  await page.evaluate("document.activeElement?.blur()");
+  await page.clickByText(".toolbar button", "保存草稿");
+  await page.waitForExpression("document.body.innerText.includes('已保存草稿')");
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "POST"
+      && request.url === "/api/lowcode/pages/drafts"
+      && request.authorization === "Bearer smoke-token"
+      && request.body?.pageStatus === "draft"
+      && request.body?.note === "HTTP Smoke 草稿"
+      && request.body?.operator?.id === "operator-me",
+    "Vue3 编辑器 HTTP 模式保存草稿并提交 note/operator",
+  );
+
+  await page.clickFirst(".toolbar button[title='生成预览版本']");
+  await page.waitForExpression("document.body.innerText.includes('已生成预览')");
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "POST"
+      && request.url === "/api/lowcode/pages/previews"
+      && request.authorization === "Bearer smoke-token"
+      && request.body?.pageStatus === "preview"
+      && request.body?.operator?.id === "operator-me",
+    "Vue3 编辑器 HTTP 模式生成预览 release",
+  );
+
+  await page.clickByText(".toolbar button", "发布");
+  await page.waitForExpression("document.body.innerText.includes('已发布')");
+  await waitForConfigPlatformRequest(
+    (request) => request.method === "POST"
+      && request.url === "/api/lowcode/pages/releases"
+      && request.authorization === "Bearer smoke-token"
+      && request.body?.pageStatus === "published"
+      && request.body?.operator?.id === "operator-me",
+    "Vue3 编辑器 HTTP 模式发布页面 release",
+  );
+  await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('HTTP 编辑器 Smoke 页面') || item.innerText.includes('published-smoke'))");
+  log("通过：Vue3 编辑器可通过 env 使用 HTTP 配置平台 client 完成草稿、预览、发布和自动快照");
+}
+
 async function assertInspectorGroups(page) {
   log("检查属性面板分组折叠");
   await page.waitForExpression("document.body.innerText.includes('内容配置')");
@@ -885,6 +1118,7 @@ async function cleanup() {
 
 async function main() {
   await assertPortFree(editorPort, "editor playground");
+  await assertPortFree(editorHttpPort, "editor HTTP config playground");
   await assertPortFree(h5Port, "H5 runtime playground");
   await assertPortFree(h5HttpPort, "H5 runtime HTTP playground");
   await assertPortFree(configPlatformPort, "config platform HTTP mock");
@@ -893,6 +1127,11 @@ async function main() {
   await startConfigPlatformSmokeServer(configPlatformPort);
   await startViteServer("editor playground", path.join(rootDir, "apps/editor-playground"), editorPort, {
     VITE_REACT_H5_RUNTIME_URL: h5RuntimeUrl,
+  });
+  await startViteServer("editor HTTP config playground", path.join(rootDir, "apps/editor-playground"), editorHttpPort, {
+    VITE_REACT_H5_RUNTIME_URL: h5RuntimeUrl,
+    VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL: configPlatformSmokeUrl,
+    VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION: "Bearer smoke-token",
   });
   await startViteServer("H5 runtime playground", path.join(rootDir, "apps/h5-runtime-playground"), h5Port);
   await startViteServer("H5 runtime HTTP config playground", path.join(rootDir, "apps/h5-runtime-playground"), h5HttpPort, {
@@ -950,6 +1189,7 @@ async function main() {
       },
     ]);
     await assertEditorApprovalActions(page);
+    await assertEditorHttpConfigPlatform(page);
 
     await assertPage(page, editorRuntimeUrl, [
       { label: "编辑器内置 runtime shell 已挂载", expression: "document.querySelector('.runtime-shell')" },

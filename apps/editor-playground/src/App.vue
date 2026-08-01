@@ -20,6 +20,7 @@ import {
   createStaticTemplateLibraryClient,
   encodePageSchemaToUrlParam,
   resolveLowcodeDataSources,
+  type ConfigPlatformPageRelease,
   type ConfigPlatformEditorDraftSnapshot,
   type ConfigPlatformEditorWorkflowState,
   type DataSourceResolutionRecord,
@@ -214,12 +215,12 @@ import EditorSelectedNodeCard from "./components/EditorSelectedNodeCard.vue";
 import EditorSourcePanel from "./components/EditorSourcePanel.vue";
 import EditorStatusPanel from "./components/EditorStatusPanel.vue";
 import EditorTopToolbar from "./components/EditorTopToolbar.vue";
+import { createEditorConfigPlatformBinding } from "./configPlatformClient";
 import { pageTemplates, type PageTemplate } from "./pageTemplates";
 import {
   createDefaultEditorWorkflowState,
   localConfigPlatformClient,
   localOperator,
-  type LocalPageRelease,
   writeEditorWorkflowState,
 } from "./mockPlatform";
 
@@ -431,7 +432,10 @@ const previewDataSourceRegistry = createDataSourceRegistry({
 });
 
 const initialSchema = cloneLowcodePageSchema((pageTemplates[0] as PageTemplate).schema);
-const configPlatformClient = localConfigPlatformClient;
+const configPlatformBinding = createEditorConfigPlatformBinding(localConfigPlatformClient);
+const configPlatformClient = configPlatformBinding.client;
+
+type EditorPageRelease = ConfigPlatformPageRelease;
 
 interface LoadedSchemaResult {
   schema: LowcodePageSchema;
@@ -468,8 +472,10 @@ const releaseMessage = ref("");
 const schemaTransferMessage = ref("");
 const autoSaveStatus = ref<LowcodeEditorDraftPersistenceStatus>(loadedSchemaResult.restored ? "restored" : "idle");
 const lastAutoSavedAt = ref<string | undefined>(loadedSchemaResult.updatedAt);
-const editorWorkflowState = shallowRef(seedEditorWorkflowStateFromQuery(editorState.value.schema.pageId));
-const releases = shallowRef<LocalPageRelease[]>(configPlatformClient.listReleases(editorState.value.schema.pageId));
+const editorWorkflowState = shallowRef<ConfigPlatformEditorWorkflowState>(
+  createDefaultEditorWorkflowState(editorState.value.schema.pageId),
+);
+const releases = shallowRef<EditorPageRelease[]>([]);
 const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const releaseNoteDraft = ref("");
 const releaseKeyword = ref("");
@@ -518,6 +524,7 @@ const previewData = ref<JsonObject>({});
 const runtimePreviewData = ref<JsonObject>({});
 const previewDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
 const runtimeDataSourceRecords = ref<DataSourceResolutionRecord[]>([]);
+const runtimeSchema = shallowRef<LowcodePageSchema>(editorState.value.schema);
 const isPreviewDataResolving = ref(false);
 const isRuntimeDataResolving = ref(false);
 const actionMessage = ref("");
@@ -699,12 +706,15 @@ const canMoveSelectedDown = computed(() => {
   return row.index < getSiblingCount(row.parentId) - 1;
 });
 
-function readEditorWorkflowState(pageId: string): ConfigPlatformEditorWorkflowState {
-  return configPlatformClient.getEditorWorkflowState?.(pageId) ?? createDefaultEditorWorkflowState(pageId);
+async function readEditorWorkflowState(pageId: string): Promise<ConfigPlatformEditorWorkflowState> {
+  const state = await Promise.resolve(configPlatformClient.getEditorWorkflowState?.(pageId));
+  return state ?? createDefaultEditorWorkflowState(pageId);
 }
 
-function seedEditorWorkflowStateFromQuery(pageId: string): ConfigPlatformEditorWorkflowState {
-  const baseState = readEditorWorkflowState(pageId);
+async function seedEditorWorkflowStateFromQuery(pageId: string): Promise<ConfigPlatformEditorWorkflowState> {
+  const baseState = await readEditorWorkflowState(pageId);
+  if (configPlatformBinding.mode !== "local") return baseState;
+
   const seededState: ConfigPlatformEditorWorkflowState = {
     ...baseState,
     lock: { ...baseState.lock },
@@ -767,8 +777,8 @@ function seedEditorWorkflowStateFromQuery(pageId: string): ConfigPlatformEditorW
   return baseState;
 }
 
-function refreshEditorWorkflowState(pageId = editorState.value.schema.pageId): void {
-  editorWorkflowState.value = seedEditorWorkflowStateFromQuery(pageId);
+async function refreshEditorWorkflowState(pageId = editorState.value.schema.pageId): Promise<void> {
+  editorWorkflowState.value = await seedEditorWorkflowStateFromQuery(pageId);
 }
 
 function createCollaborationStateOptionsFromWorkflow(): Parameters<typeof createLowcodeEditorCollaborationState>[0] {
@@ -994,10 +1004,10 @@ const autoSaveStatusText = computed(() => {
 const autoSaveStatusTone = computed(() => {
   return getLowcodeEditorDraftStatusTone(autoSaveStatus.value);
 });
-const selectedRelease = computed<LocalPageRelease | undefined>(() =>
+const selectedRelease = computed<EditorPageRelease | undefined>(() =>
   releases.value.find((release) => release.id === selectedReleaseId.value),
 );
-const visibleReleaseItems = computed<ReleaseListItem<LocalPageRelease>[]>(() =>
+const visibleReleaseItems = computed<ReleaseListItem<EditorPageRelease>[]>(() =>
   createLowcodeReleaseListItems(releases.value, {
     keyword: releaseKeyword.value,
     selectedReleaseId: selectedReleaseId.value,
@@ -1006,7 +1016,7 @@ const visibleReleaseItems = computed<ReleaseListItem<LocalPageRelease>[]>(() =>
 const releaseListSummary = computed(() =>
   summarizeLowcodeReleaseList(releases.value.length, visibleReleaseItems.value.length, releaseKeyword.value),
 );
-const latestPublishedRelease = computed<LocalPageRelease | undefined>(() =>
+const latestPublishedRelease = computed<EditorPageRelease | undefined>(() =>
   releases.value.find((release) => release.kind === "published"),
 );
 const releaseDiffItems = computed<ReleaseDiffItem[]>(() =>
@@ -1021,7 +1031,6 @@ const releaseSchemaPreviewItems = computed<ReleaseSchemaPreviewItem[]>(() =>
     })
     : [],
 );
-const runtimeSchema = computed(() => resolveRuntimeSchema() ?? editorState.value.schema);
 const runtimeTitle = computed(() => runtimeSchema.value.title || "MeuMall Lowcode H5");
 const previewLinkItems = computed<PreviewLinkItem[]>(() =>
   createLowcodePreviewLinkItems([
@@ -1034,7 +1043,7 @@ const previewLinkItems = computed<PreviewLinkItem[]>(() =>
     {
       id: "page-runtime",
       title: "页面草稿/最新版本 H5",
-      description: "按 pageId 读取本地 mock 配置平台。",
+      description: `按 pageId 读取配置平台：${configPlatformBinding.label}`,
       url: createRuntimeUrl({ pageId: editorState.value.schema.pageId }),
     },
     latestPublishedRelease.value ? {
@@ -1246,6 +1255,9 @@ watch(
   () => editorState.value.schema,
   (schema) => {
     schemaDraft.value = JSON.stringify(schema, null, 2);
+    if (!isRuntimeMode) {
+      runtimeSchema.value = schema;
+    }
     if (suppressNextAutoSave) {
       suppressNextAutoSave = false;
       return;
@@ -1257,7 +1269,7 @@ watch(
 watch(
   () => editorState.value.schema.pageId,
   (pageId) => {
-    refreshEditorWorkflowState(pageId);
+    void refreshEditorWorkflowState(pageId);
   },
 );
 
@@ -1364,6 +1376,9 @@ onMounted(() => {
   window.addEventListener("pointerup", onPointerCanvasDragEnd);
   window.addEventListener("pointercancel", onPointerCanvasDragCancel);
   window.addEventListener("keydown", onGlobalKeydown);
+  void refreshReleases();
+  void refreshEditorWorkflowState();
+  void refreshRuntimeSchema();
   void restoreEditorDraftSnapshot();
 });
 
@@ -1475,8 +1490,9 @@ function applyRestoredDraftSnapshot(snapshot: ConfigPlatformEditorDraftSnapshot)
   jsonError.value = "";
   lastAutoSavedAt.value = snapshot.updatedAt;
   autoSaveStatus.value = "restored";
-  refreshReleases();
-  refreshEditorWorkflowState(schema.pageId);
+  void refreshReleases();
+  void refreshEditorWorkflowState(schema.pageId);
+  void refreshRuntimeSchema();
 }
 
 async function restoreEditorDraftSnapshot(): Promise<void> {
@@ -2807,8 +2823,8 @@ function resetSchema(): void {
   });
   schemaDraft.value = JSON.stringify(editorState.value.schema, null, 2);
   releaseMessage.value = "已重置为示例页面";
-  refreshReleases();
-  refreshEditorWorkflowState(editorState.value.schema.pageId);
+  void refreshReleases();
+  void refreshEditorWorkflowState(editorState.value.schema.pageId);
 }
 
 function openPageStartWizard(): void {
@@ -2838,8 +2854,8 @@ function createBlankPageFromWizard(): void {
   collapsedOutlineNodeIds.value = [];
   releaseMessage.value = "已创建空白 H5 页面";
   closePageStartWizard();
-  refreshReleases();
-  refreshEditorWorkflowState(editorState.value.schema.pageId);
+  void refreshReleases();
+  void refreshEditorWorkflowState(editorState.value.schema.pageId);
 }
 
 function clearCanvas(): void {
@@ -2983,8 +2999,8 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onAp
   jsonError.value = "";
   releaseMessage.value = `已应用模板：${templateDetail.title}`;
   onApplied?.();
-  refreshReleases();
-  refreshEditorWorkflowState(schema.pageId);
+  void refreshReleases();
+  void refreshEditorWorkflowState(schema.pageId);
 }
 
 async function applyTemplateFromStartWizard(template: Pick<LowcodeTemplateResource, "id">): Promise<void> {
@@ -3062,7 +3078,7 @@ function replaceCurrentSchema(
   multiSelectedNodeIds.value = [];
   collapsedOutlineNodeIds.value = [];
   if (options.message) releaseMessage.value = options.message;
-  refreshReleases();
+  void refreshReleases();
 }
 
 function updatePageTitle(value: string): void {
@@ -3188,18 +3204,43 @@ function applySampleProducts(): void {
   applySelectedProductsToNode();
 }
 
-function refreshReleases(): void {
-  releases.value = configPlatformClient.listReleases(editorState.value.schema.pageId);
-  if (!releases.value.some((release) => release.id === selectedReleaseId.value)) {
-    selectedReleaseId.value = releases.value[0]?.id ?? "";
+async function refreshReleases(): Promise<void> {
+  const nextReleases = await Promise.resolve(configPlatformClient.listReleases(editorState.value.schema.pageId));
+  releases.value = nextReleases;
+  if (!nextReleases.some((release) => release.id === selectedReleaseId.value)) {
+    selectedReleaseId.value = nextReleases[0]?.id ?? "";
   }
 }
 
-function resolveRuntimeSchema(): LowcodePageSchema | undefined {
+async function resolveRuntimeSchema(): Promise<LowcodePageSchema | undefined> {
   const releaseId = runtimeQuery.get("releaseId");
-  if (releaseId) return configPlatformClient.getRelease(releaseId)?.schema;
+  if (releaseId) {
+    try {
+      return (await Promise.resolve(configPlatformClient.getRelease(releaseId)))?.schema;
+    } catch {
+      return undefined;
+    }
+  }
   const pageId = runtimeQuery.get("pageId") || editorState.value.schema.pageId;
-  return configPlatformClient.getPublished(pageId) ?? configPlatformClient.getDraft(pageId);
+  try {
+    const publishedSchema = await Promise.resolve(configPlatformClient.getPublished(pageId));
+    if (publishedSchema) return publishedSchema;
+  } catch {
+    // 外部配置平台读取失败时继续尝试草稿，再回退到当前编辑器 schema。
+  }
+  try {
+    return await Promise.resolve(configPlatformClient.getDraft(pageId));
+  } catch {
+    return undefined;
+  }
+}
+
+async function refreshRuntimeSchema(): Promise<void> {
+  if (!isRuntimeMode) {
+    runtimeSchema.value = editorState.value.schema;
+    return;
+  }
+  runtimeSchema.value = await resolveRuntimeSchema() ?? editorState.value.schema;
 }
 
 function createRuntimeUrl(params: { pageId?: string; releaseId?: string }): string {
@@ -3332,7 +3373,18 @@ async function copyTextToClipboard(text: string): Promise<void> {
   }
 }
 
-function setReleaseMessage(release: LocalPageRelease, action: string): void {
+function createReleaseMetadata(note = releaseNoteDraft.value): { note?: string; operator: typeof localOperator } {
+  return {
+    note: note.trim() || undefined,
+    operator: localOperator,
+  };
+}
+
+function formatConfigPlatformError(error: unknown): string {
+  return error instanceof Error ? error.message : "配置平台请求失败";
+}
+
+function setReleaseMessage(release: EditorPageRelease, action: string): void {
   releaseMessage.value = createLowcodeReleaseMessage(release, action);
 }
 
@@ -3343,121 +3395,163 @@ function ensurePublishReady(action: string): boolean {
   return false;
 }
 
-function setEditorWorkflowStateFromAction(nextState: ConfigPlatformEditorWorkflowState | undefined, message: string): void {
+async function setEditorWorkflowStateFromAction(
+  nextState: ConfigPlatformEditorWorkflowState | Promise<ConfigPlatformEditorWorkflowState> | undefined,
+  message: string,
+): Promise<void> {
   if (!nextState) {
     releaseMessage.value = "当前配置平台 client 不支持审批操作";
     return;
   }
-  editorWorkflowState.value = nextState;
+  editorWorkflowState.value = await Promise.resolve(nextState);
   releaseMessage.value = message;
 }
 
-function submitCurrentApproval(): void {
+async function submitCurrentApproval(): Promise<void> {
   if (!canSubmitApproval.value || !ensurePublishReady("提交审批")) return;
-  setEditorWorkflowStateFromAction(
-    configPlatformClient.submitApproval?.({
-      pageId: editorState.value.schema.pageId,
-      operator: localOperator,
-      comment: releaseNoteDraft.value.trim() || "提交审批",
-    }),
-    "已提交审批",
-  );
+  try {
+    await setEditorWorkflowStateFromAction(
+      configPlatformClient.submitApproval?.({
+        pageId: editorState.value.schema.pageId,
+        operator: localOperator,
+        comment: releaseNoteDraft.value.trim() || "提交审批",
+      }),
+      "已提交审批",
+    );
+  } catch (error) {
+    releaseMessage.value = `提交审批失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function cancelCurrentApproval(): void {
+async function cancelCurrentApproval(): Promise<void> {
   if (!canCancelApproval.value) return;
-  setEditorWorkflowStateFromAction(
-    configPlatformClient.cancelApproval?.({
-      pageId: editorState.value.schema.pageId,
-      operator: localOperator,
-      comment: "撤回审批，继续编辑。",
-    }),
-    "已撤回审批",
-  );
+  try {
+    await setEditorWorkflowStateFromAction(
+      configPlatformClient.cancelApproval?.({
+        pageId: editorState.value.schema.pageId,
+        operator: localOperator,
+        comment: "撤回审批，继续编辑。",
+      }),
+      "已撤回审批",
+    );
+  } catch (error) {
+    releaseMessage.value = `撤回审批失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function approveCurrentApproval(): void {
+async function approveCurrentApproval(): Promise<void> {
   if (!canReviewApproval.value) return;
-  setEditorWorkflowStateFromAction(
-    configPlatformClient.reviewApproval?.({
-      pageId: editorState.value.schema.pageId,
-      operator: { id: "reviewer-1", name: "审核人" },
-      approved: true,
-      comment: "本地审核通过。",
-    }),
-    "审批已通过，可以发布",
-  );
+  try {
+    await setEditorWorkflowStateFromAction(
+      configPlatformClient.reviewApproval?.({
+        pageId: editorState.value.schema.pageId,
+        operator: { id: "reviewer-1", name: "审核人" },
+        approved: true,
+        comment: "本地审核通过。",
+      }),
+      "审批已通过，可以发布",
+    );
+  } catch (error) {
+    releaseMessage.value = `审批通过失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function rejectCurrentApproval(): void {
+async function rejectCurrentApproval(): Promise<void> {
   if (!canReviewApproval.value) return;
-  setEditorWorkflowStateFromAction(
-    configPlatformClient.reviewApproval?.({
-      pageId: editorState.value.schema.pageId,
-      operator: { id: "reviewer-1", name: "审核人" },
-      approved: false,
-      comment: "本地审核驳回。",
-      reason: "审批驳回，请调整活动内容后重新提交。",
-    }),
-    "审批已驳回",
-  );
+  try {
+    await setEditorWorkflowStateFromAction(
+      configPlatformClient.reviewApproval?.({
+        pageId: editorState.value.schema.pageId,
+        operator: { id: "reviewer-1", name: "审核人" },
+        approved: false,
+        comment: "本地审核驳回。",
+        reason: "审批驳回，请调整活动内容后重新提交。",
+      }),
+      "审批已驳回",
+    );
+  } catch (error) {
+    releaseMessage.value = `审批驳回失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function saveSchema(): void {
-  const release = configPlatformClient.saveDraft(editorState.value.schema, { note: releaseNoteDraft.value });
-  releaseNoteDraft.value = "";
-  markSchemaPersisted(release.schema);
-  editorState.value = markSaved(createEditorState(release.schema, {
-    selectedNodeId: editorState.value.selectedNodeId,
-    mode: editorState.value.mode,
-    viewport: editorState.value.viewport,
-  }));
-  schemaDraft.value = JSON.stringify(release.schema, null, 2);
-  refreshReleases();
-  setReleaseMessage(release, "已保存草稿");
+async function saveSchema(): Promise<void> {
+  try {
+    const release = await Promise.resolve(configPlatformClient.saveDraft(editorState.value.schema, createReleaseMetadata()));
+    releaseNoteDraft.value = "";
+    markSchemaPersisted(release.schema);
+    editorState.value = markSaved(createEditorState(release.schema, {
+      selectedNodeId: editorState.value.selectedNodeId,
+      mode: editorState.value.mode,
+      viewport: editorState.value.viewport,
+    }));
+    schemaDraft.value = JSON.stringify(release.schema, null, 2);
+    await refreshReleases();
+    await refreshRuntimeSchema();
+    setReleaseMessage(release, "已保存草稿");
+  } catch (error) {
+    releaseMessage.value = `保存草稿失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function createPreviewRelease(): void {
+async function createPreviewRelease(): Promise<void> {
   if (!ensurePublishReady("生成预览")) return;
-  const release = configPlatformClient.createPreview(editorState.value.schema, { note: releaseNoteDraft.value });
-  releaseNoteDraft.value = "";
-  refreshReleases();
-  setReleaseMessage(release, "已生成预览");
-  openRuntime({ releaseId: release.id });
+  try {
+    const release = await Promise.resolve(configPlatformClient.createPreview(editorState.value.schema, createReleaseMetadata()));
+    releaseNoteDraft.value = "";
+    await refreshReleases();
+    setReleaseMessage(release, "已生成预览");
+    openRuntime({ releaseId: release.id });
+  } catch (error) {
+    releaseMessage.value = `生成预览失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function publishCurrentPage(): void {
+async function publishCurrentPage(): Promise<void> {
   if (!ensurePublishReady("发布")) return;
-  const release = configPlatformClient.publishPage(editorState.value.schema, { note: releaseNoteDraft.value });
-  releaseNoteDraft.value = "";
-  markSchemaPersisted(release.schema);
-  editorState.value = markSaved(createEditorState(release.schema, {
-    selectedNodeId: editorState.value.selectedNodeId,
-    mode: editorState.value.mode,
-    viewport: editorState.value.viewport,
-  }));
-  schemaDraft.value = JSON.stringify(release.schema, null, 2);
-  refreshReleases();
-  refreshEditorWorkflowState(release.schema.pageId);
-  setReleaseMessage(release, "已发布");
+  try {
+    const release = await Promise.resolve(configPlatformClient.publishPage(editorState.value.schema, createReleaseMetadata()));
+    releaseNoteDraft.value = "";
+    markSchemaPersisted(release.schema);
+    editorState.value = markSaved(createEditorState(release.schema, {
+      selectedNodeId: editorState.value.selectedNodeId,
+      mode: editorState.value.mode,
+      viewport: editorState.value.viewport,
+    }));
+    schemaDraft.value = JSON.stringify(release.schema, null, 2);
+    await refreshReleases();
+    await refreshEditorWorkflowState(release.schema.pageId);
+    await refreshRuntimeSchema();
+    setReleaseMessage(release, "已发布");
+  } catch (error) {
+    releaseMessage.value = `发布失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function loadRelease(release: LocalPageRelease): void {
-  editorState.value = createEditorState(release.schema, {
-    selectedNodeId: release.schema.nodes[0]?.id,
-    mode: editorState.value.mode,
-    viewport: editorState.value.viewport,
-  });
-  schemaDraft.value = JSON.stringify(release.schema, null, 2);
-  refreshReleases();
-  refreshEditorWorkflowState(release.schema.pageId);
-  selectedReleaseId.value = release.id;
-  setReleaseMessage(release, "已载入版本");
+async function loadRelease(release: EditorPageRelease): Promise<void> {
+  try {
+    editorState.value = createEditorState(release.schema, {
+      selectedNodeId: release.schema.nodes[0]?.id,
+      mode: editorState.value.mode,
+      viewport: editorState.value.viewport,
+    });
+    schemaDraft.value = JSON.stringify(release.schema, null, 2);
+    await refreshReleases();
+    await refreshEditorWorkflowState(release.schema.pageId);
+    await refreshRuntimeSchema();
+    selectedReleaseId.value = release.id;
+    setReleaseMessage(release, "已载入版本");
+  } catch (error) {
+    releaseMessage.value = `载入版本失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
-function loadReleaseById(releaseId: string): void {
-  const release = configPlatformClient.getRelease(releaseId);
-  if (release) loadRelease(release);
+async function loadReleaseById(releaseId: string): Promise<void> {
+  try {
+    const release = await Promise.resolve(configPlatformClient.getRelease(releaseId));
+    if (release) await loadRelease(release);
+  } catch (error) {
+    releaseMessage.value = `读取版本失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
 function openReleaseRuntime(releaseId: string): void {
@@ -3469,31 +3563,36 @@ function selectRelease(releaseId: string): void {
 }
 
 function loadSelectedRelease(): void {
-  if (selectedRelease.value) loadRelease(selectedRelease.value);
+  if (selectedRelease.value) void loadRelease(selectedRelease.value);
 }
 
-function rollbackPublishSelectedRelease(): void {
+async function rollbackPublishSelectedRelease(): Promise<void> {
   const release = selectedRelease.value;
   if (!release) return;
   if (!window.confirm(createLowcodeRollbackConfirmText(release))) return;
-  const rollbackRelease = configPlatformClient.publishPage({
-    ...release.schema,
-    status: "published",
-    publishMeta: {
-      ...release.schema.publishMeta,
-      environment: editorState.value.schema.publishMeta.environment,
-    },
-  }, { note: createLowcodeRollbackNote(release) });
-  markSchemaPersisted(rollbackRelease.schema);
-  editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
-    selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
-    mode: editorState.value.mode,
-    viewport: editorState.value.viewport,
-  }));
-  schemaDraft.value = JSON.stringify(rollbackRelease.schema, null, 2);
-  refreshReleases();
-  selectedReleaseId.value = rollbackRelease.id;
-  setReleaseMessage(rollbackRelease, `已回滚发布自 ${release.pageVersion}`);
+  try {
+    const rollbackRelease = await Promise.resolve(configPlatformClient.publishPage({
+      ...release.schema,
+      status: "published",
+      publishMeta: {
+        ...release.schema.publishMeta,
+        environment: editorState.value.schema.publishMeta.environment,
+      },
+    }, createReleaseMetadata(createLowcodeRollbackNote(release))));
+    markSchemaPersisted(rollbackRelease.schema);
+    editorState.value = markSaved(createEditorState(rollbackRelease.schema, {
+      selectedNodeId: rollbackRelease.schema.nodes[0]?.id,
+      mode: editorState.value.mode,
+      viewport: editorState.value.viewport,
+    }));
+    schemaDraft.value = JSON.stringify(rollbackRelease.schema, null, 2);
+    await refreshReleases();
+    await refreshRuntimeSchema();
+    selectedReleaseId.value = rollbackRelease.id;
+    setReleaseMessage(rollbackRelease, `已回滚发布自 ${release.pageVersion}`);
+  } catch (error) {
+    releaseMessage.value = `回滚发布失败：${formatConfigPlatformError(error)}`;
+  }
 }
 
 </script>

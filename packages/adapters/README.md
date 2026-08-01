@@ -44,6 +44,11 @@ Handlers receive the action config plus safe context containing the action ref, 
 
 `LowcodeConfigPlatformClient` describes the editor-facing draft, preview, publish, release-list, draft-query, and published-query API.
 
+`saveDraft(schema, metadata)`, `createPreview(schema, metadata)`, and `publishPage(schema, metadata)` accept optional release metadata. The current metadata shape is intentionally small and backwards-compatible:
+
+- `note`: operator-facing release note.
+- `operator`: current operator info for audit and platform-side permission checks.
+
 It also contains optional editor workflow methods for Java management-console integration:
 
 - `getEditorWorkflowState(pageId)`
@@ -79,6 +84,11 @@ It also contains optional editor draft snapshot methods for autosave recovery. T
 - `GET /api/lowcode/pages/{pageId}/editor-draft-snapshot`
 
 The Vue editor playground currently uses a localStorage implementation of the same client interface, so real Java integration should replace only the client instance rather than the editor workflow.
+
+The Vue editor playground can also switch to the HTTP implementation by setting:
+
+- `VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL`
+- `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` (optional)
 
 Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells should map `ConfigPlatformEditorWorkflowState.lock` into `createLowcodeEditorCollaborationState` and `ConfigPlatformEditorWorkflowState.approval` into `createLowcodeEditorApprovalState`, then merge those permission options with role/menu permissions.
 

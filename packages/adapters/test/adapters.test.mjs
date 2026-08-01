@@ -365,6 +365,7 @@ describe("@meumall/lowcode-adapters", () => {
       pageId: schema.pageId,
       pageVersion: schema.pageVersion,
       title: schema.title,
+      note: "首版草稿",
       createdAt: "2026-07-31T00:00:00.000Z",
       schema,
     };
@@ -410,7 +411,13 @@ describe("@meumall/lowcode-adapters", () => {
       headers: { authorization: "Bearer token" },
     });
 
-    assert.deepEqual(await client.saveDraft(schema), release);
+    assert.deepEqual(
+      await client.saveDraft(schema, {
+        note: "首版草稿",
+        operator: { id: "op_001", name: "运营 A" },
+      }),
+      release,
+    );
     assert.deepEqual(await client.listReleases("platform_page"), [release]);
     assert.deepEqual(await client.getDraft("platform_page"), schema);
     assert.deepEqual(await client.getEditorWorkflowState("platform_page"), workflow);
@@ -444,6 +451,8 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(calls[0].init.method, "POST");
     assert.equal(calls[0].init.headers.authorization, "Bearer token");
     assert.equal(JSON.parse(calls[0].init.body).pageStatus, "draft");
+    assert.equal(JSON.parse(calls[0].init.body).note, "首版草稿");
+    assert.equal(JSON.parse(calls[0].init.body).operator.id, "op_001");
     assert.equal(calls[1].input, "https://platform.example.com/api/lowcode/pages/releases?pageId=platform_page");
     assert.equal(calls[2].input, "https://platform.example.com/api/lowcode/pages/platform_page/draft");
     assert.equal(calls[3].input, "https://platform.example.com/api/lowcode/pages/platform_page/workflow");

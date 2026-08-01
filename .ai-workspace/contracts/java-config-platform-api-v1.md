@@ -68,6 +68,7 @@ Java 配置平台。
   "pageId": "summer-campaign-demo",
   "pageVersion": "draft-20260731T083000Z",
   "title": "夏日好物节",
+  "note": "首版草稿",
   "createdAt": "2026-07-31T08:30:00.000Z",
   "schema": {}
 }
@@ -79,6 +80,7 @@ Java 配置平台。
 - `kind`：`draft | preview | published`。
 - `pageId`：页面稳定 id。
 - `pageVersion`：页面版本号，建议由 Java 配置平台生成。
+- `note`：运营填写的版本备注，可选。
 - `schema`：完整 `LowcodePageSchema`。
 
 ### EditorDraftSnapshot
@@ -118,7 +120,12 @@ Content-Type: application/json
 ```json
 {
   "schema": {},
-  "pageStatus": "draft"
+  "pageStatus": "draft",
+  "note": "版本备注",
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  }
 }
 ```
 
@@ -129,6 +136,7 @@ Content-Type: application/json
 - Java 配置平台必须校验 Page Schema。
 - 保存草稿不影响线上 active published release。
 - 同一个 `pageId` 的最新草稿应能通过“查询草稿”接口拿到。
+- `note` 和 `operator` 均可选；如传入，Java 配置平台应写入版本备注和审计上下文。
 
 ### 生成预览
 
@@ -142,7 +150,12 @@ Content-Type: application/json
 ```json
 {
   "schema": {},
-  "pageStatus": "preview"
+  "pageStatus": "preview",
+  "note": "预览给业务确认",
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  }
 }
 ```
 
@@ -153,6 +166,7 @@ Content-Type: application/json
 - 预览 release 可被 H5 runtime 使用 `releaseId` 打开。
 - 预览 release 不影响线上 active published release。
 - 后续可增加 `expireAt` 和 `previewToken`。
+- `note` 和 `operator` 均可选；如传入，Java 配置平台应写入预览版本备注和审计上下文。
 
 ### 发布页面
 
@@ -166,7 +180,12 @@ Content-Type: application/json
 ```json
 {
   "schema": {},
-  "pageStatus": "published"
+  "pageStatus": "published",
+  "note": "活动上线",
+  "operator": {
+    "id": "op_001",
+    "name": "运营 A"
+  }
 }
 ```
 
@@ -177,6 +196,7 @@ Content-Type: application/json
 - Java 配置平台创建 published release，并将该 release 设置为 pageId 的 active published release。
 - 发布前必须校验 Page Schema、物料白名单、数据源白名单和 action 白名单。
 - 后续如接审批，可以让该接口创建待审批发布单，而不是直接切 active。
+- `note` 和 `operator` 均可选；如传入，Java 配置平台应写入发布备注和审计上下文。
 
 ### 查询 release 列表
 
@@ -194,6 +214,7 @@ GET /api/lowcode/pages/releases?pageId=summer-campaign-demo
     "pageId": "summer-campaign-demo",
     "pageVersion": "prod-20260731T083000Z",
     "title": "夏日好物节",
+    "note": "活动上线",
     "createdAt": "2026-07-31T08:30:00.000Z",
     "schema": {}
   }
