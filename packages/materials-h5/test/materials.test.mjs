@@ -5,6 +5,7 @@ import {
   ActivityHero,
   ActivityRuleModal,
   BasicAccordion,
+  BasicAlert,
   BasicButton,
   BasicCard,
   BasicCarousel,
@@ -121,6 +122,9 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicLink", "variant", ["plain", "bar", "card"]],
       ["BasicAccordion", "mode", ["single", "multiple"]],
       ["BasicAccordion", "icon", ["chevron", "plus", "none"]],
+      ["BasicAlert", "tone", ["info", "success", "warning", "danger", "neutral"]],
+      ["BasicAlert", "variant", ["soft", "outline", "solid"]],
+      ["BasicAlert", "actionAlign", ["left", "center", "right"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -165,6 +169,12 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAccordion", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAccordion", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicAccordion", "badgeRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicAlert", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicAlert", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicAlert", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicAlert", "badgeRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicAlert", "actionRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicAlert", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -246,6 +256,12 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicAccordion", "contentColor"],
       ["BasicAccordion", "badgeColor"],
       ["BasicAccordion", "iconColor"],
+      ["BasicAlert", "backgroundColor"],
+      ["BasicAlert", "titleColor"],
+      ["BasicAlert", "contentColor"],
+      ["BasicAlert", "accentColor"],
+      ["BasicAlert", "borderColor"],
+      ["BasicAlert", "actionBackgroundColor"],
       ["BasicLink", "backgroundColor"],
       ["BasicLink", "textColor"],
       ["BasicLink", "subtitleColor"],
@@ -450,6 +466,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicForm, ["MlcButton", "MlcText"]);
     functionSourceIncludes(BasicList, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicAccordion, ["MlcText", "MlcTag"]);
+    functionSourceIncludes(BasicAlert, ["MlcButton", "MlcText", "MlcTag"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -695,6 +712,56 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.itemPadding.setter, "number");
     assert.equal(material.manifest.propsSchema.badgeColor.setter, "color");
     assert.equal(material.manifest.events?.[0]?.name, "onItemToggle");
+  });
+
+  it("registers the basic alert material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicAlert");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础提示");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.tone, "info");
+    assert.equal(material.manifest.defaultProps.variant, "soft");
+    assert.equal(material.manifest.defaultProps.showIcon, true);
+    assert.equal(material.manifest.defaultProps.showAction, true);
+    assert.equal(material.manifest.propsSchema.content.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.tone.setter, "select");
+    assert.equal(material.manifest.propsSchema.variant.setter, "select");
+    assert.equal(material.manifest.propsSchema.showIcon.setter, "switch");
+    assert.equal(material.manifest.propsSchema.actionAlign.setter, "select");
+    assert.equal(material.manifest.propsSchema.accentColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onActionClick");
+  });
+
+  it("renders basic alert props and action clicks in React H5", () => {
+    let clicks = 0;
+    const element = BasicAlert({
+      node: { id: "alert_1", componentName: "BasicAlert", props: {} },
+      props: {
+        title: "提示测试",
+        content: "这是一条测试提示",
+        badgeText: "Info",
+        actionText: "知道了",
+        tone: "success",
+        variant: "solid",
+        onActionClick: () => {
+          clicks += 1;
+        },
+      },
+    });
+
+    assert.equal(element.props.className.includes("mlc-basic-alert--success"), true);
+    assert.equal(element.props.className.includes("mlc-basic-alert--solid"), true);
+    const card = element.props.children;
+    assert.equal(card.props.role, "note");
+    const contentWrapper = card.props.children[1];
+    assert.ok(contentWrapper);
+    const action = contentWrapper.props.children[2];
+    assert.equal(action.props.className, "mlc-basic-alert__action");
+    const button = action.props.children;
+    button.props.onClick();
+    assert.equal(clicks, 1);
   });
 
   it("renders section container layout props in React H5", () => {

@@ -159,9 +159,12 @@ type BasicModalPlacement = "center" | "bottom";
 type BasicListMarker = "dot" | "number" | "badge" | "none";
 type BasicAccordionMode = "single" | "multiple";
 type BasicAccordionIcon = "chevron" | "plus" | "none";
+type BasicAlertTone = "info" | "success" | "warning" | "danger" | "neutral";
+type BasicAlertVariant = "soft" | "outline" | "solid";
 type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 type BasicAccordionToggleHandler = (payload: { item: Record<string, unknown>; index: number; open: boolean }) => void;
+type BasicAlertActionHandler = () => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -258,6 +261,28 @@ const BASIC_ACCORDION_ICON_OPTIONS = [
   { label: "加号", value: "plus" },
   { label: "隐藏", value: "none" },
 ];
+
+const BASIC_ALERT_TONE_OPTIONS = [
+  { label: "信息", value: "info" },
+  { label: "成功", value: "success" },
+  { label: "警告", value: "warning" },
+  { label: "危险", value: "danger" },
+  { label: "中性", value: "neutral" },
+];
+
+const BASIC_ALERT_VARIANT_OPTIONS = [
+  { label: "柔和", value: "soft" },
+  { label: "描边", value: "outline" },
+  { label: "实心", value: "solid" },
+];
+
+const BASIC_ALERT_TONE_PALETTES = {
+  info: { icon: "i", accent: "#2563eb", background: "#eff6ff", border: "#bfdbfe", title: "#1e3a8a", content: "#1d4ed8" },
+  success: { icon: "✓", accent: "#0f766e", background: "#f0fdfa", border: "#99f6e4", title: "#134e4a", content: "#0f766e" },
+  warning: { icon: "!", accent: "#ea580c", background: "#fff7ed", border: "#fed7aa", title: "#9a3412", content: "#c2410c" },
+  danger: { icon: "!", accent: "#dc2626", background: "#fef2f2", border: "#fecaca", title: "#991b1b", content: "#b91c1c" },
+  neutral: { icon: "•", accent: "#64748b", background: "#f8fafc", border: "#e2e8f0", title: "#111827", content: "#64748b" },
+} satisfies Record<BasicAlertTone, { icon: string; accent: string; background: string; border: string; title: string; content: string }>;
 
 const NUMBER_PIXEL_SIZE_META = { min: 0, max: 80, step: 1, unit: "px" };
 const NUMBER_RADIUS_META = { min: 0, max: 48, step: 1, unit: "px" };
@@ -1065,6 +1090,147 @@ export const BasicAccordion = defineComponent({
                 );
               }),
             ),
+          ],
+        ),
+      );
+    };
+  },
+});
+
+export const BasicAlert = defineComponent({
+  name: "BasicAlert",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const tone = option<BasicAlertTone>(runtimeProps.tone, ["info", "success", "warning", "danger", "neutral"], "info");
+      const variant = option<BasicAlertVariant>(runtimeProps.variant, ["soft", "outline", "solid"], "soft");
+      const palette = BASIC_ALERT_TONE_PALETTES[tone];
+      const accentColor = text(runtimeProps.accentColor, palette.accent);
+      const solid = variant === "solid";
+      const title = text(runtimeProps.title, "基础提示");
+      const content = text(runtimeProps.content, "用于配置页面提示、注意事项或反馈说明。");
+      const badgeText = text(runtimeProps.badgeText);
+      const actionText = text(runtimeProps.actionText);
+      const actionAlign = option<BasicInlineAlign>(runtimeProps.actionAlign, ["left", "center", "right"], "left");
+      const showAction = boolean(runtimeProps.showAction, Boolean(actionText));
+      const onActionClick = typeof runtimeProps.onActionClick === "function" ? runtimeProps.onActionClick as BasicAlertActionHandler : undefined;
+      const backgroundColor = text(runtimeProps.backgroundColor, solid ? accentColor : palette.background);
+      const borderColor = text(runtimeProps.borderColor, variant === "soft" ? palette.border : accentColor);
+      const titleColor = text(runtimeProps.titleColor, solid ? "#ffffff" : palette.title);
+      const contentColor = text(runtimeProps.contentColor, solid ? "rgba(255, 255, 255, 0.88)" : palette.content);
+
+      return h(
+        "section",
+        {
+          class: `mlc-material mlc-basic-alert mlc-basic-alert--${tone} mlc-basic-alert--${variant}`,
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 12px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "#f3f4f6"),
+          } satisfies CSSProperties,
+        },
+        h(
+          "div",
+          {
+            class: "mlc-basic-alert__card",
+            role: "note",
+            style: {
+              display: "grid",
+              gridTemplateColumns: boolean(runtimeProps.showIcon, true) ? "auto 1fr" : "1fr",
+              gap: `${number(runtimeProps.gap, 10)}px`,
+              alignItems: "flex-start",
+              padding: `${number(runtimeProps.padding, 14)}px`,
+              borderRadius: `${number(runtimeProps.radius, 12)}px`,
+              border: `${number(runtimeProps.borderWidth, 1)}px solid ${borderColor}`,
+              color: titleColor,
+              background: backgroundColor,
+              boxShadow: boolean(runtimeProps.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
+            } satisfies CSSProperties,
+          },
+          [
+            boolean(runtimeProps.showIcon, true)
+              ? h(
+                  "span",
+                  {
+                    class: "mlc-basic-alert__icon",
+                    "aria-hidden": "true",
+                    style: {
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: `${number(runtimeProps.iconSize, 24)}px`,
+                      height: `${number(runtimeProps.iconSize, 24)}px`,
+                      borderRadius: "999px",
+                      color: text(runtimeProps.iconColor, solid ? accentColor : "#ffffff"),
+                      background: text(runtimeProps.iconBackgroundColor, solid ? "#ffffff" : accentColor),
+                      fontSize: `${Math.max(12, Math.round(number(runtimeProps.iconSize, 24) * 0.58))}px`,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                    } satisfies CSSProperties,
+                  },
+                  text(runtimeProps.iconText, palette.icon),
+                )
+              : null,
+            h("div", { class: "mlc-basic-alert__content", style: { display: "grid", gap: "8px", minWidth: 0 } }, [
+              h("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" } }, [
+                h(
+                  MlcText,
+                  { as: "strong", size: number(runtimeProps.titleSize, 15), weight: 900, lineHeight: 1.45, style: { color: titleColor } },
+                  () => title,
+                ),
+                badgeText
+                  ? h(
+                      MlcTag,
+                      {
+                        tone: solid ? "inverse" : "accent",
+                        radius: number(runtimeProps.badgeRadius, 999),
+                        class: "mlc-basic-alert__badge",
+                        style: {
+                          color: text(runtimeProps.badgeColor, accentColor),
+                          background: text(runtimeProps.badgeBackgroundColor, solid ? "#ffffff" : "rgba(255, 255, 255, 0.76)"),
+                        },
+                      },
+                      () => badgeText,
+                    )
+                  : null,
+              ]),
+              content
+                ? h(
+                    MlcText,
+                    { as: "p", size: number(runtimeProps.contentSize, 13), lineHeight: 1.65, style: { color: contentColor, whiteSpace: "pre-line" } },
+                    () => content,
+                  )
+                : null,
+              showAction && actionText
+                ? h(
+                    "div",
+                    {
+                      class: "mlc-basic-alert__action",
+                      style: {
+                        display: "flex",
+                        justifyContent: actionAlign === "right" ? "flex-end" : actionAlign === "center" ? "center" : "flex-start",
+                      } satisfies CSSProperties,
+                    },
+                    h(
+                      MlcButton,
+                      {
+                        size: "sm",
+                        variant: solid ? "outline" : "solid",
+                        radius: number(runtimeProps.actionRadius, 999),
+                        style: {
+                          borderColor: solid ? "#ffffff" : accentColor,
+                          color: solid ? "#ffffff" : text(runtimeProps.actionTextColor, "#ffffff"),
+                          background: solid ? "transparent" : text(runtimeProps.actionBackgroundColor, accentColor),
+                        },
+                        onClick: () => {
+                          onActionClick?.();
+                        },
+                      },
+                      () => actionText,
+                    ),
+                  )
+                : null,
+            ]),
           ],
         ),
       );
@@ -4892,6 +5058,87 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
       },
       events: [{ name: "onItemToggle", title: "切换折叠项" }],
+    }),
+  },
+  {
+    component: BasicAlert,
+    manifest: createMaterialManifest({
+      componentName: "BasicAlert",
+      materialVersion: "0.1.0",
+      title: "基础提示",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        title: "基础提示",
+        content: "用于配置页面提示、注意事项或反馈说明。",
+        badgeText: "提示",
+        actionText: "查看详情",
+        tone: "info",
+        variant: "soft",
+        showIcon: true,
+        showAction: true,
+        iconText: "i",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#eff6ff",
+        titleColor: "#1e3a8a",
+        contentColor: "#1d4ed8",
+        accentColor: "#2563eb",
+        borderColor: "#bfdbfe",
+        iconColor: "#ffffff",
+        iconBackgroundColor: "#2563eb",
+        badgeColor: "#2563eb",
+        badgeBackgroundColor: "rgba(255, 255, 255, 0.76)",
+        actionBackgroundColor: "#2563eb",
+        actionTextColor: "#ffffff",
+        borderWidth: 1,
+        radius: 12,
+        badgeRadius: 999,
+        actionRadius: 999,
+        paddingY: 12,
+        padding: 14,
+        gap: 10,
+        iconSize: 24,
+        titleSize: 15,
+        contentSize: 13,
+        actionAlign: "left",
+        shadow: false,
+      },
+      propsSchema: {
+        title: { label: "标题", type: "string", setter: "input", defaultValue: "基础提示" },
+        content: { label: "正文", type: "string", setter: "textarea", defaultValue: "用于配置页面提示、注意事项或反馈说明。" },
+        badgeText: { label: "角标文案", type: "string", setter: "input", defaultValue: "提示" },
+        actionText: { label: "按钮文案", type: "string", setter: "input", defaultValue: "查看详情" },
+        tone: { label: "语气", type: "string", setter: "select", defaultValue: "info", options: BASIC_ALERT_TONE_OPTIONS },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "soft", options: BASIC_ALERT_VARIANT_OPTIONS },
+        showIcon: { label: "显示图标", type: "boolean", setter: "switch", defaultValue: true },
+        showAction: { label: "显示按钮", type: "boolean", setter: "switch", defaultValue: true },
+        iconText: { label: "图标文案", type: "string", setter: "input", defaultValue: "i" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "#f3f4f6", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "提示背景", type: "string", setter: "color", defaultValue: "#eff6ff", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#1e3a8a", ...COLOR_SWATCHES_META },
+        contentColor: { label: "正文色", type: "string", setter: "color", defaultValue: "#1d4ed8", ...COLOR_SWATCHES_META },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#2563eb", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#bfdbfe", ...COLOR_SWATCHES_META },
+        iconColor: { label: "图标文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        iconBackgroundColor: { label: "图标背景", type: "string", setter: "color", defaultValue: "#2563eb", ...COLOR_SWATCHES_META },
+        badgeColor: { label: "角标文字色", type: "string", setter: "color", defaultValue: "#2563eb", ...COLOR_SWATCHES_META },
+        badgeBackgroundColor: { label: "角标背景", type: "string", setter: "color", defaultValue: "rgba(255, 255, 255, 0.76)", ...COLOR_SWATCHES_META },
+        actionBackgroundColor: { label: "按钮背景", type: "string", setter: "color", defaultValue: "#2563eb", ...COLOR_SWATCHES_META },
+        actionTextColor: { label: "按钮文字色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        badgeRadius: { label: "角标圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        actionRadius: { label: "按钮圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "内容留白", type: "number", setter: "number", defaultValue: 14, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        iconSize: { label: "图标尺寸", type: "number", setter: "number", defaultValue: 24, ...NUMBER_FONT_SIZE_META },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 15, ...NUMBER_FONT_SIZE_META },
+        contentSize: { label: "正文字号", type: "number", setter: "number", defaultValue: 13, ...NUMBER_FONT_SIZE_META },
+        actionAlign: { label: "按钮对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+      },
+      events: [{ name: "onActionClick", title: "点击提示按钮" }],
     }),
   },
   {
