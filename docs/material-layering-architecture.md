@@ -116,6 +116,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `SectionTitle`
 - `ImageBanner`
 - `BasicButton`
+- `BasicLink`
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
@@ -160,6 +161,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicForm` 是通用基础表单容器物料，负责标题、说明、子节点字段区、提交按钮、提交成功态和 `onSubmit` 安全事件；它复用 Page Schema `children` 组合现有基础输入物料，不自动采集子字段值，不承载校验规则、验证码、登录、风控、远程提交、服务端保存或表单布局 DSL。这些能力应由后续表单协议、action、业务物料或宿主服务扩展。
 
 `BasicList` 是通用静态内容列表物料，负责标题、说明、列表项标题、说明、标记、右侧辅助信息、间距、边框、圆角、颜色和 `onItemClick` 安全事件；它不承载远程数据源、分页、搜索、排序、FAQ 展开折叠、时间线协议、商品/优惠券/门店达人等业务模型或个性化推荐语义。这些能力应由后续数据源协议、专项内容物料、业务物料或宿主服务扩展。
+
+`BasicLink` 是通用轻量链接入口物料，负责链接文案、辅助说明、前置标签、右侧箭头、普通 H5 链接、禁用态、圆角、边框、颜色和 `onClick` 安全事件；它不承载业务路由白名单、App bridge、登录鉴权、埋点平台、风控、权限审批、短链生成或远程链接校验。这些能力应由宿主 action handler、Java/BFF、管理台权限或后续专项协议扩展。
 
 `NoticeBar` 是通用公告条展示物料，负责图标文案、标签、正文、背景、边框、圆角和留白配置；它不承载远程公告流、跑马灯、关闭记忆、曝光统计、权限审批或活动规则语义，这些能力应由后续数据源、业务物料、action 或宿主服务扩展。
 
@@ -317,6 +320,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `SectionTitle`
 - `ImageBanner`
 - `BasicButton`
+- `BasicLink`
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`

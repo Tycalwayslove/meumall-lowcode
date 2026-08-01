@@ -11,6 +11,7 @@ import {
   BasicForm,
   BasicImage,
   BasicInput,
+  BasicLink,
   BasicList,
   BasicModal,
   BasicPrice,
@@ -116,6 +117,7 @@ describe("MeuMall H5 material manifests", () => {
     const enumProps = [
       ["BasicButton", "variant", ["solid", "outline", "ghost"]],
       ["BasicButton", "size", ["sm", "md", "lg"]],
+      ["BasicLink", "variant", ["plain", "bar", "card"]],
       ["BasicInput", "type", ["text", "tel", "email", "number"]],
       ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
       ["BasicText", "align", ["left", "center", "right"]],
@@ -156,6 +158,11 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicList", "itemPadding", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicList", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
       ["BasicList", "markerRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicLink", "padding", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicLink", "gap", { min: 0, max: 80, step: 1, unit: "px" }],
+      ["BasicLink", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicLink", "prefixRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicLink", "fontSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["BasicButton", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
@@ -225,6 +232,11 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicList", "itemBackgroundColor"],
       ["BasicList", "itemTitleColor"],
       ["BasicList", "markerColor"],
+      ["BasicLink", "backgroundColor"],
+      ["BasicLink", "textColor"],
+      ["BasicLink", "subtitleColor"],
+      ["BasicLink", "prefixColor"],
+      ["BasicLink", "arrowColor"],
       ["BasicButton", "backgroundColor"],
       ["BasicButton", "wrapperBackgroundColor"],
       ["BasicInput", "borderColor"],
@@ -400,6 +412,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(TabsBlock, ["MlcTabs", "MlcTag", "MlcText"]);
     functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
     functionSourceIncludes(BasicButton, ["MlcButton"]);
+    functionSourceIncludes(BasicLink, ["MlcText", "MlcTag"]);
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
     functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
@@ -734,6 +747,48 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.block.setter, "switch");
     assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
     assert.equal(material.manifest.events?.[0]?.name, "onClick");
+  });
+
+  it("registers the basic link material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicLink");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础链接");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.text, "查看详情");
+    assert.equal(material.manifest.defaultProps.variant, "bar");
+    assert.equal(material.manifest.propsSchema.linkUrl.setter, "input");
+    assert.equal(material.manifest.propsSchema.targetBlank.setter, "switch");
+    assert.equal(material.manifest.propsSchema.variant.setter, "select");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onClick");
+  });
+
+  it("renders basic link props and click payloads in React H5", () => {
+    const clicks = [];
+    const element = BasicLink({
+      node: { id: "link_1", componentName: "BasicLink", props: {} },
+      props: {
+        text: "链接测试",
+        subtitle: "辅助说明",
+        prefixText: "入口",
+        linkUrl: "/test-link",
+        variant: "card",
+        onClick: (payload) => clicks.push(payload),
+      },
+    });
+
+    assert.equal(element.props.className, "mlc-material mlc-basic-link");
+    const link = element.props.children;
+    assert.equal(link.type, "a");
+    assert.equal(link.props.href, "/test-link");
+    assert.equal(link.props.className.includes("mlc-basic-link__inner--card"), true);
+    assert.equal(link.props.children[0].type.name, "MlcTag");
+
+    link.props.onClick({ preventDefault: () => clicks.push({ prevented: true }) });
+    assert.equal(clicks.length, 1);
+    assert.deepEqual(clicks[0], { linkUrl: "/test-link" });
   });
 
   it("registers the basic input material", () => {

@@ -855,7 +855,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
-  log("检查基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框通用物料");
+  log("检查基础按钮、基础链接、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框通用物料");
   const nodeCountBeforeBasicButton = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础按钮");
@@ -872,6 +872,17 @@ async function assertEditorWorkflow(page) {
   await page.clickNumberStepperByLabel("圆角", "increase");
   await page.clickByText(".toolbar button", "源码");
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicButton\"') && item.value.includes('\"variant\": \"ghost\"') && item.value.includes('\"backgroundColor\": \"#2563eb\"') && item.value.includes('\"radius\": 9'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  const nodeCountBeforeBasicLink = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础链接");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础链接')");
+  await page.clickByText(".command-palette-item", "添加物料：基础链接");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicLink)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-link a[href=\"#\"]') && document.body.innerText.includes('查看详情')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicLink\"') && item.value.includes('\"linkUrl\": \"#\"') && item.value.includes('\"variant\": \"bar\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicInput = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -947,7 +958,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicCheckbox\"') && item.value.includes('\"defaultChecked\": false') && item.value.includes('\"checkedColor\": \"#0f766e\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
+  log("通过：基础按钮、基础链接、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查基础文本和分割线通用物料");
   const nodeCountBeforeBasicText = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1558,6 +1569,7 @@ async function main() {
       { label: "公告条物料存在", expression: "document.body.innerText.includes('公告条')" },
       { label: "富文本物料存在", expression: "document.body.innerText.includes('富文本')" },
       { label: "基础按钮物料存在", expression: "document.body.innerText.includes('基础按钮')" },
+      { label: "基础链接物料存在", expression: "document.body.innerText.includes('基础链接')" },
       { label: "基础输入框物料存在", expression: "document.body.innerText.includes('基础输入框')" },
       { label: "基础多行输入物料存在", expression: "document.body.innerText.includes('基础多行输入')" },
       { label: "基础选择框物料存在", expression: "document.body.innerText.includes('基础选择框')" },
@@ -1588,6 +1600,7 @@ async function main() {
       { label: "默认大促模板包含增强公告条", expression: "document.querySelector('.phone-frame .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "默认大促模板包含增强富文本", expression: "document.querySelector('.phone-frame .mlc-rich-text') && document.body.innerText.includes('活动说明')" },
       { label: "默认大促模板包含基础按钮", expression: "document.body.innerText.includes('基础按钮示例')" },
+      { label: "默认大促模板包含基础链接", expression: "document.querySelector('.phone-frame [data-lowcode-node-id=\"summer_basic_link\"] .mlc-basic-link a[href=\"/activity/summer-guide\"]') && document.body.innerText.includes('查看基础链接示例')" },
       { label: "默认大促模板包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && Array.from(document.querySelectorAll('.phone-frame input')).some((item) => item.getAttribute('placeholder') === '请输入想看的活动品类')" },
       { label: "默认大促模板包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && Array.from(document.querySelectorAll('.phone-frame textarea')).some((item) => item.getAttribute('placeholder') === '请输入活动备注或补充说明')" },
       { label: "默认大促模板包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('.phone-frame select')).some((item) => item.querySelector('option[value=\"women\"]') && item.querySelector('option[value=\"accessories\"]'))" },
@@ -1648,6 +1661,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含增强公告条", expression: "document.querySelector('[data-lowcode-page] .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "编辑器内置 runtime 包含增强富文本", expression: "document.querySelector('[data-lowcode-page] .mlc-rich-text') && document.body.innerText.includes('活动说明')" },
       { label: "编辑器内置 runtime 包含基础按钮", expression: "document.body.innerText.includes('基础按钮示例')" },
+      { label: "编辑器内置 runtime 包含基础链接", expression: "document.querySelector('[data-lowcode-node-id=\"summer_basic_link\"] .mlc-basic-link a[href=\"/activity/summer-guide\"]') && document.body.innerText.includes('查看基础链接示例')" },
       { label: "编辑器内置 runtime 包含基础输入框", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
       { label: "编辑器内置 runtime 包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "编辑器内置 runtime 包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
@@ -1692,6 +1706,7 @@ async function main() {
       { label: "React H5 增强富文本已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-rich-text') && document.body.innerText.includes('运营说明')" },
       { label: "React H5 增强商品列表已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-product-list') && document.body.innerText.includes('轻盈通勤手提包')" },
       { label: "React H5 基础按钮已渲染", expression: "document.body.innerText.includes('基础按钮示例')" },
+      { label: "React H5 基础链接已渲染", expression: "document.querySelector('[data-lowcode-node-id=\"node_basic_link\"] .mlc-basic-link a[href=\"/activity/react-h5-guide\"]') && document.body.innerText.includes('React H5 基础链接示例')" },
       { label: "React H5 基础输入框已渲染", expression: "document.body.innerText.includes('基础输入框示例') && document.querySelector('[data-lowcode-page] input[placeholder=\"请输入想看的活动品类\"]')" },
       { label: "React H5 基础多行输入已渲染", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "React H5 基础选择框已渲染", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
@@ -1780,6 +1795,7 @@ async function main() {
       { label: "React H5 pageId 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
       { label: "React H5 pageId 渲染增强公告条", expression: "document.querySelector('[data-lowcode-page] .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
+      { label: "React H5 pageId 渲染基础链接", expression: "document.querySelector('.mlc-basic-link') && document.body.innerText.includes('React H5 基础链接示例')" },
       { label: "React H5 pageId 渲染基础列表", expression: "document.querySelector('.mlc-basic-list') && document.body.innerText.includes('React H5 基础列表示例')" },
       { label: "React H5 pageId 渲染基础视频", expression: "document.querySelector('.mlc-basic-video video') && document.body.innerText.includes('React H5 视频示例')" },
     ]);

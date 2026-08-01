@@ -97,6 +97,7 @@ export function ImageBanner({ props }: MaterialProps) {
 
 type BasicButtonVariant = "solid" | "outline" | "ghost";
 type BasicButtonSize = "sm" | "md" | "lg";
+type BasicLinkVariant = "plain" | "bar" | "card";
 type BasicInputType = "text" | "tel" | "email" | "number";
 type BasicTextAs = "span" | "p" | "strong" | "h1" | "h2" | "h3";
 type BasicTextAlign = "left" | "center" | "right";
@@ -107,6 +108,7 @@ type BasicInlineAlign = "left" | "center" | "right";
 type BasicCarouselIndicator = "dots" | "counter" | "none";
 type BasicModalPlacement = "center" | "bottom";
 type BasicListMarker = "dot" | "number" | "badge" | "none";
+type BasicLinkClickHandler = (payload: { linkUrl: string }) => void;
 type BasicListItemClickHandler = (payload: { item: Record<string, unknown>; index: number }) => void;
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
@@ -119,6 +121,12 @@ const BASIC_BUTTON_SIZE_OPTIONS = [
   { label: "小", value: "sm" },
   { label: "中", value: "md" },
   { label: "大", value: "lg" },
+];
+
+const BASIC_LINK_VARIANT_OPTIONS = [
+  { label: "文本", value: "plain" },
+  { label: "横条", value: "bar" },
+  { label: "卡片", value: "card" },
 ];
 
 const BASIC_MODAL_PLACEMENT_OPTIONS = [
@@ -278,6 +286,98 @@ export function BasicButton({ props }: MaterialProps) {
       >
         {text(props.text, "基础按钮")}
       </MlcButton>
+    </section>
+  );
+}
+
+export function BasicLink({ props }: MaterialProps) {
+  const variant = option<BasicLinkVariant>(props.variant, ["plain", "bar", "card"], "bar");
+  const linkUrl = text(props.linkUrl);
+  const subtitle = text(props.subtitle);
+  const prefixText = text(props.prefixText);
+  const disabled = boolean(props.disabled, false);
+  const borderWidth = number(props.borderWidth, variant === "plain" ? 0 : 1);
+  const onClick = typeof props.onClick === "function" ? props.onClick as BasicLinkClickHandler : undefined;
+  const showSurface = variant !== "plain";
+
+  return (
+    <section
+      className="mlc-material mlc-basic-link"
+      style={{
+        padding: `${number(props.paddingY, 10)}px 16px`,
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      <a
+        className={`mlc-basic-link__inner mlc-basic-link__inner--${variant}`}
+        href={!disabled && linkUrl ? linkUrl : undefined}
+        target={boolean(props.targetBlank, false) ? "_blank" : undefined}
+        rel={boolean(props.targetBlank, false) ? "noreferrer" : undefined}
+        aria-disabled={disabled ? "true" : undefined}
+        tabIndex={disabled ? -1 : undefined}
+        onClick={(event) => {
+          if (disabled) {
+            event.preventDefault();
+            return;
+          }
+          onClick?.({ linkUrl });
+          if (!linkUrl) event.preventDefault();
+        }}
+        style={{
+          display: "grid",
+          gridTemplateColumns: prefixText ? "auto 1fr auto" : "1fr auto",
+          alignItems: "center",
+          gap: number(props.gap, 10),
+          minHeight: variant === "plain" ? undefined : 44,
+          padding: showSurface ? number(props.padding, 12) : 0,
+          color: text(props.textColor, disabled ? "#94a3b8" : "#111827"),
+          textDecoration: boolean(props.underline, variant === "plain") ? "underline" : "none",
+          border: showSurface && borderWidth > 0 ? `${borderWidth}px solid ${text(props.borderColor, "#e5e7eb")}` : undefined,
+          borderRadius: showSurface ? number(props.radius, variant === "card" ? 12 : 10) : undefined,
+          background: showSurface ? text(props.backgroundColor, "#ffffff") : "transparent",
+          boxShadow: variant === "card" && boolean(props.shadow) ? "0 10px 24px rgba(15, 23, 42, 0.08)" : undefined,
+          opacity: disabled ? 0.58 : 1,
+          cursor: disabled ? "not-allowed" : "pointer",
+        }}
+      >
+        {prefixText ? (
+          <MlcTag
+            tone="accent"
+            radius={number(props.prefixRadius, 999)}
+            className="mlc-basic-link__prefix"
+            style={{
+              color: text(props.prefixColor, "#0f766e"),
+              background: text(props.prefixBackgroundColor, "rgba(15, 118, 110, 0.1)"),
+            }}
+          >
+            {prefixText}
+          </MlcTag>
+        ) : null}
+        <span className="mlc-basic-link__content" style={{ display: "grid", gap: subtitle ? 3 : 0, minWidth: 0 }}>
+          <MlcText as="strong" size={number(props.fontSize, 14)} weight={number(props.fontWeight, 800)} lineHeight={1.45} style={{ color: text(props.textColor, disabled ? "#94a3b8" : "#111827") }}>
+            {text(props.text, "基础链接")}
+          </MlcText>
+          {subtitle ? (
+            <MlcText as="span" size={12} lineHeight={1.45} style={{ color: text(props.subtitleColor, "#64748b") }}>
+              {subtitle}
+            </MlcText>
+          ) : null}
+        </span>
+        {boolean(props.showArrow, true) ? (
+          <span
+            className="mlc-basic-link__arrow"
+            aria-hidden="true"
+            style={{
+              color: text(props.arrowColor, "#94a3b8"),
+              fontSize: number(props.arrowSize, 20),
+              fontWeight: 900,
+              lineHeight: 1,
+            }}
+          >
+            {text(props.arrowText, "›")}
+          </span>
+        ) : null}
+      </a>
     </section>
   );
 }
@@ -3196,6 +3296,77 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: BasicLink,
+    manifest: createMaterialManifest({
+      componentName: "BasicLink",
+      materialVersion: "0.1.0",
+      title: "基础链接",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "查看详情",
+        subtitle: "适合配置规则、说明或专题入口。",
+        prefixText: "入口",
+        linkUrl: "#",
+        targetBlank: false,
+        showArrow: true,
+        arrowText: "›",
+        variant: "bar",
+        disabled: false,
+        underline: false,
+        wrapperBackgroundColor: "transparent",
+        backgroundColor: "#ffffff",
+        textColor: "#111827",
+        subtitleColor: "#64748b",
+        prefixColor: "#0f766e",
+        prefixBackgroundColor: "rgba(15, 118, 110, 0.1)",
+        arrowColor: "#94a3b8",
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        radius: 10,
+        prefixRadius: 999,
+        paddingY: 10,
+        padding: 12,
+        gap: 10,
+        fontSize: 14,
+        fontWeight: 800,
+        arrowSize: 20,
+        shadow: false,
+      },
+      propsSchema: {
+        text: { label: "链接文案", type: "string", setter: "input", required: true, defaultValue: "查看详情" },
+        subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "适合配置规则、说明或专题入口。" },
+        prefixText: { label: "前置标签", type: "string", setter: "input", defaultValue: "入口" },
+        linkUrl: { label: "H5 链接", type: "string", setter: "input", defaultValue: "#" },
+        targetBlank: { label: "新窗口打开", type: "boolean", setter: "switch", defaultValue: false },
+        showArrow: { label: "显示箭头", type: "boolean", setter: "switch", defaultValue: true },
+        arrowText: { label: "箭头文案", type: "string", setter: "input", defaultValue: "›" },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "bar", options: BASIC_LINK_VARIANT_OPTIONS },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        underline: { label: "下划线", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "入口背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        textColor: { label: "文案色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        prefixColor: { label: "标签文字色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        prefixBackgroundColor: { label: "标签背景色", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)", ...COLOR_SWATCHES_META },
+        arrowColor: { label: "箭头色", type: "string", setter: "color", defaultValue: "#94a3b8", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 1, ...NUMBER_BORDER_WIDTH_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10, ...NUMBER_RADIUS_META },
+        prefixRadius: { label: "标签圆角", type: "number", setter: "number", defaultValue: 999, ...NUMBER_PILL_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        padding: { label: "入口内边距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        gap: { label: "内容间距", type: "number", setter: "number", defaultValue: 10, ...NUMBER_PIXEL_SIZE_META },
+        fontSize: { label: "文案字号", type: "number", setter: "number", defaultValue: 14, ...NUMBER_FONT_SIZE_META },
+        fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 800, ...NUMBER_FONT_WEIGHT_META },
+        arrowSize: { label: "箭头字号", type: "number", setter: "number", defaultValue: 20, ...NUMBER_FONT_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+      },
+      events: [{ name: "onClick", title: "点击链接" }],
     }),
   },
   {
