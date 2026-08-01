@@ -202,7 +202,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `本次提交` | 新增 BasicModal 基础弹窗通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
+| 2026-08-01 | `00b83cc` | 新增 BasicModal 基础弹窗通用物料，React/Vue H5 双端 manifest 对齐并接入编辑器和 React H5 runtime smoke。 |
 | 2026-08-01 | `4732666` | 新增 Vue3 编辑器本地审计日志面板，顶部宿主审计入口可查看并关闭近期操作记录。 |
 | 2026-08-01 | `cca099e` | 新增 editor audit trail API，并在 Vue3 编辑器状态面板展示最近操作。 |
 | 2026-08-01 | `edd43cc` | 新增 editor material insert target API，并统一 Vue3 编辑器物料插入目标提示、只读禁用原因和 smoke 覆盖。 |
