@@ -104,6 +104,82 @@ export interface LowcodeEditorWorkspaceStat {
   tone: LowcodeEditorWorkspaceStatTone;
 }
 
+export type LowcodeEditorAuditEventType =
+  | "node.operation"
+  | "material.insert"
+  | "template.apply"
+  | "resource.apply"
+  | "schema.transfer"
+  | "release.action"
+  | "approval.action"
+  | "runtime.open"
+  | "action.execute"
+  | "system.message"
+  | (string & {});
+
+export type LowcodeEditorAuditEventResult = "success" | "info" | "warning" | "error";
+
+export interface LowcodeEditorAuditActor {
+  id?: string;
+  name: string;
+  role?: string;
+}
+
+export interface LowcodeEditorAuditTarget {
+  id?: string;
+  type?: string;
+  title?: string;
+}
+
+export interface LowcodeEditorAuditEvent {
+  id: string;
+  type: LowcodeEditorAuditEventType;
+  title: string;
+  description?: string;
+  result: LowcodeEditorAuditEventResult;
+  at: string;
+  actor?: LowcodeEditorAuditActor;
+  target?: LowcodeEditorAuditTarget;
+  metadata?: JsonObject;
+}
+
+export interface CreateLowcodeEditorAuditEventInput {
+  id?: string;
+  type: LowcodeEditorAuditEventType;
+  title: string;
+  description?: string;
+  result?: LowcodeEditorAuditEventResult;
+  at?: string | Date;
+  actor?: LowcodeEditorAuditActor;
+  target?: LowcodeEditorAuditTarget;
+  metadata?: JsonObject;
+}
+
+export interface CreateLowcodeEditorAuditEventOptions {
+  now?: string | Date;
+  sequence?: number;
+}
+
+export interface CreateLowcodeEditorAuditTrailOptions extends CreateLowcodeEditorAuditEventOptions {
+  limit?: number;
+}
+
+export interface LowcodeEditorAuditListItem<TEvent extends LowcodeEditorAuditEvent = LowcodeEditorAuditEvent> {
+  id: string;
+  title: string;
+  description: string;
+  result: LowcodeEditorAuditEventResult;
+  timeLabel: string;
+  actorName: string;
+  targetText: string;
+  event: TEvent;
+}
+
+export interface CreateLowcodeEditorAuditListItemsOptions {
+  limit?: number;
+  latestFirst?: boolean;
+}
+
 export interface CreateLowcodeWorkspaceStatsOptions {
   selectedTitle?: string;
   validationValid?: boolean;
@@ -1100,6 +1176,8 @@ export const LOWCODE_H5_VIEWPORT_PRESETS = [
 
 export type LowcodeH5ViewportPresetId = (typeof LOWCODE_H5_VIEWPORT_PRESETS)[number]["id"];
 
+export const LOWCODE_EDITOR_AUDIT_TRAIL_DEFAULT_LIMIT = 50;
+
 export const LOWCODE_EDITOR_PERMISSION_ACTIONS = [
   "approval.submit",
   "approval.cancel",
@@ -1435,6 +1513,85 @@ export function setEditorViewportPreset(
   preset: LowcodeEditorViewportPreset,
 ): LowcodeEditorState {
   return setEditorViewport(state, createLowcodeEditorViewportFromPreset(preset));
+}
+
+function toLowcodeAuditIsoTime(value: string | Date | undefined): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string" && value.length > 0) return value;
+  return new Date().toISOString();
+}
+
+function sanitizeLowcodeAuditIdPart(value: string): string {
+  const sanitized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return sanitized || "event";
+}
+
+function createLowcodeAuditEventId(type: LowcodeEditorAuditEventType, at: string, sequence = 0): string {
+  return `audit-${sanitizeLowcodeAuditIdPart(type)}-${sanitizeLowcodeAuditIdPart(at)}-${sequence}`;
+}
+
+function isLowcodeEditorAuditEvent(input: CreateLowcodeEditorAuditEventInput | LowcodeEditorAuditEvent): input is LowcodeEditorAuditEvent {
+  return typeof input.id === "string" && typeof input.at === "string" && typeof input.result === "string";
+}
+
+function formatLowcodeAuditTimeLabel(at: string): string {
+  const date = new Date(at);
+  if (Number.isNaN(date.getTime())) return at;
+  const hours = `${date.getHours()}`.padStart(2, "0");
+  const minutes = `${date.getMinutes()}`.padStart(2, "0");
+  const seconds = `${date.getSeconds()}`.padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+export function createLowcodeEditorAuditEvent(
+  input: CreateLowcodeEditorAuditEventInput,
+  options: CreateLowcodeEditorAuditEventOptions = {},
+): LowcodeEditorAuditEvent {
+  const at = toLowcodeAuditIsoTime(input.at ?? options.now);
+  return {
+    id: input.id ?? createLowcodeAuditEventId(input.type, at, options.sequence),
+    type: input.type,
+    title: input.title,
+    description: input.description,
+    result: input.result ?? "success",
+    at,
+    actor: input.actor,
+    target: input.target,
+    metadata: input.metadata,
+  };
+}
+
+export function createLowcodeEditorAuditTrail(
+  events: readonly LowcodeEditorAuditEvent[],
+  input: CreateLowcodeEditorAuditEventInput | LowcodeEditorAuditEvent,
+  options: CreateLowcodeEditorAuditTrailOptions = {},
+): LowcodeEditorAuditEvent[] {
+  const limit = Math.max(1, Math.floor(options.limit ?? LOWCODE_EDITOR_AUDIT_TRAIL_DEFAULT_LIMIT));
+  const event = isLowcodeEditorAuditEvent(input)
+    ? input
+    : createLowcodeEditorAuditEvent(input, {
+      now: options.now,
+      sequence: options.sequence ?? events.length,
+    });
+  return [...events, event].slice(-limit);
+}
+
+export function createLowcodeEditorAuditListItems(
+  events: readonly LowcodeEditorAuditEvent[],
+  options: CreateLowcodeEditorAuditListItemsOptions = {},
+): LowcodeEditorAuditListItem[] {
+  const limit = Math.max(0, Math.floor(options.limit ?? events.length));
+  const ordered = options.latestFirst === false ? [...events] : [...events].reverse();
+  return ordered.slice(0, limit).map((event) => ({
+    id: event.id,
+    title: event.title,
+    description: event.description ?? event.type,
+    result: event.result,
+    timeLabel: formatLowcodeAuditTimeLabel(event.at),
+    actorName: event.actor?.name ?? "本地操作",
+    targetText: event.target?.title ?? event.target?.id ?? event.target?.type ?? "-",
+    event,
+  }));
 }
 
 export function createLowcodeWorkspaceStats(

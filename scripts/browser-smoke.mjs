@@ -811,6 +811,7 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".material-detail-actions button", "添加到画布");
   await page.waitForExpression("!document.querySelector('.material-detail-dialog')");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreference)}`);
+  await page.waitForExpression("document.querySelector('[data-testid=\"audit-trail-panel\"]') && document.querySelector('[data-testid=\"audit-trail-panel\"]')?.innerText.includes('添加物料') && document.querySelector('[data-testid=\"audit-trail-panel\"]')?.innerText.includes('图片 Banner')");
   log("通过：物料详情可展示默认 H5 预览、配置字段并一键添加");
 
   const nodeCountBeforeMaterialPreferenceAdd = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");

@@ -26,6 +26,9 @@ import {
   createLowcodeDefaultDataSourceParams,
   createLowcodeDefaultActionParams,
   createLowcodeDeliverySummary,
+  createLowcodeEditorAuditEvent,
+  createLowcodeEditorAuditListItems,
+  createLowcodeEditorAuditTrail,
   createLowcodeEditorDraftPayload,
   createLowcodeEditorCommandSearchText,
   createLowcodeEditorCollaborationPermissionOptions,
@@ -1095,6 +1098,56 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(createLowcodeNodeOperationMessage("delete", { nodeTitle: "首屏主图" }), "已删除节点：首屏主图");
     assert.equal(createLowcodeNodeOperationMessage("insertAfter", { materialTitle: "图片 Banner" }), "已在后方插入物料：图片 Banner");
     assert.equal(createLowcodeNodeOperationMessage("redo"), "已重做上一步操作");
+  });
+
+  it("creates reusable audit events, trails and display items", () => {
+    const first = createLowcodeEditorAuditEvent({
+      type: "material.insert",
+      title: "添加物料",
+      description: "已添加物料：图片 Banner",
+      actor: { id: "operator-1", name: "运营 A" },
+      target: { id: "banner_1", type: "node", title: "图片 Banner" },
+      metadata: { componentName: "ImageBanner" },
+    }, {
+      now: "2026-08-01T09:00:00.000Z",
+      sequence: 1,
+    });
+    assert.equal(first.id, "audit-material-insert-2026-08-01t09-00-00-000z-1");
+    assert.equal(first.result, "success");
+    assert.equal(first.at, "2026-08-01T09:00:00.000Z");
+
+    let trail = createLowcodeEditorAuditTrail([], first, { limit: 2 });
+    trail = createLowcodeEditorAuditTrail(trail, {
+      type: "node.operation",
+      title: "复制节点",
+      result: "info",
+      actor: { name: "运营 A" },
+      target: { id: "banner_1" },
+    }, {
+      now: "2026-08-01T09:01:00.000Z",
+      limit: 2,
+    });
+    trail = createLowcodeEditorAuditTrail(trail, {
+      type: "release.action",
+      title: "保存草稿",
+      description: "已保存草稿",
+      target: { id: "release_draft_1", title: "草稿版本" },
+    }, {
+      now: "2026-08-01T09:02:00.000Z",
+      limit: 2,
+    });
+
+    assert.equal(trail.length, 2);
+    assert.equal(trail[0]?.title, "复制节点");
+    assert.equal(trail[1]?.title, "保存草稿");
+
+    const items = createLowcodeEditorAuditListItems(trail, { limit: 2 });
+    assert.deepEqual(items.map((item) => item.title), ["保存草稿", "复制节点"]);
+    assert.equal(items[0]?.description, "已保存草稿");
+    assert.equal(items[0]?.actorName, "本地操作");
+    assert.equal(items[0]?.targetText, "草稿版本");
+    assert.match(items[0]?.timeLabel ?? "", /^\d{2}:\d{2}:\d{2}$/);
+    assert.equal(createLowcodeEditorAuditListItems(trail, { latestFirst: false })[0]?.title, "复制节点");
   });
 
   it("creates reusable material insert targets and applies them to editor state", () => {

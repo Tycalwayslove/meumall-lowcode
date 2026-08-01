@@ -27,6 +27,10 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeMaterialDetailDataSourceSlotItems`
 - `createLowcodeMaterialNodeInput`
 - `createLowcodeMaterialPreviewSchema`
+- `LOWCODE_EDITOR_AUDIT_TRAIL_DEFAULT_LIMIT`
+- `createLowcodeEditorAuditEvent`
+- `createLowcodeEditorAuditTrail`
+- `createLowcodeEditorAuditListItems`
 - `LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT`
 - `createLowcodeEditorCommandSearchText`
 - `filterLowcodeEditorCommands`
@@ -100,6 +104,9 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
 - `createLowcodeWorkspaceStats`
+- `createLowcodeMaterialInsertTargets`
+- `createLowcodeMaterialInsertTarget`
+- `insertLowcodeMaterialByTarget`
 - `createLowcodePreviewLinkItem`
 - `createLowcodePreviewLinkItems`
 - `summarizeLowcodePreviewLinks`
@@ -233,6 +240,18 @@ The permission helpers keep editor operation availability reusable across the Vu
 `createLowcodeEditorCapabilityState(options)` combines collaboration state, approval state, optional account permission state, and publish-check summary into one shell-facing model. It returns the merged `permissionState`, `editable`, `readonly`, `submittable`, `publishable`, `disabledActions`, status items, and blocking reasons. Publish-check errors automatically block preview creation, approval submission, and publishing.
 
 These helpers do not read users, create approval instances, call Java approval or lock APIs, renew locks, release locks, render UI, or mutate Page Schema. Host shells remain responsible for real approval flows, lock services, audit logs, and persistence.
+
+## Audit Trail API
+
+The audit trail helpers keep editor operation logs reusable across the Vue3 playground, future Java management-console shells, and independent editor shells.
+
+`createLowcodeEditorAuditEvent(input, options)` creates a normalized event with type, title, optional description, result, ISO timestamp, actor, target, and metadata.
+
+`createLowcodeEditorAuditTrail(events, input, options)` appends one event and keeps the trail within `LOWCODE_EDITOR_AUDIT_TRAIL_DEFAULT_LIMIT` or the host-provided limit.
+
+`createLowcodeEditorAuditListItems(events, options)` derives display-friendly items with latest-first ordering, time labels, actor names, target text, and result tones.
+
+These helpers do not persist audit records, call Java APIs, inspect users, enforce permissions, render timelines, or mutate Page Schema. Host shells remain responsible for deciding which operations are audited, uploading records, permission checks, pagination, retention, and compliance rules.
 
 ## Material Insert Target API
 

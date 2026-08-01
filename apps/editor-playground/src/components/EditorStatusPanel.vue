@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { Code2, RotateCcw } from "@lucide/vue";
+import { Clock3, Code2, RotateCcw } from "@lucide/vue";
+import type { LowcodeEditorAuditListItem } from "@meumall/lowcode-editor";
 
 defineProps<{
   nodeCount: number;
   historyPastCount: number;
   historyFutureCount: number;
   validationValid: boolean;
+  auditItems: readonly LowcodeEditorAuditListItem[];
 }>();
 
 const emit = defineEmits<{
@@ -37,5 +39,27 @@ const emit = defineEmits<{
       <RotateCcw :size="16" />
       <span>重置示例</span>
     </button>
+    <div class="audit-trail-panel" data-testid="audit-trail-panel">
+      <div class="audit-trail-title">
+        <Clock3 :size="15" />
+        <span>最近操作</span>
+      </div>
+      <ol v-if="auditItems.length" class="audit-trail-list">
+        <li
+          v-for="item in auditItems"
+          :key="item.id"
+          class="audit-trail-item"
+          :data-audit-result="item.result"
+        >
+          <span class="audit-dot" aria-hidden="true"></span>
+          <div>
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.timeLabel }} / {{ item.actorName }} / {{ item.targetText }}</small>
+            <p>{{ item.description }}</p>
+          </div>
+        </li>
+      </ol>
+      <p v-else class="audit-trail-empty">暂无操作记录</p>
+    </div>
   </section>
 </template>

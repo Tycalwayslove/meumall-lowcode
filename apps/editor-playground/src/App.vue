@@ -46,6 +46,8 @@ import {
   createLowcodeActionFormItems,
   createLowcodeDataSourceFormItems,
   createLowcodeDeliverySummary,
+  createLowcodeEditorAuditListItems,
+  createLowcodeEditorAuditTrail,
   createLowcodeEditorApprovalState,
   createLowcodeEditorCapabilityState,
   createLowcodeEditorDraftPayload,
@@ -163,6 +165,11 @@ import {
   type LowcodeEditorCanvasFrameMetrics as CanvasFrameMetrics,
   type LowcodeEditorCanvasPoint as CanvasPoint,
   type LowcodeEditorCanvasRect as CanvasRect,
+  type CreateLowcodeEditorAuditEventInput as AuditEventInput,
+  type LowcodeEditorAuditEvent as AuditEvent,
+  type LowcodeEditorAuditEventResult as AuditEventResult,
+  type LowcodeEditorAuditEventType as AuditEventType,
+  type LowcodeEditorAuditListItem as AuditListItem,
   type LowcodeEditorDraftPersistenceStatus,
   type LowcodeEditorMode,
   type LowcodeEditorOutlineRow as OutlineRow,
@@ -232,6 +239,8 @@ const MATERIAL_FAVORITES_KEY = "meumall-lowcode-material-favorites";
 const MATERIAL_RECENT_KEY = "meumall-lowcode-material-recent";
 const CUSTOM_TEMPLATES_KEY = "meumall-lowcode-custom-templates";
 const AUTO_SAVE_DELAY_MS = 700;
+const AUDIT_TRAIL_LIMIT = 20;
+const AUDIT_PANEL_LIMIT = 6;
 const REACT_H5_RUNTIME_URL = import.meta.env.VITE_REACT_H5_RUNTIME_URL ?? "http://localhost:5174/";
 const runtimeQuery = new URLSearchParams(window.location.search);
 const isRuntimeMode = runtimeQuery.get("runtime") === "1";
@@ -568,6 +577,7 @@ const runtimeSchema = shallowRef<LowcodePageSchema>(editorState.value.schema);
 const isPreviewDataResolving = ref(false);
 const isRuntimeDataResolving = ref(false);
 const actionMessage = ref("");
+const auditEvents = ref<AuditEvent[]>([]);
 let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
 let templateSearchSeq = 0;
@@ -849,6 +859,37 @@ async function refreshEditorWorkflowState(pageId = editorState.value.schema.page
   editorWorkflowState.value = await seedEditorWorkflowStateFromQuery(pageId);
 }
 
+function recordAuditEvent(input: AuditEventInput): void {
+  auditEvents.value = createLowcodeEditorAuditTrail(
+    auditEvents.value,
+    {
+      ...input,
+      actor: input.actor ?? { id: localOperator.id, name: localOperator.name ?? "本地运营", role: "operator" },
+      metadata: {
+        pageId: editorState.value.schema.pageId,
+        ...(input.metadata ?? {}),
+      },
+    },
+    { limit: AUDIT_TRAIL_LIMIT },
+  );
+}
+
+function recordAuditMessage(
+  type: AuditEventType,
+  title: string,
+  description: string,
+  result: AuditEventResult = "success",
+  target: AuditEventInput["target"] = { id: editorState.value.schema.pageId, type: "page", title: editorState.value.schema.title },
+): void {
+  recordAuditEvent({
+    type,
+    title,
+    description,
+    result,
+    target,
+  });
+}
+
 function createCollaborationStateOptionsFromWorkflow(): Parameters<typeof createLowcodeEditorCollaborationState>[0] {
   const lock = editorWorkflowState.value.lock;
   return {
@@ -1062,6 +1103,9 @@ const workspaceStats = computed<WorkspaceStat[]>(() =>
     publishCheckSummary: publishCheckSummary.value,
     dirty: editorState.value.dirty,
   }),
+);
+const auditListItems = computed<AuditListItem[]>(() =>
+  createLowcodeEditorAuditListItems(auditEvents.value, { limit: AUDIT_PANEL_LIMIT }),
 );
 const autoSaveStatusText = computed(() => {
   return formatLowcodeEditorDraftStatusText(autoSaveStatus.value, {
@@ -1467,6 +1511,7 @@ onMounted(() => {
   window.addEventListener("pointerup", onPointerCanvasDragEnd);
   window.addEventListener("pointercancel", onPointerCanvasDragCancel);
   window.addEventListener("keydown", onGlobalKeydown);
+  recordAuditMessage("system.message", "打开编辑器", `已打开页面：${editorState.value.schema.title || editorState.value.schema.pageId}`, "info");
   void refreshReleases();
   void refreshEditorWorkflowState();
   void refreshRuntimeSchema();
@@ -1925,6 +1970,13 @@ function addMaterial(manifest: LowcodeMaterialManifest): boolean {
   }
   editorState.value = appendNode(editorState.value, createNodeInput(manifest));
   recordRecentMaterial(manifest);
+  recordAuditEvent({
+    type: "material.insert",
+    title: "添加物料",
+    description: `已追加物料：${manifest.title}`,
+    target: { id: manifest.componentName, type: "material", title: manifest.title },
+    metadata: { componentName: manifest.componentName },
+  });
   return true;
 }
 
@@ -2378,6 +2430,13 @@ function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: Canva
   const result = insertLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, createNodeInput(manifest));
   editorState.value = result.state;
   recordRecentMaterial(manifest);
+  recordAuditEvent({
+    type: "material.insert",
+    title: "拖拽物料",
+    description: `已通过画布拖拽插入：${manifest.title}`,
+    target: { id: manifest.componentName, type: "material", title: manifest.title },
+    metadata: { componentName: manifest.componentName, placement: hint.placement },
+  });
 }
 
 function onCanvasDrop(event: DragEvent): void {
@@ -2446,6 +2505,7 @@ function moveSelected(offset: number): void {
 
 function bindSelectedProductMaterialToDataSource(): void {
   if (!selectedNode.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = {
     ...editorState.value,
     schema: {
@@ -2461,10 +2521,16 @@ function bindSelectedProductMaterialToDataSource(): void {
     dirty: true,
     lastAction: "bindSelectedProductMaterialToDataSource",
   };
+  recordAuditMessage("resource.apply", "绑定商品数据源", `已将 ${nodeTitle} 绑定到 products 数据源`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function bindSelectedStoreExpertMaterialToDataSource(): void {
   if (!selectedNode.value || !isStoreExpertMaterialSelected.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = {
     ...editorState.value,
     schema: {
@@ -2492,6 +2558,11 @@ function bindSelectedStoreExpertMaterialToDataSource(): void {
     dirty: true,
     lastAction: "bindSelectedStoreExpertMaterialToDataSource",
   };
+  recordAuditMessage("resource.apply", "绑定门店达人数据源", `已将 ${nodeTitle} 绑定到 stores 数据源`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function toggleProductSelection(productId: string): void {
@@ -2530,6 +2601,7 @@ function toggleStoreExpertSelection(itemId: string): void {
 
 function applySelectedProductsToNode(): void {
   if (!selectedNode.value || !isProductMaterialSelected.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   const items = selectedProducts.value.map((product) => ({ ...product })) as unknown as JsonValue;
   editorState.value = {
     ...editorState.value,
@@ -2551,10 +2623,16 @@ function applySelectedProductsToNode(): void {
     dirty: true,
     lastAction: "applySelectedProductsToNode",
   };
+  recordAuditMessage("resource.apply", "应用商品资源", `已应用 ${selectedProducts.value.length} 个商品到 ${nodeTitle}`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function applySelectedCouponsToNode(): void {
   if (!selectedNode.value || !canUseCouponLibrary.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   const coupons = selectedCoupons.value.map((coupon) => ({ ...coupon })) as unknown as JsonValue[];
   const primaryCoupon = selectedCoupons.value[0];
   editorState.value = {
@@ -2585,10 +2663,16 @@ function applySelectedCouponsToNode(): void {
     dirty: true,
     lastAction: "applySelectedCouponsToNode",
   };
+  recordAuditMessage("resource.apply", "应用优惠券资源", `已应用 ${selectedCoupons.value.length} 张优惠券到 ${nodeTitle}`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function applySelectedStoreExpertsToNode(): void {
   if (!selectedNode.value || !isStoreExpertMaterialSelected.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   const items = selectedStoreExperts.value.map((item) => ({ ...item })) as unknown as JsonValue;
   editorState.value = {
     ...editorState.value,
@@ -2610,6 +2694,11 @@ function applySelectedStoreExpertsToNode(): void {
     dirty: true,
     lastAction: "applySelectedStoreExpertsToNode",
   };
+  recordAuditMessage("resource.apply", "应用门店达人资源", `已应用 ${selectedStoreExperts.value.length} 个门店/达人到 ${nodeTitle}`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function clearSelectedProducts(): void {
@@ -2805,7 +2894,21 @@ function showNodeOperationMessage(
   action: Parameters<typeof createLowcodeNodeOperationMessage>[0],
   options: Parameters<typeof createLowcodeNodeOperationMessage>[1] = {},
 ): void {
-  releaseMessage.value = createLowcodeNodeOperationMessage(action, options);
+  const message = createLowcodeNodeOperationMessage(action, options);
+  releaseMessage.value = message;
+  const materialTitle = options.materialTitle;
+  const nodeTitle = options.nodeTitle ?? selectedNodeDisplayName.value;
+  recordAuditEvent({
+    type: materialTitle ? "material.insert" : "node.operation",
+    title: message,
+    description: String(action),
+    target: {
+      id: materialTitle ? selectedInsertManifest.value?.componentName : editorState.value.selectedNodeId,
+      type: materialTitle ? "material" : "node",
+      title: materialTitle ?? nodeTitle,
+    },
+    metadata: { action: String(action) },
+  });
 }
 
 function removeSelected(): void {
@@ -2956,6 +3059,7 @@ function resetSchema(): void {
   });
   schemaDraft.value = JSON.stringify(editorState.value.schema, null, 2);
   releaseMessage.value = "已重置为示例页面";
+  recordAuditMessage("schema.transfer", "重置示例页面", releaseMessage.value, "info");
   void refreshReleases();
   void refreshEditorWorkflowState(editorState.value.schema.pageId);
 }
@@ -2986,6 +3090,7 @@ function createBlankPageFromWizard(): void {
   multiSelectedNodeIds.value = [];
   collapsedOutlineNodeIds.value = [];
   releaseMessage.value = "已创建空白 H5 页面";
+  recordAuditMessage("schema.transfer", "新建空白页面", releaseMessage.value);
   closePageStartWizard();
   void refreshReleases();
   void refreshEditorWorkflowState(editorState.value.schema.pageId);
@@ -3007,6 +3112,7 @@ function clearCanvas(): void {
   };
   multiSelectedNodeIds.value = [];
   releaseMessage.value = "已清空画布";
+  recordAuditMessage("schema.transfer", "清空画布", releaseMessage.value, "warning");
 }
 
 function openCommandPalette(): void {
@@ -3131,6 +3237,11 @@ async function applyTemplate(template: Pick<LowcodeTemplateResource, "id">, onAp
   schemaDraft.value = JSON.stringify(schema, null, 2);
   jsonError.value = "";
   releaseMessage.value = `已应用模板：${templateDetail.title}`;
+  recordAuditMessage("template.apply", "应用模板", releaseMessage.value, "success", {
+    id: templateDetail.id,
+    type: "template",
+    title: templateDetail.title,
+  });
   onApplied?.();
   void refreshReleases();
   void refreshEditorWorkflowState(schema.pageId);
@@ -3170,6 +3281,11 @@ function saveCurrentPageAsLocalTemplate(): void {
   templateCategory.value = "全部";
   templateKeyword.value = title;
   releaseMessage.value = `已保存本地模板：${title}`;
+  recordAuditMessage("template.apply", "保存本地模板", releaseMessage.value, "success", {
+    id: template.id,
+    type: "template",
+    title,
+  });
   closeCommandPalette();
   void refreshTemplates();
 }
@@ -3211,6 +3327,13 @@ function replaceCurrentSchema(
   multiSelectedNodeIds.value = [];
   collapsedOutlineNodeIds.value = [];
   if (options.message) releaseMessage.value = options.message;
+  if (options.message) {
+    recordAuditMessage("schema.transfer", "替换页面 Schema", options.message, "success", {
+      id: schema.pageId,
+      type: "page",
+      title: schema.title,
+    });
+  }
   void refreshReleases();
 }
 
@@ -3304,7 +3427,13 @@ function removeAction(index: number): void {
 
 function bindSelectedEvent(eventName: string, actionId: string): void {
   if (!selectedNode.value) return;
+  const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = bindLowcodeNodeEvent(editorState.value, selectedNode.value.id, eventName, actionId || undefined);
+  recordAuditMessage("action.execute", "绑定节点事件", `已${actionId ? "绑定" : "清空"} ${nodeTitle} 的 ${eventName} 事件`, "success", {
+    id: selectedNode.value.id,
+    type: "node",
+    title: nodeTitle,
+  });
 }
 
 function applyAsset(propName: string, url: string): void {
@@ -3317,6 +3446,12 @@ function applyAsset(propName: string, url: string): void {
 function applyAssetToSelected(asset: LowcodeImageAssetResource): void {
   if (!assetTargetPropName.value) return;
   applyAsset(assetTargetPropName.value, asset.url);
+  releaseMessage.value = `已应用图片素材：${asset.title}`;
+  recordAuditMessage("resource.apply", "应用图片素材", releaseMessage.value, "success", {
+    id: asset.id,
+    type: "asset",
+    title: asset.title,
+  });
 }
 
 function applyVideoToSelected(asset: LowcodeVideoAssetResource): void {
@@ -3331,6 +3466,11 @@ function applyVideoToSelected(asset: LowcodeVideoAssetResource): void {
     updateProp("posterUrl", posterPropSchema, asset.posterUrl);
   }
   releaseMessage.value = `已应用视频素材：${asset.title}`;
+  recordAuditMessage("resource.apply", "应用视频素材", releaseMessage.value, "success", {
+    id: asset.id,
+    type: "video",
+    title: asset.title,
+  });
 }
 
 function applyAssetToListTarget(asset: LowcodeImageAssetResource): void {
@@ -3342,6 +3482,11 @@ function applyAssetToListTarget(asset: LowcodeImageAssetResource): void {
   }
   updateListItemField(target.propName, target.propSchema, target.itemIndex, target.fieldName, asset.url);
   releaseMessage.value = `已应用图片素材：${asset.title}`;
+  recordAuditMessage("resource.apply", "应用列表图片素材", releaseMessage.value, "success", {
+    id: asset.id,
+    type: "asset",
+    title: asset.title,
+  });
   listAssetTarget.value = undefined;
 }
 
@@ -3430,6 +3575,7 @@ function exportCurrentSchema(): void {
   URL.revokeObjectURL(url);
   schemaTransferMessage.value = `已导出页面 Schema：${schema.title || schema.pageId}（${exported.sizeText}）`;
   releaseMessage.value = schemaTransferMessage.value;
+  recordAuditMessage("schema.transfer", "导出页面 Schema", schemaTransferMessage.value);
 }
 
 async function copyCurrentSchema(): Promise<void> {
@@ -3437,8 +3583,10 @@ async function copyCurrentSchema(): Promise<void> {
     await copyTextToClipboard(deliverySchemaJson.value);
     schemaTransferMessage.value = `已复制页面 Schema：${editorState.value.schema.title || editorState.value.schema.pageId}`;
     releaseMessage.value = schemaTransferMessage.value;
+    recordAuditMessage("schema.transfer", "复制页面 Schema", schemaTransferMessage.value);
   } catch {
     releaseMessage.value = "复制失败：请从源码区手动复制 Schema";
+    recordAuditMessage("schema.transfer", "复制页面 Schema 失败", releaseMessage.value, "error");
   }
 }
 
@@ -3461,6 +3609,7 @@ async function onSchemaFileChange(event: Event): Promise<void> {
       schemaTransferMessage.value = "";
       jsonError.value = message;
       releaseMessage.value = message;
+      recordAuditMessage("schema.transfer", "导入页面 Schema 失败", message, "error");
       return;
     }
     if (editorState.value.dirty && !window.confirm("当前页面有未保存修改，确认导入文件并替换当前页面吗？")) {
@@ -3478,6 +3627,7 @@ async function onSchemaFileChange(event: Event): Promise<void> {
     schemaTransferMessage.value = "";
     jsonError.value = message;
     releaseMessage.value = message;
+    recordAuditMessage("schema.transfer", "导入页面 Schema 失败", message, "error");
   }
 }
 
@@ -3533,6 +3683,13 @@ function formatConfigPlatformError(error: unknown): string {
 
 function setReleaseMessage(release: EditorPageRelease, action: string): void {
   releaseMessage.value = createLowcodeReleaseMessage(release, action);
+  recordAuditEvent({
+    type: "release.action",
+    title: action,
+    description: releaseMessage.value,
+    target: { id: release.id, type: "release", title: `${release.kind} / ${release.pageVersion}` },
+    metadata: { releaseId: release.id, releaseKind: release.kind, pageVersion: release.pageVersion },
+  });
 }
 
 function showHostAuditLog(): void {
@@ -3556,10 +3713,12 @@ async function setEditorWorkflowStateFromAction(
 ): Promise<void> {
   if (!nextState) {
     releaseMessage.value = "当前配置平台 client 不支持审批操作";
+    recordAuditMessage("approval.action", "审批操作不可用", releaseMessage.value, "warning");
     return;
   }
   editorWorkflowState.value = await Promise.resolve(nextState);
   releaseMessage.value = message;
+  recordAuditMessage("approval.action", message, message);
 }
 
 async function submitCurrentApproval(): Promise<void> {
@@ -3575,6 +3734,7 @@ async function submitCurrentApproval(): Promise<void> {
     );
   } catch (error) {
     releaseMessage.value = `提交审批失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("approval.action", "提交审批失败", releaseMessage.value, "error");
   }
 }
 
@@ -3591,6 +3751,7 @@ async function cancelCurrentApproval(): Promise<void> {
     );
   } catch (error) {
     releaseMessage.value = `撤回审批失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("approval.action", "撤回审批失败", releaseMessage.value, "error");
   }
 }
 
@@ -3608,6 +3769,7 @@ async function approveCurrentApproval(): Promise<void> {
     );
   } catch (error) {
     releaseMessage.value = `审批通过失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("approval.action", "审批通过失败", releaseMessage.value, "error");
   }
 }
 
@@ -3626,6 +3788,7 @@ async function rejectCurrentApproval(): Promise<void> {
     );
   } catch (error) {
     releaseMessage.value = `审批驳回失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("approval.action", "审批驳回失败", releaseMessage.value, "error");
   }
 }
 
@@ -3645,6 +3808,7 @@ async function saveSchema(): Promise<void> {
     setReleaseMessage(release, "已保存草稿");
   } catch (error) {
     releaseMessage.value = `保存草稿失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("release.action", "保存草稿失败", releaseMessage.value, "error");
   }
 }
 
@@ -3658,6 +3822,7 @@ async function createPreviewRelease(): Promise<void> {
     openRuntime({ releaseId: release.id });
   } catch (error) {
     releaseMessage.value = `生成预览失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("release.action", "生成预览失败", releaseMessage.value, "error");
   }
 }
 
@@ -3679,6 +3844,7 @@ async function publishCurrentPage(): Promise<void> {
     setReleaseMessage(release, "已发布");
   } catch (error) {
     releaseMessage.value = `发布失败：${formatConfigPlatformError(error)}`;
+    recordAuditMessage("release.action", "发布失败", releaseMessage.value, "error");
   }
 }
 
@@ -4422,6 +4588,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :history-past-count="editorState.history.past.length"
         :history-future-count="editorState.history.future.length"
         :validation-valid="validation.valid"
+        :audit-items="auditListItems"
         @reset-schema="resetSchema"
       />
     </aside>
