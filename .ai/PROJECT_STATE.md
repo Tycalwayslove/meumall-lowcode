@@ -203,7 +203,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `待提交` | 新增 adapters runtime health summary API，并在 React H5 runtime playground 展示运行态健康摘要和检查项。 |
+| 2026-08-01 | `2414898` | 新增 adapters runtime health summary API，并在 React H5 runtime playground 展示运行态健康摘要和检查项。 |
 | 2026-08-01 | `b0c26a1` | 新增 editor publish risk summary API，并在 Vue3 发布面板展示发布风险摘要和优先处理项。 |
 | 2026-08-01 | `ee15d07` | 新增本地演示验收命令，覆盖编辑器和 React H5 runtime 的 pageId/releaseId/previewToken 入口清单。 |
 | 2026-08-01 | `505c420` | 新增 H5 runtime previewToken 加载入口，并接入 Vue3 编辑器和 React H5 runtime playground。 |
