@@ -12,6 +12,14 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - Vue shell 组件不直接依赖 Java API、localStorage、DOM 测量、权限、审批、审计或服务端保存。
 - 真实资源查询、发布、保存、权限和审批仍由宿主 shell 或 Java 管理台注入。
 
+## 样式 Token
+
+`apps/editor-playground/src/editor-theme.css` 是 Vue3 编辑器 shell 的主题 token 原型，负责声明 `--mlc-editor-*` 变量，例如文字、面板、边框、状态色、控件高度、圆角、阴影和焦点环。`main.ts` 必须先引入 `editor-theme.css`，再引入 `styles.css`，让具体组件样式消费 token。
+
+这些 token 只服务管理台编辑器 UI，不服务运营 H5 runtime 页面。它们与 `packages/materials-*` 内部 `h5Tokens`、`MlcButton`、`MlcInput` 等 runtime primitives 分开治理，避免编辑器控件和用户访问页面的触控、性能、主题边界互相污染。
+
+当前不新增 `@meumall/lowcode-editor-vue` 或公开 design-tokens npm 包。只有当多个 Vue 管理台或独立编辑器复用 shell 组件，并且样式 token、权限插槽、资源选择器插槽和发布操作插槽稳定后，再评估抽包。
+
 ## 已拆组件
 
 ### `EditorWorkspaceStats`
@@ -330,7 +338,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 ## 后续拆分顺序
 
-当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域。后续优先治理样式隔离、设计 token、权限插槽、协作锁定状态、审批状态和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
+当前首轮 Vue shell 面板和工具条拆分已覆盖主要内联区域，编辑器主题 token 已先在 playground 内部沉淀。后续优先继续治理剩余硬编码样式、权限插槽、协作锁定状态、审批状态和管理台扩展插槽，再评估是否抽 `@meumall/lowcode-editor-vue`。
 
 ## 抽 npm 包判断
 

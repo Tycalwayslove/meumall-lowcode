@@ -1,0 +1,71 @@
+:root,
+.meumall-lowcode-editor-theme {
+  --mlc-editor-font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --mlc-editor-color-text: #111827;
+  --mlc-editor-color-text-strong: #0f172a;
+  --mlc-editor-color-text-muted: #64748b;
+  --mlc-editor-color-text-soft: #475569;
+  --mlc-editor-color-heading: #334155;
+  --mlc-editor-color-inverse: #ffffff;
+
+  --mlc-editor-color-app-bg: #e4e7ed;
+  --mlc-editor-color-runtime-bg: #e7e9ee;
+  --mlc-editor-color-panel-bg: #f8fafc;
+  --mlc-editor-color-surface: #ffffff;
+  --mlc-editor-color-surface-soft: #f1f5f9;
+  --mlc-editor-color-phone-bg: #f3f4f6;
+  --mlc-editor-color-overlay: rgba(15, 23, 42, 0.36);
+  --mlc-editor-color-overlay-soft: rgba(15, 23, 42, 0.32);
+
+  --mlc-editor-color-border: #d8dbe2;
+  --mlc-editor-color-border-soft: #e2e8f0;
+  --mlc-editor-color-border-control: #d7dbe3;
+  --mlc-editor-color-border-card: #dce1ea;
+  --mlc-editor-color-border-hover: #94a3b8;
+
+  --mlc-editor-color-brand: #111827;
+  --mlc-editor-color-accent: #0f766e;
+  --mlc-editor-color-accent-soft: #ecfdf5;
+  --mlc-editor-color-accent-surface: #f0fdfa;
+  --mlc-editor-color-accent-hover: #ccfbf1;
+  --mlc-editor-color-accent-border: #99f6e4;
+  --mlc-editor-color-accent-border-strong: #bfd7d2;
+  --mlc-editor-color-info: #2563eb;
+  --mlc-editor-color-info-soft: #eff6ff;
+  --mlc-editor-color-info-text: #1d4ed8;
+
+  --mlc-editor-color-success-text: #166534;
+  --mlc-editor-color-success-bg: #f0fdf4;
+  --mlc-editor-color-success-border: #bbf7d0;
+  --mlc-editor-color-warning-text: #9a3412;
+  --mlc-editor-color-warning-alt-text: #854d0e;
+  --mlc-editor-color-warning-bg: #fff7ed;
+  --mlc-editor-color-warning-alt-bg: #fefce8;
+  --mlc-editor-color-warning-border: #fed7aa;
+  --mlc-editor-color-warning-alt-border: #fde68a;
+  --mlc-editor-color-danger-text: #b91c1c;
+  --mlc-editor-color-danger-bg: #fff5f5;
+  --mlc-editor-color-danger-border: #fecaca;
+
+  --mlc-editor-radius-xs: 7px;
+  --mlc-editor-radius-sm: 8px;
+  --mlc-editor-radius-md: 10px;
+  --mlc-editor-radius-phone: 18px;
+  --mlc-editor-radius-pill: 999px;
+
+  --mlc-editor-size-topbar-height: 68px;
+  --mlc-editor-size-control-height: 34px;
+  --mlc-editor-size-control-height-sm: 32px;
+  --mlc-editor-size-status-pill-height: 24px;
+
+  --mlc-editor-shadow-topbar: 0 1px 0 rgba(255, 255, 255, 0.72);
+  --mlc-editor-shadow-hover: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --mlc-editor-shadow-phone: 0 16px 40px rgba(15, 23, 42, 0.14);
+  --mlc-editor-shadow-floating: 0 24px 64px rgba(15, 23, 42, 0.24);
+  --mlc-editor-shadow-context: 0 18px 48px rgba(15, 23, 42, 0.2);
+
+  --mlc-editor-focus-ring: rgba(20, 184, 166, 0.24);
+  --mlc-editor-transition-fast: 0.16s ease;
+  --mlc-editor-transition-press: 0.12s ease;
+}
