@@ -909,7 +909,18 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：基础图文卡片");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicCard)}`);
   await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-card') && document.body.innerText.includes('基础图文卡片')");
-  log("通过：基础图片、基础标签和基础图文卡片可从快捷命令添加并在 Vue H5 画布渲染");
+  const nodeCountBeforeBasicCarousel = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础图片轮播");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础图片轮播')");
+  await page.clickByText(".command-palette-item", "添加物料：基础图片轮播");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicCarousel)}`);
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-carousel') && document.body.innerText.includes('新品首发')");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicCarousel\"') && item.value.includes('\"indicator\": \"dots\"') && item.value.includes('\"autoPlay\": true'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
+  log("通过：基础图片、基础标签、基础图文卡片和基础图片轮播可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查留资表单通用物料");
   const nodeCountBeforeLeadForm = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1505,6 +1516,7 @@ async function main() {
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },
       { label: "React H5 pageId 命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('summer-campaign-demo')" },
       { label: "React H5 pageId 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
+      { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
     ]);
 
     await assertPage(page, h5RuntimeReleaseIdUrl, [

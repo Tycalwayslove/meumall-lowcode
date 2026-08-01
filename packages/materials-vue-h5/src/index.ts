@@ -1,6 +1,6 @@
-import { defineComponent, h, ref, watch, type CSSProperties, type PropType } from "vue";
+import { defineComponent, h, onBeforeUnmount, ref, watch, type CSSProperties, type PropType } from "vue";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
-import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
+import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
 import { MlcButton, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
@@ -136,6 +136,7 @@ type DividerLineStyle = "solid" | "dashed" | "dotted";
 type BasicImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
 type BasicInlineAlign = "left" | "center" | "right";
+type BasicCarouselIndicator = "dots" | "counter" | "none";
 
 const BASIC_BUTTON_VARIANT_OPTIONS = [
   { label: "实心", value: "solid" },
@@ -192,6 +193,12 @@ const BASIC_TAG_TONE_OPTIONS = [
   { label: "反白", value: "inverse" },
 ];
 
+const BASIC_CAROUSEL_INDICATOR_OPTIONS = [
+  { label: "圆点", value: "dots" },
+  { label: "数字", value: "counter" },
+  { label: "隐藏", value: "none" },
+];
+
 const NUMBER_PIXEL_SIZE_META = { min: 0, max: 80, step: 1, unit: "px" };
 const NUMBER_RADIUS_META = { min: 0, max: 48, step: 1, unit: "px" };
 const NUMBER_PILL_RADIUS_META = { min: 0, max: 999, step: 1, unit: "px" };
@@ -200,6 +207,7 @@ const NUMBER_FONT_SIZE_META = { min: 10, max: 48, step: 1, unit: "px" };
 const NUMBER_FONT_WEIGHT_META = { min: 100, max: 900, step: 100 };
 const NUMBER_LINE_HEIGHT_META = { min: 1, max: 2.5, step: 0.1, unit: "倍" };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
+const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
 const COLOR_SWATCHES_META = {
   swatches: [
     "#111827",
@@ -613,6 +621,211 @@ export const BasicCard = defineComponent({
               ),
             ],
           ),
+        ],
+      );
+    };
+  },
+});
+
+const BASIC_CAROUSEL_FALLBACK_ITEMS: JsonObject[] = [
+  {
+    id: "hero",
+    title: "新品首发",
+    subtitle: "多张图片承载活动主视觉和会场入口",
+    badgeText: "NEW",
+    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    linkUrl: "",
+  },
+  {
+    id: "deal",
+    title: "限时好价",
+    subtitle: "支持标题、说明、角标和点击事件",
+    badgeText: "HOT",
+    imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80",
+    linkUrl: "",
+  },
+];
+
+export const BasicCarousel = defineComponent({
+  name: "BasicCarousel",
+  props: materialPropOptions,
+  setup(props) {
+    const activeIndex = ref(0);
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    function visibleItems(): Record<string, unknown>[] {
+      const items = list(props.props?.items);
+      return items.length ? items : BASIC_CAROUSEL_FALLBACK_ITEMS;
+    }
+
+    function clearTimer() {
+      if (timer) clearInterval(timer);
+      timer = undefined;
+    }
+
+    function restartTimer() {
+      clearTimer();
+      const runtimeProps = props.props ?? {};
+      const items = visibleItems();
+      activeIndex.value = Math.min(activeIndex.value, Math.max(items.length - 1, 0));
+      if (!boolean(runtimeProps.autoPlay, true) || items.length <= 1) return;
+      const interval = Math.max(1000, number(runtimeProps.interval, 3000));
+      timer = setInterval(() => {
+        activeIndex.value = (activeIndex.value + 1) % visibleItems().length;
+      }, interval);
+    }
+
+    watch(
+      () => [props.props?.autoPlay, props.props?.interval, JSON.stringify(props.props?.items ?? [])],
+      restartTimer,
+      { immediate: true },
+    );
+    onBeforeUnmount(clearTimer);
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const items = visibleItems();
+      const safeIndex = Math.min(activeIndex.value, Math.max(items.length - 1, 0));
+      const activeItem = items[safeIndex] ?? items[0] ?? {};
+      const radius = number(runtimeProps.radius, 12);
+      const indicator = option<BasicCarouselIndicator>(runtimeProps.indicator, ["dots", "counter", "none"], "dots");
+      const imageFit = option<BasicImageFit>(runtimeProps.fit, ["cover", "contain", "fill", "none", "scale-down"], "cover");
+      const accentColor = text(runtimeProps.accentColor, "#ffffff");
+      const onItemClick = runtimeProps.onItemClick;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-carousel",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            "button",
+            {
+              type: "button",
+              class: "mlc-basic-carousel__frame",
+              style: {
+                position: "relative",
+                display: "block",
+                overflow: "hidden",
+                width: "100%",
+                border: 0,
+                borderRadius: `${radius}px`,
+                padding: 0,
+                color: text(runtimeProps.textColor, "#ffffff"),
+                background: text(runtimeProps.backgroundColor, "#111827"),
+                textAlign: "left",
+                boxShadow: boolean(runtimeProps.shadow, true) ? "0 12px 30px rgba(15, 23, 42, 0.14)" : undefined,
+              } satisfies CSSProperties,
+              onClick: () => {
+                if (typeof onItemClick === "function") onItemClick(activeItem);
+              },
+            },
+            [
+              h(MlcImage, {
+                src: text(activeItem.imageUrl),
+                alt: text(activeItem.alt, text(activeItem.title, "轮播图片")),
+                ratio: text(runtimeProps.ratio, "16 / 9"),
+                fit: imageFit,
+                radius: 0,
+                fallback: "请配置轮播图片",
+              }),
+              h(
+                "div",
+                {
+                  class: "mlc-basic-carousel__overlay",
+                  style: {
+                    position: "absolute",
+                    inset: "auto 0 0",
+                    display: "grid",
+                    gap: "6px",
+                    padding: "40px 14px 14px",
+                    background: "linear-gradient(180deg, rgba(15, 23, 42, 0), rgba(15, 23, 42, 0.68))",
+                  } satisfies CSSProperties,
+                },
+                [
+                  text(activeItem.badgeText)
+                    ? h(
+                        MlcTag,
+                        {
+                          radius: 999,
+                          style: {
+                            width: "fit-content",
+                            color: accentColor,
+                            background: "rgba(255, 255, 255, 0.18)",
+                          } satisfies CSSProperties,
+                        },
+                        () => text(activeItem.badgeText),
+                      )
+                    : null,
+                  h(
+                    MlcText,
+                    {
+                      as: "strong",
+                      size: number(runtimeProps.titleSize, 18),
+                      weight: 900,
+                      lineHeight: 1.25,
+                      style: { color: text(runtimeProps.titleColor, "#ffffff") } satisfies CSSProperties,
+                    },
+                    () => text(activeItem.title, "基础图片轮播"),
+                  ),
+                  text(activeItem.subtitle)
+                    ? h(
+                        MlcText,
+                        {
+                          as: "p",
+                          size: 13,
+                          lineHeight: 1.45,
+                          style: { color: text(runtimeProps.textColor, "rgba(255, 255, 255, 0.86)") } satisfies CSSProperties,
+                        },
+                        () => text(activeItem.subtitle),
+                      )
+                    : null,
+                ],
+              ),
+            ],
+          ),
+          indicator !== "none" && items.length > 1
+            ? h(
+                "div",
+                {
+                  class: "mlc-basic-carousel__indicator",
+                  style: {
+                    display: "flex",
+                    justifyContent: "center",
+                    gap: "6px",
+                    marginTop: "8px",
+                    color: text(runtimeProps.indicatorColor, "#64748b"),
+                    fontSize: "12px",
+                    fontWeight: 700,
+                  } satisfies CSSProperties,
+                },
+                indicator === "counter"
+                  ? `${safeIndex + 1}/${items.length}`
+                  : items.map((item, index) =>
+                      h("button", {
+                        key: String(item.id ?? index),
+                        type: "button",
+                        "aria-label": `切换到第 ${index + 1} 张`,
+                        style: {
+                          width: index === safeIndex ? "16px" : "6px",
+                          height: "6px",
+                          border: 0,
+                          borderRadius: "999px",
+                          padding: 0,
+                          background: index === safeIndex ? text(runtimeProps.indicatorColor, "#111827") : "rgba(100, 116, 139, 0.28)",
+                        } satisfies CSSProperties,
+                        onClick: () => {
+                          activeIndex.value = index;
+                        },
+                      }),
+                    ),
+              )
+            : null,
         ],
       );
     };
@@ -2903,6 +3116,53 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         contentPadding: { label: "内容内边距", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: BasicCarousel as VueH5MaterialComponent,
+    manifest: createMaterialManifest({
+      componentName: "BasicCarousel",
+      materialVersion: "0.1.0",
+      title: "基础图片轮播",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        ratio: "16 / 9",
+        fit: "cover",
+        radius: 12,
+        autoPlay: true,
+        interval: 3000,
+        indicator: "dots",
+        wrapperBackgroundColor: "transparent",
+        backgroundColor: "#111827",
+        titleColor: "#ffffff",
+        textColor: "rgba(255, 255, 255, 0.86)",
+        accentColor: "#ffffff",
+        indicatorColor: "#111827",
+        titleSize: 18,
+        paddingY: 12,
+        shadow: true,
+        items: BASIC_CAROUSEL_FALLBACK_ITEMS,
+      },
+      propsSchema: {
+        items: { label: "轮播列表", type: "array", setter: "textarea", defaultValue: BASIC_CAROUSEL_FALLBACK_ITEMS },
+        ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
+        fit: { label: "填充模式", type: "string", setter: "select", defaultValue: "cover", options: BASIC_IMAGE_FIT_OPTIONS },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 12, ...NUMBER_RADIUS_META },
+        autoPlay: { label: "自动播放", type: "boolean", setter: "switch", defaultValue: true },
+        interval: { label: "切换间隔", type: "number", setter: "number", defaultValue: 3000, ...NUMBER_CAROUSEL_INTERVAL_META },
+        indicator: { label: "指示器", type: "string", setter: "select", defaultValue: "dots", options: BASIC_CAROUSEL_INDICATOR_OPTIONS },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        backgroundColor: { label: "图片底色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "rgba(255, 255, 255, 0.86)", ...COLOR_SWATCHES_META },
+        accentColor: { label: "角标色", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        indicatorColor: { label: "指示器色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        titleSize: { label: "标题字号", type: "number", setter: "number", defaultValue: 18, ...NUMBER_FONT_SIZE_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: true },
+      },
+      events: [{ name: "onItemClick", title: "点击轮播图" }],
     }),
   },
   {

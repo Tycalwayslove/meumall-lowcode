@@ -255,6 +255,49 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_carousel",
+      componentName: "BasicCarousel",
+      materialVersion: "0.1.0",
+      props: {
+        ratio: "16 / 9",
+        fit: "cover",
+        radius: 12,
+        autoPlay: true,
+        interval: 3200,
+        indicator: "dots",
+        wrapperBackgroundColor: "#f3f4f6",
+        backgroundColor: "#111827",
+        titleColor: "#ffffff",
+        textColor: "rgba(255, 255, 255, 0.86)",
+        accentColor: "#ffffff",
+        indicatorColor: "#0f766e",
+        titleSize: 18,
+        paddingY: 8,
+        shadow: true,
+        items: [
+          {
+            id: "runtime_carousel_new",
+            title: "夏日新品首发",
+            subtitle: "React H5 runtime 渲染基础图片轮播。",
+            badgeText: "NEW",
+            imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80",
+            linkUrl: "",
+          },
+          {
+            id: "runtime_carousel_coupon",
+            title: "限时券包加码",
+            subtitle: "标题、说明、角标和点击 action 可统一配置。",
+            badgeText: "HOT",
+            imageUrl: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
+            linkUrl: "",
+          },
+        ],
+      },
+      events: {
+        onItemClick: { actionId: "track_basic_carousel_click" },
+      },
+    },
+    {
       id: "node_rules",
       componentName: "ActivityRuleModal",
       materialVersion: "0.1.0",
@@ -770,6 +813,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_card_click",
+      },
+    },
+    {
+      id: "track_basic_carousel_click",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_carousel_click",
       },
     },
     {

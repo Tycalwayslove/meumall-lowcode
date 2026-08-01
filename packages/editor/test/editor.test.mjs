@@ -1529,11 +1529,21 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(isLowcodeListImageField("coverImageUrl"), true);
     assert.equal(isLowcodeListImageField("title"), false);
 
+    const carouselFields = createLowcodeListEditorFields("items", {
+      componentName: "BasicCarousel",
+      items: [{ id: "slide_1", title: "轮播图", imageUrl: "https://example.com/slide.jpg" }],
+    });
+    assert.deepEqual(carouselFields.map((field) => field.name), ["id", "title", "subtitle", "badgeText", "imageUrl", "linkUrl"]);
+
     assert.deepEqual(createLowcodeDefaultListItem("items", {
       componentName: "FloorAnchorNav",
       targetNodeId: "floor_1",
       id: "items_fixed",
     }), { id: "items_fixed", title: "新楼层", targetId: "floor_1" });
+    assert.deepEqual(createLowcodeDefaultListItem("items", {
+      componentName: "BasicCarousel",
+      id: "carousel_fixed",
+    }), { id: "carousel_fixed", title: "新轮播图", subtitle: "请输入说明", badgeText: "推荐", imageUrl: "", linkUrl: "" });
     assert.deepEqual(createLowcodeDefaultListItem("coupons", { id: "coupon_fixed" }), {
       id: "coupon_fixed",
       title: "满 199 减 30",

@@ -5,6 +5,7 @@ import {
   ActivityRuleModal,
   BasicButton,
   BasicCard,
+  BasicCarousel,
   BasicImage,
   BasicInput,
   BasicTag,
@@ -107,6 +108,8 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTag", "tone", ["neutral", "accent", "danger", "inverse"]],
       ["BasicTag", "align", ["left", "center", "right"]],
       ["BasicCard", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
+      ["BasicCarousel", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
+      ["BasicCarousel", "indicator", ["dots", "counter", "none"]],
       ["SectionTitle", "align", ["left", "center", "right"]],
     ];
 
@@ -130,6 +133,8 @@ describe("MeuMall H5 material manifests", () => {
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
       ["BasicTag", "fontWeight", { min: 100, max: 900, step: 100, unit: undefined }],
       ["BasicCard", "buttonRadius", { min: 0, max: 999, step: 1, unit: "px" }],
+      ["BasicCarousel", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicCarousel", "interval", { min: 1000, max: 10000, step: 500, unit: "ms" }],
       ["SectionTitle", "titleSize", { min: 10, max: 48, step: 1, unit: "px" }],
       ["ImageCardGrid", "columns", { min: 1, max: 3, step: 1, unit: undefined }],
     ];
@@ -155,6 +160,7 @@ describe("MeuMall H5 material manifests", () => {
       ["DividerBlock", "color"],
       ["BasicTag", "backgroundColor"],
       ["BasicCard", "accentColor"],
+      ["BasicCarousel", "indicatorColor"],
       ["SectionTitle", "accentColor"],
       ["ImageCardGrid", "cardBackgroundColor"],
     ];
@@ -277,6 +283,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicImage, ["MlcImage"]);
     functionSourceIncludes(BasicTag, ["MlcTag"]);
     functionSourceIncludes(BasicCard, ["MlcImage", "MlcTag", "MlcText", "MlcButton"]);
+    functionSourceIncludes(BasicCarousel, ["MlcImage", "MlcTag", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -443,6 +450,22 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.showButton.setter, "switch");
     assert.equal(material.manifest.propsSchema.shadow.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onClick");
+  });
+
+  it("registers the basic carousel material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicCarousel");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础图片轮播");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.indicator, "dots");
+    assert.equal(material.manifest.defaultProps.autoPlay, true);
+    assert.equal(material.manifest.propsSchema.items.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.autoPlay.setter, "switch");
+    assert.equal(material.manifest.propsSchema.indicator.setter, "select");
+    assert.equal(material.manifest.propsSchema.interval.setter, "number");
+    assert.equal(material.manifest.defaultProps.items[0].imageUrl.includes("images.unsplash.com"), true);
+    assert.equal(material.manifest.events?.[0]?.name, "onItemClick");
   });
 
   it("registers the image card grid material", () => {
