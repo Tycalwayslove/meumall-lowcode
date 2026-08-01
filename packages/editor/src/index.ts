@@ -95,6 +95,34 @@ export interface LowcodeEditorPublishCheckSummary {
   error: number;
 }
 
+export type LowcodeEditorPublishRiskLevel = "blocked" | "warning" | "ready";
+
+export interface LowcodeEditorPublishRiskItem {
+  id: string;
+  title: string;
+  description: string;
+  status: Exclude<LowcodeEditorPublishCheckStatus, "pass">;
+  nodeId?: string;
+  nodeTitle?: string;
+  actionText: string;
+}
+
+export interface LowcodeEditorPublishRiskSummary {
+  level: LowcodeEditorPublishRiskLevel;
+  title: string;
+  description: string;
+  statusText: string;
+  primaryActionText: string;
+  blockingCount: number;
+  warningCount: number;
+  passCount: number;
+  priorityItems: LowcodeEditorPublishRiskItem[];
+}
+
+export interface CreateLowcodePublishRiskSummaryOptions {
+  maxPriorityItems?: number;
+}
+
 export type LowcodeEditorWorkspaceStatTone = "neutral" | "success" | "warning" | "danger";
 
 export interface LowcodeEditorWorkspaceStat {
@@ -4384,6 +4412,66 @@ export function summarizeLowcodePublishChecks(
   );
 }
 
+export function createLowcodePublishRiskSummary(
+  checks: readonly LowcodeEditorPublishCheck[],
+  options: CreateLowcodePublishRiskSummaryOptions = {},
+): LowcodeEditorPublishRiskSummary {
+  const maxPriorityItems = Math.max(0, Math.floor(options.maxPriorityItems ?? 3));
+  const summary = summarizeLowcodePublishChecks([...checks]);
+  const riskChecks = checks
+    .filter((check): check is LowcodeEditorPublishCheck & { status: "error" | "warning" } => check.status !== "pass")
+    .sort((a, b) => getPublishRiskStatusWeight(a.status) - getPublishRiskStatusWeight(b.status));
+  const priorityItems = riskChecks.slice(0, maxPriorityItems).map((check) => ({
+    id: check.id,
+    title: check.title,
+    description: check.description,
+    status: check.status,
+    nodeId: check.nodeId,
+    nodeTitle: check.nodeTitle,
+    actionText: check.nodeId ? "定位处理" : check.status === "error" ? "修复配置" : "检查配置",
+  }));
+
+  if (summary.error > 0) {
+    return {
+      level: "blocked",
+      title: "发布前需要处理阻塞项",
+      description: "存在会阻止生成预览或发布的配置问题，建议先按优先项逐个修复。",
+      statusText: `${summary.error} 个阻塞项 / ${summary.warning} 个提醒`,
+      primaryActionText: "先处理阻塞项",
+      blockingCount: summary.error,
+      warningCount: summary.warning,
+      passCount: summary.pass,
+      priorityItems,
+    };
+  }
+
+  if (summary.warning > 0) {
+    return {
+      level: "warning",
+      title: "可以生成预览，仍有提醒",
+      description: "当前没有阻塞项，但素材、商品或动作等配置仍有优化空间。",
+      statusText: `${summary.warning} 个提醒 / ${summary.pass} 项通过`,
+      primaryActionText: "检查提醒项",
+      blockingCount: summary.error,
+      warningCount: summary.warning,
+      passCount: summary.pass,
+      priorityItems,
+    };
+  }
+
+  return {
+    level: "ready",
+    title: "发布检查已通过",
+    description: "页面结构、素材、数据源和动作配置当前没有发现阻塞或提醒。",
+    statusText: `${summary.pass} 项通过`,
+    primaryActionText: "可以生成预览",
+    blockingCount: summary.error,
+    warningCount: summary.warning,
+    passCount: summary.pass,
+    priorityItems,
+  };
+}
+
 export function createLowcodeDeliverySummary(
   schema: LowcodePageSchema,
   options: CreateLowcodeDeliverySummaryOptions = {},
@@ -5125,6 +5213,12 @@ function lowcodeNodeContains(node: LowcodeNode | undefined, nodeId: string): boo
 function getJsonParamString(params: JsonObject | undefined, key: string, fallback: string): string {
   const value = params?.[key];
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function getPublishRiskStatusWeight(status: LowcodeEditorPublishCheckStatus): number {
+  if (status === "error") return 0;
+  if (status === "warning") return 1;
+  return 2;
 }
 
 function createDeliveryStatusText(summary: LowcodeEditorPublishCheckSummary): string {

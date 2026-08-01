@@ -21,6 +21,8 @@ import type {
   LowcodeEditorPreviewLinkSummary,
   LowcodeEditorPublishCheck,
   LowcodeEditorPublishCheckSummary,
+  LowcodeEditorPublishRiskItem,
+  LowcodeEditorPublishRiskSummary,
   LowcodeEditorReleaseListItem,
   LowcodeEditorReleaseListSummary,
   LowcodeEditorSchemaPreviewItem,
@@ -34,6 +36,7 @@ defineProps<{
   deliveryMetrics: readonly LowcodeEditorDeliveryMetric[];
   publishChecks: readonly LowcodeEditorPublishCheck[];
   publishCheckSummary: LowcodeEditorPublishCheckSummary;
+  publishRiskSummary: LowcodeEditorPublishRiskSummary;
   hasPublishBlockingErrors: boolean;
   approvalStatusText: string;
   approvalStatusDescription: string;
@@ -80,6 +83,10 @@ defineSlots<{
 
 function getInputValue(event: Event): string {
   return (event.target as HTMLInputElement).value;
+}
+
+function locateRiskItem(item: LowcodeEditorPublishRiskItem): void {
+  emit("locate-publish-check", item);
 }
 </script>
 
@@ -219,6 +226,36 @@ function getInputValue(event: Event): string {
     <div class="panel-title">
       <PanelRight :size="16" />
       <span>发布检查</span>
+    </div>
+    <div class="publish-risk-summary" :data-risk-level="publishRiskSummary.level">
+      <div>
+        <strong>{{ publishRiskSummary.title }}</strong>
+        <span>{{ publishRiskSummary.description }}</span>
+      </div>
+      <em>{{ publishRiskSummary.statusText }}</em>
+    </div>
+    <div v-if="publishRiskSummary.priorityItems.length" class="publish-risk-list">
+      <article
+        v-for="item in publishRiskSummary.priorityItems"
+        :key="item.id"
+        class="publish-risk-item"
+        :data-risk-status="item.status"
+      >
+        <div>
+          <strong>{{ item.title }}</strong>
+          <span>{{ item.description }}</span>
+        </div>
+        <button
+          v-if="item.nodeId"
+          type="button"
+          :title="`定位到 ${item.nodeTitle ?? item.nodeId}`"
+          @click="locateRiskItem(item)"
+        >
+          <LocateFixed :size="13" />
+          {{ item.actionText }}
+        </button>
+        <em v-else>{{ item.actionText }}</em>
+      </article>
     </div>
     <div class="publish-summary" :class="{ blocked: hasPublishBlockingErrors }">
       <strong>{{ hasPublishBlockingErrors ? "存在阻塞项" : "可以生成预览" }}</strong>

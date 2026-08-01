@@ -70,6 +70,7 @@ import {
   createLowcodePageSettingsForm,
   createLowcodePageStartState,
   createLowcodePublishChecks,
+  createLowcodePublishRiskSummary,
   createLowcodeReleaseListItems,
   createLowcodeReleaseMessage,
   createLowcodeRollbackConfirmText,
@@ -185,6 +186,7 @@ import {
   type LowcodeEditorState,
   type LowcodeEditorDeliveryMetric as DeliveryMetricItem,
   type LowcodeEditorPublishCheck as PublishCheck,
+  type LowcodeEditorPublishRiskSummary as PublishRiskSummary,
   type LowcodeEditorSchemaPreviewItem as ReleaseSchemaPreviewItem,
   type LowcodeEditorTemplateListItem as TemplateListItem,
   type LowcodeEditorViewportPreset,
@@ -942,6 +944,7 @@ const editorCapabilityActions: LowcodeEditorPermissionAction[] = [
 ];
 const publishChecks = computed(() => createPublishChecks());
 const publishCheckSummary = computed(() => summarizeLowcodePublishChecks(publishChecks.value));
+const publishRiskSummary = computed<PublishRiskSummary>(() => createLowcodePublishRiskSummary(publishChecks.value));
 const hasPublishBlockingErrors = computed(() => publishCheckSummary.value.error > 0);
 const editorCapabilityState = computed(() => createLowcodeEditorCapabilityState({
   collaboration: editorCollaborationState.value,
@@ -4425,6 +4428,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :delivery-metrics="deliveryMetrics"
         :publish-checks="publishChecks"
         :publish-check-summary="publishCheckSummary"
+        :publish-risk-summary="publishRiskSummary"
         :has-publish-blocking-errors="hasPublishBlockingErrors"
         :approval-status-text="editorApprovalState.title"
         :approval-status-description="editorApprovalState.description"

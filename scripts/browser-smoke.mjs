@@ -1079,6 +1079,8 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：秒杀商品组");
   await page.waitForExpression("document.body.innerText.includes('秒杀商品组 没有静态商品，也没有绑定商品数据源')");
   await page.clickByText(".toolbar button", "预览");
+  await page.waitForExpression("document.querySelector('.publish-risk-summary') && document.body.innerText.includes('可以生成预览，仍有提醒')");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.publish-risk-item')).some((item) => item.innerText.includes('秒杀商品组 没有静态商品'))");
   await page.waitForExpression("!document.querySelector('.phone-frame .mlc-runtime-node.is-selected')");
   await page.clickChildByText(".publish-check", "秒杀商品组 没有静态商品", ".publish-locate-button");
   await page.waitForExpression("document.body.innerText.includes('已定位：秒杀商品组')");
@@ -1514,6 +1516,7 @@ async function main() {
       { label: "基础弹窗物料存在", expression: "document.body.innerText.includes('基础弹窗')" },
       { label: "物料卡片摘要存在", expression: "document.body.innerText.includes('个配置 /') && document.body.innerText.includes('个事件 /') && document.body.innerText.includes('个数据槽')" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
+      { label: "发布风险摘要存在", expression: "document.querySelector('.publish-risk-summary') && (document.body.innerText.includes('发布检查已通过') || document.body.innerText.includes('可以生成预览，仍有提醒') || document.body.innerText.includes('发布前需要处理阻塞项'))" },
       { label: "编辑器发布面板宿主扩展位存在", expression: "document.querySelector('[data-testid=\"host-delivery-policy\"]') && document.querySelector('[data-testid=\"host-approval-policy\"]') && document.querySelector('[data-testid=\"host-publish-check-policy\"]') && document.querySelector('[data-testid=\"host-release-policy-button\"]')" },
       { label: "默认大促模板包含增强活动头图", expression: "document.querySelector('.phone-frame .mlc-activity-hero img') && document.body.innerText.includes('夏日好物节')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },

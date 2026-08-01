@@ -101,6 +101,7 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `getLowcodeNodeDisplayName`
 - `createLowcodePublishChecks`
 - `summarizeLowcodePublishChecks`
+- `createLowcodePublishRiskSummary`
 - `createLowcodeDeliverySummary`
 - `formatLowcodeSchemaSize`
 - `createLowcodeWorkspaceStats`
@@ -208,6 +209,8 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Common action parameter warnings for `navigate.url`, `coupon.receive.couponId`, and `tracking.click.eventName`.
 
 `createLowcodeDeliverySummary(schema, { checks })` returns the formatted schema JSON, schema byte size, publish status text, and common delivery metrics used by the editor handoff panel.
+
+`createLowcodePublishRiskSummary(checks, options)` derives an operator-facing risk summary from existing publish checks. It returns `blocked`, `warning`, or `ready` status, copy for the publish panel, and prioritized error/warning items that host shells can display before the full check list. The helper does not add new validation rules or call server-side publish checks.
 
 ## Workspace Summary API
 

@@ -72,6 +72,7 @@ import {
   createLowcodePreviewLinkItem,
   createLowcodePreviewLinkItems,
   createLowcodePublishChecks,
+  createLowcodePublishRiskSummary,
   createLowcodeSchemaFileExport,
   createLowcodeSchemaFileName,
   createLowcodeSchemaPreviewItems,
@@ -343,6 +344,37 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.match(descriptions, /nav_without_url 缺少 跳转 URL/);
     assert.equal(summary.error >= 3, true);
     assert.equal(summary.warning >= 4, true);
+  });
+
+  it("creates publish risk summaries from publish checks", () => {
+    const blockedSummary = createLowcodePublishRiskSummary([
+      { id: "images", title: "图片素材", status: "warning", description: "缺少图片", nodeId: "banner_1", nodeTitle: "首屏主图" },
+      { id: "schema", title: "Schema 校验", status: "error", description: "结构错误" },
+      { id: "nodes", title: "页面节点", status: "pass", description: "已配置 1 个节点" },
+      { id: "actions", title: "动作配置", status: "error", description: "动作缺失", nodeId: "button_1", nodeTitle: "按钮" },
+    ], { maxPriorityItems: 2 });
+
+    assert.equal(blockedSummary.level, "blocked");
+    assert.equal(blockedSummary.statusText, "2 个阻塞项 / 1 个提醒");
+    assert.equal(blockedSummary.primaryActionText, "先处理阻塞项");
+    assert.deepEqual(blockedSummary.priorityItems.map((item) => item.id), ["schema", "actions"]);
+    assert.equal(blockedSummary.priorityItems[1].actionText, "定位处理");
+
+    const warningSummary = createLowcodePublishRiskSummary([
+      { id: "images", title: "图片素材", status: "warning", description: "缺少图片", nodeId: "banner_1", nodeTitle: "首屏主图" },
+      { id: "nodes", title: "页面节点", status: "pass", description: "已配置 1 个节点" },
+    ]);
+    assert.equal(warningSummary.level, "warning");
+    assert.equal(warningSummary.statusText, "1 个提醒 / 1 项通过");
+    assert.deepEqual(warningSummary.priorityItems.map((item) => item.id), ["images"]);
+
+    const readySummary = createLowcodePublishRiskSummary([
+      { id: "schema", title: "Schema 校验", status: "pass", description: "结构有效" },
+      { id: "nodes", title: "页面节点", status: "pass", description: "已配置 1 个节点" },
+    ]);
+    assert.equal(readySummary.level, "ready");
+    assert.equal(readySummary.statusText, "2 项通过");
+    assert.equal(readySummary.priorityItems.length, 0);
   });
 
   it("creates delivery summary from publish checks", () => {
