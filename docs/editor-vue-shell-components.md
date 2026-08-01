@@ -215,6 +215,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 接收 `propGroups`、`selectedProps`、`selectedComponentName`、`collapsedGroups`、列表项拖拽状态、列表项素材目标、素材筛选状态、素材列表和事件绑定展示模型。
 - 通过 emits 抛出分组折叠、属性更新、列表项增删改移、列表项拖拽、列表项素材选择、素材筛选、商品快捷操作和事件绑定操作。
 - 复用 prop groups、prop editor model 和 event binding API 产出的展示模型，以及现有 `.property-*`、`.list-*`、`.resource-*` 和 `.event-binding-list` 样式，保持当前视觉与 smoke check DOM 语义。
+- 当 editor prop groups API 返回 `validation` 分组时，展示“表单校验”提示，帮助运营理解 `required`、`requiredMessage` 会在 `BasicForm` 提交前触发本地校验和字段错误展示。
 
 不负责：
 
@@ -223,6 +224,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 - 不查询素材、商品、优惠券、门店/达人等资源。
 - 不读取或写入 localStorage。
 - 不处理权限、协作锁定、审计或服务端保存。
+- 不实现复杂校验 DSL、远程提交、服务端错误回填或 H5 runtime 校验逻辑。
 
 ### `EditorResourcePanels`
 

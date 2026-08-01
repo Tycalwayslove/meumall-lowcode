@@ -1641,7 +1641,13 @@ async function assertInspectorGroups(page) {
   await page.waitForExpression("(() => { const group = Array.from(document.querySelectorAll('.property-group')).find((item) => item.innerText.includes('样式配置')); return Boolean(group && group.classList.contains('collapsed')); })()");
   await page.clickByText(".property-group-head", "样式配置");
   await page.waitForExpression("(() => { const group = Array.from(document.querySelectorAll('.property-group')).find((item) => item.innerText.includes('样式配置')); return Boolean(group && !group.classList.contains('collapsed')); })()");
-  log("通过：属性面板分组可折叠展开");
+  await page.fillByPlaceholder("搜索节点", "基础输入框");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.outline-item')).some((item) => item.innerText.includes('基础输入框'))");
+  await page.clickByText(".outline-item", "基础输入框");
+  await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('基础输入框')); })()");
+  await page.waitForExpression("document.body.innerText.includes('表单校验') && document.body.innerText.includes('BasicForm 提交前校验') && document.body.innerText.includes('开启必填后') && Array.from(document.querySelectorAll('.property-group')).some((item) => item.innerText.includes('表单校验') && item.innerText.includes('必填提示'))");
+  await page.fillByPlaceholder("搜索节点", "");
+  log("通过：属性面板分组可折叠展开，并能展示基础表单字段校验配置");
 }
 
 async function assertOutlineNavigator(page) {

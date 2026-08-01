@@ -96,6 +96,10 @@ function isGroupCollapsed(key: LowcodeEditorPropGroupKey): boolean {
   return Boolean(props.collapsedGroups[key]);
 }
 
+function isValidationGroup(key: LowcodeEditorPropGroupKey): boolean {
+  return key === "validation";
+}
+
 function isStructured(propSchema: LowcodePropSchema): boolean {
   return getLowcodePropEditorControl(propSchema) === "json";
 }
@@ -220,6 +224,10 @@ function canUseProductQuickActions(propName: string): boolean {
         <ChevronDown :size="15" />
       </button>
       <div v-if="!isGroupCollapsed(group.key)" class="property-group-body">
+        <div v-if="isValidationGroup(group.key)" class="property-group-hint validation-hint">
+          <strong>BasicForm 提交前校验</strong>
+          <small>开启必填后，提交时会展示表单级错误和字段级错误提示；提示文案会写入当前字段 props。</small>
+        </div>
         <div
           v-for="entry in group.entries"
           :key="entry.name"

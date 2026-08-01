@@ -3362,6 +3362,29 @@ button:focus-visible {
   margin-bottom: 0;
 }
 
+.property-group-hint {
+  display: grid;
+  gap: 3px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.property-group-hint strong {
+  color: #1e3a8a;
+  font-size: 12px;
+}
+
+.property-group-hint small {
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .mini-empty {
   display: grid;
   min-height: 42px;

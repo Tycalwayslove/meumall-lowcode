@@ -979,7 +979,7 @@ export interface LowcodeEditorCanvasOperationResult {
   changed: boolean;
 }
 
-export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "behavior" | "advanced";
+export type LowcodeEditorPropGroupKey = "content" | "style" | "data" | "validation" | "behavior" | "advanced";
 
 export interface LowcodeEditorPropGroupMeta {
   label: string;
@@ -1005,6 +1005,7 @@ export interface CreateLowcodePropGroupsOptions {
   groupMeta?: Partial<Record<LowcodeEditorPropGroupKey, LowcodeEditorPropGroupMeta>>;
   contentPropNames?: readonly string[];
   dataPropNames?: readonly string[];
+  validationPropNames?: readonly string[];
   behaviorPropNames?: readonly string[];
 }
 
@@ -1414,11 +1415,12 @@ export const LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS = [
 
 export const LOWCODE_EDITOR_COMMAND_DEFAULT_LIMIT = 28;
 export const LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT = 6;
-export const LOWCODE_EDITOR_PROP_GROUP_ORDER = ["content", "style", "data", "behavior", "advanced"] as const satisfies readonly LowcodeEditorPropGroupKey[];
+export const LOWCODE_EDITOR_PROP_GROUP_ORDER = ["content", "style", "data", "validation", "behavior", "advanced"] as const satisfies readonly LowcodeEditorPropGroupKey[];
 export const LOWCODE_EDITOR_PROP_GROUP_META = {
   content: { label: "内容配置", description: "标题、文案、图片和按钮内容。" },
   style: { label: "样式配置", description: "颜色、圆角、间距和排版表现。" },
   data: { label: "数据配置", description: "商品、券、规则、导航项和数据源字段。" },
+  validation: { label: "表单校验", description: "必填状态、提示文案和表单提交前的本地校验。" },
   behavior: { label: "行为配置", description: "跳转链接、吸顶、平滑滚动等交互行为。" },
   advanced: { label: "其他配置", description: "暂未归类的物料字段。" },
 } as const satisfies Record<LowcodeEditorPropGroupKey, LowcodeEditorPropGroupMeta>;
@@ -1595,6 +1597,7 @@ const DEFAULT_CONTENT_PROP_NAMES = [
   "logoImageUrl",
 ];
 const DEFAULT_DATA_PROP_NAMES = ["items", "coupons", "rules", "sellingPoints"];
+const DEFAULT_VALIDATION_PROP_NAMES = ["required", "requiredMessage", "validationErrorText", "errorText", "errorMessage"];
 const DEFAULT_BEHAVIOR_PROP_NAMES = [
   "linkUrl",
   "primaryLinkUrl",
@@ -4895,8 +4898,12 @@ export function getLowcodePropGroupKey(
   const normalized = propName.toLowerCase();
   const contentPropNames = new Set(options.contentPropNames ?? DEFAULT_CONTENT_PROP_NAMES);
   const dataPropNames = new Set(options.dataPropNames ?? DEFAULT_DATA_PROP_NAMES);
+  const validationPropNames = new Set(options.validationPropNames ?? DEFAULT_VALIDATION_PROP_NAMES);
   const behaviorPropNames = new Set(options.behaviorPropNames ?? DEFAULT_BEHAVIOR_PROP_NAMES);
 
+  if (validationPropNames.has(propName) || /^(required|validation|error)(message|text)?$/i.test(propName)) {
+    return "validation";
+  }
   if (dataPropNames.has(propName) || propSchema.setter === "dataSourceSelector" || propSchema.type === "array") {
     return "data";
   }

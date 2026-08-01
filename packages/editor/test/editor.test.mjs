@@ -1961,27 +1961,34 @@ describe("@meumall/lowcode-editor readiness", () => {
       videoUrl: { label: "视频地址", type: "string", setter: "video", defaultValue: "" },
       backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
       items: { label: "商品", type: "array", setter: "textarea", defaultValue: [] },
+      required: { label: "必填", type: "boolean", setter: "switch", defaultValue: false },
+      requiredMessage: { label: "必填提示", type: "string", setter: "input", defaultValue: "" },
       sticky: { label: "吸顶", type: "boolean", setter: "switch", defaultValue: false },
       trackingCode: { label: "埋点扩展", type: "string", setter: "input", defaultValue: "" },
     };
 
-    assert.deepEqual(LOWCODE_EDITOR_PROP_GROUP_ORDER, ["content", "style", "data", "behavior", "advanced"]);
+    assert.deepEqual(LOWCODE_EDITOR_PROP_GROUP_ORDER, ["content", "style", "data", "validation", "behavior", "advanced"]);
     assert.equal(LOWCODE_EDITOR_PROP_GROUP_META.content.label, "内容配置");
+    assert.equal(LOWCODE_EDITOR_PROP_GROUP_META.validation.label, "表单校验");
     assert.equal(getLowcodePropGroupKey("title", propsSchema.title), "content");
     assert.equal(getLowcodePropGroupKey("coverImageUrl", { label: "图片", type: "string", setter: "image", defaultValue: "" }), "content");
     assert.equal(getLowcodePropGroupKey("videoUrl", propsSchema.videoUrl), "content");
     assert.equal(getLowcodePropGroupKey("backgroundColor", propsSchema.backgroundColor), "style");
     assert.equal(getLowcodePropGroupKey("items", propsSchema.items), "data");
     assert.equal(getLowcodePropGroupKey("products", { label: "数据源", type: "string", setter: "dataSourceSelector", defaultValue: "" }), "data");
+    assert.equal(getLowcodePropGroupKey("required", propsSchema.required), "validation");
+    assert.equal(getLowcodePropGroupKey("requiredMessage", propsSchema.requiredMessage), "validation");
+    assert.equal(getLowcodePropGroupKey("customRequired", { label: "自定义必填", type: "boolean", setter: "switch", defaultValue: false }, { validationPropNames: ["customRequired"] }), "validation");
     assert.equal(getLowcodePropGroupKey("sticky", propsSchema.sticky), "behavior");
     assert.equal(getLowcodePropGroupKey("trackingCode", propsSchema.trackingCode), "advanced");
 
     const groups = createLowcodePropGroups(propsSchema);
-    assert.deepEqual(groups.map((group) => group.key), ["content", "style", "data", "behavior", "advanced"]);
+    assert.deepEqual(groups.map((group) => group.key), ["content", "style", "data", "validation", "behavior", "advanced"]);
     assert.deepEqual(groups.map((group) => group.entries.map((entry) => entry.name)), [
       ["title", "videoUrl"],
       ["backgroundColor"],
       ["items"],
+      ["required", "requiredMessage"],
       ["sticky"],
       ["trackingCode"],
     ]);
