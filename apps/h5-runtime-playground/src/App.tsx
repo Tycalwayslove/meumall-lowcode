@@ -1,21 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  createLowcodeRuntimeHealthSummary,
   createSafeActionExecutor,
-  loadLowcodeRuntimeSchema,
-  resolveLowcodeDataSources,
   type ConfigPlatformPageRelease,
-  type DataSourceResolutionRecord,
   type LowcodeConfigPlatformClient,
   type RuntimeSchemaSourceType,
 } from "@meumall/lowcode-adapters";
-import { createMaterialRegistry } from "@meumall/lowcode-core";
-import { h5Materials } from "@meumall/lowcode-materials-h5";
-import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
+import {
+  LowcodeReactH5Runtime,
+  createDefaultReactH5MaterialRegistry,
+  useLowcodeReactH5Runtime,
+} from "@meumall/lowcode-runtime-react-h5";
 import {
   createLowcodePageSchema,
   createMaterialManifest,
-  validateLowcodePageSchema,
   type JsonObject,
   type JsonValue,
   type LowcodeEnvironment,
@@ -1328,8 +1325,7 @@ const localRuntimeConfigPlatformClient: LowcodeConfigPlatformClient = {
 
 const runtimeConfigPlatformBinding = createRuntimeConfigPlatformBinding(localRuntimeConfigPlatformClient);
 
-const registry = createMaterialRegistry([
-  ...h5Materials,
+const registry = createDefaultReactH5MaterialRegistry([
   {
     component: BrokenBlock,
     manifest: createMaterialManifest({
@@ -1467,13 +1463,6 @@ function createRuntimeSourceNote(input: RuntimeSchemaInputInfo, runtimeSchema: R
   return "当前 schema 已按请求入口加载。";
 }
 
-function countNodes(schema: LowcodePageSchema): number {
-  const walk = (nodes: LowcodePageSchema["nodes"]): number => {
-    return nodes.reduce((total, node) => total + 1 + walk(node.children ?? []), 0);
-  };
-  return walk(schema.nodes);
-}
-
 function getParamString(params: JsonObject | undefined, key: string, fallback: string): string {
   const value = params?.[key];
   return typeof value === "string" && value.length > 0 ? value : fallback;
@@ -1481,50 +1470,7 @@ function getParamString(params: JsonObject | undefined, key: string, fallback: s
 
 export function App() {
   const runtimeInput = useMemo(() => getRuntimeSchemaInputInfo(), []);
-  const [renderErrors, setRenderErrors] = useState<string[]>([]);
-  const [runtimeData, setRuntimeData] = useState<JsonObject>({});
-  const [dataSourceRecords, setDataSourceRecords] = useState<DataSourceResolutionRecord[]>([]);
-  const [dataResolving, setDataResolving] = useState(true);
-  const [schemaLoading, setSchemaLoading] = useState(true);
   const [actionLogs, setActionLogs] = useState<string[]>([]);
-  const [runtimeSchema, setRuntimeSchema] = useState<RuntimeSchemaSource>({
-    schema: runtimeInput.fallbackSchema,
-    source: "fallback",
-  });
-  const validation = useMemo(() => validateLowcodePageSchema(runtimeSchema.schema), [runtimeSchema.schema]);
-  const nodeCount = useMemo(() => countNodes(runtimeSchema.schema), [runtimeSchema.schema]);
-  const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
-  const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
-  const runtimeSourceNote = createRuntimeSourceNote(runtimeInput, runtimeSchema, schemaLoading);
-  const runtimeHealthSummary = useMemo(
-    () =>
-      createLowcodeRuntimeHealthSummary({
-        loading: schemaLoading,
-        schema: runtimeSchema.schema,
-        source: runtimeSchema.source,
-        sourceError: runtimeSchema.error,
-        validationValid: validation.valid,
-        validationErrors: validation.errors,
-        nodeCount,
-        dataResolving,
-        dataSourceRecords,
-        actionLogCount: actionLogs.length,
-        renderErrors,
-      }),
-    [
-      actionLogs.length,
-      dataResolving,
-      dataSourceRecords,
-      nodeCount,
-      renderErrors,
-      runtimeSchema.error,
-      runtimeSchema.schema,
-      runtimeSchema.source,
-      schemaLoading,
-      validation.errors,
-      validation.valid,
-    ],
-  );
   const runtimeEntryLinks = [
     { label: "Sample", href: "/", desc: "无参数 fallback 演示" },
     { label: "PageId", href: "/?pageId=summer-campaign-demo", desc: "模拟生产 pageId 入口" },
@@ -1557,46 +1503,34 @@ export function App() {
       }),
     };
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setSchemaLoading(true);
-    loadLowcodeRuntimeSchema({
+  const runtimeLoadInput = useMemo(
+    () => ({
       ...runtimeInput,
       configPlatformClient: runtimeConfigPlatformBinding.client,
-    })
-      .then((result) => {
-        if (cancelled) return;
-        setRuntimeSchema({
-          schema: result.schema ?? runtimeInput.fallbackSchema,
-          source: result.source,
-          error: result.error,
-        });
-      })
-      .finally(() => {
-        if (!cancelled) setSchemaLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [runtimeInput]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setDataResolving(true);
-    resolveLowcodeDataSources(runtimeSchema.schema.dataSources ?? [], dataSourceRegistry)
-      .then((result) => {
-        if (cancelled) return;
-        setRuntimeData(result.data);
-        setDataSourceRecords(result.records);
-      })
-      .finally(() => {
-        if (!cancelled) setDataResolving(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [runtimeSchema.schema]);
+    }),
+    [runtimeInput],
+  );
+  const runtime = useLowcodeReactH5Runtime({
+    runtimeInput: runtimeLoadInput,
+    dataSourceRegistry,
+    actionExecutor: actionRuntime.executor,
+    actionLogCount: actionLogs.length,
+  });
+  const runtimeSchema: RuntimeSchemaSource = {
+    schema: runtime.schema ?? runtimeInput.fallbackSchema,
+    source: runtime.source,
+    error: runtime.sourceError,
+  };
+  const validation = runtime.validation;
+  const nodeCount = runtime.nodeCount;
+  const dataSourceRecords = runtime.dataSourceRecords;
+  const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
+  const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
+  const dataResolving = runtime.dataResolving;
+  const schemaLoading = runtime.schemaLoading;
+  const renderErrors = runtime.renderErrors;
+  const runtimeHealthSummary = runtime.healthSummary;
+  const runtimeSourceNote = createRuntimeSourceNote(runtimeInput, runtimeSchema, schemaLoading);
 
   return (
     <main className="runtime-shell">
@@ -1716,15 +1650,10 @@ export function App() {
           <span>{runtimeSchema.schema.title}</span>
           <span>React H5</span>
         </div>
-        <LowcodeRenderer
-          schema={runtimeSchema.schema}
+        <LowcodeReactH5Runtime
+          runtime={runtime}
           registry={registry}
-          data={runtimeData}
-          actionExecutor={actionRuntime.executor}
           fallback={<div className="runtime-empty">页面暂无内容，H5 runtime 已进入安全空态</div>}
-          onRenderError={(error, node) => {
-            setRenderErrors((current) => [...current, `${node?.id ?? "unknown"}: ${error.message}`]);
-          }}
         />
       </section>
 

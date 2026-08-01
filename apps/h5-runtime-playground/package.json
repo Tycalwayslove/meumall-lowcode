@@ -11,9 +11,7 @@
   },
   "dependencies": {
     "@meumall/lowcode-adapters": "workspace:*",
-    "@meumall/lowcode-core": "workspace:*",
-    "@meumall/lowcode-materials-h5": "workspace:*",
-    "@meumall/lowcode-renderer-h5": "workspace:*",
+    "@meumall/lowcode-runtime-react-h5": "workspace:*",
     "@meumall/lowcode-schema": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

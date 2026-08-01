@@ -14,6 +14,7 @@ const publicPackages = new Map([
   ["packages/core", "@meumall/lowcode-core"],
   ["packages/renderer-h5", "@meumall/lowcode-renderer-h5"],
   ["packages/materials-h5", "@meumall/lowcode-materials-h5"],
+  ["packages/runtime-react-h5", "@meumall/lowcode-runtime-react-h5"],
   ["packages/renderer-vue-h5", "@meumall/lowcode-renderer-vue-h5"],
   ["packages/materials-vue-h5", "@meumall/lowcode-materials-vue-h5"],
   ["packages/editor", "@meumall/lowcode-editor"],
@@ -33,6 +34,16 @@ const allowedInternalDeps = new Map([
   ["@meumall/lowcode-core", ["@meumall/lowcode-schema"]],
   ["@meumall/lowcode-renderer-h5", ["@meumall/lowcode-core", "@meumall/lowcode-schema"]],
   ["@meumall/lowcode-materials-h5", ["@meumall/lowcode-core", "@meumall/lowcode-primitives-react-h5", "@meumall/lowcode-schema"]],
+  [
+    "@meumall/lowcode-runtime-react-h5",
+    [
+      "@meumall/lowcode-adapters",
+      "@meumall/lowcode-core",
+      "@meumall/lowcode-materials-h5",
+      "@meumall/lowcode-renderer-h5",
+      "@meumall/lowcode-schema",
+    ],
+  ],
   ["@meumall/lowcode-renderer-vue-h5", ["@meumall/lowcode-core", "@meumall/lowcode-schema"]],
   [
     "@meumall/lowcode-materials-vue-h5",
@@ -58,6 +69,7 @@ const allowedInternalDeps = new Map([
       "@meumall/lowcode-core",
       "@meumall/lowcode-materials-h5",
       "@meumall/lowcode-renderer-h5",
+      "@meumall/lowcode-runtime-react-h5",
       "@meumall/lowcode-schema",
     ],
   ],

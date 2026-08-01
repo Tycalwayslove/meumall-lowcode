@@ -4,13 +4,11 @@ React H5 runtime playground for MeuMall low-code pages.
 
 This app consumes:
 
-- `@meumall/lowcode-renderer-h5`
-- `@meumall/lowcode-materials-h5`
-- `@meumall/lowcode-core`
-- `@meumall/lowcode-schema`
 - `@meumall/lowcode-adapters`
+- `@meumall/lowcode-runtime-react-h5`
+- `@meumall/lowcode-schema`
 
-It exists to prove that a published Page Schema can be rendered by the H5 runtime package independently from the Vue3 editor playground.
+It exists to prove that a published Page Schema can be rendered by the React H5 runtime host package independently from the Vue3 editor playground.
 
 For the real `hybird-meumall` integration checklist, read:
 
@@ -51,7 +49,7 @@ http://localhost:5174/?demo=broken
 - `demo=empty` renders an empty Page Schema to verify the H5 runtime empty state does not white-screen.
 - `demo=broken` renders an unknown material and a throwing local material to verify renderer-level local fallback does not white-screen.
 
-The left diagnostics panel shows the requested entry, effective schema source, config platform mode, data source mode, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
+The left diagnostics panel shows the requested entry, effective schema source, config platform mode, data source mode, page id, page version, schema validation, node count, runtime health summary, data source status, action logs, and local entry shortcuts.
 
 ## Config Platform Client
 

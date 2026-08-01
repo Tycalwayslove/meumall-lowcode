@@ -12,6 +12,7 @@
       "@meumall/lowcode-core",
       "@meumall/lowcode-renderer-h5",
       "@meumall/lowcode-materials-h5",
+      "@meumall/lowcode-runtime-react-h5",
       "@meumall/lowcode-renderer-vue-h5",
       "@meumall/lowcode-materials-vue-h5",
       "@meumall/lowcode-editor",

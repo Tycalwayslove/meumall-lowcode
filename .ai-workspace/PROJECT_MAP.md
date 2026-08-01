@@ -10,15 +10,16 @@ primitives-vue-h5 -> design-tokens
 renderer-h5 -> core -> schema
 materials-h5 -> core -> schema
 materials-h5 -> primitives-react-h5
+runtime-react-h5 -> adapters + renderer-h5 + materials-h5 + core + schema
 renderer-vue-h5 -> core -> schema
 materials-vue-h5 -> renderer-vue-h5 -> core -> schema
 materials-vue-h5 -> primitives-vue-h5
 adapters -> schema
 editor-playground -> editor + renderer-vue-h5 + materials-vue-h5
-h5-runtime-playground -> renderer-h5 + materials-h5 + core + schema
+h5-runtime-playground -> runtime-react-h5 + adapters + schema
 
 Java config platform -> stores and publishes PageSchema
-hybird-meumall -> consumes renderer-h5/materials-h5/schema
+hybird-meumall -> consumes runtime-react-h5 or renderer-h5/materials-h5/schema
 future mini-program runtime -> consumes schema/core
 ```
 
@@ -49,6 +50,12 @@ npm 包：`@meumall/lowcode-materials-h5`
 负责 MeuMall H5 运营页面物料。物料必须声明 manifest，不得依赖 `hybird-meumall` 内部模块。
 
 物料内部需要按 `docs/material-layering-architecture.md` 区分通用物料和业务物料。基础 Button、Image、Tag、Text、Price、Input、Select 等能力已抽到 `@meumall/lowcode-primitives-react-h5`，materials 只负责低代码物料 manifest 和物料组合语义。
+
+### `packages/runtime-react-h5`
+
+npm 包：`@meumall/lowcode-runtime-react-h5`
+
+负责 React H5 宿主组合层：默认物料 registry、schema loader hook、数据源解析、schema 校验、节点统计、运行态健康摘要和 `LowcodeRenderer` 挂载。该包面向真实 H5 消费方减少接入样板代码，不替代 `renderer-h5`、`materials-h5`、`adapters` 或 `schema` 的职责。
 
 ### `packages/renderer-vue-h5`
 
@@ -97,8 +104,7 @@ Vue3 编辑器 playground。负责演示和验证：
 
 React H5 runtime playground。负责演示和验证：
 
-- React H5 renderer 消费 Page Schema。
-- React H5 materials 渲染基础物料和嵌套容器。
+- `@meumall/lowcode-runtime-react-h5` 消费 Page Schema 并挂载 React H5 renderer/materials。
 - mock runtime data 通过 dataBinding 注入商品列表。
 - 未来 `hybird-meumall` H5 接入形态。
 
@@ -135,6 +141,7 @@ H5 消费方。通过 npm 引入 schema、renderer、materials 和 adapters，�
 - `renderer-*` 可以依赖 `core` 和 `schema`，不得依赖 `editor`。
 - `materials-*` 可以依赖 `core` 和 `schema`，不得依赖业务项目。
 - `materials-*` 可以依赖对应端 `primitives-*`，但 `primitives-*` 不得反向依赖 `materials-*`、`renderer-*`、`editor`、`schema` 或 `core`。
+- `runtime-react-h5` 可以依赖 `adapters`、`core`、`renderer-h5`、`materials-h5` 和 `schema`，不得依赖编辑器或业务项目。
 - `editor` 可以依赖 `core` 和 `schema`，不得依赖 renderer 的私有实现。
 - `editor` 不直接依赖 H5 runtime primitives；编辑器后台控件单独治理或接入管理台组件库。
 - `adapters` 可以依赖 `schema`，宿主实现通过注册注入。

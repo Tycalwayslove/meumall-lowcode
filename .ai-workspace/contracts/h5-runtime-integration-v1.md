@@ -20,19 +20,19 @@ MeuMall Lowcode H5 Runtime Integration v1
 
 ## 集成目标
 
-`hybird-meumall` 通过 npm 引入低代码 renderer、materials、schema/core/adapters，在 H5 路由中按 `pageId`、`previewToken` 或 `releaseId` 拉取 Page Schema 并渲染，不复制低代码平台源码。
+`hybird-meumall` 通过 npm 引入低代码 React H5 runtime host 包，在 H5 路由中按 `pageId`、`previewToken` 或 `releaseId` 拉取 Page Schema 并渲染，不复制低代码平台源码。需要更底层控制时，可以直接组合 renderer、materials、schema/core/adapters。
 
 ## 需要安装的包
 
 ```bash
-pnpm add @meumall/lowcode-schema @meumall/lowcode-core @meumall/lowcode-renderer-h5 @meumall/lowcode-materials-h5 @meumall/lowcode-adapters
+pnpm add @meumall/lowcode-runtime-react-h5 @meumall/lowcode-adapters @meumall/lowcode-schema
 ```
 
 版本要求：
 
 - 首次接入应锁定同一批次版本。
-- `@meumall/lowcode-renderer-h5` 不依赖 editor。
-- `@meumall/lowcode-materials-h5` 不依赖 `hybird-meumall` 内部模块。
+- `@meumall/lowcode-runtime-react-h5` 不依赖 editor 或 `hybird-meumall` 内部模块。
+- `@meumall/lowcode-renderer-h5`、`@meumall/lowcode-materials-h5`、`@meumall/lowcode-core` 可作为底层高级用法直接安装，但默认由 runtime host 包组合。
 
 ## 推荐路由
 
@@ -52,13 +52,11 @@ pnpm add @meumall/lowcode-schema @meumall/lowcode-core @meumall/lowcode-renderer
 
 ## Schema 获取优先级
 
-H5 runtime 推荐统一调用 `loadLowcodeRuntimeSchema`：
+H5 runtime host 内部统一通过 `loadLowcodeRuntimeSchema` 获取 schema：
 
-```ts
-import {
-  createHttpConfigPlatformClient,
-  loadLowcodeRuntimeSchema,
-} from "@meumall/lowcode-adapters";
+```tsx
+import { createHttpConfigPlatformClient } from "@meumall/lowcode-adapters";
+import { LowcodeReactH5Runtime, useLowcodeReactH5Runtime } from "@meumall/lowcode-runtime-react-h5";
 
 const configPlatformClient = createHttpConfigPlatformClient({
   baseUrl: "/api",
@@ -67,14 +65,20 @@ const configPlatformClient = createHttpConfigPlatformClient({
   },
 });
 
-const result = await loadLowcodeRuntimeSchema({
-  encodedSchema: query.schema,
-  previewToken: route.params.previewToken,
-  releaseId: route.params.releaseId,
-  pageId: route.params.pageId,
-  configPlatformClient,
-  fallbackSchema,
+const runtime = useLowcodeReactH5Runtime({
+  runtimeInput: {
+    encodedSchema: query.schema,
+    previewToken: route.params.previewToken,
+    releaseId: route.params.releaseId,
+    pageId: route.params.pageId,
+    configPlatformClient,
+    fallbackSchema,
+  },
+  dataSourceRegistry,
+  actionExecutor,
 });
+
+<LowcodeReactH5Runtime runtime={runtime} />;
 ```
 
 优先级：
@@ -107,12 +111,8 @@ pnpm --filter @meumall/lowcode-h5-runtime-playground dev
 ## React 渲染示例
 
 ```tsx
-import { createDataSourceRegistry, createSafeActionExecutor, createSafeActionRegistry, resolveLowcodeDataSources } from "@meumall/lowcode-adapters";
-import { createMaterialRegistry } from "@meumall/lowcode-core";
-import { h5Materials } from "@meumall/lowcode-materials-h5";
-import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
-
-const materialRegistry = createMaterialRegistry(h5Materials);
+import { createDataSourceRegistry, createSafeActionExecutor, createSafeActionRegistry } from "@meumall/lowcode-adapters";
+import { LowcodeReactH5Runtime, useLowcodeReactH5Runtime } from "@meumall/lowcode-runtime-react-h5";
 
 const dataSourceRegistry = createDataSourceRegistry({
   "product.byActivity": resolveProductsByActivity,
@@ -125,16 +125,15 @@ const actionRegistry = createSafeActionRegistry({
   "tracking.click": reportClick,
 });
 
-const { data, records } = await resolveLowcodeDataSources(schema.dataSources ?? [], dataSourceRegistry);
+const runtime = useLowcodeReactH5Runtime({
+  runtimeInput: { pageId, configPlatformClient, fallbackSchema },
+  dataSourceRegistry,
+  actionExecutor: createSafeActionExecutor(actionRegistry),
+});
 
-<LowcodeRenderer
-  schema={schema}
-  registry={materialRegistry}
-  data={data}
-  actionExecutor={createSafeActionExecutor(actionRegistry)}
-  fallback={<EmptyLowcodePage />}
-  onRenderError={reportRenderError}
-/>;
+reportRuntimeHealth(runtime.healthSummary);
+
+<LowcodeReactH5Runtime runtime={runtime} fallback={<EmptyLowcodePage />} />;
 ```
 
 ## 数据源接入

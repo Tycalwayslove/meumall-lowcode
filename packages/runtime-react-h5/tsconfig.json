@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../schema" },
+    { "path": "../core" },
+    { "path": "../adapters" },
+    { "path": "../renderer-h5" },
+    { "path": "../materials-h5" }
+  ]
+}

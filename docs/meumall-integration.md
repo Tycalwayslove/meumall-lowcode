@@ -5,14 +5,18 @@
 `hybird-meumall` should consume packages, not copy source files.
 
 ```tsx
-import { LowcodeRenderer } from "@meumall/lowcode-renderer-h5";
-import { h5Materials } from "@meumall/lowcode-materials-h5";
-import { createMaterialRegistry } from "@meumall/lowcode-core";
+import { LowcodeReactH5Runtime, useLowcodeReactH5Runtime } from "@meumall/lowcode-runtime-react-h5";
 
-const registry = createMaterialRegistry(h5Materials);
+const runtime = useLowcodeReactH5Runtime({
+  runtimeInput: { pageId, configPlatformClient, fallbackSchema },
+  dataSourceRegistry,
+  actionExecutor,
+});
 
-<LowcodeRenderer schema={schema} registry={registry} />
+<LowcodeReactH5Runtime runtime={runtime} />
 ```
+
+如果业务 H5 需要更底层控制，也可以直接消费 `@meumall/lowcode-renderer-h5`、`@meumall/lowcode-materials-h5`、`@meumall/lowcode-core`、`@meumall/lowcode-schema` 和 `@meumall/lowcode-adapters` 自行组合。但默认推荐优先使用 `@meumall/lowcode-runtime-react-h5`，避免复制 playground glue code。
 
 本仓库提供独立 React H5 runtime 验证入口：
 
@@ -26,7 +30,7 @@ pnpm dev:h5
 http://localhost:5174/
 ```
 
-该入口位于 `apps/h5-runtime-playground`，只消费 React H5 renderer/materials/core/schema，不依赖 Vue 编辑器。
+该入口位于 `apps/h5-runtime-playground`，消费 `@meumall/lowcode-runtime-react-h5`、`@meumall/lowcode-adapters` 和 `@meumall/lowcode-schema`，不依赖 Vue 编辑器。
 
 Vue3 编辑器可以通过 URL handoff 打开 React H5 runtime：
 

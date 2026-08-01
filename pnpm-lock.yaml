@@ -78,15 +78,9 @@ importers:
       '@meumall/lowcode-adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@meumall/lowcode-core':
+      '@meumall/lowcode-runtime-react-h5':
         specifier: workspace:*
-        version: link:../../packages/core
-      '@meumall/lowcode-materials-h5':
-        specifier: workspace:*
-        version: link:../../packages/materials-h5
-      '@meumall/lowcode-renderer-h5':
-        specifier: workspace:*
-        version: link:../../packages/renderer-h5
+        version: link:../../packages/runtime-react-h5
       '@meumall/lowcode-schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -198,6 +192,27 @@ importers:
       vue:
         specifier: '>=3'
         version: 3.5.40(typescript@5.9.3)
+
+  packages/runtime-react-h5:
+    dependencies:
+      '@meumall/lowcode-adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@meumall/lowcode-core':
+        specifier: workspace:*
+        version: link:../core
+      '@meumall/lowcode-materials-h5':
+        specifier: workspace:*
+        version: link:../materials-h5
+      '@meumall/lowcode-renderer-h5':
+        specifier: workspace:*
+        version: link:../renderer-h5
+      '@meumall/lowcode-schema':
+        specifier: workspace:*
+        version: link:../schema
+      react:
+        specifier: '>=18'
+        version: 18.3.1
 
   packages/schema: {}
 
