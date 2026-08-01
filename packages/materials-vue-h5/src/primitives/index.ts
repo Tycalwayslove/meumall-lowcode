@@ -991,6 +991,11 @@ export const MlcStepper = defineComponent({
     max: { type: Number, default: 99 },
     step: { type: Number, default: 1 },
     disabled: { type: Boolean, default: false },
+    accentColor: { type: String, default: h5Tokens.color.accent },
+    borderColor: { type: String, default: h5Tokens.color.border },
+    textColor: { type: String, default: h5Tokens.color.text },
+    buttonBackgroundColor: { type: String, default: h5Tokens.color.surface },
+    radius: { type: Number, default: h5Tokens.radius.md },
     class: { type: String, default: "" },
     style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
     onChange: { type: Function as PropType<(value: number) => void>, default: undefined },
@@ -1002,10 +1007,10 @@ export const MlcStepper = defineComponent({
       const buttonStyle: CSSProperties = {
         width: "34px",
         height: "34px",
-        border: `1px solid ${h5Tokens.color.border}`,
-        borderRadius: `${h5Tokens.radius.md}px`,
-        color: h5Tokens.color.text,
-        background: h5Tokens.color.surface,
+        border: `1px solid ${props.borderColor}`,
+        borderRadius: `${props.radius}px`,
+        color: props.textColor,
+        background: props.buttonBackgroundColor,
         fontSize: "18px",
         fontWeight: 800,
       };
@@ -1027,7 +1032,7 @@ export const MlcStepper = defineComponent({
             {
               style: {
                 minWidth: "28px",
-                color: h5Tokens.color.text,
+                color: props.accentColor,
                 fontSize: `${h5Tokens.fontSize.body}px`,
                 textAlign: "center",
               } satisfies CSSProperties,

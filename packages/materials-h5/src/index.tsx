@@ -29,6 +29,16 @@ function list(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 }
 
+function basicStepperRange(props: Record<string, unknown>) {
+  const rawMin = number(props.min, 0);
+  const rawMax = number(props.max, 99);
+  const min = Math.min(rawMin, rawMax);
+  const max = Math.max(rawMin, rawMax);
+  const step = Math.max(1, number(props.step, 1));
+  const defaultValue = Math.min(max, Math.max(min, number(props.defaultValue, min)));
+  return { min, max, step, defaultValue };
+}
+
 function ruleList(value: unknown): Array<Record<string, unknown> | string> {
   return Array.isArray(value) ? (value as Array<Record<string, unknown> | string>) : [];
 }
@@ -163,6 +173,8 @@ const NUMBER_FONT_SIZE_META = { min: 10, max: 48, step: 1, unit: "px" };
 const NUMBER_FONT_WEIGHT_META = { min: 100, max: 900, step: 100 };
 const NUMBER_LINE_HEIGHT_META = { min: 1, max: 2.5, step: 0.1, unit: "倍" };
 const NUMBER_TEXTAREA_ROWS_META = { min: 2, max: 8, step: 1 };
+const NUMBER_STEPPER_VALUE_META = { min: 0, max: 999, step: 1 };
+const NUMBER_STEPPER_STEP_META = { min: 1, max: 20, step: 1 };
 const NUMBER_COLUMNS_1_TO_3_META = { min: 1, max: 3, step: 1 };
 const NUMBER_CAROUSEL_INTERVAL_META = { min: 1000, max: 10000, step: 500, unit: "ms" };
 const COLOR_SWATCHES_META = {
@@ -420,6 +432,58 @@ export function BasicRadioGroup({ props }: MaterialProps) {
           value: text(item.value),
           disabled: boolean(item.disabled),
         }))}
+        onChange={(nextValue) => {
+          setValue(nextValue);
+          if (typeof handler === "function") handler(nextValue);
+        }}
+      />
+      {helperText ? (
+        <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </section>
+  );
+}
+
+export function BasicStepper({ props }: MaterialProps) {
+  const range = basicStepperRange(props);
+  const [value, setValue] = React.useState(range.defaultValue);
+  const label = text(props.label, "基础步进器");
+  const helperText = text(props.helperText);
+  const handler = props.onChange;
+
+  React.useEffect(() => {
+    setValue(basicStepperRange(props).defaultValue);
+  }, [props.defaultValue, props.min, props.max]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-stepper"
+      style={{
+        display: "grid",
+        gap: 8,
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.textColor, "#111827"),
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      {label ? (
+        <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
+          {label}
+        </MlcText>
+      ) : null}
+      <MlcStepper
+        value={value}
+        min={range.min}
+        max={range.max}
+        step={range.step}
+        disabled={boolean(props.disabled)}
+        accentColor={text(props.accentColor, "#0f766e")}
+        borderColor={text(props.borderColor, "#e5e7eb")}
+        textColor={text(props.textColor, "#111827")}
+        buttonBackgroundColor={text(props.buttonBackgroundColor, "#ffffff")}
+        radius={number(props.radius, 8)}
         onChange={(nextValue) => {
           setValue(nextValue);
           if (typeof handler === "function") handler(nextValue);
@@ -2682,6 +2746,53 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onChange", title: "单选变化" }],
+    }),
+  },
+  {
+    component: BasicStepper,
+    manifest: createMaterialManifest({
+      componentName: "BasicStepper",
+      materialVersion: "0.1.0",
+      title: "基础步进器",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础步进器",
+        helperText: "用于业务无关的数字增减选择，库存、限购和保存请通过后续业务物料或 action 接入。",
+        defaultValue: 2,
+        min: 0,
+        max: 10,
+        step: 1,
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        buttonBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        accentColor: "#0f766e",
+        borderColor: "#e5e7eb",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础步进器" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于业务无关的数字增减选择，库存、限购和保存请通过后续业务物料或 action 接入。" },
+        defaultValue: { label: "默认值", type: "number", setter: "number", defaultValue: 2, ...NUMBER_STEPPER_VALUE_META },
+        min: { label: "最小值", type: "number", setter: "number", defaultValue: 0, ...NUMBER_STEPPER_VALUE_META },
+        max: { label: "最大值", type: "number", setter: "number", defaultValue: 10, ...NUMBER_STEPPER_VALUE_META },
+        step: { label: "步长", type: "number", setter: "number", defaultValue: 1, ...NUMBER_STEPPER_STEP_META },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        buttonBackgroundColor: { label: "按钮背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        accentColor: { label: "强调色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onChange", title: "数字变化" }],
     }),
   },
   {

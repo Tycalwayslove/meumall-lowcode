@@ -11,6 +11,7 @@ import {
   BasicInput,
   BasicRadioGroup,
   BasicSelect,
+  BasicStepper,
   BasicSwitch,
   BasicTag,
   BasicText,
@@ -139,6 +140,9 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicSelect", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicRadioGroup", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicStepper", "defaultValue", { min: 0, max: 999, step: 1, unit: undefined }],
+      ["BasicStepper", "step", { min: 1, max: 20, step: 1, unit: undefined }],
+      ["BasicStepper", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicCheckbox", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
@@ -172,6 +176,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTextarea", "borderColor"],
       ["BasicSelect", "borderColor"],
       ["BasicRadioGroup", "activeColor"],
+      ["BasicStepper", "accentColor"],
       ["BasicSwitch", "activeColor"],
       ["BasicCheckbox", "checkedColor"],
       ["BasicText", "backgroundColor"],
@@ -314,6 +319,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
     functionSourceIncludes(BasicRadioGroup, ["MlcRadioGroup", "MlcText"]);
+    functionSourceIncludes(BasicStepper, ["MlcStepper", "MlcText"]);
     functionSourceIncludes(BasicSwitch, ["MlcSwitch", "MlcText"]);
     functionSourceIncludes(BasicCheckbox, ["MlcCheckbox", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
@@ -484,6 +490,23 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.propsSchema.options.setter, "textarea");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
     assert.equal(material.manifest.propsSchema.activeColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic stepper material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicStepper");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础步进器");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.defaultValue, 2);
+    assert.equal(material.manifest.defaultProps.min, 0);
+    assert.equal(material.manifest.defaultProps.max, 10);
+    assert.equal(material.manifest.propsSchema.defaultValue.setter, "number");
+    assert.equal(material.manifest.propsSchema.step.setter, "number");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.propsSchema.accentColor.setter, "color");
     assert.equal(material.manifest.propsSchema.radius.setter, "number");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });

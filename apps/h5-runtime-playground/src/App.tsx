@@ -238,6 +238,31 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_stepper",
+      componentName: "BasicStepper",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础步进器示例",
+        helperText: "步进器适合业务无关的数字增减选择，业务保存由 action 或表单协议扩展。",
+        defaultValue: 2,
+        min: 0,
+        max: 10,
+        step: 1,
+        wrapperBackgroundColor: "#f3f4f6",
+        buttonBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        accentColor: "#0f766e",
+        borderColor: "#d1d5db",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_stepper_change" },
+      },
+    },
+    {
       id: "node_basic_switch",
       componentName: "BasicSwitch",
       materialVersion: "0.1.0",
@@ -981,6 +1006,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_radio_group_change",
+      },
+    },
+    {
+      id: "track_basic_stepper_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_stepper_change",
       },
     },
     {

@@ -1065,6 +1065,11 @@ export interface MlcStepperProps {
   max?: number;
   step?: number;
   disabled?: boolean;
+  accentColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  buttonBackgroundColor?: string;
+  radius?: number;
   className?: string;
   style?: React.CSSProperties;
   onChange?: (value: number) => void;
@@ -1076,6 +1081,11 @@ export function MlcStepper({
   max = 99,
   step = 1,
   disabled = false,
+  accentColor = h5Tokens.color.accent,
+  borderColor = h5Tokens.color.border,
+  textColor = h5Tokens.color.text,
+  buttonBackgroundColor = h5Tokens.color.surface,
+  radius = h5Tokens.radius.md,
   className,
   style,
   onChange,
@@ -1087,10 +1097,10 @@ export function MlcStepper({
   const buttonStyle: React.CSSProperties = {
     width: 34,
     height: 34,
-    border: `1px solid ${h5Tokens.color.border}`,
-    borderRadius: h5Tokens.radius.md,
-    color: h5Tokens.color.text,
-    background: h5Tokens.color.surface,
+    border: `1px solid ${borderColor}`,
+    borderRadius: radius,
+    color: textColor,
+    background: buttonBackgroundColor,
     fontSize: 18,
     fontWeight: 800,
   };
@@ -1107,7 +1117,7 @@ export function MlcStepper({
       <button type="button" disabled={disabled || normalizedValue <= min} onClick={() => update(normalizedValue - step)} style={buttonStyle}>
         -
       </button>
-      <strong style={{ minWidth: 28, color: h5Tokens.color.text, fontSize: h5Tokens.fontSize.body, textAlign: "center" }}>{normalizedValue}</strong>
+      <strong style={{ minWidth: 28, color: accentColor, fontSize: h5Tokens.fontSize.body, textAlign: "center" }}>{normalizedValue}</strong>
       <button type="button" disabled={disabled || normalizedValue >= max} onClick={() => update(normalizedValue + step)} style={buttonStyle}>
         +
       </button>

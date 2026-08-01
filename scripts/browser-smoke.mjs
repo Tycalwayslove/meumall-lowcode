@@ -834,7 +834,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeCommand)}`);
   log("通过：快捷命令可搜索并添加品牌专题物料");
 
-  log("检查基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础开关和基础复选框通用物料");
+  log("检查基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框通用物料");
   const nodeCountBeforeBasicButton = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础按钮");
@@ -893,6 +893,17 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicRadioGroup\"') && item.value.includes('\"defaultValue\": \"women\"') && item.value.includes('\"activeColor\": \"#0f766e\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
+  const nodeCountBeforeBasicStepper = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
+  await page.pressShortcut("k", { ctrlKey: true });
+  await page.fillByPlaceholder("搜索命令、物料或模板", "基础步进器");
+  await page.waitForExpression("document.body.innerText.includes('添加物料：基础步进器')");
+  await page.clickByText(".command-palette-item", "添加物料：基础步进器");
+  await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicStepper)}`);
+  await page.waitForExpression("document.body.innerText.includes('基础步进器') && (() => { const stepper = document.querySelector('.phone-frame .mlc-basic-stepper'); if (!stepper) return false; const buttons = Array.from(stepper.querySelectorAll('button')).map((item) => item.textContent?.trim()); return buttons.includes('-') && buttons.includes('+') && stepper.innerText.includes('2'); })()");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicStepper\"') && item.value.includes('\"defaultValue\": 2') && item.value.includes('\"max\": 10') && item.value.includes('\"accentColor\": \"#0f766e\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicSwitch = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础开关");
@@ -915,7 +926,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicCheckbox\"') && item.value.includes('\"defaultChecked\": false') && item.value.includes('\"checkedColor\": \"#0f766e\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
-  log("通过：基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
+  log("通过：基础按钮、基础输入框、基础多行输入、基础选择框、基础单选组、基础步进器、基础开关和基础复选框可从快捷命令添加并在 Vue H5 画布渲染");
 
   log("检查基础文本和分割线通用物料");
   const nodeCountBeforeBasicText = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -1437,6 +1448,7 @@ async function main() {
       { label: "基础多行输入物料存在", expression: "document.body.innerText.includes('基础多行输入')" },
       { label: "基础选择框物料存在", expression: "document.body.innerText.includes('基础选择框')" },
       { label: "基础单选组物料存在", expression: "document.body.innerText.includes('基础单选组')" },
+      { label: "基础步进器物料存在", expression: "document.body.innerText.includes('基础步进器')" },
       { label: "基础开关物料存在", expression: "document.body.innerText.includes('基础开关')" },
       { label: "基础复选框物料存在", expression: "document.body.innerText.includes('基础复选框')" },
       { label: "基础文本物料存在", expression: "document.body.innerText.includes('基础文本')" },
@@ -1457,6 +1469,7 @@ async function main() {
       { label: "默认大促模板包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && Array.from(document.querySelectorAll('.phone-frame textarea')).some((item) => item.getAttribute('placeholder') === '请输入活动备注或补充说明')" },
       { label: "默认大促模板包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('.phone-frame select')).some((item) => item.querySelector('option[value=\"women\"]') && item.querySelector('option[value=\"accessories\"]'))" },
       { label: "默认大促模板包含基础单选组", expression: "document.body.innerText.includes('基础单选组示例') && document.querySelector('.phone-frame .mlc-basic-radio-group [role=\"radiogroup\"] [role=\"radio\"][aria-checked=\"true\"]')" },
+      { label: "默认大促模板包含基础步进器", expression: "document.body.innerText.includes('基础步进器示例') && (() => { const stepper = document.querySelector('.phone-frame .mlc-basic-stepper'); return Boolean(stepper && stepper.innerText.includes('2') && Array.from(stepper.querySelectorAll('button')).some((item) => item.textContent?.trim() === '+')); })()" },
       { label: "默认大促模板包含基础开关", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('.phone-frame .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "默认大促模板包含基础复选框", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('.phone-frame .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "默认大促模板包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
@@ -1506,6 +1519,7 @@ async function main() {
       { label: "编辑器内置 runtime 包含基础多行输入", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "编辑器内置 runtime 包含基础选择框", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
       { label: "编辑器内置 runtime 包含基础单选组", expression: "document.body.innerText.includes('基础单选组示例') && document.querySelector('[data-lowcode-page] .mlc-basic-radio-group [role=\"radiogroup\"] [role=\"radio\"][aria-checked=\"true\"]')" },
+      { label: "编辑器内置 runtime 包含基础步进器", expression: "document.body.innerText.includes('基础步进器示例') && (() => { const stepper = document.querySelector('[data-lowcode-page] .mlc-basic-stepper'); return Boolean(stepper && stepper.innerText.includes('2') && Array.from(stepper.querySelectorAll('button')).some((item) => item.textContent?.trim() === '+')); })()" },
       { label: "编辑器内置 runtime 包含基础开关", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('[data-lowcode-page] .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "编辑器内置 runtime 包含基础复选框", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('[data-lowcode-page] .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "编辑器内置 runtime 包含基础文本", expression: "document.body.innerText.includes('基础文本示例')" },
@@ -1539,6 +1553,7 @@ async function main() {
       { label: "React H5 基础多行输入已渲染", expression: "document.body.innerText.includes('基础多行输入示例') && document.querySelector('[data-lowcode-page] textarea[placeholder=\"请输入活动备注或补充说明\"]')" },
       { label: "React H5 基础选择框已渲染", expression: "document.body.innerText.includes('基础选择框示例') && Array.from(document.querySelectorAll('[data-lowcode-page] select')).some((item) => item.querySelector('option[value=\"women\"]'))" },
       { label: "React H5 基础单选组已渲染", expression: "document.body.innerText.includes('基础单选组示例') && document.querySelector('[data-lowcode-page] .mlc-basic-radio-group [role=\"radiogroup\"] [role=\"radio\"][aria-checked=\"true\"]')" },
+      { label: "React H5 基础步进器已渲染", expression: "document.body.innerText.includes('基础步进器示例') && (() => { const stepper = document.querySelector('[data-lowcode-page] .mlc-basic-stepper'); return Boolean(stepper && stepper.innerText.includes('2') && Array.from(stepper.querySelectorAll('button')).some((item) => item.textContent?.trim() === '+')); })()" },
       { label: "React H5 基础开关已渲染", expression: "document.body.innerText.includes('基础开关示例') && document.querySelector('[data-lowcode-page] .mlc-basic-switch [role=\"switch\"][aria-checked=\"true\"]')" },
       { label: "React H5 基础复选框已渲染", expression: "document.body.innerText.includes('基础复选框示例') && document.querySelector('[data-lowcode-page] .mlc-basic-checkbox [role=\"checkbox\"][aria-checked=\"true\"]')" },
       { label: "React H5 基础文本已渲染", expression: "document.body.innerText.includes('基础文本示例')" },

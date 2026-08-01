@@ -36,6 +36,7 @@ Currently migrated materials:
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicRadioGroup`
+- `BasicStepper`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
@@ -74,6 +75,7 @@ Current materials:
 - `BasicTextarea`
 - `BasicSelect`
 - `BasicRadioGroup`
+- `BasicStepper`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
