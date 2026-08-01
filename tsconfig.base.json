@@ -16,6 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "@meumall/lowcode-design-tokens": ["packages/design-tokens/src/index.ts"],
+      "@meumall/lowcode-primitives-react-h5": ["packages/primitives-react-h5/src/index.tsx"],
+      "@meumall/lowcode-primitives-vue-h5": ["packages/primitives-vue-h5/src/index.ts"],
       "@meumall/lowcode-schema": ["packages/schema/src/index.ts"],
       "@meumall/lowcode-core": ["packages/core/src/index.ts"],
       "@meumall/lowcode-renderer-h5": ["packages/renderer-h5/src/index.tsx"],

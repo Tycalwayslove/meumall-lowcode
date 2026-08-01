@@ -2,12 +2,12 @@
 
 Vue 3 H5 business materials for MeuMall low-code pages.
 
-## Internal Primitives
+## Runtime Primitives
 
-This package contains an internal runtime primitives prototype under `src/primitives`.
-These primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; the primitives themselves are still internal implementation details.
+This package composes Vue H5 runtime primitives from `@meumall/lowcode-primitives-vue-h5`.
+Primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; they are not low-code materials and must not appear in `h5VueMaterials`.
 
-Current internal primitives:
+Current primitives:
 
 - `MlcButton`
 - `MlcImage`
@@ -30,7 +30,7 @@ Current internal primitives:
 - `MlcNoticeBar`
 - `MlcRichText`
 
-They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5VueMaterials`.
+They are implementation details for material components, not low-code materials. They do not declare material manifests.
 
 Currently migrated materials:
 

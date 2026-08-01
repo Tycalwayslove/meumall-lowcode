@@ -41,4 +41,4 @@ meumall-lowcode-miniapp
 
 Only split after npm package boundaries are stable. Do not split by folder before package APIs are stable.
 
-`@meumall/lowcode-design-tokens` has been introduced as the first public package below runtime primitives. Runtime primitives should still stay inside the materials packages until Button/Input/Image/etc. APIs are stable, then split into npm packages after the API is proven. See `docs/material-layering-architecture.md`.
+`@meumall/lowcode-design-tokens`, `@meumall/lowcode-primitives-react-h5`, and `@meumall/lowcode-primitives-vue-h5` have been introduced as public packages below materials. Keep them in this monorepo until npm publishing, ownership, CI, and version cadence are stable; split repositories only after the package APIs are proven. See `docs/material-layering-architecture.md`.

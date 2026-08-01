@@ -129,9 +129,9 @@ importers:
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../core
-      '@meumall/lowcode-design-tokens':
+      '@meumall/lowcode-primitives-react-h5':
         specifier: workspace:*
-        version: link:../design-tokens
+        version: link:../primitives-react-h5
       '@meumall/lowcode-schema':
         specifier: workspace:*
         version: link:../schema
@@ -144,15 +144,33 @@ importers:
       '@meumall/lowcode-core':
         specifier: workspace:*
         version: link:../core
-      '@meumall/lowcode-design-tokens':
+      '@meumall/lowcode-primitives-vue-h5':
         specifier: workspace:*
-        version: link:../design-tokens
+        version: link:../primitives-vue-h5
       '@meumall/lowcode-renderer-vue-h5':
         specifier: workspace:*
         version: link:../renderer-vue-h5
       '@meumall/lowcode-schema':
         specifier: workspace:*
         version: link:../schema
+      vue:
+        specifier: '>=3'
+        version: 3.5.40(typescript@5.9.3)
+
+  packages/primitives-react-h5:
+    dependencies:
+      '@meumall/lowcode-design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
+      react:
+        specifier: '>=18'
+        version: 18.3.1
+
+  packages/primitives-vue-h5:
+    dependencies:
+      '@meumall/lowcode-design-tokens':
+        specifier: workspace:*
+        version: link:../design-tokens
       vue:
         specifier: '>=3'
         version: 3.5.40(typescript@5.9.3)

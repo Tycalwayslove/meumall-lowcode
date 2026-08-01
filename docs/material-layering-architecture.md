@@ -91,7 +91,7 @@ Runtime Primitives 是运行时基础组件，不是低代码物料，不声明 
 - Java 配置平台 API。
 - 业务字段，例如 `couponId`、`skuId`、`liveId`。
 
-建议后续包名：
+当前公开包名：
 
 ```text
 @meumall/lowcode-primitives-react-h5
@@ -222,12 +222,10 @@ design-tokens
 primitives-react-h5 -> design-tokens
 primitives-vue-h5 -> design-tokens
 
-materials-h5 -> design-tokens
-future materials-h5 -> primitives-react-h5 -> design-tokens
+materials-h5 -> primitives-react-h5 -> design-tokens
 materials-h5 -> core -> schema
 
-materials-vue-h5 -> design-tokens
-future materials-vue-h5 -> primitives-vue-h5 -> design-tokens
+materials-vue-h5 -> primitives-vue-h5 -> design-tokens
 materials-vue-h5 -> core -> schema
 
 editor -> schema + core
@@ -327,7 +325,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `RichTextBlock`
 - `NavGrid`
 
-新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已开始复用内部 primitives，但它们仍是可拖拽物料，不是 primitives 公开 API。
+新增业务物料前，优先检查是否能通过这些通用物料和模板组合满足运营需求。当前 `SectionContainer`、`ActivityHero`、`Basic*`、`NoticeBar`、`RichTextBlock` 等通用物料已复用公开 runtime primitives 包；它们仍是可拖拽物料，不是 primitives API 本身。
 
 ## Business Materials 首批规划
 
@@ -340,7 +338,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 
 1. `StickyActionBar`：按钮重复明显。
 2. `CouponBundle`：Tag、Button、Price 可复用。
-3. `ProductList` / `ProductRankList` / `FlashSaleList`：Image、Price、Tag 可复用，当前均已迁移到内部 primitives 组合。
+3. `ProductList` / `ProductRankList` / `FlashSaleList`：Image、Price、Tag 可复用，当前均已迁移到公开 runtime primitives 组合。
 4. `LiveEntry`：Image、Tag、Button 可复用。
 5. `BrandFeatureSection` / `StoreExpertSection`：Image、Tag、Button 可复用。
 
@@ -363,23 +361,18 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 
 - 新增 `@meumall/lowcode-design-tokens`。
 - React/Vue H5 materials 内部 primitives 共同消费该包的 H5 token 和 helper。
-- 继续保留内部 `Mlc*` primitives，不把 Button/Input 等组件 API 过早公开。
+- 已作为 Phase 2 前置步骤完成。
 
 ### Phase 2：抽出 primitives npm 包
 
-触发条件：
-
-- 至少 5 个物料复用同一批 primitives。
-- React/Vue primitives API 已稳定。
-- README、测试和 dry-run 能证明包内容明确。
-- design tokens 包已稳定，不再需要在各端重复定义 `h5Tokens`。
-
-抽包目标：
+当前已新增：
 
 ```text
 @meumall/lowcode-primitives-react-h5
 @meumall/lowcode-primitives-vue-h5
 ```
+
+这两个包承载 React/Vue H5 runtime 的业务无关 `Mlc*` 基础组件。materials 包从对应 primitives 包导入组件，继续负责低代码 manifest、props schema、data source slot 和 action 语义。primitives 不进入物料注册表，不依赖 schema/core/editor/renderer/materials 或业务项目。
 
 ### Phase 3：通用物料包拆分
 

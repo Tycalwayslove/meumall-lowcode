@@ -2,6 +2,8 @@
   "files": [],
   "references": [
     { "path": "./packages/design-tokens" },
+    { "path": "./packages/primitives-react-h5" },
+    { "path": "./packages/primitives-vue-h5" },
     { "path": "./packages/schema" },
     { "path": "./packages/core" },
     { "path": "./packages/adapters" },

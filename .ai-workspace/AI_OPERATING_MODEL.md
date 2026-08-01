@@ -9,6 +9,9 @@ MeuMall Lowcode AI 协作体系让 AI 可以长期参与低代码平台建设，
 当前仓库维护：
 
 - `@meumall/lowcode-schema`
+- `@meumall/lowcode-design-tokens`
+- `@meumall/lowcode-primitives-react-h5`
+- `@meumall/lowcode-primitives-vue-h5`
 - `@meumall/lowcode-core`
 - `@meumall/lowcode-renderer-h5`
 - `@meumall/lowcode-materials-h5`
@@ -66,4 +69,3 @@ MeuMall Lowcode AI 协作体系让 AI 可以长期参与低代码平台建设，
 - 指定验证命令通过，或限制已记录。
 - 验收标准逐项有结果。
 - 发布影响已说明。
-

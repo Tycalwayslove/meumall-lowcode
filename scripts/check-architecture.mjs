@@ -8,6 +8,8 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 
 const publicPackages = new Map([
   ["packages/design-tokens", "@meumall/lowcode-design-tokens"],
+  ["packages/primitives-react-h5", "@meumall/lowcode-primitives-react-h5"],
+  ["packages/primitives-vue-h5", "@meumall/lowcode-primitives-vue-h5"],
   ["packages/schema", "@meumall/lowcode-schema"],
   ["packages/core", "@meumall/lowcode-core"],
   ["packages/renderer-h5", "@meumall/lowcode-renderer-h5"],
@@ -25,14 +27,16 @@ const apps = new Map([
 
 const allowedInternalDeps = new Map([
   ["@meumall/lowcode-design-tokens", []],
+  ["@meumall/lowcode-primitives-react-h5", ["@meumall/lowcode-design-tokens"]],
+  ["@meumall/lowcode-primitives-vue-h5", ["@meumall/lowcode-design-tokens"]],
   ["@meumall/lowcode-schema", []],
   ["@meumall/lowcode-core", ["@meumall/lowcode-schema"]],
   ["@meumall/lowcode-renderer-h5", ["@meumall/lowcode-core", "@meumall/lowcode-schema"]],
-  ["@meumall/lowcode-materials-h5", ["@meumall/lowcode-core", "@meumall/lowcode-design-tokens", "@meumall/lowcode-schema"]],
+  ["@meumall/lowcode-materials-h5", ["@meumall/lowcode-core", "@meumall/lowcode-primitives-react-h5", "@meumall/lowcode-schema"]],
   ["@meumall/lowcode-renderer-vue-h5", ["@meumall/lowcode-core", "@meumall/lowcode-schema"]],
   [
     "@meumall/lowcode-materials-vue-h5",
-    ["@meumall/lowcode-core", "@meumall/lowcode-design-tokens", "@meumall/lowcode-renderer-vue-h5", "@meumall/lowcode-schema"],
+    ["@meumall/lowcode-core", "@meumall/lowcode-primitives-vue-h5", "@meumall/lowcode-renderer-vue-h5", "@meumall/lowcode-schema"],
   ],
   ["@meumall/lowcode-editor", ["@meumall/lowcode-core", "@meumall/lowcode-schema"]],
   ["@meumall/lowcode-adapters", ["@meumall/lowcode-schema"]],

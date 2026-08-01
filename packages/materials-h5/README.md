@@ -4,12 +4,12 @@ MeuMall React H5 business materials.
 
 The first version is intentionally small and business-oriented. Avoid exposing too many atomic layout controls to operators.
 
-## Internal Primitives
+## Runtime Primitives
 
-This package contains an internal runtime primitives prototype under `src/primitives`.
-These primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; the primitives themselves are still internal implementation details.
+This package composes React H5 runtime primitives from `@meumall/lowcode-primitives-react-h5`.
+Primitives consume framework-agnostic H5 tokens from `@meumall/lowcode-design-tokens`; they are not low-code materials and must not appear in `h5Materials`.
 
-Current internal primitives:
+Current primitives:
 
 - `MlcButton`
 - `MlcImage`
@@ -32,7 +32,7 @@ Current internal primitives:
 - `MlcNoticeBar`
 - `MlcRichText`
 
-They are implementation details for material components, not low-code materials. They do not declare material manifests and must not appear in `h5Materials`.
+They are implementation details for material components, not low-code materials. They do not declare material manifests.
 
 Currently migrated materials:
 
