@@ -196,7 +196,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `本次提交` | 顶部工具栏改为消费 capability status items，通用展示协作、审批和发布检查状态。 |
+| 2026-08-01 | `85000f4` | 顶部工具栏改为消费 capability status items，通用展示协作、审批和发布检查状态。 |
 | 2026-08-01 | `d0c786c` | 新增 editor capability state API，统一协作锁、审批、权限和发布检查门禁，并接入 Vue3 编辑器 playground。 |
 | 2026-08-01 | `a771705` | 增强 `SectionContainer` 容器区块物料，复用内部 `MlcText` primitive 并保持单列容器协议稳定。 |
 | 2026-08-01 | `0f0b86b` | 增强 `ActivityHero` 活动头图物料，复用内部 primitives 并补齐样式配置、示例和 smoke 校验。 |
