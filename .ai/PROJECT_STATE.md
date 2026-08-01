@@ -197,7 +197,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
-| 2026-08-01 | `本次提交` | 新增 `@meumall/lowcode-design-tokens` 公开包，并让 React/Vue H5 内部 primitives 共同消费共享 token。 |
+| 2026-08-01 | `880e5e3` | 新增 `@meumall/lowcode-design-tokens` 公开包，并让 React/Vue H5 内部 primitives 共同消费共享 token。 |
 | 2026-08-01 | `bfc8a81` | 为 Vue3 编辑器顶部工具栏和发布面板增加宿主扩展插槽，并接入本地管理台扩展示例。 |
 | 2026-08-01 | `85000f4` | 顶部工具栏改为消费 capability status items，通用展示协作、审批和发布检查状态。 |
 | 2026-08-01 | `d0c786c` | 新增 editor capability state API，统一协作锁、审批、权限和发布检查门禁，并接入 Vue3 编辑器 playground。 |
