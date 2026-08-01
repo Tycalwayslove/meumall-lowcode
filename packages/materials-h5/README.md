@@ -29,6 +29,8 @@ They are implementation details for material components, not low-code materials.
 
 Currently migrated materials:
 
+- `BasicButton`
+- `BasicInput`
 - `ActionButton`
 - `ImageBanner`
 - `SectionTitle`
@@ -54,6 +56,8 @@ Current materials:
 
 - `SectionContainer`
 - `NoticeBar`
+- `BasicButton`
+- `BasicInput`
 - `ActivityHero`
 - `ImageBanner`
 - `SectionTitle`

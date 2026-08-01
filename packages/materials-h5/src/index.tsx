@@ -17,6 +17,14 @@ function number(value: unknown, fallback: number): number {
   return typeof value === "number" ? value : fallback;
 }
 
+function boolean(value: unknown, fallback = false): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function option<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? value as T : fallback;
+}
+
 function list(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : [];
 }
@@ -66,6 +74,100 @@ export function ImageBanner({ props }: MaterialProps) {
       alt={text(props.alt)}
       radius={number(props.radius, 0)}
     />
+  );
+}
+
+type BasicButtonVariant = "solid" | "outline" | "ghost";
+type BasicButtonSize = "sm" | "md" | "lg";
+type BasicInputType = "text" | "tel" | "email" | "number";
+
+export function BasicButton({ props }: MaterialProps) {
+  const variant = option<BasicButtonVariant>(props.variant, ["solid", "outline", "ghost"], "solid");
+  const size = option<BasicButtonSize>(props.size, ["sm", "md", "lg"], "md");
+  const backgroundColor = text(props.backgroundColor, "#111827");
+  const borderColor = text(props.borderColor, backgroundColor);
+  const textColor = text(props.textColor, variant === "solid" ? "#ffffff" : backgroundColor);
+  const handler = props.onClick;
+
+  return (
+    <section
+      className="mlc-material mlc-basic-button"
+      style={{
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      <MlcButton
+        block={boolean(props.block, true)}
+        variant={variant}
+        size={size}
+        radius={number(props.radius, 8)}
+        disabled={boolean(props.disabled)}
+        loading={boolean(props.loading)}
+        onClick={() => {
+          if (typeof handler === "function") handler();
+        }}
+        style={{
+          borderColor,
+          color: textColor,
+          background: variant === "solid" ? backgroundColor : "transparent",
+        }}
+      >
+        {text(props.text, "基础按钮")}
+      </MlcButton>
+    </section>
+  );
+}
+
+export function BasicInput({ props }: MaterialProps) {
+  const [value, setValue] = React.useState(text(props.defaultValue));
+  const inputType = option<BasicInputType>(props.type, ["text", "tel", "email", "number"], "text");
+  const label = text(props.label, "基础输入框");
+  const helperText = text(props.helperText);
+  const handler = props.onChange;
+
+  React.useEffect(() => {
+    setValue(text(props.defaultValue));
+  }, [props.defaultValue]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-input"
+      style={{
+        display: "grid",
+        gap: 8,
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.textColor, "#111827"),
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      {label ? (
+        <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
+          {label}
+        </MlcText>
+      ) : null}
+      <MlcInput
+        value={value}
+        type={inputType}
+        placeholder={text(props.placeholder, "请输入内容")}
+        disabled={boolean(props.disabled)}
+        radius={number(props.radius, 8)}
+        onChange={(nextValue) => {
+          setValue(nextValue);
+          if (typeof handler === "function") handler(nextValue);
+        }}
+        style={{
+          borderColor: text(props.borderColor, "#e5e7eb"),
+          color: text(props.textColor, "#111827"),
+          background: text(props.inputBackgroundColor, "#ffffff"),
+        }}
+      />
+      {helperText ? (
+        <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </section>
   );
 }
 
@@ -1509,6 +1611,88 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb" },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e" },
       },
+    }),
+  },
+  {
+    component: BasicButton,
+    manifest: createMaterialManifest({
+      componentName: "BasicButton",
+      materialVersion: "0.1.0",
+      title: "基础按钮",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "基础按钮",
+        variant: "solid",
+        size: "md",
+        block: true,
+        disabled: false,
+        loading: false,
+        backgroundColor: "#111827",
+        textColor: "#ffffff",
+        borderColor: "#111827",
+        wrapperBackgroundColor: "transparent",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        text: { label: "按钮文案", type: "string", setter: "input", required: true, defaultValue: "基础按钮" },
+        variant: { label: "样式", type: "string", setter: "input", defaultValue: "solid" },
+        size: { label: "尺寸", type: "string", setter: "input", defaultValue: "md" },
+        block: { label: "撑满宽度", type: "boolean", setter: "switch", defaultValue: true },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        loading: { label: "加载中", type: "boolean", setter: "switch", defaultValue: false },
+        backgroundColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#111827" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: BasicInput,
+    manifest: createMaterialManifest({
+      componentName: "BasicInput",
+      materialVersion: "0.1.0",
+      title: "基础输入框",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础输入框",
+        placeholder: "请输入内容",
+        helperText: "用于收集单行文本，本地示例不会提交数据。",
+        defaultValue: "",
+        type: "text",
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        inputBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#e5e7eb",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础输入框" },
+        placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入内容" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，本地示例不会提交数据。" },
+        defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
+        type: { label: "输入类型", type: "string", setter: "input", defaultValue: "text" },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        inputBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b" },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onChange", title: "输入变化" }],
     }),
   },
   {

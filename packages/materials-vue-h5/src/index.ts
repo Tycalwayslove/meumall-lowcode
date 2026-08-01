@@ -1,4 +1,4 @@
-import { defineComponent, h, ref, type CSSProperties, type PropType } from "vue";
+import { defineComponent, h, ref, watch, type CSSProperties, type PropType } from "vue";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type LowcodeNode } from "@meumall/lowcode-schema";
 import type { VueH5MaterialComponent } from "@meumall/lowcode-renderer-vue-h5";
@@ -23,6 +23,14 @@ function text(value: unknown, fallback = ""): string {
 
 function number(value: unknown, fallback: number): number {
   return typeof value === "number" ? value : fallback;
+}
+
+function boolean(value: unknown, fallback = false): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function option<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return typeof value === "string" && (allowed as readonly string[]).includes(value) ? value as T : fallback;
 }
 
 function list(value: unknown): Record<string, unknown>[] {
@@ -115,6 +123,137 @@ export const ImageBanner = defineComponent({
         radius: number(runtimeProps.radius, 0),
         fallback: "请配置图片",
       });
+    };
+  },
+});
+
+type BasicButtonVariant = "solid" | "outline" | "ghost";
+type BasicButtonSize = "sm" | "md" | "lg";
+type BasicInputType = "text" | "tel" | "email" | "number";
+
+export const BasicButton = defineComponent({
+  name: "BasicButton",
+  props: materialPropOptions,
+  setup(props) {
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const variant = option<BasicButtonVariant>(runtimeProps.variant, ["solid", "outline", "ghost"], "solid");
+      const size = option<BasicButtonSize>(runtimeProps.size, ["sm", "md", "lg"], "md");
+      const backgroundColor = text(runtimeProps.backgroundColor, "#111827");
+      const borderColor = text(runtimeProps.borderColor, backgroundColor);
+      const textColor = text(runtimeProps.textColor, variant === "solid" ? "#ffffff" : backgroundColor);
+      const handler = runtimeProps.onClick;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-button",
+          style: {
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          h(
+            MlcButton,
+            {
+              block: boolean(runtimeProps.block, true),
+              variant,
+              size,
+              radius: number(runtimeProps.radius, 8),
+              disabled: boolean(runtimeProps.disabled),
+              loading: boolean(runtimeProps.loading),
+              style: {
+                borderColor,
+                color: textColor,
+                background: variant === "solid" ? backgroundColor : "transparent",
+              } satisfies CSSProperties,
+              onClick: () => {
+                if (typeof handler === "function") handler();
+              },
+            },
+            () => text(runtimeProps.text, "基础按钮"),
+          ),
+        ],
+      );
+    };
+  },
+});
+
+export const BasicInput = defineComponent({
+  name: "BasicInput",
+  props: materialPropOptions,
+  setup(props) {
+    const value = ref(text(props.props?.defaultValue));
+    watch(
+      () => props.props?.defaultValue,
+      (nextValue) => {
+        value.value = text(nextValue);
+      },
+    );
+
+    return () => {
+      const runtimeProps = props.props ?? {};
+      const inputType = option<BasicInputType>(runtimeProps.type, ["text", "tel", "email", "number"], "text");
+      const label = text(runtimeProps.label, "基础输入框");
+      const helperText = text(runtimeProps.helperText);
+      const handler = runtimeProps.onChange;
+
+      return h(
+        "section",
+        {
+          class: "mlc-material mlc-basic-input",
+          style: {
+            display: "grid",
+            gap: "8px",
+            padding: `${number(runtimeProps.paddingY, 12)}px 16px`,
+            color: text(runtimeProps.textColor, "#111827"),
+            background: text(runtimeProps.wrapperBackgroundColor, "transparent"),
+          } satisfies CSSProperties,
+        },
+        [
+          label
+            ? h(
+                MlcText,
+                {
+                  as: "strong",
+                  size: 13,
+                  weight: 800,
+                  style: { color: text(runtimeProps.labelColor, "#111827") } satisfies CSSProperties,
+                },
+                () => label,
+              )
+            : null,
+          h(MlcInput, {
+            value: value.value,
+            type: inputType,
+            placeholder: text(runtimeProps.placeholder, "请输入内容"),
+            disabled: boolean(runtimeProps.disabled),
+            radius: number(runtimeProps.radius, 8),
+            style: {
+              borderColor: text(runtimeProps.borderColor, "#e5e7eb"),
+              color: text(runtimeProps.textColor, "#111827"),
+              background: text(runtimeProps.inputBackgroundColor, "#ffffff"),
+            } satisfies CSSProperties,
+            onChange: (nextValue: string) => {
+              value.value = nextValue;
+              if (typeof handler === "function") handler(nextValue);
+            },
+          }),
+          helperText
+            ? h(
+                MlcText,
+                {
+                  as: "p",
+                  size: 12,
+                  tone: "muted",
+                  style: { color: text(runtimeProps.helperColor, "#64748b") } satisfies CSSProperties,
+                },
+                () => helperText,
+              )
+            : null,
+        ],
+      );
     };
   },
 });
@@ -2117,6 +2256,88 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#fffbeb" },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#92400e" },
       },
+    }),
+  },
+  {
+    component: BasicButton,
+    manifest: createMaterialManifest({
+      componentName: "BasicButton",
+      materialVersion: "0.1.0",
+      title: "基础按钮",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        text: "基础按钮",
+        variant: "solid",
+        size: "md",
+        block: true,
+        disabled: false,
+        loading: false,
+        backgroundColor: "#111827",
+        textColor: "#ffffff",
+        borderColor: "#111827",
+        wrapperBackgroundColor: "transparent",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        text: { label: "按钮文案", type: "string", setter: "input", required: true, defaultValue: "基础按钮" },
+        variant: { label: "样式", type: "string", setter: "input", defaultValue: "solid" },
+        size: { label: "尺寸", type: "string", setter: "input", defaultValue: "md" },
+        block: { label: "撑满宽度", type: "boolean", setter: "switch", defaultValue: true },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        loading: { label: "加载中", type: "boolean", setter: "switch", defaultValue: false },
+        backgroundColor: { label: "按钮色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#ffffff" },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#111827" },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onClick", title: "点击按钮" }],
+    }),
+  },
+  {
+    component: BasicInput,
+    manifest: createMaterialManifest({
+      componentName: "BasicInput",
+      materialVersion: "0.1.0",
+      title: "基础输入框",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础输入框",
+        placeholder: "请输入内容",
+        helperText: "用于收集单行文本，本地示例不会提交数据。",
+        defaultValue: "",
+        type: "text",
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        inputBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#e5e7eb",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础输入框" },
+        placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入内容" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，本地示例不会提交数据。" },
+        defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
+        type: { label: "输入类型", type: "string", setter: "input", defaultValue: "text" },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
+        inputBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff" },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827" },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b" },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
+      },
+      events: [{ name: "onChange", title: "输入变化" }],
     }),
   },
   {

@@ -3,6 +3,8 @@ import { describe, it } from "node:test";
 
 import {
   ActivityRuleModal,
+  BasicButton,
+  BasicInput,
   BrandFeatureSection,
   CouponBundle,
   CouponSection,
@@ -145,6 +147,8 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(floorAnchorTypes.has("MlcText"), true);
     functionSourceIncludes(TabsBlock, ["MlcTabs", "MlcTag", "MlcText"]);
     functionSourceIncludes(SpacerBlock, ["MlcSpacer"]);
+    functionSourceIncludes(BasicButton, ["MlcButton"]);
+    functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
     assert.equal(flashSaleTypes.has("MlcButton"), true);
     assert.equal(flashSaleTypes.has("MlcImage"), true);
     assert.equal(flashSaleTypes.has("MlcTag"), true);
@@ -181,6 +185,30 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.title, "今日主推");
     assert.equal(material.manifest.propsSchema.markerText.setter, "input");
     assert.equal(material.manifest.propsSchema.subtitle.setter, "textarea");
+  });
+
+  it("registers the basic button material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicButton");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础按钮");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.text, "基础按钮");
+    assert.equal(material.manifest.propsSchema.block.setter, "switch");
+    assert.equal(material.manifest.propsSchema.backgroundColor.setter, "color");
+    assert.equal(material.manifest.events?.[0]?.name, "onClick");
+  });
+
+  it("registers the basic input material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicInput");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础输入框");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.placeholder, "请输入内容");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.propsSchema.helperText.setter, "textarea");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 
   it("registers the image card grid material", () => {

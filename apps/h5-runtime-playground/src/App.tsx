@@ -120,6 +120,48 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_button",
+      componentName: "BasicButton",
+      materialVersion: "0.1.0",
+      props: {
+        text: "基础按钮示例",
+        variant: "outline",
+        size: "md",
+        block: true,
+        backgroundColor: "#0f766e",
+        textColor: "#0f766e",
+        borderColor: "#0f766e",
+        wrapperBackgroundColor: "#f3f4f6",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onClick: { actionId: "track_basic_button_click" },
+      },
+    },
+    {
+      id: "node_basic_input",
+      componentName: "BasicInput",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础输入框示例",
+        placeholder: "请输入想看的活动品类",
+        helperText: "单行输入框可作为后续表单物料的基础单元。",
+        type: "text",
+        wrapperBackgroundColor: "#f3f4f6",
+        inputBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        borderColor: "#d1d5db",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_input_change" },
+      },
+    },
+    {
       id: "node_rules",
       componentName: "ActivityRuleModal",
       materialVersion: "0.1.0",
@@ -606,6 +648,20 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "flash_sale_product_click",
+      },
+    },
+    {
+      id: "track_basic_button_click",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_button_click",
+      },
+    },
+    {
+      id: "track_basic_input_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_input_change",
       },
     },
     {

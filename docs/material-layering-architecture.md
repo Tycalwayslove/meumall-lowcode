@@ -111,13 +111,15 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `SectionContainer`
 - `SectionTitle`
 - `ImageBanner`
+- `BasicButton`
+- `BasicInput`
 - `ActionButton`
 - `RichTextBlock`
 - `SpacerBlock`
 - `NavGrid`
 - `ImageCardGrid`
 - `TabsBlock`
-- 后续可增加 `FormInput`、`FormSubmitButton`、`VideoBlock`。
+- 后续可增加 `VideoBlock`、`FormSubmitButton`，复杂表单字段应优先复用 `BasicInput` 再组合。
 
 通用物料允许处理：
 
@@ -255,6 +257,8 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `SectionContainer`
 - `SectionTitle`
 - `ImageBanner`
+- `BasicButton`
+- `BasicInput`
 - `ActionButton`
 - `ImageCardGrid`
 - `TabsBlock`
