@@ -42,6 +42,8 @@ import {
   createLowcodeColorSwatches,
   createLowcodeEventBindingItems,
   createLowcodeListEditorFields,
+  createLowcodeMaterialArchitectureOverview,
+  createLowcodeMaterialArchitectureProfile,
   createLowcodeMaterialCatalogItem,
   createLowcodeMaterialCatalogOverview,
   createLowcodeMaterialCategories,
@@ -106,6 +108,8 @@ import {
   getLowcodeSelectedGroupNodeIdsForDrag,
   groupLowcodeEditorCommands,
   getLowcodeEditorActionDisabledReason,
+  getLowcodeMaterialFamilyMeta,
+  getLowcodeMaterialLayerMeta,
   getLowcodeMaterialCategoryMeta,
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
@@ -696,16 +700,44 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(catalogItem.category, "basic");
     assert.equal(catalogItem.categoryLabel, "基础物料");
     assert.ok(catalogItem.categoryDescription.includes("业务无关"));
+    assert.equal(catalogItem.layer, "generic");
+    assert.equal(catalogItem.layerLabel, "通用物料");
+    assert.equal(catalogItem.family, "action");
+    assert.equal(catalogItem.familyLabel, "按钮行动");
     assert.equal(catalogItem.propCount, 1);
     assert.equal(catalogItem.eventCount, 1);
     assert.equal(catalogItem.dataSourceSlotCount, 0);
     assert.equal(catalogItem.summary, "1 个配置 / 1 个事件 / 0 个数据槽");
     assert.ok(catalogItem.searchText.includes("actionbutton"));
     assert.ok(catalogItem.searchText.includes("基础物料"));
+    assert.ok(catalogItem.searchText.includes("通用物料"));
+    assert.ok(catalogItem.searchText.includes("按钮行动"));
     assert.ok(catalogItem.searchText.includes("h5"));
     assert.equal(formatLowcodeMaterialCatalogSummary(actionButton), catalogItem.summary);
     assert.equal(getLowcodeMaterialCategoryMeta("commerce").label, "商品交易");
     assert.equal(getLowcodeMaterialCategoryMeta("unknown").description, "自定义物料分类，具体业务边界以物料详情和 manifest 为准。");
+    assert.equal(getLowcodeMaterialLayerMeta("business").label, "业务物料");
+    assert.equal(getLowcodeMaterialFamilyMeta("input").primitiveHint.includes("Input"), true);
+
+    const productProfile = createLowcodeMaterialArchitectureProfile(manifests[1]);
+    assert.equal(productProfile.layer, "business");
+    assert.equal(productProfile.layerLabel, "业务物料");
+    assert.equal(productProfile.family, "commerce");
+    assert.ok(productProfile.boundary.includes("价格"));
+
+    const customProfile = createLowcodeMaterialArchitectureProfile(createMaterialManifest({
+      componentName: "PartnerWidget",
+      materialVersion: "1.0.0",
+      title: "合作方挂件",
+      category: "partner",
+      platforms: ["h5"],
+      propsSchema: {},
+      defaultProps: {},
+    }));
+    assert.equal(customProfile.layer, "custom");
+    assert.equal(customProfile.layerLabel, "自定义物料");
+    assert.equal(customProfile.family, "partner");
+    assert.ok(customProfile.boundary.includes("白名单"));
 
     assert.deepEqual(createLowcodeMaterialCategories(manifests), ["全部", "marketing", "commerce", "basic"]);
     const categorySummaries = createLowcodeMaterialCategorySummaries(manifests, { category: "basic", keyword: "h5" });
@@ -721,6 +753,18 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(catalogOverview.activeCategory, "basic");
     assert.equal(catalogOverview.activeLabel, "基础物料");
     assert.equal(catalogOverview.summaryText, "匹配 1/2 个物料");
+    const architectureOverview = createLowcodeMaterialArchitectureOverview(manifests, { category: "basic", keyword: "视频" });
+    assert.equal(architectureOverview.totalCount, 2);
+    assert.equal(architectureOverview.visibleCount, 1);
+    assert.deepEqual(architectureOverview.layers.map((item) => [item.value, item.label, item.count, item.visibleCount]), [
+      ["generic", "通用物料", 2, 1],
+    ]);
+    assert.deepEqual(architectureOverview.families.map((item) => [item.value, item.label, item.count, item.visibleCount]), [
+      ["action", "按钮行动", 1, 0],
+      ["media", "图片视频", 1, 1],
+    ]);
+    assert.equal(architectureOverview.layerSummaryText, "通用物料 1 个");
+    assert.equal(architectureOverview.familySummaryText, "图片视频 1 个");
     assert.deepEqual(filterLowcodeMaterialCatalog(entries, { category: "commerce" }).map((item) => item.manifest.componentName), [
       "ProductList",
       "ProductRankList",

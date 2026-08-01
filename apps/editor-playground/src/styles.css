@@ -1131,6 +1131,59 @@ button:focus-visible {
   line-height: 1.45;
 }
 
+.material-architecture-summary {
+  display: grid;
+  gap: 6px;
+  margin: -2px 0 10px;
+  padding: 9px 10px;
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.material-architecture-summary div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.material-architecture-summary strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.material-architecture-summary small {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.material-architecture-summary p {
+  margin: 0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.material-architecture-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.material-architecture-chips span {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 2px 6px;
+  color: #334155;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .material-preference-message {
   margin: -2px 0 9px;
   padding: 7px 9px;
@@ -1532,6 +1585,7 @@ button:focus-visible {
 .material-item small {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
 }

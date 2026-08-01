@@ -3,7 +3,9 @@ import { computed } from "vue";
 import { Eye, Plus, Search, Star } from "@lucide/vue";
 import {
   createLowcodeMaterialCatalogItem,
+  createLowcodeMaterialArchitectureProfile,
   formatLowcodeMaterialCatalogSummary,
+  type LowcodeEditorMaterialArchitectureOverview,
   type LowcodeEditorMaterialCatalogOverview,
   type LowcodeEditorMaterialEntry,
 } from "@meumall/lowcode-editor";
@@ -17,6 +19,7 @@ const props = defineProps<{
   favoriteComponentNames: readonly string[];
   categories: readonly string[];
   categoryOverview?: LowcodeEditorMaterialCatalogOverview;
+  architectureOverview?: LowcodeEditorMaterialArchitectureOverview;
   keyword: string;
   category: string;
   preferenceMessage?: string;
@@ -54,7 +57,12 @@ function isFavoriteMaterial(componentName: string): boolean {
 
 function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
   const item = createLowcodeMaterialCatalogItem(manifest);
-  return `${item.title} / ${item.category} / ${item.componentName} / ${item.summary}`;
+  return `${item.title} / ${item.categoryLabel} / ${item.layerLabel} / ${item.familyLabel} / ${item.componentName} / ${item.summary}`;
+}
+
+function materialArchitectureTitle(manifest: LowcodeMaterialManifest): string {
+  const profile = createLowcodeMaterialArchitectureProfile(manifest);
+  return `${profile.layerLabel} / ${profile.familyLabel}：${profile.recommendedUse} ${profile.boundary}`;
 }
 </script>
 
@@ -90,6 +98,23 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         <small>{{ categoryOverview.summaryText }} · 全部 {{ categoryOverview.totalCount }} 个</small>
       </div>
       <span>{{ categoryOverview.activeDescription }}</span>
+    </div>
+    <div v-if="architectureOverview" class="material-architecture-summary" data-testid="material-architecture-summary">
+      <div>
+        <strong>物料分层</strong>
+        <small>{{ architectureOverview.visibleCount }} / {{ architectureOverview.totalCount }}</small>
+      </div>
+      <p>{{ architectureOverview.layerSummaryText }}</p>
+      <p>{{ architectureOverview.familySummaryText }}</p>
+      <div class="material-architecture-chips">
+        <span
+          v-for="layer in architectureOverview.layers"
+          :key="layer.value"
+          :title="layer.description"
+        >
+          {{ layer.label }} {{ layer.visibleCount }}/{{ layer.count }}
+        </span>
+      </div>
     </div>
     <p v-if="preferenceMessage" class="material-preference-message">{{ preferenceMessage }}</p>
     <p v-if="insertDisabledReason" class="material-insert-lock">{{ insertDisabledReason }}</p>
@@ -149,7 +174,13 @@ function materialCatalogSearchTitle(manifest: LowcodeMaterialManifest): string {
         <span>
           <strong>{{ material.manifest.title }}</strong>
           <small>
-            <em>{{ material.manifest.category }}</em>
+            <em>{{ createLowcodeMaterialCatalogItem(material.manifest).categoryLabel }}</em>
+            <em :title="materialArchitectureTitle(material.manifest)">
+              {{ createLowcodeMaterialCatalogItem(material.manifest).layerLabel }}
+            </em>
+            <em :title="materialArchitectureTitle(material.manifest)">
+              {{ createLowcodeMaterialCatalogItem(material.manifest).familyLabel }}
+            </em>
             {{ material.manifest.componentName }}
           </small>
           <small>{{ formatLowcodeMaterialCatalogSummary(material.manifest) }}</small>

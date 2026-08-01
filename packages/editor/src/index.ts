@@ -385,6 +385,10 @@ export interface LowcodeEditorMaterialCatalogItem {
   category: string;
   categoryLabel: string;
   categoryDescription: string;
+  layer: string;
+  layerLabel: string;
+  family: string;
+  familyLabel: string;
   materialVersion: string;
   platforms: LowcodePlatform[];
   propCount: number;
@@ -416,6 +420,69 @@ export interface LowcodeEditorMaterialCatalogOverview {
   activeCount: number;
   summaryText: string;
   categories: LowcodeEditorMaterialCategorySummary[];
+}
+
+export type LowcodeEditorMaterialLayer = "generic" | "business" | "custom";
+
+export interface LowcodeEditorMaterialLayerMeta {
+  label: string;
+  description: string;
+}
+
+export interface LowcodeEditorMaterialFamilyMeta {
+  label: string;
+  description: string;
+  primitiveHint: string;
+}
+
+export interface LowcodeEditorMaterialArchitectureProfile {
+  componentName: string;
+  layer: LowcodeEditorMaterialLayer | string;
+  layerLabel: string;
+  layerDescription: string;
+  family: string;
+  familyLabel: string;
+  familyDescription: string;
+  primitiveHint: string;
+  recommendedUse: string;
+  boundary: string;
+}
+
+export interface LowcodeEditorMaterialArchitectureLayerSummary extends LowcodeEditorMaterialLayerMeta {
+  value: string;
+  count: number;
+  visibleCount: number;
+  summaryText: string;
+}
+
+export interface LowcodeEditorMaterialArchitectureFamilySummary extends LowcodeEditorMaterialFamilyMeta {
+  value: string;
+  count: number;
+  visibleCount: number;
+  summaryText: string;
+}
+
+export interface LowcodeEditorMaterialArchitectureOverview {
+  totalCount: number;
+  visibleCount: number;
+  layerSummaryText: string;
+  familySummaryText: string;
+  layers: LowcodeEditorMaterialArchitectureLayerSummary[];
+  families: LowcodeEditorMaterialArchitectureFamilySummary[];
+}
+
+export interface LowcodeEditorMaterialArchitectureProfileInput {
+  layer?: LowcodeEditorMaterialLayer | string;
+  family?: string;
+  primitiveHint?: string;
+  recommendedUse?: string;
+  boundary?: string;
+}
+
+export interface LowcodeMaterialArchitectureOptions extends FilterLowcodeMaterialCatalogOptions {
+  layerMeta?: Record<string, Partial<LowcodeEditorMaterialLayerMeta>>;
+  familyMeta?: Record<string, Partial<LowcodeEditorMaterialFamilyMeta>>;
+  componentProfiles?: Record<string, Partial<LowcodeEditorMaterialArchitectureProfileInput>>;
 }
 
 export interface LowcodeEditorMaterialDetailPropEntry {
@@ -1883,6 +1950,216 @@ export function getLowcodeMaterialCategoryMeta(
   };
 }
 
+export const LOWCODE_EDITOR_MATERIAL_LAYER_META: Record<LowcodeEditorMaterialLayer, LowcodeEditorMaterialLayerMeta> = {
+  generic: {
+    label: "通用物料",
+    description: "声明 manifest、可被运营拖拽，不绑定具体 MeuMall 业务接口，优先复用 runtime primitives。",
+  },
+  business: {
+    label: "业务物料",
+    description: "面向商品、优惠券、直播、门店达人等 MeuMall 业务场景，必须复用通用物料和基础组件能力。",
+  },
+  custom: {
+    label: "自定义物料",
+    description: "未命中默认分层规则的扩展物料，建议补充物料中心白名单和架构 profile。",
+  },
+};
+
+export const LOWCODE_EDITOR_MATERIAL_FAMILY_META: Record<string, LowcodeEditorMaterialFamilyMeta> = {
+  layout: {
+    label: "布局容器",
+    description: "负责页面结构、容器、分栏和留白骨架。",
+    primitiveHint: "优先复用布局 token、文本 primitive 和容器 children 协议。",
+  },
+  action: {
+    label: "按钮行动",
+    description: "负责按钮、链接、底部转化条等点击入口。",
+    primitiveHint: "优先复用 Button、Link、Text 和安全 action binding。",
+  },
+  input: {
+    label: "输入控件",
+    description: "负责单行输入、多行输入、选择、开关、复选、单选和数字步进。",
+    primitiveHint: "优先复用 Input、Textarea、Select、Switch、Checkbox、Radio、Stepper。",
+  },
+  media: {
+    label: "图片视频",
+    description: "负责图片、轮播、视频、图文卡片和素材展示。",
+    primitiveHint: "优先复用 Image、Tag、Text，并由宿主素材库负责真实资源选择。",
+  },
+  content: {
+    label: "内容展示",
+    description: "负责文本、标题、富文本、规则、标签切换和信息表达。",
+    primitiveHint: "优先复用 Text、RichText、Tag、Tabs。",
+  },
+  feedback: {
+    label: "反馈提示",
+    description: "负责公告、提示、弹窗和轻量反馈。",
+    primitiveHint: "优先复用 NoticeBar、Modal、Text、Button。",
+  },
+  list: {
+    label: "列表结构",
+    description: "负责静态列表、折叠面板、时间线和卡片组。",
+    primitiveHint: "优先复用 Text、Tag、Image，并把远程分页交给数据源协议。",
+  },
+  form: {
+    label: "表单组合",
+    description: "负责表单容器、留资和提交入口。",
+    primitiveHint: "优先复用 Form 容器、基础输入族和安全 onSubmit action。",
+  },
+  marketing: {
+    label: "营销表达",
+    description: "负责活动头图、导航、倒计时和会场转化氛围。",
+    primitiveHint: "优先复用 Button、Image、Text、Tag、Countdown。",
+  },
+  commerce: {
+    label: "商品交易",
+    description: "负责商品、价格、优惠券、榜单和交易转化业务语义。",
+    primitiveHint: "业务物料只组合 Price、Image、Tag、Button，不直接请求业务 API。",
+  },
+};
+
+export const LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES: Record<string, LowcodeEditorMaterialArchitectureProfileInput> = {
+  SectionContainer: {
+    layer: "generic",
+    family: "layout",
+    recommendedUse: "先用它搭建单列页面骨架和运营分组。",
+    boundary: "不承载复杂 slot、断点、合并单元格或业务数据。",
+  },
+  GridContainer: {
+    layer: "generic",
+    family: "layout",
+    recommendedUse: "用于 2/3 列轻量宫格布局。",
+    boundary: "不承载单元格级投放、跨列合并或列宽拖拽。",
+  },
+  SpacerBlock: {
+    layer: "generic",
+    family: "layout",
+    recommendedUse: "用于页面局部留白和节奏调整。",
+    boundary: "不承载内容、事件或业务规则。",
+  },
+  BasicButton: { layer: "generic", family: "action", recommendedUse: "用于业务无关的主按钮、次按钮和行动入口。", boundary: "不承载登录、风控、领券或交易逻辑。" },
+  ActionButton: { layer: "generic", family: "action", recommendedUse: "用于营销页面中的通用行动按钮。", boundary: "不直接执行任意脚本，点击结果由安全 action handler 承接。" },
+  BasicLink: { layer: "generic", family: "action", recommendedUse: "用于轻量链接入口、说明跳转和运营导流。", boundary: "不承载 App bridge、短链生成、权限审批或远程链接校验。" },
+  BasicInput: { layer: "generic", family: "input", recommendedUse: "用于业务无关的单行输入。", boundary: "不承载真实提交、验证码、登录或服务端校验。" },
+  BasicTextarea: { layer: "generic", family: "input", recommendedUse: "用于业务无关的多行文本输入。", boundary: "不承载敏感词审核、富文本编辑或真实备注保存。" },
+  BasicSelect: { layer: "generic", family: "input", recommendedUse: "用于少量静态选项的单选。", boundary: "不承载远程字典、级联、多选搜索或商品类目语义。" },
+  BasicRadioGroup: { layer: "generic", family: "input", recommendedUse: "用于少量静态选项的单选组。", boundary: "不承载远程字典、会员标签或用户偏好持久化。" },
+  BasicStepper: { layer: "generic", family: "input", recommendedUse: "用于业务无关的数字步进配置。", boundary: "不承载库存、限购、价格联动或购买数量规则。" },
+  BasicSwitch: { layer: "generic", family: "input", recommendedUse: "用于业务无关的布尔开关。", boundary: "不承载活动状态、配置保存或审批规则。" },
+  BasicCheckbox: { layer: "generic", family: "input", recommendedUse: "用于业务无关的复选确认。", boundary: "不承载协议确认、表单校验或多选数组协议。" },
+  BasicForm: { layer: "generic", family: "form", recommendedUse: "用于组合基础输入物料和提交入口。", boundary: "不自动采集子字段值，不承载校验、验证码、风控或远程提交。" },
+  LeadFormBlock: { layer: "generic", family: "form", recommendedUse: "用于轻量留资和报名展示。", boundary: "真实提交、校验和风控由宿主 action 或后端服务承接。" },
+  BasicText: { layer: "generic", family: "content", recommendedUse: "用于普通文本、标题和强调文案。", boundary: "不承载 CMS、内容审核或富文本编辑。" },
+  SectionTitle: { layer: "generic", family: "content", recommendedUse: "用于区块标题、角标和说明。", boundary: "不承载商品、活动或远程栏目语义。" },
+  RichTextBlock: { layer: "generic", family: "content", recommendedUse: "用于静态富文本展示。", boundary: "不承载富文本编辑器、内容审核或资源上传。" },
+  TabsBlock: { layer: "generic", family: "content", recommendedUse: "用于静态标签切换和分组说明。", boundary: "不支持 tab 内嵌低代码节点或远程分页内容。" },
+  BasicTag: { layer: "generic", family: "content", recommendedUse: "用于基础标签、角标和状态文案。", boundary: "不承载优惠券、会员等级或审核状态等业务模型。" },
+  DividerBlock: { layer: "generic", family: "content", recommendedUse: "用于页面内容分割。", boundary: "不承载数据、事件或业务规则。" },
+  BasicImage: { layer: "generic", family: "media", recommendedUse: "用于单图展示和素材库选图。", boundary: "不承载上传、审核、个性化投放或商品图片规则。" },
+  ImageBanner: { layer: "generic", family: "media", recommendedUse: "用于活动横幅、品牌图和运营焦点图。", boundary: "不承载活动库存、权益或投放规则。" },
+  BasicCard: { layer: "generic", family: "media", recommendedUse: "用于单张图文卡片。", boundary: "不承载商品、优惠券、直播或门店达人业务模型。" },
+  BasicCarousel: { layer: "generic", family: "media", recommendedUse: "用于静态图片轮播和素材分组。", boundary: "不承载 AB 实验、个性化推荐或远程素材编排。" },
+  BasicVideo: { layer: "generic", family: "media", recommendedUse: "用于静态视频展示和视频素材选择。", boundary: "不承载上传、转码、直播、广告贴片或审核。" },
+  ImageCardGrid: { layer: "generic", family: "list", recommendedUse: "用于静态图片卡片宫格。", boundary: "不承载会场接口、频道数据或个性化推荐。" },
+  BasicList: { layer: "generic", family: "list", recommendedUse: "用于静态内容列表。", boundary: "不承载远程分页、搜索、排序或业务对象模型。" },
+  BasicAccordion: { layer: "generic", family: "list", recommendedUse: "用于静态 FAQ、规则说明和折叠内容。", boundary: "不承载远程 FAQ、富文本编辑或嵌套低代码节点。" },
+  BasicTimeline: { layer: "generic", family: "list", recommendedUse: "用于静态时间线和流程说明。", boundary: "不承载订单、审批、履约或活动状态接口。" },
+  BasicAlert: { layer: "generic", family: "feedback", recommendedUse: "用于静态提示、警示和说明。", boundary: "不承载系统消息、错误码、已读状态或内容审核。" },
+  NoticeBar: { layer: "generic", family: "feedback", recommendedUse: "用于公告条和运营提醒。", boundary: "不承载远程公告流、跑马灯、关闭记忆或曝光统计。" },
+  BasicModal: { layer: "generic", family: "feedback", recommendedUse: "用于基础弹窗和静态说明。", boundary: "不承载远程内容、表单提交、登录、领券或弹窗内低代码编排。" },
+  ActivityHero: { layer: "generic", family: "marketing", recommendedUse: "用于活动首屏、主题氛围和头图信息。", boundary: "不承载活动规则、库存、权益或服务端时间语义。" },
+  CountdownTimer: { layer: "generic", family: "marketing", recommendedUse: "用于静态倒计时展示。", boundary: "不承载服务端时间校准、活动结束状态或库存联动。" },
+  NavGrid: { layer: "generic", family: "marketing", recommendedUse: "用于会场导航和频道入口。", boundary: "不承载远程频道、权限或个性化推荐。" },
+  FloorAnchorNav: { layer: "generic", family: "marketing", recommendedUse: "用于页面内楼层锚点导航。", boundary: "不承载服务端楼层配置或复杂滚动策略。" },
+  ProductList: { layer: "business", family: "commerce", recommendedUse: "用于商品列表展示和商品数据源消费。", boundary: "不直接请求商品接口，价格、库存和权益由业务系统承接。" },
+  ProductRankList: { layer: "business", family: "commerce", recommendedUse: "用于商品榜单和排行会场。", boundary: "排行口径、库存和价格由业务数据源提供。" },
+  FlashSaleList: { layer: "business", family: "commerce", recommendedUse: "用于秒杀商品组和限时商品展示。", boundary: "不承载真实秒杀库存、限购、价格计算或风控。" },
+  CouponSection: { layer: "business", family: "commerce", recommendedUse: "用于单券或券区展示。", boundary: "不直接领券，权益校验和风控由业务 action handler 承接。" },
+  CouponBundle: { layer: "business", family: "commerce", recommendedUse: "用于组合券包展示和券数据配置。", boundary: "不承载真实领券、库存、资格和防刷逻辑。" },
+  BrandFeatureSection: { layer: "business", family: "marketing", recommendedUse: "用于品牌专题和品牌商品组合展示。", boundary: "品牌中心、审核和商品数据由外部系统承接。" },
+  StoreExpertSection: { layer: "business", family: "commerce", recommendedUse: "用于门店/达人推荐业务场景。", boundary: "门店指标、达人身份和推荐口径由业务系统承接。" },
+  LiveEntry: { layer: "business", family: "marketing", recommendedUse: "用于直播入口和直播素材展示。", boundary: "直播状态、开播提醒、权限和观看链路由业务系统承接。" },
+  ActivityRuleModal: { layer: "business", family: "marketing", recommendedUse: "用于活动规则弹窗和规则说明。", boundary: "规则中心、审核、远程规则和个性化投放由业务系统承接。" },
+  StickyActionBar: { layer: "business", family: "marketing", recommendedUse: "用于底部转化条和活动操作入口。", boundary: "不承载交易、登录、风控、领券或桥接实现。" },
+};
+
+function inferLowcodeMaterialArchitectureProfileInput(
+  manifest: LowcodeMaterialManifest,
+): LowcodeEditorMaterialArchitectureProfileInput {
+  if (manifest.category === "commerce") {
+    return {
+      layer: "business",
+      family: "commerce",
+      recommendedUse: "用于电商业务场景组合展示。",
+      boundary: "业务数据、价格、库存、权益和风控由外部业务系统承接。",
+    };
+  }
+  if (["basic", "layout", "content", "form", "marketing"].includes(manifest.category)) {
+    return {
+      layer: "generic",
+      family: manifest.category === "basic" ? "content" : manifest.category,
+      recommendedUse: "用于业务无关的运营页面搭建能力。",
+      boundary: "不直接绑定 MeuMall 业务接口或业务项目内部代码。",
+    };
+  }
+  return {
+    layer: "custom",
+    family: manifest.category || "custom",
+    recommendedUse: "作为自定义物料使用前，建议先补充分层和能力族说明。",
+    boundary: "默认不承诺业务边界，需由物料提供方补充白名单和治理规则。",
+  };
+}
+
+export function getLowcodeMaterialLayerMeta(
+  layer: LowcodeEditorMaterialLayer | string,
+  options: Pick<LowcodeMaterialArchitectureOptions, "layerMeta"> = {},
+): LowcodeEditorMaterialLayerMeta {
+  const preset = LOWCODE_EDITOR_MATERIAL_LAYER_META[layer as LowcodeEditorMaterialLayer];
+  const custom = options.layerMeta?.[layer] ?? {};
+  return {
+    label: custom.label ?? preset?.label ?? layer,
+    description: custom.description ?? preset?.description ?? "自定义物料分层，具体治理规则由宿主物料中心补充。",
+  };
+}
+
+export function getLowcodeMaterialFamilyMeta(
+  family: string,
+  options: Pick<LowcodeMaterialArchitectureOptions, "familyMeta"> = {},
+): LowcodeEditorMaterialFamilyMeta {
+  const preset = LOWCODE_EDITOR_MATERIAL_FAMILY_META[family];
+  const custom = options.familyMeta?.[family] ?? {};
+  return {
+    label: custom.label ?? preset?.label ?? family,
+    description: custom.description ?? preset?.description ?? "自定义能力族，建议补充用途和复用边界。",
+    primitiveHint: custom.primitiveHint ?? preset?.primitiveHint ?? "按物料详情确认可复用的基础组件能力。",
+  };
+}
+
+export function createLowcodeMaterialArchitectureProfile(
+  manifest: LowcodeMaterialManifest,
+  options: LowcodeMaterialArchitectureOptions = {},
+): LowcodeEditorMaterialArchitectureProfile {
+  const inferred = inferLowcodeMaterialArchitectureProfileInput(manifest);
+  const preset = LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES[manifest.componentName] ?? {};
+  const custom = options.componentProfiles?.[manifest.componentName] ?? {};
+  const layer = custom.layer ?? preset.layer ?? inferred.layer ?? "custom";
+  const family = custom.family ?? preset.family ?? inferred.family ?? manifest.category;
+  const layerMeta = getLowcodeMaterialLayerMeta(layer, options);
+  const familyMeta = getLowcodeMaterialFamilyMeta(family, options);
+  return {
+    componentName: manifest.componentName,
+    layer,
+    layerLabel: layerMeta.label,
+    layerDescription: layerMeta.description,
+    family,
+    familyLabel: familyMeta.label,
+    familyDescription: familyMeta.description,
+    primitiveHint: custom.primitiveHint ?? preset.primitiveHint ?? familyMeta.primitiveHint,
+    recommendedUse: custom.recommendedUse ?? preset.recommendedUse ?? inferred.recommendedUse ?? "用于低代码页面搭建。",
+    boundary: custom.boundary ?? preset.boundary ?? inferred.boundary ?? "具体边界以物料 manifest 和物料详情为准。",
+  };
+}
+
 export function createLowcodeMaterialCatalogItem(
   manifest: LowcodeMaterialManifest,
 ): LowcodeEditorMaterialCatalogItem {
@@ -1892,12 +2169,17 @@ export function createLowcodeMaterialCatalogItem(
   const platforms = manifest.platforms.slice();
   const summary = formatLowcodeMaterialCatalogSummary(manifest);
   const categoryMeta = getLowcodeMaterialCategoryMeta(manifest.category);
+  const architectureProfile = createLowcodeMaterialArchitectureProfile(manifest);
   return {
     componentName: manifest.componentName,
     title: manifest.title,
     category: manifest.category,
     categoryLabel: categoryMeta.label,
     categoryDescription: categoryMeta.description,
+    layer: architectureProfile.layer,
+    layerLabel: architectureProfile.layerLabel,
+    family: architectureProfile.family,
+    familyLabel: architectureProfile.familyLabel,
     materialVersion: manifest.materialVersion,
     platforms,
     propCount,
@@ -1909,6 +2191,8 @@ export function createLowcodeMaterialCatalogItem(
       manifest.componentName,
       manifest.category,
       categoryMeta.label,
+      architectureProfile.layerLabel,
+      architectureProfile.familyLabel,
       manifest.materialVersion,
       ...platforms,
     ].join(" ").toLowerCase(),
@@ -2076,6 +2360,87 @@ export function createLowcodeMaterialCatalogOverview(
     activeCount: activeCategory?.count ?? 0,
     summaryText: activeCategory?.summaryText ?? "0 个物料",
     categories,
+  };
+}
+
+function createLowcodeMaterialArchitectureSummaryText(
+  items: readonly { label: string; visibleCount: number }[],
+  emptyText: string,
+): string {
+  const visibleItems = items.filter((item) => item.visibleCount > 0);
+  if (!visibleItems.length) return emptyText;
+  return visibleItems.slice(0, 3).map((item) => `${item.label} ${item.visibleCount} 个`).join(" / ");
+}
+
+export function createLowcodeMaterialArchitectureOverview(
+  manifests: Iterable<LowcodeMaterialManifest>,
+  options: LowcodeMaterialArchitectureOptions = {},
+): LowcodeEditorMaterialArchitectureOverview {
+  const manifestList = Array.from(manifests);
+  const allCategoryLabel = options.allCategoryLabel ?? "全部";
+  const category = options.category ?? allCategoryLabel;
+  const scopedManifests = category === allCategoryLabel
+    ? manifestList
+    : manifestList.filter((manifest) => manifest.category === category);
+  const visibleManifests = filterLowcodeMaterialCatalog(scopedManifests.map((manifest) => ({ manifest })), {
+    keyword: options.keyword,
+    category: allCategoryLabel,
+    allCategoryLabel,
+  }).map((item) => item.manifest);
+  const scopedProfiles = scopedManifests.map((manifest) => createLowcodeMaterialArchitectureProfile(manifest, options));
+  const visibleProfiles = visibleManifests.map((manifest) => createLowcodeMaterialArchitectureProfile(manifest, options));
+  const visibleLayerCounts = new Map<string, number>();
+  const visibleFamilyCounts = new Map<string, number>();
+  visibleProfiles.forEach((profile) => {
+    visibleLayerCounts.set(profile.layer, (visibleLayerCounts.get(profile.layer) ?? 0) + 1);
+    visibleFamilyCounts.set(profile.family, (visibleFamilyCounts.get(profile.family) ?? 0) + 1);
+  });
+  const layerOrder = [
+    ...Object.keys(LOWCODE_EDITOR_MATERIAL_LAYER_META),
+    ...scopedProfiles.map((profile) => profile.layer).filter((value) => !Object.keys(LOWCODE_EDITOR_MATERIAL_LAYER_META).includes(value)),
+  ];
+  const familyOrder = [
+    ...Object.keys(LOWCODE_EDITOR_MATERIAL_FAMILY_META),
+    ...scopedProfiles.map((profile) => profile.family).filter((value) => !Object.keys(LOWCODE_EDITOR_MATERIAL_FAMILY_META).includes(value)),
+  ];
+  const layers = Array.from(new Set(layerOrder))
+    .map((value) => {
+      const count = scopedProfiles.filter((profile) => profile.layer === value).length;
+      const visibleCount = visibleLayerCounts.get(value) ?? 0;
+      const meta = getLowcodeMaterialLayerMeta(value, options);
+      return {
+        value,
+        label: meta.label,
+        description: meta.description,
+        count,
+        visibleCount,
+        summaryText: `${visibleCount}/${count} 个可见物料`,
+      };
+    })
+    .filter((item) => item.count > 0);
+  const families = Array.from(new Set(familyOrder))
+    .map((value) => {
+      const count = scopedProfiles.filter((profile) => profile.family === value).length;
+      const visibleCount = visibleFamilyCounts.get(value) ?? 0;
+      const meta = getLowcodeMaterialFamilyMeta(value, options);
+      return {
+        value,
+        label: meta.label,
+        description: meta.description,
+        primitiveHint: meta.primitiveHint,
+        count,
+        visibleCount,
+        summaryText: `${visibleCount}/${count} 个可见物料`,
+      };
+    })
+    .filter((item) => item.count > 0);
+  return {
+    totalCount: scopedManifests.length,
+    visibleCount: visibleManifests.length,
+    layerSummaryText: createLowcodeMaterialArchitectureSummaryText(layers, "暂无可见分层"),
+    familySummaryText: createLowcodeMaterialArchitectureSummaryText(families, "暂无可见能力族"),
+    layers,
+    families,
   };
 }
 

@@ -62,6 +62,7 @@ import {
   createLowcodeMaterialFavoriteMessage,
   createLowcodeMaterialNodeInput,
   createLowcodeMaterialPreviewSchema,
+  createLowcodeMaterialArchitectureOverview,
   createLowcodeMaterialCatalogOverview,
   createLowcodeNodeOperationItems,
   createLowcodeNodeOperationMessage,
@@ -1012,6 +1013,10 @@ const canSubmitApproval = computed(() => editorCapabilityState.value.submittable
 const canCancelApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.cancel"]);
 const canReviewApproval = computed(() => !editorCapabilityState.value.disabledActions["approval.review"]);
 const materialCatalogOverview = computed(() => createLowcodeMaterialCatalogOverview(materials.map((item) => item.manifest), {
+  keyword: materialKeyword.value,
+  category: materialCategory.value,
+}));
+const materialArchitectureOverview = computed(() => createLowcodeMaterialArchitectureOverview(materials.map((item) => item.manifest), {
   keyword: materialKeyword.value,
   category: materialCategory.value,
 }));
@@ -4240,6 +4245,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :favorite-component-names="favoriteMaterialComponentNames"
         :categories="materialCategories"
         :category-overview="materialCatalogOverview"
+        :architecture-overview="materialArchitectureOverview"
         :preference-message="materialPreferenceMessage"
         :insert-disabled-reason="materialInsertDisabledReason"
         :selected-container-title="selectedNodeIsContainer ? selectedManifest?.title : undefined"

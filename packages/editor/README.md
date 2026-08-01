@@ -21,6 +21,13 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `getLowcodeMaterialCategoryMeta`
 - `createLowcodeMaterialCategorySummaries`
 - `createLowcodeMaterialCatalogOverview`
+- `LOWCODE_EDITOR_MATERIAL_LAYER_META`
+- `LOWCODE_EDITOR_MATERIAL_FAMILY_META`
+- `LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES`
+- `getLowcodeMaterialLayerMeta`
+- `getLowcodeMaterialFamilyMeta`
+- `createLowcodeMaterialArchitectureProfile`
+- `createLowcodeMaterialArchitectureOverview`
 - `createLowcodeMaterialCategories`
 - `filterLowcodeMaterialCatalog`
 - `pickLowcodeMaterialEntriesByComponentNames`
@@ -488,11 +495,15 @@ The viewport helpers keep H5 canvas device presets reusable across the Vue3 play
 
 The material catalog helpers keep material-library search, category filters, quick sections, and card summaries reusable across editor shells.
 
-`createLowcodeMaterialCatalogItem(manifest)` returns display and search metadata derived from a `LowcodeMaterialManifest`, including component name, title, category, version, platforms, prop count, event count, data-source slot count, summary text, and search text.
+`createLowcodeMaterialCatalogItem(manifest)` returns display and search metadata derived from a `LowcodeMaterialManifest`, including component name, title, category label, architecture layer, capability family, version, platforms, prop count, event count, data-source slot count, summary text, and search text.
+
+`LOWCODE_EDITOR_MATERIAL_CATEGORY_META`, `getLowcodeMaterialCategoryMeta`, `createLowcodeMaterialCategorySummaries`, and `createLowcodeMaterialCatalogOverview` provide category labels, descriptions, active-category summaries, and count metadata for material panels.
+
+`LOWCODE_EDITOR_MATERIAL_LAYER_META`, `LOWCODE_EDITOR_MATERIAL_FAMILY_META`, `LOWCODE_EDITOR_MATERIAL_COMPONENT_PROFILES`, `getLowcodeMaterialLayerMeta`, `getLowcodeMaterialFamilyMeta`, `createLowcodeMaterialArchitectureProfile`, and `createLowcodeMaterialArchitectureOverview` provide the editor-side material architecture model. They classify existing manifests into generic, business, or custom material layers and into capability families such as action, input, media, form, list, feedback, marketing, and commerce. This is editor metadata only; runtime primitives still stay outside material registries.
 
 `createLowcodeMaterialCategories(manifests, allCategoryLabel)` returns a stable category list with `全部` by default.
 
-`filterLowcodeMaterialCatalog(materials, options)` filters entries that contain a `manifest` field by category and keyword. Keyword matching covers title, component name, category, version, and platforms.
+`filterLowcodeMaterialCatalog(materials, options)` filters entries that contain a `manifest` field by category and keyword. Keyword matching covers title, component name, category, category label, architecture layer label, capability family label, version, and platforms.
 
 `pickLowcodeMaterialEntriesByComponentNames(materials, componentNames)` resolves quick sections such as favorites or recent materials while preserving the provided component-name order and ignoring missing materials.
 
