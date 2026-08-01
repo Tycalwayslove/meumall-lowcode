@@ -1,7 +1,7 @@
 import React from "react";
 import type { LowcodeMaterial } from "@meumall/lowcode-core";
 import { createMaterialManifest, type JsonObject, type LowcodeNode } from "@meumall/lowcode-schema";
-import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
+import { MlcButton, MlcCheckbox, MlcCountdownText, MlcDivider, MlcImage, MlcInput, MlcModal, MlcPrice, MlcRadioGroup, MlcSelect, MlcSpacer, MlcStepper, MlcSwitch, MlcTabs, MlcTag, MlcText, MlcTextarea } from "./primitives/index.js";
 
 type MaterialProps = {
   props: Record<string, unknown>;
@@ -369,6 +369,60 @@ export function BasicSelect({ props }: MaterialProps) {
           borderColor: text(props.borderColor, "#e5e7eb"),
           color: text(props.textColor, "#111827"),
           background: text(props.selectBackgroundColor, "#ffffff"),
+        }}
+      />
+      {helperText ? (
+        <MlcText as="p" size={12} tone="muted" style={{ color: text(props.helperColor, "#64748b") }}>
+          {helperText}
+        </MlcText>
+      ) : null}
+    </section>
+  );
+}
+
+export function BasicRadioGroup({ props }: MaterialProps) {
+  const [value, setValue] = React.useState(text(props.defaultValue));
+  const label = text(props.label, "基础单选组");
+  const helperText = text(props.helperText);
+  const options = list(props.options).length ? list(props.options) : BASIC_SELECT_FALLBACK_OPTIONS;
+  const handler = props.onChange;
+
+  React.useEffect(() => {
+    setValue(text(props.defaultValue));
+  }, [props.defaultValue]);
+
+  return (
+    <section
+      className="mlc-material mlc-basic-radio-group"
+      style={{
+        display: "grid",
+        gap: 8,
+        padding: `${number(props.paddingY, 12)}px 16px`,
+        color: text(props.textColor, "#111827"),
+        background: text(props.wrapperBackgroundColor, "transparent"),
+      }}
+    >
+      {label ? (
+        <MlcText as="strong" size={13} weight={800} style={{ color: text(props.labelColor, "#111827") }}>
+          {label}
+        </MlcText>
+      ) : null}
+      <MlcRadioGroup
+        value={value}
+        disabled={boolean(props.disabled)}
+        radius={number(props.radius, 8)}
+        activeColor={text(props.activeColor, "#0f766e")}
+        borderColor={text(props.borderColor, "#e5e7eb")}
+        textColor={text(props.textColor, "#111827")}
+        backgroundColor={text(props.optionBackgroundColor, "#ffffff")}
+        options={options.map((item) => ({
+          label: text(item.label, text(item.value)),
+          value: text(item.value),
+          disabled: boolean(item.disabled),
+        }))}
+        onChange={(nextValue) => {
+          setValue(nextValue);
+          if (typeof handler === "function") handler(nextValue);
         }}
       />
       {helperText ? (
@@ -2585,6 +2639,49 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
       },
       events: [{ name: "onChange", title: "选择变化" }],
+    }),
+  },
+  {
+    component: BasicRadioGroup,
+    manifest: createMaterialManifest({
+      componentName: "BasicRadioGroup",
+      materialVersion: "0.1.0",
+      title: "基础单选组",
+      category: "basic",
+      platforms: ["h5"],
+      defaultProps: {
+        label: "基础单选组",
+        helperText: "用于少量静态选项单选，远程业务字典请通过后续数据源能力接入。",
+        defaultValue: "women",
+        options: BASIC_SELECT_FALLBACK_OPTIONS,
+        disabled: false,
+        wrapperBackgroundColor: "transparent",
+        optionBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        activeColor: "#0f766e",
+        borderColor: "#e5e7eb",
+        radius: 8,
+        paddingY: 12,
+      },
+      propsSchema: {
+        label: { label: "标签", type: "string", setter: "input", defaultValue: "基础单选组" },
+        helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于少量静态选项单选，远程业务字典请通过后续数据源能力接入。" },
+        defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "women" },
+        options: { label: "选项列表", type: "array", setter: "textarea", defaultValue: BASIC_SELECT_FALLBACK_OPTIONS },
+        disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
+        wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent", ...COLOR_SWATCHES_META },
+        optionBackgroundColor: { label: "选项背景", type: "string", setter: "color", defaultValue: "#ffffff", ...COLOR_SWATCHES_META },
+        labelColor: { label: "标签色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827", ...COLOR_SWATCHES_META },
+        helperColor: { label: "辅助文字色", type: "string", setter: "color", defaultValue: "#64748b", ...COLOR_SWATCHES_META },
+        activeColor: { label: "选中色", type: "string", setter: "color", defaultValue: "#0f766e", ...COLOR_SWATCHES_META },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb", ...COLOR_SWATCHES_META },
+        radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8, ...NUMBER_RADIUS_META },
+        paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12, ...NUMBER_PIXEL_SIZE_META },
+      },
+      events: [{ name: "onChange", title: "单选变化" }],
     }),
   },
   {

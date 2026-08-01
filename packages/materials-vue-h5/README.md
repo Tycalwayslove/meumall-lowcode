@@ -15,6 +15,7 @@ Current internal primitives:
 - `MlcPrice`
 - `MlcInput`
 - `MlcSelect`
+- `MlcRadioGroup`
 - `MlcTextarea`
 - `MlcSwitch`
 - `MlcCheckbox`
@@ -34,6 +35,7 @@ Currently migrated materials:
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicRadioGroup`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
@@ -71,6 +73,7 @@ Current materials:
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicRadioGroup`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`

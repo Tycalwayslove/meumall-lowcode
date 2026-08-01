@@ -51,6 +51,17 @@ function toneColor(tone: Tone): string {
   return h5Tokens.color.text;
 }
 
+function tintHexColor(color: string, opacity: number): string {
+  const normalized = color.trim();
+  const match = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!match) return "rgba(15, 118, 110, 0.08)";
+  const hex = match[1].length === 3 ? match[1].split("").map((char) => `${char}${char}`).join("") : match[1];
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
 export const MlcButton = defineComponent({
   name: "MlcButton",
   props: {
@@ -687,6 +698,98 @@ export const MlcSelect = defineComponent({
             return h("option", { key: `${optionValue}-${index}`, value: optionValue, disabled: Boolean(item.disabled) }, item.label ?? optionValue);
           }),
         ],
+      );
+  },
+});
+
+export const MlcRadioGroup = defineComponent({
+  name: "MlcRadioGroup",
+  props: {
+    value: { type: String, default: "" },
+    disabled: { type: Boolean, default: false },
+    options: { type: Array as PropType<MlcSelectOption[]>, default: () => [] },
+    activeColor: { type: String, default: h5Tokens.color.accent },
+    borderColor: { type: String, default: h5Tokens.color.border },
+    textColor: { type: String, default: h5Tokens.color.text },
+    backgroundColor: { type: String, default: h5Tokens.color.surface },
+    radius: { type: Number, default: h5Tokens.radius.md },
+    class: { type: String, default: "" },
+    style: { type: Object as PropType<CSSProperties>, default: () => ({}) },
+    onChange: { type: Function as PropType<(value: string) => void>, default: undefined },
+  },
+  setup(props) {
+    return () =>
+      h(
+        "div",
+        {
+          role: "radiogroup",
+          class: props.class,
+          style: {
+            display: "grid",
+            gap: "8px",
+            opacity: props.disabled ? 0.56 : 1,
+            ...props.style,
+          } satisfies CSSProperties,
+        },
+        props.options.map((item, index) => {
+          const optionValue = item.value ?? "";
+          const selected = optionValue === props.value;
+          const optionDisabled = props.disabled || Boolean(item.disabled);
+
+          return h(
+            "button",
+            {
+              key: `${optionValue}-${index}`,
+              type: "button",
+              role: "radio",
+              "aria-checked": selected,
+              disabled: optionDisabled,
+              style: {
+                display: "flex",
+                alignItems: "center",
+                gap: "9px",
+                width: "100%",
+                minHeight: `${h5Tokens.touch.minHeight}px`,
+                border: `1px solid ${selected ? props.activeColor : props.borderColor}`,
+                borderRadius: `${props.radius}px`,
+                padding: "0 12px",
+                color: selected ? props.activeColor : props.textColor,
+                background: selected ? tintHexColor(props.activeColor, 0.08) : props.backgroundColor,
+                fontSize: `${h5Tokens.fontSize.body}px`,
+                fontWeight: selected ? 800 : 600,
+                textAlign: "left",
+                opacity: optionDisabled ? 0.56 : 1,
+              } satisfies CSSProperties,
+              onClick: () => {
+                if (!optionDisabled) props.onChange?.(optionValue);
+              },
+            },
+            [
+              h(
+                "span",
+                {
+                  "aria-hidden": "true",
+                  style: {
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: "0 0 auto",
+                    width: "18px",
+                    height: "18px",
+                    border: `1px solid ${selected ? props.activeColor : props.borderColor}`,
+                    borderRadius: `${h5Tokens.radius.pill}px`,
+                    color: h5Tokens.color.inverseText,
+                    background: selected ? props.activeColor : h5Tokens.color.surface,
+                    fontSize: "10px",
+                    lineHeight: 1,
+                  } satisfies CSSProperties,
+                },
+                selected ? "●" : "",
+              ),
+              h("span", item.label ?? optionValue),
+            ],
+          );
+        }),
       );
   },
 });

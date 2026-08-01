@@ -9,6 +9,7 @@ import {
   BasicCheckbox,
   BasicImage,
   BasicInput,
+  BasicRadioGroup,
   BasicSelect,
   BasicSwitch,
   BasicTag,
@@ -137,6 +138,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicTextarea", "rows", { min: 2, max: 8, step: 1, unit: undefined }],
       ["BasicTextarea", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicSelect", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
+      ["BasicRadioGroup", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicCheckbox", "radius", { min: 0, max: 48, step: 1, unit: "px" }],
       ["BasicText", "lineHeight", { min: 1, max: 2.5, step: 0.1, unit: "倍" }],
       ["DividerBlock", "thickness", { min: 0, max: 8, step: 1, unit: "px" }],
@@ -169,6 +171,7 @@ describe("MeuMall H5 material manifests", () => {
       ["BasicInput", "borderColor"],
       ["BasicTextarea", "borderColor"],
       ["BasicSelect", "borderColor"],
+      ["BasicRadioGroup", "activeColor"],
       ["BasicSwitch", "activeColor"],
       ["BasicCheckbox", "checkedColor"],
       ["BasicText", "backgroundColor"],
@@ -232,6 +235,7 @@ describe("MeuMall H5 material manifests", () => {
       "MlcPrice",
       "MlcInput",
       "MlcSelect",
+      "MlcRadioGroup",
       "MlcTextarea",
       "MlcSwitch",
       "MlcCheckbox",
@@ -309,6 +313,7 @@ describe("MeuMall H5 material manifests", () => {
     functionSourceIncludes(BasicInput, ["MlcInput", "MlcText"]);
     functionSourceIncludes(BasicTextarea, ["MlcTextarea", "MlcText"]);
     functionSourceIncludes(BasicSelect, ["MlcSelect", "MlcText"]);
+    functionSourceIncludes(BasicRadioGroup, ["MlcRadioGroup", "MlcText"]);
     functionSourceIncludes(BasicSwitch, ["MlcSwitch", "MlcText"]);
     functionSourceIncludes(BasicCheckbox, ["MlcCheckbox", "MlcText"]);
     functionSourceIncludes(BasicText, ["MlcText"]);
@@ -465,6 +470,21 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.options[0].value, "women");
     assert.equal(material.manifest.propsSchema.options.setter, "textarea");
     assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.events?.[0]?.name, "onChange");
+  });
+
+  it("registers the basic radio group material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "BasicRadioGroup");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "基础单选组");
+    assert.equal(material.manifest.category, "basic");
+    assert.equal(material.manifest.defaultProps.defaultValue, "women");
+    assert.equal(material.manifest.defaultProps.options[0].value, "women");
+    assert.equal(material.manifest.propsSchema.options.setter, "textarea");
+    assert.equal(material.manifest.propsSchema.disabled.setter, "switch");
+    assert.equal(material.manifest.propsSchema.activeColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.radius.setter, "number");
     assert.equal(material.manifest.events?.[0]?.name, "onChange");
   });
 

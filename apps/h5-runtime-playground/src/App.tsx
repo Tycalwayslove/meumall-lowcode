@@ -211,6 +211,33 @@ const sampleSchema = createLowcodePageSchema({
       },
     },
     {
+      id: "node_basic_radio_group",
+      componentName: "BasicRadioGroup",
+      materialVersion: "0.1.0",
+      props: {
+        label: "基础单选组示例",
+        helperText: "单选组适合少量静态选项直接展示，和下拉选择框互补。",
+        defaultValue: "women",
+        options: [
+          { label: "女装会场", value: "women" },
+          { label: "鞋包配饰", value: "accessories" },
+          { label: "直播专场", value: "live" },
+        ],
+        wrapperBackgroundColor: "#f3f4f6",
+        optionBackgroundColor: "#ffffff",
+        labelColor: "#111827",
+        textColor: "#111827",
+        helperColor: "#64748b",
+        activeColor: "#0f766e",
+        borderColor: "#d1d5db",
+        radius: 8,
+        paddingY: 10,
+      },
+      events: {
+        onChange: { actionId: "track_basic_radio_group_change" },
+      },
+    },
+    {
       id: "node_basic_switch",
       componentName: "BasicSwitch",
       materialVersion: "0.1.0",
@@ -947,6 +974,13 @@ const sampleSchema = createLowcodePageSchema({
       type: "tracking.click",
       params: {
         eventName: "basic_select_change",
+      },
+    },
+    {
+      id: "track_basic_radio_group_change",
+      type: "tracking.click",
+      params: {
+        eventName: "basic_radio_group_change",
       },
     },
     {

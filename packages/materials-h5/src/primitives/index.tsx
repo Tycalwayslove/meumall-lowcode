@@ -49,6 +49,17 @@ function toneColor(tone: Tone): string {
   return h5Tokens.color.text;
 }
 
+function tintHexColor(color: string, opacity: number): string {
+  const normalized = color.trim();
+  const match = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (!match) return "rgba(15, 118, 110, 0.08)";
+  const hex = match[1].length === 3 ? match[1].split("").map((char) => `${char}${char}`).join("") : match[1];
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
 export interface MlcButtonProps {
   children?: React.ReactNode;
   type?: "button" | "submit" | "reset";
@@ -745,6 +756,103 @@ export function MlcSelect({
         );
       })}
     </select>
+  );
+}
+
+export interface MlcRadioGroupProps {
+  value?: string;
+  disabled?: boolean;
+  options?: MlcSelectOption[];
+  activeColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  backgroundColor?: string;
+  radius?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  onChange?: (value: string) => void;
+}
+
+export function MlcRadioGroup({
+  value = "",
+  disabled = false,
+  options = [],
+  activeColor = h5Tokens.color.accent,
+  borderColor = h5Tokens.color.border,
+  textColor = h5Tokens.color.text,
+  backgroundColor = h5Tokens.color.surface,
+  radius = h5Tokens.radius.md,
+  className,
+  style,
+  onChange,
+}: MlcRadioGroupProps): React.ReactElement {
+  return (
+    <div
+      role="radiogroup"
+      className={className}
+      style={{
+        display: "grid",
+        gap: 8,
+        opacity: disabled ? 0.56 : 1,
+        ...style,
+      }}
+    >
+      {options.map((item, index) => {
+        const optionValue = item.value ?? "";
+        const selected = optionValue === value;
+        const optionDisabled = disabled || Boolean(item.disabled);
+
+        return (
+          <button
+            key={`${optionValue}-${index}`}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={optionDisabled}
+            onClick={() => {
+              if (!optionDisabled) onChange?.(optionValue);
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              width: "100%",
+              minHeight: h5Tokens.touch.minHeight,
+              border: `1px solid ${selected ? activeColor : borderColor}`,
+              borderRadius: radius,
+              padding: "0 12px",
+              color: selected ? activeColor : textColor,
+              background: selected ? tintHexColor(activeColor, 0.08) : backgroundColor,
+              fontSize: h5Tokens.fontSize.body,
+              fontWeight: selected ? 800 : 600,
+              textAlign: "left",
+              opacity: optionDisabled ? 0.56 : 1,
+            }}
+          >
+            <span
+              aria-hidden="true"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: "0 0 auto",
+                width: 18,
+                height: 18,
+                border: `1px solid ${selected ? activeColor : borderColor}`,
+                borderRadius: h5Tokens.radius.pill,
+                color: h5Tokens.color.inverseText,
+                background: selected ? activeColor : h5Tokens.color.surface,
+                fontSize: 10,
+                lineHeight: 1,
+              }}
+            >
+              {selected ? "●" : null}
+            </span>
+            <span>{item.label ?? optionValue}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

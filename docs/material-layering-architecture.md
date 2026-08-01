@@ -115,6 +115,7 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicRadioGroup`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
@@ -143,6 +144,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 `BasicTextarea` 是通用多行输入物料，负责标签、占位、默认值、显示行数、禁用态、样式和输入变化事件；它不承载真实表单提交、校验规则、字数统计、富文本、敏感词审核或活动备注保存语义，这些能力应由后续表单协议、业务物料或宿主服务扩展。
 
 `BasicSelect` 是通用静态单选物料，负责标签、占位、静态选项、默认值、禁用态、样式和选择变化事件；它不承载远程业务字典、商品类目、会员标签、级联选择、多选搜索或表单提交语义，这些能力应通过后续数据源契约、业务物料或编辑器专用控件扩展。
+
+`BasicRadioGroup` 是通用静态单选组物料，负责标签、辅助说明、少量静态选项、默认值、禁用态、选中色、边框色、圆角和单选变化事件；它不承载远程业务字典、商品类目、会员标签、级联选择、多选搜索、表单提交或用户偏好持久化语义，这些能力应通过后续数据源契约、业务物料、action 或宿主服务扩展。
 
 `BasicSwitch` 是通用布尔开关物料，负责标签、状态文案、默认状态、禁用态、开关色、滑块色和开关变化事件；它不承载真实配置保存、权限审批、活动状态、规则联动或用户偏好持久化语义，这些能力应由后续业务物料、action 或宿主服务扩展。
 
@@ -288,6 +291,7 @@ h5-runtime-playground -> renderer-h5 + materials-h5
 - `BasicInput`
 - `BasicTextarea`
 - `BasicSelect`
+- `BasicRadioGroup`
 - `BasicSwitch`
 - `BasicCheckbox`
 - `BasicText`
