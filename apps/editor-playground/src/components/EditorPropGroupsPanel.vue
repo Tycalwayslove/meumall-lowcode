@@ -97,8 +97,21 @@ function isStructured(propSchema: LowcodePropSchema): boolean {
   return getLowcodePropEditorControl(propSchema) === "json";
 }
 
+function isSelect(propSchema: LowcodePropSchema): boolean {
+  return getLowcodePropEditorControl(propSchema) === "select";
+}
+
 function asText(value: JsonValue | undefined): string {
   return toLowcodePropInputText(value);
+}
+
+function optionValue(value: JsonValue): string {
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : JSON.stringify(value);
+}
+
+function findOptionValue(propSchema: LowcodePropSchema, value: string): JsonValue {
+  const option = propSchema.options?.find((item) => optionValue(item.value) === value);
+  return option?.value ?? value;
 }
 
 function asBoolean(value: unknown): boolean {
@@ -313,6 +326,19 @@ function canUseProductQuickActions(propName: string): boolean {
             rows="5"
             @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLTextAreaElement).value)"
           />
+          <select
+            v-else-if="isSelect(entry.schema)"
+            :value="optionValue(selectedProps[entry.name] ?? entry.schema.defaultValue ?? '')"
+            @change="emit('update-prop', entry.name, entry.schema, findOptionValue(entry.schema, ($event.target as HTMLSelectElement).value))"
+          >
+            <option
+              v-for="option in entry.schema.options ?? []"
+              :key="optionValue(option.value)"
+              :value="optionValue(option.value)"
+            >
+              {{ option.label }}
+            </option>
+          </select>
           <div
             v-else-if="entry.schema.setter === 'switch' || entry.schema.type === 'boolean'"
             class="switch-field"

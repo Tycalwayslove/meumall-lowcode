@@ -212,6 +212,7 @@ interface LowcodeValidationResult {
 - 新增节点时使用 `componentName`、`materialVersion` 和 `defaultProps`。
 - 属性面板按 `propsSchema` 渲染控件。
 - `switch` 或 `boolean` 字段必须写入真实 boolean。
+- `select` 字段应按 `options` 渲染选择控件，写回 `options[].value`；历史 schema 中的未知值不得导致属性面板崩溃，运行时仍按物料 fallback 处理。
 - `array` 和 `object` 字段必须保留 JSON 兜底编辑。
 - `events` 用于展示动作绑定。
 - `dataSourceSlots` 用于限制数据源绑定入口。
@@ -253,6 +254,7 @@ pnpm test
 
 - `validateLowcodeMaterialManifest` 校验 manifest。
 - React/Vue H5 manifest `componentName` 列表保持一致。
+- React/Vue H5 同名物料的枚举 props `setter` 和 `options` 语义保持一致。
 - 新增物料的核心 props、events、dataSourceSlots 有单元测试。
 - 编辑器新增节点时 defaultProps 可正常落入 schema。
 - renderer 遇到未知物料时显示 fallback。

@@ -34,6 +34,14 @@ function manifestNames(materials) {
   return materials.map((material) => material.manifest.componentName);
 }
 
+function findMaterial(materials, componentName) {
+  return materials.find((material) => material.manifest.componentName === componentName);
+}
+
+function optionValues(propSchema) {
+  return (propSchema.options ?? []).map((option) => option.value);
+}
+
 function elementTypeNames(element, names = new Set()) {
   if (!element || typeof element !== "object") return names;
 
@@ -71,6 +79,32 @@ describe("MeuMall H5 material manifests", () => {
       const result = validateLowcodeMaterialManifest(material.manifest);
 
       assert.equal(result.valid, true, `${material.manifest.componentName}: ${result.errors.join("; ")}`);
+    }
+  });
+
+  it("keeps generic material enum props selectable and aligned", () => {
+    const enumProps = [
+      ["BasicButton", "variant", ["solid", "outline", "ghost"]],
+      ["BasicButton", "size", ["sm", "md", "lg"]],
+      ["BasicInput", "type", ["text", "tel", "email", "number"]],
+      ["BasicText", "as", ["span", "p", "strong", "h1", "h2", "h3"]],
+      ["BasicText", "align", ["left", "center", "right"]],
+      ["DividerBlock", "lineStyle", ["solid", "dashed", "dotted"]],
+      ["BasicImage", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
+      ["BasicTag", "tone", ["neutral", "accent", "danger", "inverse"]],
+      ["BasicTag", "align", ["left", "center", "right"]],
+      ["BasicCard", "fit", ["cover", "contain", "fill", "none", "scale-down"]],
+      ["SectionTitle", "align", ["left", "center", "right"]],
+    ];
+
+    for (const [componentName, propName, values] of enumProps) {
+      const reactProp = findMaterial(h5Materials, componentName)?.manifest.propsSchema[propName];
+      const vueProp = findMaterial(h5VueMaterials, componentName)?.manifest.propsSchema[propName];
+
+      assert.equal(reactProp?.setter, "select", `${componentName}.${propName} should use select in React manifest`);
+      assert.equal(vueProp?.setter, "select", `${componentName}.${propName} should use select in Vue manifest`);
+      assert.deepEqual(optionValues(reactProp), values);
+      assert.deepEqual(optionValues(vueProp), values);
     }
   });
 

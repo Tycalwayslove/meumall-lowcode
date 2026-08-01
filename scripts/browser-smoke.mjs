@@ -470,7 +470,7 @@ class CdpPage {
 
   async fillFieldByLabel(label, value) {
     const expression = `(() => {
-      const field = Array.from(document.querySelectorAll('label.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
+      const field = Array.from(document.querySelectorAll('.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
       const input = field?.querySelector('input, textarea');
       if (!input) return false;
       input.focus();
@@ -485,7 +485,7 @@ class CdpPage {
 
   async selectFieldByLabel(label, value) {
     const expression = `(() => {
-      const field = Array.from(document.querySelectorAll('label.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
+      const field = Array.from(document.querySelectorAll('.field')).find((item) => (item.innerText || '').includes(${jsString(label)}));
       const select = field?.querySelector('select');
       if (!select) return false;
       select.value = ${jsString(value)};
@@ -733,6 +733,13 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：基础按钮");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicButton)}`);
   await page.waitForExpression("document.body.innerText.includes('基础按钮示例') || document.body.innerText.includes('基础按钮')");
+  await page.evaluate("Array.from(document.querySelectorAll('.property-group.collapsed .property-group-head')).forEach((button) => button.click())");
+  await page.waitForExpression("Array.from(document.querySelectorAll('.inspector .field')).some((item) => item.innerText.includes('样式') && item.querySelector('select option[value=\"ghost\"]'))");
+  await page.selectFieldByLabel("样式", "ghost");
+  await page.clickByText(".toolbar button", "源码");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicButton\"') && item.value.includes('\"variant\": \"ghost\"'))");
+  await page.clickByText(".toolbar button", "设计");
+  await page.waitForExpression("document.querySelector('.phone-frame')");
   const nodeCountBeforeBasicInput = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "基础输入框");

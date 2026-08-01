@@ -137,6 +137,61 @@ type BasicImageFit = "cover" | "contain" | "fill" | "none" | "scale-down";
 type BasicTagTone = "neutral" | "accent" | "danger" | "inverse";
 type BasicInlineAlign = "left" | "center" | "right";
 
+const BASIC_BUTTON_VARIANT_OPTIONS = [
+  { label: "实心", value: "solid" },
+  { label: "描边", value: "outline" },
+  { label: "幽灵", value: "ghost" },
+];
+
+const BASIC_BUTTON_SIZE_OPTIONS = [
+  { label: "小", value: "sm" },
+  { label: "中", value: "md" },
+  { label: "大", value: "lg" },
+];
+
+const BASIC_INPUT_TYPE_OPTIONS = [
+  { label: "文本", value: "text" },
+  { label: "手机号", value: "tel" },
+  { label: "邮箱", value: "email" },
+  { label: "数字", value: "number" },
+];
+
+const BASIC_TEXT_AS_OPTIONS = [
+  { label: "行内文本", value: "span" },
+  { label: "段落", value: "p" },
+  { label: "强调", value: "strong" },
+  { label: "一级标题", value: "h1" },
+  { label: "二级标题", value: "h2" },
+  { label: "三级标题", value: "h3" },
+];
+
+const INLINE_ALIGN_OPTIONS = [
+  { label: "左对齐", value: "left" },
+  { label: "居中", value: "center" },
+  { label: "右对齐", value: "right" },
+];
+
+const DIVIDER_LINE_STYLE_OPTIONS = [
+  { label: "实线", value: "solid" },
+  { label: "虚线", value: "dashed" },
+  { label: "点线", value: "dotted" },
+];
+
+const BASIC_IMAGE_FIT_OPTIONS = [
+  { label: "裁剪填充", value: "cover" },
+  { label: "完整包含", value: "contain" },
+  { label: "拉伸填满", value: "fill" },
+  { label: "原始尺寸", value: "none" },
+  { label: "等比缩小", value: "scale-down" },
+];
+
+const BASIC_TAG_TONE_OPTIONS = [
+  { label: "默认", value: "neutral" },
+  { label: "强调", value: "accent" },
+  { label: "危险", value: "danger" },
+  { label: "反白", value: "inverse" },
+];
+
 export const BasicButton = defineComponent({
   name: "BasicButton",
   props: materialPropOptions,
@@ -2585,8 +2640,8 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       },
       propsSchema: {
         text: { label: "按钮文案", type: "string", setter: "input", required: true, defaultValue: "基础按钮" },
-        variant: { label: "样式", type: "string", setter: "input", defaultValue: "solid" },
-        size: { label: "尺寸", type: "string", setter: "input", defaultValue: "md" },
+        variant: { label: "样式", type: "string", setter: "select", defaultValue: "solid", options: BASIC_BUTTON_VARIANT_OPTIONS },
+        size: { label: "尺寸", type: "string", setter: "select", defaultValue: "md", options: BASIC_BUTTON_SIZE_OPTIONS },
         block: { label: "撑满宽度", type: "boolean", setter: "switch", defaultValue: true },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         loading: { label: "加载中", type: "boolean", setter: "switch", defaultValue: false },
@@ -2629,7 +2684,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         placeholder: { label: "占位提示", type: "string", setter: "input", defaultValue: "请输入内容" },
         helperText: { label: "辅助说明", type: "string", setter: "textarea", defaultValue: "用于收集单行文本，本地示例不会提交数据。" },
         defaultValue: { label: "默认值", type: "string", setter: "input", defaultValue: "" },
-        type: { label: "输入类型", type: "string", setter: "input", defaultValue: "text" },
+        type: { label: "输入类型", type: "string", setter: "select", defaultValue: "text", options: BASIC_INPUT_TYPE_OPTIONS },
         disabled: { label: "禁用", type: "boolean", setter: "switch", defaultValue: false },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
         inputBackgroundColor: { label: "输入背景", type: "string", setter: "color", defaultValue: "#ffffff" },
@@ -2664,11 +2719,11 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       },
       propsSchema: {
         text: { label: "文本内容", type: "string", setter: "textarea", required: true, defaultValue: "这是一段基础文本，可用于活动说明、提示文案或普通段落。" },
-        as: { label: "标签类型", type: "string", setter: "input", defaultValue: "p" },
+        as: { label: "标签类型", type: "string", setter: "select", defaultValue: "p", options: BASIC_TEXT_AS_OPTIONS },
         fontSize: { label: "字号", type: "number", setter: "number", defaultValue: 14 },
         fontWeight: { label: "字重", type: "number", setter: "number", defaultValue: 400 },
         lineHeight: { label: "行高", type: "number", setter: "number", defaultValue: 1.6 },
-        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
         color: { label: "文字色", type: "string", setter: "color", defaultValue: "#111827" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "transparent" },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 10 },
@@ -2694,7 +2749,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       propsSchema: {
         color: { label: "线条色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
         thickness: { label: "线条粗细", type: "number", setter: "number", defaultValue: 1 },
-        lineStyle: { label: "线条样式", type: "string", setter: "input", defaultValue: "solid" },
+        lineStyle: { label: "线条样式", type: "string", setter: "select", defaultValue: "solid", options: DIVIDER_LINE_STYLE_OPTIONS },
         inset: { label: "左右缩进", type: "number", setter: "number", defaultValue: 16 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
@@ -2722,7 +2777,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         imageUrl: { label: "图片地址", type: "string", setter: "input", required: true, defaultValue: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" },
         alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "活动图片" },
         ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
-        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        fit: { label: "填充模式", type: "string", setter: "select", defaultValue: "cover", options: BASIC_IMAGE_FIT_OPTIONS },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 8 },
         paddingY: { label: "上下留白", type: "number", setter: "number", defaultValue: 12 },
         backgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
@@ -2751,8 +2806,8 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
       },
       propsSchema: {
         text: { label: "标签文案", type: "string", setter: "input", required: true, defaultValue: "基础标签" },
-        tone: { label: "语义色", type: "string", setter: "input", defaultValue: "accent" },
-        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        tone: { label: "语义色", type: "string", setter: "select", defaultValue: "accent", options: BASIC_TAG_TONE_OPTIONS },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
         textColor: { label: "文字色", type: "string", setter: "color", defaultValue: "#0f766e" },
         backgroundColor: { label: "标签背景", type: "string", setter: "color", defaultValue: "rgba(15, 118, 110, 0.1)" },
         wrapperBackgroundColor: { label: "区块背景", type: "string", setter: "color", defaultValue: "transparent" },
@@ -2800,7 +2855,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         imageUrl: { label: "图片地址", type: "string", setter: "image", defaultValue: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80" },
         alt: { label: "替代文本", type: "string", setter: "input", defaultValue: "基础图文卡片" },
         ratio: { label: "图片比例", type: "string", setter: "input", defaultValue: "16 / 9" },
-        fit: { label: "填充模式", type: "string", setter: "input", defaultValue: "cover" },
+        fit: { label: "填充模式", type: "string", setter: "select", defaultValue: "cover", options: BASIC_IMAGE_FIT_OPTIONS },
         badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
         title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "基础图文卡片" },
         description: { label: "说明", type: "string", setter: "textarea", defaultValue: "用于组合图片、标题、说明和按钮，适合活动入口、内容推荐和轻量导购。" },
@@ -2848,7 +2903,7 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         markerText: { label: "角标", type: "string", setter: "input", defaultValue: "精选" },
         title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "今日主推" },
         subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "用标题和说明分隔不同运营楼层。" },
-        align: { label: "对齐", type: "string", setter: "input", defaultValue: "left" },
+        align: { label: "对齐", type: "string", setter: "select", defaultValue: "left", options: INLINE_ALIGN_OPTIONS },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#f3f4f6" },
         titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
         textColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },

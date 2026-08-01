@@ -693,7 +693,7 @@ export interface CreateLowcodePropGroupsOptions {
   behaviorPropNames?: readonly string[];
 }
 
-export type LowcodeEditorPropControl = "text" | "number" | "color" | "switch" | "textarea" | "json" | "list";
+export type LowcodeEditorPropControl = "text" | "number" | "color" | "switch" | "select" | "textarea" | "json" | "list";
 
 export interface LowcodeEditorListField {
   name: string;
@@ -3472,6 +3472,7 @@ export function getLowcodePropEditorControl(propSchema: LowcodePropSchema): Lowc
   if (propSchema.type === "array" || propSchema.type === "object" || propSchema.setter === "dataSourceSelector") return "json";
   if (propSchema.setter === "textarea" || propSchema.setter === "richText") return "textarea";
   if (propSchema.setter === "switch" || propSchema.type === "boolean") return "switch";
+  if (propSchema.setter === "select") return "select";
   if (propSchema.setter === "color") return "color";
   if (propSchema.type === "number") return "number";
   return "text";

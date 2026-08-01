@@ -1482,6 +1482,13 @@ describe("@meumall/lowcode-editor readiness", () => {
     const numberSchema = { label: "列数", type: "number", setter: "number", defaultValue: 2 };
     const colorSchema = { label: "颜色", type: "string", setter: "color", defaultValue: "#111827" };
     const switchSchema = { label: "开启", type: "boolean", setter: "switch", defaultValue: false };
+    const selectSchema = {
+      label: "样式",
+      type: "string",
+      setter: "select",
+      defaultValue: "solid",
+      options: [{ label: "实心", value: "solid" }],
+    };
     const textareaSchema = { label: "说明", type: "string", setter: "textarea", defaultValue: "" };
     const jsonSchema = { label: "样式", type: "object", setter: "textarea", defaultValue: {} };
     const listSchema = { label: "列表", type: "array", setter: "textarea", defaultValue: [] };
@@ -1490,6 +1497,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodePropEditorControl(numberSchema), "number");
     assert.equal(getLowcodePropEditorControl(colorSchema), "color");
     assert.equal(getLowcodePropEditorControl(switchSchema), "switch");
+    assert.equal(getLowcodePropEditorControl(selectSchema), "select");
     assert.equal(getLowcodePropEditorControl(textareaSchema), "textarea");
     assert.equal(getLowcodePropEditorControl(jsonSchema), "json");
     assert.equal(getLowcodePropEditorControl(listSchema), "list");
