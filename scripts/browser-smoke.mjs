@@ -5,11 +5,14 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
-import { createServer } from "node:net";
+import { createServer as createHttpServer } from "node:http";
+import { createServer as createNetServer } from "node:net";
 
 const rootDir = path.resolve(new URL("..", import.meta.url).pathname);
 const editorPort = Number(process.env.EDITOR_SMOKE_PORT ?? 5193);
 const h5Port = Number(process.env.H5_SMOKE_PORT ?? 5194);
+const h5HttpPort = Number(process.env.H5_HTTP_SMOKE_PORT ?? 5195);
+const configPlatformPort = Number(process.env.CONFIG_PLATFORM_SMOKE_PORT ?? 5196);
 const chromeDebugPort = Number(process.env.CHROME_DEBUG_PORT ?? 9223);
 const host = "127.0.0.1";
 const timeoutMs = 30_000;
@@ -19,6 +22,8 @@ const editorRuntimeUrl = `http://${host}:${editorPort}/?runtime=1`;
 const editorWorkflowDemoUrl = `${editorUrl}?collaboration=locked-other&approval=pending`;
 const editorApprovalActionsUrl = `${editorUrl}?collaboration=locked-me&approval=draft`;
 const h5RuntimeUrl = `http://${host}:${h5Port}/`;
+const h5RuntimeHttpUrl = `http://${host}:${h5HttpPort}/?pageId=smoke-http-page`;
+const configPlatformSmokeUrl = `http://${host}:${configPlatformPort}`;
 const h5RuntimePageIdUrl = `${h5RuntimeUrl}?pageId=summer-campaign-demo`;
 const h5RuntimeReleaseIdUrl = `${h5RuntimeUrl}?releaseId=preview_demo`;
 const h5RuntimeMissingPageUrl = `${h5RuntimeUrl}?pageId=missing-page`;
@@ -26,7 +31,36 @@ const h5RuntimeEmptyUrl = `${h5RuntimeUrl}?demo=empty`;
 const h5RuntimeBrokenUrl = `${h5RuntimeUrl}?demo=broken`;
 
 const children = [];
+const servers = [];
+const configPlatformRequests = [];
 let chromeUserDataDir;
+
+const smokeHttpPageSchema = {
+  schemaVersion: "1.0.0",
+  pageId: "smoke-http-page",
+  pageVersion: "prod-smoke-http",
+  title: "HTTP 配置平台页面",
+  status: "published",
+  pageType: "activity",
+  targetPlatforms: ["h5"],
+  layout: { safeArea: true },
+  nodes: [
+    {
+      id: "smoke_http_title",
+      componentName: "SectionTitle",
+      materialVersion: "1.0.0",
+      props: {
+        title: "HTTP 配置平台页面",
+        subtitle: "来自 Java HTTP client mock",
+      },
+    },
+  ],
+  publishMeta: {
+    environment: "test",
+    publishedAt: "2026-08-01T00:00:00.000Z",
+    operator: "browser-smoke",
+  },
+};
 
 function log(message) {
   process.stdout.write(`[browser-smoke] ${message}\n`);
@@ -95,7 +129,7 @@ async function waitForHttp(url, label) {
 }
 
 async function assertPortFree(port, label) {
-  const server = createServer();
+  const server = createNetServer();
   return new Promise((resolve, reject) => {
     server.once("error", () => {
       reject(new Error(`${label} 端口 ${port} 已被占用，请释放端口或通过环境变量调整。`));
@@ -104,6 +138,41 @@ async function assertPortFree(port, label) {
       server.close(() => resolve());
     });
   });
+}
+
+function writeJsonResponse(response, statusCode, payload) {
+  response.writeHead(statusCode, {
+    "access-control-allow-origin": "*",
+    "access-control-allow-methods": "GET,POST,PUT,OPTIONS",
+    "access-control-allow-headers": "content-type,authorization",
+    "content-type": "application/json; charset=utf-8",
+  });
+  response.end(JSON.stringify(payload));
+}
+
+async function startConfigPlatformSmokeServer(port) {
+  log(`启动 config platform HTTP mock: ${port}`);
+  const server = createHttpServer((request, response) => {
+    if (request.method === "OPTIONS") {
+      writeJsonResponse(response, 204, null);
+      return;
+    }
+    configPlatformRequests.push({
+      method: request.method,
+      url: request.url,
+      authorization: request.headers.authorization,
+    });
+    if (request.method === "GET" && request.url === "/api/lowcode/pages/smoke-http-page/published") {
+      writeJsonResponse(response, 200, smokeHttpPageSchema);
+      return;
+    }
+    writeJsonResponse(response, 404, null);
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, host, resolve);
+  });
+  servers.push(server);
 }
 
 function delay(ms) {
@@ -799,6 +868,9 @@ async function assertOutlineNavigator(page) {
 }
 
 async function cleanup() {
+  for (const server of [...servers].reverse()) {
+    await new Promise((resolve) => server.close(resolve));
+  }
   for (const child of [...children].reverse()) {
     if (!child.killed) child.kill("SIGTERM");
   }
@@ -814,12 +886,19 @@ async function cleanup() {
 async function main() {
   await assertPortFree(editorPort, "editor playground");
   await assertPortFree(h5Port, "H5 runtime playground");
+  await assertPortFree(h5HttpPort, "H5 runtime HTTP playground");
+  await assertPortFree(configPlatformPort, "config platform HTTP mock");
   await assertPortFree(chromeDebugPort, "Chrome DevTools");
 
+  await startConfigPlatformSmokeServer(configPlatformPort);
   await startViteServer("editor playground", path.join(rootDir, "apps/editor-playground"), editorPort, {
     VITE_REACT_H5_RUNTIME_URL: h5RuntimeUrl,
   });
   await startViteServer("H5 runtime playground", path.join(rootDir, "apps/h5-runtime-playground"), h5Port);
+  await startViteServer("H5 runtime HTTP config playground", path.join(rootDir, "apps/h5-runtime-playground"), h5HttpPort, {
+    VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL: configPlatformSmokeUrl,
+    VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION: "Bearer smoke-token",
+  });
   await startChrome();
 
   const page = await createPage();
@@ -909,6 +988,23 @@ async function main() {
     ]);
     await assertActivityRuleModal(page, "React H5 runtime");
     await assertTabsBlockSwitch(page, "React H5 runtime");
+
+    await assertPage(page, h5RuntimeHttpUrl, [
+      { label: "React H5 HTTP 配置平台入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('配置平台')" },
+      { label: "React H5 HTTP 配置平台模式展示", expression: `document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})` },
+      { label: "React H5 HTTP 配置平台命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('smoke-http-page')" },
+      { label: "React H5 HTTP 配置平台页面已渲染", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('HTTP 配置平台页面')" },
+    ]);
+    if (
+      !configPlatformRequests.some((request) => {
+        return request.method === "GET"
+          && request.url === "/api/lowcode/pages/smoke-http-page/published"
+          && request.authorization === "Bearer smoke-token";
+      })
+    ) {
+      fail("HTTP 配置平台 mock 未收到带 authorization 的 published schema 请求");
+    }
+    log("通过：React H5 runtime 可通过 env 使用 HTTP 配置平台 client 并透传 authorization");
 
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },

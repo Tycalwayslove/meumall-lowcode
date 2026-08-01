@@ -53,6 +53,20 @@ http://localhost:5174/?demo=broken
 
 The left diagnostics panel shows the requested entry, effective schema source, page id, page version, schema validation, node count, data source status, action logs, and local entry shortcuts.
 
+## Config Platform Client
+
+By default the playground uses the local mock config platform client. To point the H5 runtime at a Java config platform while keeping the renderer/materials unchanged:
+
+```bash
+VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+- `VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL` enables `createHttpConfigPlatformClient`.
+- `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` is optional and is forwarded as the `authorization` header.
+- The diagnostics panel shows `配置平台: local mock` or `配置平台: http <baseUrl>`.
+
 ## Visual Smoke
 
 The repository root provides a local visual smoke command:

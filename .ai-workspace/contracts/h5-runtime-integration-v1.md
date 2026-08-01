@@ -83,6 +83,23 @@ const result = await loadLowcodeRuntimeSchema({
 
 生产环境建议禁用或限制 `encodedSchema`，避免 URL 过长和绕过配置平台审计。
 
+## H5 runtime playground 环境开关
+
+`apps/h5-runtime-playground` 默认使用本地 mock `LowcodeConfigPlatformClient`，用于离线验证 `pageId=summer-campaign-demo`、`releaseId=preview_demo`、empty demo 和 broken demo。需要联调 Java 配置平台时，可以通过环境变量切换为 HTTP client：
+
+```bash
+VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+说明：
+
+- `VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL` 存在时，playground 使用 `createHttpConfigPlatformClient`。
+- `VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` 可选，会作为 `authorization` header 透传。
+- 不配置时仍使用本地 mock，确保本地 smoke check 不依赖外部 Java 服务。
+- 左侧诊断面板会展示当前配置平台模式：`local mock` 或 `http <baseUrl>`。
+
 ## React 渲染示例
 
 ```tsx

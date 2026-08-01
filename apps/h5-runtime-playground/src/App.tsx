@@ -23,6 +23,7 @@ import {
   type LowcodeDataSourceConfig,
   type LowcodePageSchema,
 } from "@meumall/lowcode-schema";
+import { createRuntimeConfigPlatformBinding } from "./configPlatformClient";
 
 function BrokenBlock(): never {
   throw new Error("BrokenBlock render failed");
@@ -814,6 +815,8 @@ const localRuntimeConfigPlatformClient: LowcodeConfigPlatformClient = {
   },
 };
 
+const runtimeConfigPlatformBinding = createRuntimeConfigPlatformBinding(localRuntimeConfigPlatformClient);
+
 const registry = createMaterialRegistry([
   ...h5Materials,
   {
@@ -1002,7 +1005,7 @@ export function App() {
     setSchemaLoading(true);
     loadLowcodeRuntimeSchema({
       ...runtimeInput,
-      configPlatformClient: localRuntimeConfigPlatformClient,
+      configPlatformClient: runtimeConfigPlatformBinding.client,
     })
       .then((result) => {
         if (cancelled) return;
@@ -1057,6 +1060,10 @@ export function App() {
           <div>
             <dt>实际来源</dt>
             <dd>{schemaLoading ? "loading" : formatRuntimeSource(runtimeSchema.source)}</dd>
+          </div>
+          <div>
+            <dt>配置平台</dt>
+            <dd>{runtimeConfigPlatformBinding.label}</dd>
           </div>
           <div>
             <dt>页面 ID</dt>

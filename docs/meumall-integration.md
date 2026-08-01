@@ -77,6 +77,16 @@ http://localhost:5174/?demo=empty
 
 `apps/h5-runtime-playground` 内置一个本地 `LowcodeConfigPlatformClient` mock：`?pageId=summer-campaign-demo` 会加载本地 published schema，`?releaseId=preview_demo` 会加载本地 preview release schema；未知 `pageId` 或 `releaseId` 会回落到 sample schema 并展示 fallback 原因。左侧运行诊断面板会展示请求入口、实际 schema 来源、pageId、pageVersion、schema 校验、节点数、数据源状态、action 日志和 fallback 原因。`?demo=empty` 只用于本地验证空页面降级，确保 nodes 为空时展示 H5 空态而不是白屏。
 
+H5 runtime playground 可通过环境变量切换为 Java HTTP client：
+
+```bash
+VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL=http://localhost:8080 \
+VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION="Bearer token" \
+pnpm --filter @meumall/lowcode-h5-runtime-playground dev
+```
+
+不配置时仍使用本地 mock；配置后左侧诊断面板会展示 `配置平台: http <baseUrl>`，并通过 `createHttpConfigPlatformClient` 加载 `pageId` 或 `releaseId`。
+
 后续替换真实 Java API 时，优先保持编辑器侧调用语义不变，把 localStorage mock 实现替换为 HTTP adapter。注意 `saveDraft` 是手动版本草稿，`saveEditorDraftSnapshot` 是自动保存恢复点，两者不要共用同一条版本历史。
 
 ## Rendering Rules

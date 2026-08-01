@@ -54,6 +54,11 @@ It also contains optional editor workflow methods for Java management-console in
 - `cancelApproval(input)`
 - `reviewApproval(input)`
 
+It also contains optional editor draft snapshot methods for autosave recovery. These snapshots are editor recovery points, not release history entries:
+
+- `saveEditorDraftSnapshot(input)`
+- `getEditorDraftSnapshot(pageId)`
+
 `createHttpConfigPlatformClient` is a reference HTTP implementation for the Java config platform contract:
 
 - `POST /api/lowcode/pages/drafts`
@@ -70,6 +75,8 @@ It also contains optional editor workflow methods for Java management-console in
 - `POST /api/lowcode/pages/{pageId}/approval/submit`
 - `POST /api/lowcode/pages/{pageId}/approval/cancel`
 - `POST /api/lowcode/pages/{pageId}/approval/review`
+- `PUT /api/lowcode/pages/{pageId}/editor-draft-snapshot`
+- `GET /api/lowcode/pages/{pageId}/editor-draft-snapshot`
 
 The Vue editor playground currently uses a localStorage implementation of the same client interface, so real Java integration should replace only the client instance rather than the editor workflow.
 
