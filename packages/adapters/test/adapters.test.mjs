@@ -274,6 +274,26 @@ describe("@meumall/lowcode-adapters", () => {
           tags: ["新人"],
         },
       ],
+      videoAssets: [
+        {
+          id: "video_brand",
+          title: "品牌宣传视频",
+          category: "品牌视频",
+          url: "https://example.com/brand.mp4",
+          posterUrl: "https://example.com/brand.jpg",
+          durationText: "00:18",
+          tags: ["品牌", "首屏"],
+        },
+        {
+          id: "video_try_on",
+          title: "导购试穿视频",
+          category: "导购视频",
+          url: "https://example.com/try-on.mp4",
+          posterUrl: "https://example.com/try-on.jpg",
+          durationText: "00:32",
+          tags: ["导购", "穿搭"],
+        },
+      ],
       products: [
         {
           id: "sku_001",
@@ -338,6 +358,8 @@ describe("@meumall/lowcode-adapters", () => {
 
     const bannerResult = client.searchImageAssets({ category: "活动横幅", keyword: "首屏" });
     const couponResult = client.searchImageAssets({ ids: ["asset_coupon"] });
+    const videoResult = client.searchVideoAssets({ category: "品牌视频", keyword: "首屏" });
+    const taggedVideoResult = client.searchVideoAssets({ tags: ["穿搭"], limit: 1 });
     const productResult = client.searchProducts({ keyword: "sku_00", limit: 1 });
     const taggedProductResult = client.searchProducts({ tags: ["鞋履"] });
     const couponSearchResult = client.searchCoupons({ keyword: "包邮" });
@@ -348,6 +370,9 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(bannerResult.total, 1);
     assert.equal(bannerResult.items[0].id, "asset_hero");
     assert.equal(couponResult.items[0].url, "https://example.com/coupon.png");
+    assert.equal(videoResult.total, 1);
+    assert.equal(videoResult.items[0].posterUrl, "https://example.com/brand.jpg");
+    assert.equal(taggedVideoResult.items[0].id, "video_try_on");
     assert.equal(productResult.total, 2);
     assert.equal(productResult.items.length, 1);
     assert.equal(productResult.items[0].id, "sku_001");

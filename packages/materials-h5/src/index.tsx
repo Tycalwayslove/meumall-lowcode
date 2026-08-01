@@ -2554,7 +2554,7 @@ export const h5Materials: LowcodeMaterial<React.ComponentType<MaterialProps>>[] 
         shadow: true,
       },
       propsSchema: {
-        videoUrl: { label: "视频地址", type: "string", setter: "input", defaultValue: BASIC_VIDEO_SAMPLE_VIDEO_URL },
+        videoUrl: { label: "视频地址", type: "string", setter: "video", defaultValue: BASIC_VIDEO_SAMPLE_VIDEO_URL },
         posterUrl: { label: "封面图", type: "string", setter: "image", defaultValue: BASIC_VIDEO_SAMPLE_POSTER_URL },
         badgeText: { label: "角标", type: "string", setter: "input", defaultValue: "VIDEO" },
         title: { label: "标题", type: "string", setter: "input", required: true, defaultValue: "基础视频" },

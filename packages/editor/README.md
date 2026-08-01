@@ -191,6 +191,7 @@ The readiness helpers are framework-agnostic editor core APIs. They can be reuse
 - Page Schema validation.
 - Empty page nodes.
 - Empty image fields declared by material manifests.
+- Empty video fields declared by material manifests.
 - Product materials without static items or `items` data binding.
 - Data source resolution errors passed in by the host.
 - Node event references that point to missing actions.

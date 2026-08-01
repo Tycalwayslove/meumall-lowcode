@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Database, Image, Search } from "@lucide/vue";
+import { Database, Image, Search, Video } from "@lucide/vue";
 import type {
   LowcodeCouponResource,
   LowcodeImageAssetResource,
   LowcodeProductResource,
   LowcodeStoreExpertResource,
+  LowcodeVideoAssetResource,
 } from "@meumall/lowcode-adapters";
 
 interface ImagePropOption {
@@ -21,6 +22,14 @@ defineProps<{
   assetCategories: readonly string[];
   filteredAssets: readonly LowcodeImageAssetResource[];
   isAssetSearching: boolean;
+  canUseVideoLibrary: boolean;
+  videoPropOptions: readonly ImagePropOption[];
+  videoTargetPropName: string;
+  videoKeyword: string;
+  videoCategory: string;
+  videoCategories: readonly string[];
+  filteredVideos: readonly LowcodeVideoAssetResource[];
+  isVideoSearching: boolean;
   isProductMaterialSelected: boolean;
   productKeyword: string;
   filteredProducts: readonly LowcodeProductResource[];
@@ -51,6 +60,10 @@ const emit = defineEmits<{
   "update:assetKeyword": [value: string];
   "update:assetCategory": [value: string];
   "apply-asset": [asset: LowcodeImageAssetResource];
+  "update:videoTargetPropName": [value: string];
+  "update:videoKeyword": [value: string];
+  "update:videoCategory": [value: string];
+  "apply-video": [asset: LowcodeVideoAssetResource];
   "update:productKeyword": [value: string];
   "toggle-product": [productId: string];
   "apply-sample-products": [];
@@ -126,6 +139,66 @@ const emit = defineEmits<{
     </div>
     <div v-if="isAssetSearching" class="mini-empty">素材搜索中</div>
     <div v-else-if="!filteredAssets.length" class="mini-empty">没有匹配素材</div>
+  </div>
+
+  <div v-if="canUseVideoLibrary" class="resource-panel video-resource-panel">
+    <div class="resource-panel-head">
+      <div>
+        <strong>
+          <Video :size="15" />
+          <span>视频素材库</span>
+        </strong>
+        <small>选择视频后写入当前节点</small>
+      </div>
+      <select
+        :value="videoTargetPropName"
+        aria-label="视频写入字段"
+        @change="emit('update:videoTargetPropName', ($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="option in videoPropOptions" :key="option.name" :value="option.name">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+    <div class="resource-filters">
+      <label class="search-field">
+        <Search :size="14" />
+        <input
+          :value="videoKeyword"
+          placeholder="搜索视频素材"
+          @input="emit('update:videoKeyword', ($event.target as HTMLInputElement).value)"
+        />
+      </label>
+      <select
+        :value="videoCategory"
+        aria-label="视频分类"
+        @change="emit('update:videoCategory', ($event.target as HTMLSelectElement).value)"
+      >
+        <option v-for="category in videoCategories" :key="category" :value="category">
+          {{ category }}
+        </option>
+      </select>
+    </div>
+    <div class="asset-library video-asset-library">
+      <button
+        v-for="video in filteredVideos"
+        :key="video.id"
+        type="button"
+        class="asset-card video-asset-card"
+        @click="emit('apply-video', video)"
+      >
+        <img v-if="video.posterUrl" :src="video.posterUrl" alt="" />
+        <span v-else class="video-empty-cover">
+          <Video :size="18" />
+        </span>
+        <span>
+          <strong>{{ video.title }}</strong>
+          <small>{{ video.category }}{{ video.durationText ? ` · ${video.durationText}` : "" }}</small>
+        </span>
+      </button>
+    </div>
+    <div v-if="isVideoSearching" class="mini-empty">视频搜索中</div>
+    <div v-else-if="!filteredVideos.length" class="mini-empty">没有匹配视频</div>
   </div>
 
   <div v-if="isProductMaterialSelected" class="resource-panel">

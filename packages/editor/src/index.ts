@@ -3433,7 +3433,7 @@ export function getLowcodePropGroupKey(
   if (behaviorPropNames.has(propName) || propSchema.type === "boolean" || propSchema.setter === "switch") {
     return "behavior";
   }
-  if (contentPropNames.has(propName) || ["image", "richText", "textarea"].includes(propSchema.setter)) {
+  if (contentPropNames.has(propName) || ["image", "video", "richText", "textarea"].includes(propSchema.setter)) {
     return "content";
   }
   return "advanced";
@@ -3672,6 +3672,26 @@ export function createLowcodePublishChecks(
       }));
   });
 
+  const missingVideoChecks = nodes.flatMap((node) => {
+    const manifest = manifests.get(node.componentName);
+    if (!manifest) return [];
+
+    return Object.entries(manifest.propsSchema)
+      .filter(([, propSchema]) => propSchema.setter === "video")
+      .filter(([propName]) => {
+        const value = node.props[propName];
+        return typeof value !== "string" || value.trim().length === 0;
+      })
+      .map(([propName, propSchema]) => ({
+        id: `video-${node.id}-${propName}`,
+        title: "视频素材",
+        status: "warning" as const,
+        description: `${getLowcodeNodeDisplayName(node, manifest)} 的「${propSchema.label ?? propName}」为空`,
+        nodeId: node.id,
+        nodeTitle: getLowcodeNodeDisplayName(node, manifest),
+      }));
+  });
+
   const emptyProductChecks = nodes.flatMap((node) => {
     if (!productComponentNames.has(node.componentName)) return [];
     if (node.dataBinding?.items) return [];
@@ -3765,6 +3785,12 @@ export function createLowcodePublishChecks(
       title: "图片素材",
       status: "pass" as const,
       description: "图片类字段已配置",
+    }]),
+    ...(missingVideoChecks.length ? missingVideoChecks : [{
+      id: "videos",
+      title: "视频素材",
+      status: "pass" as const,
+      description: "视频类字段已配置",
     }]),
     ...(emptyProductChecks.length ? emptyProductChecks : [{
       id: "products",

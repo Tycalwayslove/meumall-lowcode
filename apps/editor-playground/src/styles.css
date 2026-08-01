@@ -2991,6 +2991,16 @@ button:focus-visible {
   font-size: 11px;
 }
 
+.asset-card .video-empty-cover {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1.35;
+  place-items: center;
+  border-radius: 6px;
+  color: #64748b;
+  background: #e2e8f0;
+}
+
 .resource-hint {
   padding: 8px 9px;
   border: 1px solid #fed7aa;

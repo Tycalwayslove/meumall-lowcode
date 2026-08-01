@@ -927,8 +927,13 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".command-palette-item", "添加物料：基础视频");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeBasicVideo)}`);
   await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-video video') && document.body.innerText.includes('基础视频')");
+  await page.waitForExpression("document.body.innerText.includes('视频素材库') && document.body.innerText.includes('品牌氛围短片')");
+  await page.fillByPlaceholder("搜索视频素材", "权益");
+  await page.waitForExpression("document.body.innerText.includes('权益说明视频')");
+  await page.clickByText(".video-asset-card", "权益说明视频");
+  await page.waitForExpression("document.querySelector('.phone-frame .mlc-basic-video video[poster*=\"1607083206869\"]')");
   await page.clickByText(".toolbar button", "源码");
-  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicVideo\"') && item.value.includes('\"posterUrl\"') && item.value.includes('\"controls\": true'))");
+  await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('\"componentName\": \"BasicVideo\"') && item.value.includes('\"posterUrl\": \"https://images.unsplash.com/photo-1607083206869') && item.value.includes('\"controls\": true'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   log("通过：基础图片、基础标签、基础图文卡片、基础图片轮播和基础视频可从快捷命令添加并在 Vue H5 画布渲染");

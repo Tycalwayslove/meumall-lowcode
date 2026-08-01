@@ -29,6 +29,7 @@ import {
   type LowcodeResourceSearchResult,
   type LowcodeStoreExpertResource,
   type LowcodeTemplateResource,
+  type LowcodeVideoAssetResource,
 } from "@meumall/lowcode-adapters";
 import { createMaterialRegistry } from "@meumall/lowcode-core";
 import {
@@ -287,6 +288,36 @@ const sampleAssets: LowcodeImageAssetResource[] = [
   },
 ];
 
+const sampleVideoAssets: LowcodeVideoAssetResource[] = [
+  {
+    id: "video_flower_brand",
+    title: "品牌氛围短片",
+    category: "品牌视频",
+    url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
+    durationText: "00:05",
+    tags: ["品牌", "首屏", "宣传"],
+  },
+  {
+    id: "video_styling_demo",
+    title: "导购穿搭讲解",
+    category: "导购视频",
+    url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+    durationText: "00:18",
+    tags: ["导购", "穿搭", "活动"],
+  },
+  {
+    id: "video_coupon_scene",
+    title: "权益说明视频",
+    category: "活动视频",
+    url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    posterUrl: "https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?auto=format&fit=crop&w=900&q=80",
+    durationText: "00:12",
+    tags: ["优惠券", "权益", "转化"],
+  },
+];
+
 const sampleProducts: LowcodeProductResource[] = [
   {
     id: "sku_001",
@@ -419,6 +450,7 @@ const materials = registry.list();
 const availableMaterialComponentNames = materials.map((item) => item.manifest.componentName);
 const resourceLibraryClient = createStaticResourceLibraryClient({
   imageAssets: sampleAssets,
+  videoAssets: sampleVideoAssets,
   products: sampleProducts,
   coupons: sampleCoupons,
   storeExperts: sampleStoreExperts,
@@ -503,6 +535,9 @@ const isTemplateSearching = ref(false);
 const assetKeyword = ref("");
 const assetCategory = ref("全部");
 const assetTargetPropName = ref("");
+const videoKeyword = ref("");
+const videoCategory = ref("全部");
+const videoTargetPropName = ref("");
 const productKeyword = ref("");
 const selectedProductIds = ref<string[]>([]);
 const couponKeyword = ref("");
@@ -511,6 +546,7 @@ const storeExpertKeyword = ref("");
 const storeExpertCategory = ref("全部");
 const selectedStoreExpertIds = ref<string[]>([]);
 const filteredAssets = ref<LowcodeImageAssetResource[]>([]);
+const filteredVideos = ref<LowcodeVideoAssetResource[]>([]);
 const filteredProducts = ref<LowcodeProductResource[]>([]);
 const filteredCoupons = ref<LowcodeCouponResource[]>([]);
 const filteredStoreExperts = ref<LowcodeStoreExpertResource[]>([]);
@@ -518,6 +554,7 @@ const resourceProductCatalog = ref<LowcodeProductResource[]>([]);
 const resourceCouponCatalog = ref<LowcodeCouponResource[]>([]);
 const resourceStoreExpertCatalog = ref<LowcodeStoreExpertResource[]>([]);
 const isAssetSearching = ref(false);
+const isVideoSearching = ref(false);
 const isProductSearching = ref(false);
 const isCouponSearching = ref(false);
 const isStoreExpertSearching = ref(false);
@@ -533,6 +570,7 @@ let previewResolutionSeq = 0;
 let runtimeResolutionSeq = 0;
 let templateSearchSeq = 0;
 let assetSearchSeq = 0;
+let videoSearchSeq = 0;
 let productSearchSeq = 0;
 let couponSearchSeq = 0;
 let storeExpertSearchSeq = 0;
@@ -680,6 +718,15 @@ const imagePropOptions = computed(() => {
 });
 const canUseAssetLibrary = computed(() => Boolean(selectedNode.value && imagePropOptions.value.length));
 const assetCategories = computed(() => ["全部", ...Array.from(new Set(sampleAssets.map((asset) => asset.category)))]);
+const videoPropOptions = computed(() => {
+  const manifest = selectedManifest.value;
+  if (!manifest) return [];
+  return Object.entries(manifest.propsSchema)
+    .filter(([, propSchema]) => propSchema.setter === "video")
+    .map(([name, propSchema]) => ({ name, label: propSchema.label }));
+});
+const canUseVideoLibrary = computed(() => Boolean(selectedNode.value && videoPropOptions.value.length));
+const videoCategories = computed(() => ["全部", ...Array.from(new Set(sampleVideoAssets.map((asset) => asset.category)))]);
 const isProductMaterialSelected = computed(() =>
   Boolean(selectedNode.value && ["ProductList", "ProductRankList", "BrandFeatureSection", "FlashSaleList"].includes(selectedNode.value.componentName)),
 );
@@ -1306,6 +1353,20 @@ watch(
 );
 
 watch(
+  videoPropOptions,
+  (options) => {
+    if (!options.length) {
+      videoTargetPropName.value = "";
+      return;
+    }
+    if (!options.some((option) => option.name === videoTargetPropName.value)) {
+      videoTargetPropName.value = options[0]?.name ?? "";
+    }
+  },
+  { immediate: true },
+);
+
+watch(
   () => selectedNode.value?.id,
   () => {
     listAssetTarget.value = undefined;
@@ -1328,6 +1389,14 @@ watch(
   [assetKeyword, assetCategory],
   () => {
     void refreshImageAssets();
+  },
+  { immediate: true },
+);
+
+watch(
+  [videoKeyword, videoCategory],
+  () => {
+    void refreshVideoAssets();
   },
   { immediate: true },
 );
@@ -1626,6 +1695,27 @@ async function refreshImageAssets(): Promise<void> {
     if (seq === assetSearchSeq) filteredAssets.value = [];
   } finally {
     if (seq === assetSearchSeq) isAssetSearching.value = false;
+  }
+}
+
+async function refreshVideoAssets(): Promise<void> {
+  const seq = ++videoSearchSeq;
+  isVideoSearching.value = true;
+  try {
+    if (!resourceLibraryClient.searchVideoAssets) {
+      filteredVideos.value = [];
+      return;
+    }
+    const result = await toResourceSearchResult(resourceLibraryClient.searchVideoAssets({
+      keyword: videoKeyword.value,
+      category: videoCategory.value,
+    }));
+    if (seq !== videoSearchSeq) return;
+    filteredVideos.value = result.items;
+  } catch {
+    if (seq === videoSearchSeq) filteredVideos.value = [];
+  } finally {
+    if (seq === videoSearchSeq) isVideoSearching.value = false;
   }
 }
 
@@ -3187,6 +3277,20 @@ function applyAssetToSelected(asset: LowcodeImageAssetResource): void {
   applyAsset(assetTargetPropName.value, asset.url);
 }
 
+function applyVideoToSelected(asset: LowcodeVideoAssetResource): void {
+  const manifest = selectedManifest.value;
+  if (!videoTargetPropName.value || !manifest) return;
+  const videoPropSchema = manifest.propsSchema[videoTargetPropName.value];
+  if (!videoPropSchema) return;
+  updateProp(videoTargetPropName.value, videoPropSchema, asset.url);
+
+  const posterPropSchema = manifest.propsSchema.posterUrl;
+  if (asset.posterUrl && posterPropSchema) {
+    updateProp("posterUrl", posterPropSchema, asset.posterUrl);
+  }
+  releaseMessage.value = `已应用视频素材：${asset.title}`;
+}
+
 function applyAssetToListTarget(asset: LowcodeImageAssetResource): void {
   const target = listAssetTarget.value;
   if (!target) return;
@@ -4088,6 +4192,9 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
             v-model:asset-target-prop-name="assetTargetPropName"
             v-model:asset-keyword="assetKeyword"
             v-model:asset-category="assetCategory"
+            v-model:video-target-prop-name="videoTargetPropName"
+            v-model:video-keyword="videoKeyword"
+            v-model:video-category="videoCategory"
             v-model:product-keyword="productKeyword"
             v-model:coupon-keyword="couponKeyword"
             v-model:store-expert-keyword="storeExpertKeyword"
@@ -4097,6 +4204,11 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
             :asset-categories="assetCategories"
             :filtered-assets="filteredAssets"
             :is-asset-searching="isAssetSearching"
+            :can-use-video-library="canUseVideoLibrary"
+            :video-prop-options="videoPropOptions"
+            :video-categories="videoCategories"
+            :filtered-videos="filteredVideos"
+            :is-video-searching="isVideoSearching"
             :is-product-material-selected="isProductMaterialSelected"
             :filtered-products="filteredProducts"
             :selected-product-ids="selectedProductIds"
@@ -4117,6 +4229,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
             :is-store-expert-searching="isStoreExpertSearching"
             :has-store-expert-data-binding="Boolean(selectedNode.dataBinding?.items)"
             @apply-asset="applyAssetToSelected"
+            @apply-video="applyVideoToSelected"
             @toggle-product="toggleProductSelection"
             @apply-sample-products="applySampleProducts"
             @apply-products="applySelectedProductsToNode"

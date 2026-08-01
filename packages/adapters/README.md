@@ -129,9 +129,10 @@ Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells shou
 
 ## Resource Library Client
 
-`LowcodeResourceLibraryClient` describes editor-facing resource search for assets, products, coupons, stores, and experts:
+`LowcodeResourceLibraryClient` describes editor-facing resource search for image assets, video assets, products, coupons, stores, and experts:
 
 - `searchImageAssets(query)`
+- `searchVideoAssets(query)`
 - `searchProducts(query)`
 - `searchCoupons(query)`
 - `searchStoreExperts(query)`
@@ -139,12 +140,12 @@ Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells shou
 The first integration stage supports:
 
 - keyword search by id/title/category/tags/description.
-- image asset category filtering.
+- image and video asset category filtering.
 - store/expert type filtering through `category`.
 - tag and id filtering.
 - result limiting.
 
-`createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape for image assets, products, coupons, stores, and experts while keeping UI logic unchanged.
+`createStaticResourceLibraryClient` is the local mock implementation used by the Vue editor playground. Real Java/resource-center integration should provide the same client shape for image assets, video assets, products, coupons, stores, and experts while keeping UI logic unchanged.
 
 ## Template Library Client
 

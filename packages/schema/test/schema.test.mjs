@@ -144,12 +144,19 @@ describe("@meumall/lowcode-schema", () => {
           defaultValue: "#ffffff",
           swatches: ["#ffffff", "#111827", "transparent"],
         },
+        videoUrl: {
+          label: "视频地址",
+          type: "string",
+          setter: "video",
+          defaultValue: "https://example.com/video.mp4",
+        },
       },
-      defaultProps: { title: "限时领券", backgroundColor: "#ffffff" },
+      defaultProps: { title: "限时领券", backgroundColor: "#ffffff", videoUrl: "https://example.com/video.mp4" },
     });
 
     assert.equal(validateLowcodeMaterialManifest(manifest).valid, true);
     assert.deepEqual(manifest.propsSchema.backgroundColor.swatches, ["#ffffff", "#111827", "transparent"]);
+    assert.equal(manifest.propsSchema.videoUrl.setter, "video");
     assert.equal(isSchemaVersionCompatible("1.9.0"), true);
     assert.equal(isSchemaVersionCompatible("2.0.0"), false);
   });

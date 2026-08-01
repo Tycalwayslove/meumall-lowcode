@@ -220,6 +220,18 @@ const manifests = [
     defaultProps: { text: "立即查看" },
     events: [{ name: "click", label: "点击" }],
   }),
+  createMaterialManifest({
+    componentName: "BasicVideo",
+    materialVersion: "1.0.0",
+    title: "基础视频",
+    category: "basic",
+    platforms: ["h5"],
+    propsSchema: {
+      videoUrl: { label: "视频地址", type: "string", setter: "video", defaultValue: "" },
+      posterUrl: { label: "封面图", type: "string", setter: "image", defaultValue: "" },
+    },
+    defaultProps: { videoUrl: "", posterUrl: "" },
+  }),
 ];
 
 function createReadinessSchema() {
@@ -268,6 +280,12 @@ function createReadinessSchema() {
             props: { text: "缺少参数" },
             events: { click: { actionId: "nav_without_url" } },
           }),
+          createLowcodeNode({
+            id: "video_1",
+            componentName: "BasicVideo",
+            materialVersion: "1.0.0",
+            props: { videoUrl: "", posterUrl: "https://example.com/poster.jpg" },
+          }),
         ],
       }),
     ],
@@ -283,8 +301,8 @@ describe("@meumall/lowcode-editor readiness", () => {
     const banner = nodes.find((node) => node.id === "banner_1");
     const button = nodes.find((node) => node.id === "button_missing_param");
 
-    assert.equal(nodes.length, 6);
-    assert.equal(countLowcodeNodes(schema), 6);
+    assert.equal(nodes.length, 7);
+    assert.equal(countLowcodeNodes(schema), 7);
     assert.ok(banner);
     assert.ok(button);
     assert.equal(getLowcodeNodeDisplayName(banner, manifests[0]), "首屏主图");
@@ -307,12 +325,13 @@ describe("@meumall/lowcode-editor readiness", () => {
 
     assert.equal(checks.some((check) => check.id === "schema" && check.status === "error"), true);
     assert.match(descriptions, /首屏主图 的「图片」为空/);
+    assert.match(descriptions, /基础视频 的「视频地址」为空/);
     assert.match(descriptions, /商品列表 没有静态商品，也没有绑定商品数据源/);
     assert.match(descriptions, /broken_products 解析失败：接口 500/);
     assert.match(descriptions, /引用了不存在的动作 missing_action/);
     assert.match(descriptions, /nav_without_url 缺少 跳转 URL/);
     assert.equal(summary.error >= 3, true);
-    assert.equal(summary.warning >= 3, true);
+    assert.equal(summary.warning >= 4, true);
   });
 
   it("creates delivery summary from publish checks", () => {
@@ -597,6 +616,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     ]);
     assert.deepEqual(filterLowcodeMaterialCatalog(entries, { keyword: "1.0.0 h5", category: "basic" }).map((item) => item.manifest.componentName), [
       "ActionButton",
+      "BasicVideo",
     ]);
     assert.deepEqual(pickLowcodeMaterialEntriesByComponentNames(entries, ["ActionButton", "Missing", "ImageBanner"]).map((item) => item.manifest.componentName), [
       "ActionButton",
@@ -1443,6 +1463,7 @@ describe("@meumall/lowcode-editor readiness", () => {
   it("creates reusable property groups and collapsed state", () => {
     const propsSchema = {
       title: { label: "标题", type: "string", setter: "input", defaultValue: "" },
+      videoUrl: { label: "视频地址", type: "string", setter: "video", defaultValue: "" },
       backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
       items: { label: "商品", type: "array", setter: "textarea", defaultValue: [] },
       sticky: { label: "吸顶", type: "boolean", setter: "switch", defaultValue: false },
@@ -1453,6 +1474,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(LOWCODE_EDITOR_PROP_GROUP_META.content.label, "内容配置");
     assert.equal(getLowcodePropGroupKey("title", propsSchema.title), "content");
     assert.equal(getLowcodePropGroupKey("coverImageUrl", { label: "图片", type: "string", setter: "image", defaultValue: "" }), "content");
+    assert.equal(getLowcodePropGroupKey("videoUrl", propsSchema.videoUrl), "content");
     assert.equal(getLowcodePropGroupKey("backgroundColor", propsSchema.backgroundColor), "style");
     assert.equal(getLowcodePropGroupKey("items", propsSchema.items), "data");
     assert.equal(getLowcodePropGroupKey("products", { label: "数据源", type: "string", setter: "dataSourceSelector", defaultValue: "" }), "data");
@@ -1462,7 +1484,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     const groups = createLowcodePropGroups(propsSchema);
     assert.deepEqual(groups.map((group) => group.key), ["content", "style", "data", "behavior", "advanced"]);
     assert.deepEqual(groups.map((group) => group.entries.map((entry) => entry.name)), [
-      ["title"],
+      ["title", "videoUrl"],
       ["backgroundColor"],
       ["items"],
       ["sticky"],
@@ -1496,6 +1518,7 @@ describe("@meumall/lowcode-editor readiness", () => {
       options: [{ label: "实心", value: "solid" }],
     };
     const textareaSchema = { label: "说明", type: "string", setter: "textarea", defaultValue: "" };
+    const videoSchema = { label: "视频地址", type: "string", setter: "video", defaultValue: "" };
     const jsonSchema = { label: "样式", type: "object", setter: "textarea", defaultValue: {} };
     const listSchema = { label: "列表", type: "array", setter: "textarea", defaultValue: [] };
 
@@ -1505,6 +1528,7 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(getLowcodePropEditorControl(switchSchema), "switch");
     assert.equal(getLowcodePropEditorControl(selectSchema), "select");
     assert.equal(getLowcodePropEditorControl(textareaSchema), "textarea");
+    assert.equal(getLowcodePropEditorControl(videoSchema), "text");
     assert.equal(getLowcodePropEditorControl(jsonSchema), "json");
     assert.equal(getLowcodePropEditorControl(listSchema), "list");
     assert.equal(isLowcodeListPropEditor(listSchema), true);

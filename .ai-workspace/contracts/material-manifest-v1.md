@@ -71,6 +71,7 @@ interface LowcodePropSchema {
     | "switch"
     | "select"
     | "image"
+    | "video"
     | "color"
     | "richText"
     | "productSelector"
@@ -151,6 +152,7 @@ interface LowcodeDataSourceSlotManifest {
 - `defaultValue` 应与 `type` 保持一致。
 - 对 `number` 类型，`min`、`max`、`step` 和 `unit` 是可选编辑元数据，用于生成范围、步长和单位提示；这些字段不写入 Page Schema 节点 props。
 - 对 `setter: "color"` 字段，`swatches` 是可选推荐色板，用于生成快捷颜色选择；该字段不限制最终写入值，编辑器必须保留文本输入兜底以支持 `transparent`、`rgba(...)` 等 CSS 颜色字符串。
+- 对 `setter: "video"` 字段，编辑器可提供视频素材选择器并写回视频 URL；不支持该 setter 的旧编辑器必须退化为普通 URL 输入，不改变 Page Schema 节点 props 值类型。
 - 对 `array` 或 `object` 类型，编辑器必须保留 JSON 兜底编辑能力。
 
 ### `defaultProps`

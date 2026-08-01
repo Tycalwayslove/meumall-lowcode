@@ -263,6 +263,16 @@ export interface LowcodeImageAssetResource {
   tags?: string[];
 }
 
+export interface LowcodeVideoAssetResource {
+  id: string;
+  title: string;
+  category: string;
+  url: string;
+  posterUrl?: string;
+  durationText?: string;
+  tags?: string[];
+}
+
 export interface LowcodeProductResource {
   id: string;
   title: string;
@@ -300,6 +310,7 @@ export interface LowcodeStoreExpertResource {
 
 export interface LowcodeResourceLibraryClient {
   searchImageAssets(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeImageAssetResource>>;
+  searchVideoAssets?(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeVideoAssetResource>>;
   searchProducts(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeProductResource>>;
   searchCoupons?(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeCouponResource>>;
   searchStoreExperts?(query?: LowcodeResourceQuery): MaybePromise<LowcodeResourceSearchResult<LowcodeStoreExpertResource>>;
@@ -307,6 +318,7 @@ export interface LowcodeResourceLibraryClient {
 
 export interface CreateStaticResourceLibraryClientInput {
   imageAssets?: LowcodeImageAssetResource[];
+  videoAssets?: LowcodeVideoAssetResource[];
   products?: LowcodeProductResource[];
   coupons?: LowcodeCouponResource[];
   storeExperts?: LowcodeStoreExpertResource[];
@@ -409,6 +421,7 @@ function cloneTemplateResource(template: LowcodeTemplateResource): LowcodeTempla
 
 export function createStaticResourceLibraryClient(input: CreateStaticResourceLibraryClientInput = {}): LowcodeResourceLibraryClient {
   const imageAssets = input.imageAssets ?? [];
+  const videoAssets = input.videoAssets ?? [];
   const products = input.products ?? [];
   const coupons = input.coupons ?? [];
   const storeExperts = input.storeExperts ?? [];
@@ -422,6 +435,20 @@ export function createStaticResourceLibraryClient(input: CreateStaticResourceLib
         if (!resourceMatchesIds(asset.id, query.ids)) return false;
         if (!resourceMatchesTags(asset.tags, query.tags)) return false;
         return resourceMatchesKeyword([asset.id, asset.title, asset.category, ...(asset.tags ?? [])], keyword);
+      });
+      return {
+        items: applyResourceLimit(items, query.limit),
+        total: items.length,
+      };
+    },
+    searchVideoAssets(query = {}) {
+      const keyword = normalizeSearchText(query.keyword);
+      const category = query.category && query.category !== "全部" ? query.category : undefined;
+      const items = videoAssets.filter((asset) => {
+        if (category && asset.category !== category) return false;
+        if (!resourceMatchesIds(asset.id, query.ids)) return false;
+        if (!resourceMatchesTags(asset.tags, query.tags)) return false;
+        return resourceMatchesKeyword([asset.id, asset.title, asset.category, asset.durationText, ...(asset.tags ?? [])], keyword);
       });
       return {
         items: applyResourceLimit(items, query.limit),

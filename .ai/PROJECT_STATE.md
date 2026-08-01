@@ -96,14 +96,14 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - H5 runtime 集成契约：`.ai-workspace/contracts/h5-runtime-integration-v1.md` 已定义 `hybird-meumall` npm 依赖、推荐路由、schema 获取优先级、H5 runtime playground HTTP client 环境开关、数据源、action、降级、监控和 smoke check。
 - Runtime schema loader：`@meumall/lowcode-adapters` 提供 `loadLowcodeRuntimeSchema`，统一支持 encoded schema、releaseId、pageId 和 fallback schema；React H5 runtime playground 已切换为同一 loader，并支持通过 `VITE_LOWCODE_CONFIG_PLATFORM_BASE_URL` 使用 `createHttpConfigPlatformClient` 查询 Java 配置平台，`VITE_LOWCODE_CONFIG_PLATFORM_AUTHORIZATION` 可透传 authorization header。
 - Renderer fallback：React/Vue H5 renderer 已统一未知物料和组件异常局部兜底 DOM 标记；未知物料输出 `mlc-runtime-missing`、`data-lowcode-node-id`、`data-lowcode-missing`，组件异常输出 `mlc-runtime-error`、`data-lowcode-node-id`、`data-lowcode-error`，并支持宿主通过 `onRenderError` 记录异常。
-- Resource Library Client：`@meumall/lowcode-adapters` 提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，覆盖图片素材、商品、优惠券、门店/达人资源查询，为后续替换真实资源中心 HTTP client 预留边界。
-- Vue3 编辑器资源选择器：右侧属性区已提供 mock 素材库、商品选择器、优惠券选择器和门店/达人选择器，支持搜索、分类、多选、静态 props 写回，并支持商品恢复绑定 `products` 数据源、门店/达人恢复绑定 `stores` 数据源；资源选择器主面板已通过 `EditorResourcePanels.vue` 独立组件渲染，真实 Resource Library Client 查询、选择状态维护、props/dataBinding 写回、权限和审计仍由 playground 或未来管理台 shell 持有。
+- Resource Library Client：`@meumall/lowcode-adapters` 提供 `LowcodeResourceLibraryClient` 和 `createStaticResourceLibraryClient`，覆盖图片素材、视频素材、商品、优惠券、门店/达人资源查询，为后续替换真实资源中心 HTTP client 预留边界。
+- Vue3 编辑器资源选择器：右侧属性区已提供 mock 图片素材库、视频素材库、商品选择器、优惠券选择器和门店/达人选择器，支持搜索、分类、多选、静态 props 写回，并支持视频素材同步写回 `videoUrl`/`posterUrl`、商品恢复绑定 `products` 数据源、门店/达人恢复绑定 `stores` 数据源；资源选择器主面板已通过 `EditorResourcePanels.vue` 独立组件渲染，真实 Resource Library Client 查询、选择状态维护、props/dataBinding 写回、权限和审计仍由 playground 或未来管理台 shell 持有。
 - Vue3 编辑器画布拖拽：从物料区拖到画布节点时可显示前/后插入线，拖到 `SectionContainer` 中间区域可显示容器投放高亮，拖到空白区域可追加到页面末尾。
 - Vue3 编辑器已有节点拖拽：设计模式下画布节点可直接拖动，支持移动到目标节点前/后、移动进 `SectionContainer`、移动到根节点末尾，并规避拖到自己或自己后代。
 - 基础容器布局能力：React/Vue H5 `SectionContainer` 已支持 `marginY`、`gap`、`borderColor`、`borderWidth`、`shadow`、`titleColor`、`subtitleColor` 和 `emptyText`，并保持 Page Schema v1 节点结构和编辑器容器判断逻辑不变；默认模板、编辑器内置 runtime、React H5 runtime 示例和 browser smoke check 已接入。
 - 基础图文卡片物料：React/Vue H5 物料包已新增 `BasicCard`，支持图片、角标、标题、说明、行动按钮、边框和阴影配置，并复用内部 `MlcImage`、`MlcTag`、`MlcText`、`MlcButton` primitives；默认模板、快捷命令添加链路、React H5 runtime 示例和 browser smoke check 已接入。
 - 基础图片轮播物料：React/Vue H5 物料包已新增 `BasicCarousel`，支持静态轮播项、图片、标题、说明、角标、圆角、比例、自动播放、指示器和 `onItemClick` 安全 action，并复用内部 `MlcImage`、`MlcTag`、`MlcText` primitives；默认模板、快捷命令添加链路、React H5 runtime 示例、editor 列表项字段模型、browser smoke check 和 pending minor changeset 已接入。
-- 基础视频物料：React/Vue H5 物料包已新增 `BasicVideo`，支持视频地址、封面、标题、说明、角标、圆角、比例、播放控件、静音、循环、自动播放、行内播放和 `onPlay` 安全 action，并复用内部 `MlcImage`、`MlcTag`、`MlcText` primitives；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。
+- 基础视频物料：React/Vue H5 物料包已新增 `BasicVideo`，支持视频地址、封面、标题、说明、角标、圆角、比例、播放控件、静音、循环、自动播放、行内播放和 `onPlay` 安全 action，并复用内部 `MlcImage`、`MlcTag`、`MlcText` primitives；`videoUrl` 已使用 manifest `video` setter，Vue3 编辑器可从视频素材库选择视频并同步写回封面；默认模板、快捷命令添加链路、React H5 runtime 示例、browser smoke check 和 pending minor changeset 已接入。
 - Vue3 编辑器触屏拖拽：物料面板、结构树节点和 H5 画布节点已支持触屏/手写笔 Pointer Events 拖拽，复用现有投放提示、容器投放、节点移动和点击抑制逻辑。
 - Vue3 编辑器画布吸附线：拖到节点前/后时显示跨画布横向吸附线和目标中心纵向线，拖入容器时显示容器中心横向/纵向辅助线。
 - Vue3 编辑器同父级多选拖拽：结构树支持勾选、Meta/Ctrl/Shift 点击多选；同父级选区可从结构树或 H5 画布成组拖到目标前/后、容器末尾或页面末尾。
@@ -178,7 +178,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 - 当前 React H5 handoff 使用 URL schema 参数，React H5 runtime playground 已通过本地 client 跑通 pageId/releaseId 加载并展示 fallback 诊断和 empty demo 空态，也已支持通过 env 切换真实 HTTP config platform client；正式预览仍需 Java 配置平台确认 previewId/pageId 协议、鉴权和响应包装。
 - Adapters 已具备 HTTP action handler 基础能力，React H5 runtime playground 已支持可选 HTTP `tracking.click` 演示链路；真实跳转桥、领券接口、埋点平台、权限、风控、登录态刷新、幂等和业务错误展示仍待后续接入。
 - 高阶活动物料仍使用静态倒计时、静态规则、静态楼层配置、静态券包、静态门店/达人推荐、静态直播入口、静态商品榜单、静态品牌专题、静态底部转化条和 mock 商品数据，尚未对接真实活动、库存、价格、排行口径、品牌中心、规则中心、楼层配置中心、优惠券中心、门店中心、达人中心和直播中心。
-- 素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，本地自定义模板仍是 localStorage 原型；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
+- 图片/视频素材库、商品选择器、优惠券选择器、门店/达人选择器和模板列表已通过对应 client 解耦，本地自定义模板仍是 localStorage 原型；列表项编辑器仍使用通用字段模板，尚未接入真实素材中心、视频中心、商品中心、优惠券中心、门店/达人中心、模板市场、权限、分页、上下架和审核。
 - 尚未在 `hybird-meumall` 真实业务仓库创建低代码路由并接入 npm 包。
 - 尚未配置 npm registry/token；当前已具备本地 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler` 已补 pending minor changeset，但真实发布仍需确认 registry、access、token、linked group 版本结果和 release/tag 策略。
 - 已建立浏览器级 smoke check、带 PNG 健康断言的可视化截图 smoke check、renderer fallback 单测和架构边界 check，并覆盖基础挂载、模板应用、模式切换、编辑器首页、published H5 入口、preview H5 入口、empty/broken runtime 降级、包结构、依赖方向和物料 manifest 对齐；但更完整的组件级 DOM 测试、拖拽/属性编辑/发布等浏览器交互 E2E，完整循环依赖分析，以及带基线图 diff 的 visual regression 尚未建立。
@@ -346,7 +346,8 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 | 2026-08-01 | `d7058f8` | 增强 visual smoke 截图健康断言。 |
 | 2026-08-01 | `41cd7e0` | 新增本地编辑器与 H5 runtime 联合启动器。 |
 | 2026-08-01 | `ceca96c` | 新增基础图片轮播通用物料。 |
-| 2026-08-01 | 本提交 | 新增基础视频通用物料。 |
+| 2026-08-01 | `62824c3` | 新增基础视频通用物料。 |
+| 2026-08-01 | 本提交 | 新增编辑器视频素材选择器。 |
 
 ## 默认验证命令
 

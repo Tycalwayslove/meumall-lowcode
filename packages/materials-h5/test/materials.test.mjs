@@ -201,6 +201,16 @@ describe("MeuMall H5 material manifests", () => {
     }
   });
 
+  it("keeps generic material video props using video asset picker setters", () => {
+    const reactProp = findMaterial(h5Materials, "BasicVideo")?.manifest.propsSchema.videoUrl;
+    const vueProp = findMaterial(h5VueMaterials, "BasicVideo")?.manifest.propsSchema.videoUrl;
+
+    assert.equal(reactProp?.setter, "video");
+    assert.equal(vueProp?.setter, "video");
+    assert.equal(reactProp?.type, "string");
+    assert.equal(vueProp?.type, "string");
+  });
+
   it("keeps runtime primitives out of material registries", () => {
     const primitiveNames = [
       "MlcButton",
@@ -306,7 +316,7 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.category, "basic");
     assert.equal(material.manifest.defaultProps.controls, true);
     assert.equal(material.manifest.defaultProps.muted, true);
-    assert.equal(material.manifest.propsSchema.videoUrl.setter, "input");
+    assert.equal(material.manifest.propsSchema.videoUrl.setter, "video");
     assert.equal(material.manifest.propsSchema.posterUrl.setter, "image");
     assert.equal(material.manifest.propsSchema.autoPlay.setter, "switch");
     assert.equal(material.manifest.events?.[0]?.name, "onPlay");

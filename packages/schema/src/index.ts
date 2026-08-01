@@ -136,6 +136,7 @@ export type LowcodePropSetter =
   | "switch"
   | "select"
   | "image"
+  | "video"
   | "color"
   | "richText"
   | "productSelector"
