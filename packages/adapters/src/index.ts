@@ -245,6 +245,39 @@ export interface RuntimeSchemaLoadResult {
   error?: string;
 }
 
+export type LowcodeRuntimeHealthLevel = "loading" | "healthy" | "warning" | "error";
+export type LowcodeRuntimeHealthItemStatus = "loading" | "pass" | "warning" | "error";
+
+export interface LowcodeRuntimeHealthItem {
+  id: string;
+  title: string;
+  status: LowcodeRuntimeHealthItemStatus;
+  description: string;
+}
+
+export interface LowcodeRuntimeHealthSummary {
+  level: LowcodeRuntimeHealthLevel;
+  title: string;
+  description: string;
+  statusText: string;
+  items: LowcodeRuntimeHealthItem[];
+  priorityItems: LowcodeRuntimeHealthItem[];
+}
+
+export interface CreateLowcodeRuntimeHealthSummaryInput {
+  loading?: boolean;
+  schema?: LowcodePageSchema;
+  source?: RuntimeSchemaSourceType;
+  sourceError?: string;
+  validationValid?: boolean;
+  validationErrors?: readonly string[];
+  nodeCount?: number;
+  dataResolving?: boolean;
+  dataSourceRecords?: readonly DataSourceResolutionRecord[];
+  actionLogCount?: number;
+  renderErrors?: readonly string[];
+}
+
 export interface LowcodeResourceQuery {
   keyword?: string;
   category?: string;
@@ -1000,6 +1033,149 @@ function fallbackRuntimeSchema(fallbackSchema: LowcodePageSchema | undefined, er
     schema: fallbackSchema,
     source: "fallback",
     error: toError(error).message,
+  };
+}
+
+function formatRuntimeHealthSource(source: RuntimeSchemaSourceType | undefined): string {
+  const label: Record<RuntimeSchemaSourceType, string> = {
+    encoded: "schema URL",
+    preview: "previewToken",
+    release: "releaseId",
+    published: "pageId",
+    fallback: "fallback",
+  };
+  return source ? label[source] : "未识别";
+}
+
+function countRuntimeHealthItems(items: readonly LowcodeRuntimeHealthItem[], status: LowcodeRuntimeHealthItemStatus): number {
+  return items.filter((item) => item.status === status).length;
+}
+
+export function createLowcodeRuntimeHealthSummary(input: CreateLowcodeRuntimeHealthSummaryInput): LowcodeRuntimeHealthSummary {
+  const dataSourceRecords = input.dataSourceRecords ?? [];
+  const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
+  const dataSourceSkipped = dataSourceRecords.filter((record) => record.status === "skipped");
+  const renderErrors = input.renderErrors ?? [];
+  const validationErrors = input.validationErrors ?? [];
+  const hasValidationError = input.validationValid === false || validationErrors.length > 0;
+
+  const items: LowcodeRuntimeHealthItem[] = [
+    {
+      id: "source",
+      title: "Schema 来源",
+      status: input.loading ? "loading" : input.sourceError || input.source === "fallback" ? "warning" : "pass",
+      description: input.loading
+        ? "正在解析运行入口。"
+        : input.sourceError
+          ? `已启用 fallback：${input.sourceError}`
+          : `当前来源为 ${formatRuntimeHealthSource(input.source)}。`,
+    },
+    {
+      id: "schema",
+      title: "Schema 有效性",
+      status: input.loading ? "loading" : !input.schema || hasValidationError ? "error" : "pass",
+      description: input.loading
+        ? "等待 schema 加载完成。"
+        : hasValidationError
+          ? validationErrors[0] ?? "Schema 校验未通过。"
+          : !input.schema
+            ? "未获得可渲染 schema。"
+            : `Schema valid，页面 ID：${input.schema.pageId}。`,
+    },
+    {
+      id: "nodes",
+      title: "页面节点",
+      status: input.loading ? "loading" : input.nodeCount === 0 ? "warning" : "pass",
+      description: input.loading
+        ? "等待页面节点统计。"
+        : input.nodeCount === 0
+          ? "页面暂无节点，H5 runtime 会进入安全空态。"
+          : `当前可渲染节点数：${input.nodeCount ?? 0}。`,
+    },
+    {
+      id: "dataSources",
+      title: "数据源",
+      status: input.dataResolving ? "loading" : dataSourceErrors.length || dataSourceSkipped.length ? "warning" : "pass",
+      description: input.dataResolving
+        ? "正在解析运行态数据源。"
+        : dataSourceErrors.length
+          ? `${dataSourceErrors.length} 个数据源解析失败，页面会保留已解析数据和兜底内容。`
+          : dataSourceSkipped.length
+            ? `${dataSourceSkipped.length} 个数据源未绑定，已跳过解析。`
+            : dataSourceRecords.length
+              ? `${dataSourceRecords.length} 个数据源已完成解析。`
+              : "当前页面未配置运行态数据源。",
+    },
+    {
+      id: "actions",
+      title: "动作执行",
+      status: "pass",
+      description: input.actionLogCount
+        ? `已记录 ${input.actionLogCount} 条动作日志。`
+        : "动作执行器已就绪，暂无动作日志。",
+    },
+    {
+      id: "render",
+      title: "渲染兜底",
+      status: renderErrors.length ? "warning" : "pass",
+      description: renderErrors.length
+        ? `${renderErrors.length} 个节点触发渲染兜底，页面不会白屏。`
+        : "暂未发现物料渲染异常。",
+    },
+  ];
+
+  const errorCount = countRuntimeHealthItems(items, "error");
+  const warningCount = countRuntimeHealthItems(items, "warning");
+  const loadingCount = countRuntimeHealthItems(items, "loading");
+  const level: LowcodeRuntimeHealthLevel = errorCount
+    ? "error"
+    : warningCount
+      ? "warning"
+      : loadingCount
+        ? "loading"
+        : "healthy";
+  const priorityItems = items.filter((item) => item.status === "error" || item.status === "warning");
+
+  if (level === "loading") {
+    return {
+      level,
+      title: "H5 runtime 加载中",
+      description: "正在解析 schema、数据源和运行态状态。",
+      statusText: `${loadingCount} 项加载中`,
+      items,
+      priorityItems,
+    };
+  }
+
+  if (level === "error") {
+    return {
+      level,
+      title: "H5 runtime 需要处理",
+      description: "存在阻塞渲染或 schema 校验的问题，需要先处理错误项。",
+      statusText: `${errorCount} error · ${warningCount} warning`,
+      items,
+      priorityItems,
+    };
+  }
+
+  if (level === "warning") {
+    return {
+      level,
+      title: "H5 runtime 已进入提醒状态",
+      description: "页面仍可渲染，但存在 fallback、空态、数据源或物料兜底提醒。",
+      statusText: `${warningCount} warning`,
+      items,
+      priorityItems,
+    };
+  }
+
+  return {
+    level,
+    title: "H5 runtime 正常",
+    description: "Schema、页面节点、数据源、动作和渲染兜底链路均处于可运行状态。",
+    statusText: "all passed",
+    items,
+    priorityItems,
   };
 }
 

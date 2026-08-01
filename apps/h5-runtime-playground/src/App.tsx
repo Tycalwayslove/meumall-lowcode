@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  createLowcodeRuntimeHealthSummary,
   createSafeActionExecutor,
   loadLowcodeRuntimeSchema,
   resolveLowcodeDataSources,
@@ -1495,6 +1496,35 @@ export function App() {
   const dataSourceErrors = dataSourceRecords.filter((record) => record.status === "error");
   const dataSourceResolvedCount = dataSourceRecords.filter((record) => record.status === "resolved").length;
   const runtimeSourceNote = createRuntimeSourceNote(runtimeInput, runtimeSchema, schemaLoading);
+  const runtimeHealthSummary = useMemo(
+    () =>
+      createLowcodeRuntimeHealthSummary({
+        loading: schemaLoading,
+        schema: runtimeSchema.schema,
+        source: runtimeSchema.source,
+        sourceError: runtimeSchema.error,
+        validationValid: validation.valid,
+        validationErrors: validation.errors,
+        nodeCount,
+        dataResolving,
+        dataSourceRecords,
+        actionLogCount: actionLogs.length,
+        renderErrors,
+      }),
+    [
+      actionLogs.length,
+      dataResolving,
+      dataSourceRecords,
+      nodeCount,
+      renderErrors,
+      runtimeSchema.error,
+      runtimeSchema.schema,
+      runtimeSchema.source,
+      schemaLoading,
+      validation.errors,
+      validation.valid,
+    ],
+  );
   const runtimeEntryLinks = [
     { label: "Sample", href: "/", desc: "无参数 fallback 演示" },
     { label: "PageId", href: "/?pageId=summer-campaign-demo", desc: "模拟生产 pageId 入口" },
@@ -1574,6 +1604,26 @@ export function App() {
         <div className="runtime-status-head">
           <strong>React H5 Runtime</strong>
           <span>{schemaLoading ? "loading" : runtimeSchema.source}</span>
+        </div>
+        <div
+          className="runtime-health-summary"
+          data-runtime-health={runtimeHealthSummary.level}
+          data-testid="runtime-health-summary"
+        >
+          <div className="runtime-health-title">
+            <strong>{runtimeHealthSummary.title}</strong>
+            <span>{runtimeHealthSummary.statusText}</span>
+          </div>
+          <p>{runtimeHealthSummary.description}</p>
+          <div className="runtime-health-items" aria-label="运行态健康检查">
+            {runtimeHealthSummary.items.map((item) => (
+              <div key={item.id} className={`runtime-health-item is-${item.status}`}>
+                <span>{item.title}</span>
+                <strong>{item.status}</strong>
+                <small>{item.description}</small>
+              </div>
+            ))}
+          </div>
         </div>
         <p className="runtime-source-note">{runtimeSourceNote}</p>
         <dl>

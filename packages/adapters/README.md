@@ -18,6 +18,7 @@ Utilities:
 - `encodePageSchemaToUrlParam`
 - `decodePageSchemaFromUrlParam`
 - `loadLowcodeRuntimeSchema`
+- `createLowcodeRuntimeHealthSummary`
 
 ## Data Source Resolver
 
@@ -142,6 +143,27 @@ Adapters intentionally do not import `@meumall/lowcode-editor`. Host shells shou
 5. `fallbackSchema`
 
 The result contains `schema`, `source`, and optional `error`. `source = "preview"` means the schema was loaded through `getPreviewByToken`. Production H5 routes should use `previewToken` only for preview validation; normal activity pages should still load the active published schema by `pageId`.
+
+## Runtime Health Summary
+
+`createLowcodeRuntimeHealthSummary(input)` converts H5 runtime signals into a framework-agnostic diagnostic model. Hosts can pass the output directly to React, Vue, mini-program, logs, or monitoring adapters.
+
+Recommended inputs:
+
+- `schema`, `source`, and `sourceError` from `loadLowcodeRuntimeSchema`.
+- `validationValid` and `validationErrors` from `validateLowcodePageSchema`.
+- `nodeCount` from the host runtime tree walker.
+- `dataSourceRecords` from `resolveLowcodeDataSources`.
+- `actionLogCount` and `renderErrors` from the host shell.
+
+The summary returns:
+
+- `level`: `loading`, `healthy`, `warning`, or `error`.
+- `title`, `description`, and `statusText` for operator-facing diagnostics.
+- `items`: source, schema, node, data-source, action, and render checks.
+- `priorityItems`: checks that need attention, ordered by the fixed runtime checklist.
+
+Fallback sources, empty pages, skipped/failed data sources, and material render fallbacks are treated as `warning`; invalid or missing schema is treated as `error`.
 
 ## Resource Library Client
 

@@ -1611,6 +1611,7 @@ async function main() {
       { label: "React H5 标识存在", expression: "document.body.innerText.includes('React H5')" },
       { label: "React H5 诊断面板展示请求入口", expression: "document.body.innerText.includes('请求入口') && document.body.innerText.includes('sample fallback')" },
       { label: "React H5 诊断面板展示实际来源", expression: "document.body.innerText.includes('实际来源') && document.body.innerText.includes('fallback schema')" },
+      { label: "React H5 健康摘要展示 fallback warning", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'warning' && el.innerText.includes('H5 runtime 已进入提醒状态')); })()" },
       { label: "React H5 诊断面板展示本地入口", expression: "document.body.innerText.includes('本地入口') && document.body.innerText.includes('Empty')" },
       { label: "React H5 增强活动头图已渲染", expression: "document.querySelector('[data-lowcode-page] .mlc-activity-hero img') && document.body.innerText.includes('夏日好物节')" },
       { label: "React H5 直播入口已渲染", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
@@ -1654,6 +1655,7 @@ async function main() {
       { label: "React H5 HTTP 数据源模式展示", expression: "document.body.innerText.includes('数据源模式') && document.body.innerText.includes('http')" },
       { label: "React H5 HTTP 动作模式展示", expression: "document.body.innerText.includes('动作模式') && document.body.innerText.includes('http')" },
       { label: "React H5 HTTP 配置平台命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('smoke-http-page')" },
+      { label: "React H5 HTTP 健康摘要为 healthy", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'healthy' && el.innerText.includes('H5 runtime 正常')); })()" },
       { label: "React H5 HTTP 配置平台页面已渲染", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('HTTP 配置平台页面')" },
       { label: "React H5 HTTP action 按钮已渲染", expression: "Array.from(document.querySelectorAll('.phone-frame button')).some((item) => item.innerText.includes('HTTP 动作按钮'))" },
       { label: "React H5 HTTP 数据源商品已渲染", expression: "document.body.innerText.includes('HTTP 数据源手提包') && document.body.innerText.includes('HTTP 数据源凉鞋')" },
@@ -1701,6 +1703,7 @@ async function main() {
     await assertPage(page, h5RuntimePageIdUrl, [
       { label: "React H5 pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('pageId')" },
       { label: "React H5 pageId 命中 published schema", expression: "document.body.innerText.includes('published schema') && document.body.innerText.includes('summer-campaign-demo')" },
+      { label: "React H5 pageId 健康摘要为 healthy", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'healthy' && el.innerText.includes('H5 runtime 正常')); })()" },
       { label: "React H5 pageId 页面非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
       { label: "React H5 pageId 渲染增强公告条", expression: "document.querySelector('[data-lowcode-page] .mlc-notice-bar') && document.body.innerText.includes('活动期间下单即享限时补贴')" },
       { label: "React H5 pageId 渲染基础图片轮播", expression: "document.querySelector('.mlc-basic-carousel') && document.body.innerText.includes('夏日新品首发')" },
@@ -1722,12 +1725,14 @@ async function main() {
     await assertPage(page, h5RuntimeMissingPageUrl, [
       { label: "React H5 missing pageId 入口可打开", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('missing-page')" },
       { label: "React H5 missing pageId 展示 fallback 原因", expression: "document.body.innerText.includes('Lowcode published schema not found: missing-page') && document.body.innerText.includes('已启用 fallback')" },
+      { label: "React H5 missing pageId 健康摘要为 warning", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'warning' && el.innerText.includes('Schema 来源')); })()" },
       { label: "React H5 missing pageId fallback 后页面仍非空", expression: "document.querySelector('[data-lowcode-page]') && document.body.innerText.includes('夏日好物节')" },
     ]);
 
     await assertPage(page, h5RuntimeEmptyUrl, [
       { label: "React H5 empty demo shell 已挂载", expression: "document.querySelector('.runtime-shell') && document.body.innerText.includes('empty demo')" },
       { label: "React H5 empty demo 展示安全空态", expression: "document.body.innerText.includes('空页面演示') && document.body.innerText.includes('页面暂无内容，H5 runtime 已进入安全空态')" },
+      { label: "React H5 empty demo 健康摘要展示空态 warning", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'warning' && el.innerText.includes('页面暂无节点')); })()" },
       { label: "React H5 empty demo 节点数为 0", expression: "document.body.innerText.includes('节点数') && document.body.innerText.includes('0')" },
     ]);
 
@@ -1737,6 +1742,7 @@ async function main() {
       { label: "React H5 broken demo 展示未知物料兜底", expression: "document.querySelector('[data-lowcode-missing=\"MissingMaterialBlock\"]') && document.body.innerText.includes('缺少物料：MissingMaterialBlock')" },
       { label: "React H5 broken demo 展示异常物料兜底", expression: "document.querySelector('[data-lowcode-error=\"node_broken_material\"]') && document.body.innerText.includes('组件渲染失败：BrokenBlock')" },
       { label: "React H5 broken demo 记录渲染错误", expression: "document.body.innerText.includes('node_broken_material: BrokenBlock render failed')" },
+      { label: "React H5 broken demo 健康摘要展示渲染 warning", expression: "(() => { const el = document.querySelector('[data-testid=\"runtime-health-summary\"]'); return Boolean(el && el.getAttribute('data-runtime-health') === 'warning' && el.innerText.includes('渲染兜底')); })()" },
     ]);
   } finally {
     await page.close();

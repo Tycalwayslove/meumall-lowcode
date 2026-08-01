@@ -2,7 +2,7 @@
 
 ## P0
 
-- 确认 npm registry、scope、access、token、linked group 版本结果和 release/tag 策略；当前已具备 11 个可发布包的 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-editor` demo checklist API、`@meumall/lowcode-editor` publish risk summary API、`@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已有 pending changeset，但尚未执行真实 npm 发布。
+- 确认 npm registry、scope、access、token、linked group 版本结果和 release/tag 策略；当前已具备 11 个可发布包的 `pnpm pack:dry-run` 包内容预检，且 `createHttpActionHandler`、`@meumall/lowcode-adapters` previewToken runtime loader、`@meumall/lowcode-adapters` runtime health summary API、`@meumall/lowcode-editor` demo checklist API、`@meumall/lowcode-editor` publish risk summary API、`@meumall/lowcode-design-tokens`、`@meumall/lowcode-primitives-react-h5` 与 `@meumall/lowcode-primitives-vue-h5` 已有 pending changeset，但尚未执行真实 npm 发布。
 
 ## P1
 

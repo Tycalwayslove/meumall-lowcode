@@ -7,6 +7,7 @@ import {
   createHttpActionHandler,
   createHttpDataSourceHandler,
   createHttpConfigPlatformClient,
+  createLowcodeRuntimeHealthSummary,
   createStaticResourceLibraryClient,
   createStaticTemplateLibraryClient,
   createSafeActionExecutor,
@@ -873,5 +874,94 @@ describe("@meumall/lowcode-adapters", () => {
     assert.equal(missingClientResult.source, "fallback");
     assert.equal(missingClientResult.schema.pageId, "fallback_page");
     assert.match(missingClientResult.error, /Config platform client is required/);
+  });
+
+  it("creates healthy runtime health summaries", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "runtime_health_page",
+      title: "健康页面",
+      nodes: [
+        {
+          id: "node_title",
+          componentName: "BasicText",
+          props: { text: "运行正常" },
+        },
+      ],
+    });
+
+    const summary = createLowcodeRuntimeHealthSummary({
+      schema,
+      source: "published",
+      validationValid: true,
+      nodeCount: 1,
+      dataSourceRecords: [{ id: "ds_products", type: "product.byIds", bindTo: "products", status: "resolved" }],
+      actionLogCount: 0,
+    });
+
+    assert.equal(summary.level, "healthy");
+    assert.equal(summary.title, "H5 runtime 正常");
+    assert.equal(summary.priorityItems.length, 0);
+    assert.equal(summary.items.find((item) => item.id === "source").status, "pass");
+  });
+
+  it("creates warning runtime health summaries for fallback, empty nodes and data source errors", () => {
+    const schema = createLowcodePageSchema({
+      pageId: "fallback_runtime_page",
+      title: "兜底页面",
+      nodes: [],
+    });
+
+    const summary = createLowcodeRuntimeHealthSummary({
+      schema,
+      source: "fallback",
+      sourceError: "Lowcode published schema not found: missing_page",
+      validationValid: true,
+      nodeCount: 0,
+      dataSourceRecords: [
+        {
+          id: "ds_error",
+          type: "product.byIds",
+          bindTo: "products",
+          status: "error",
+          error: "接口异常",
+        },
+      ],
+      renderErrors: ["node_bad: render failed"],
+    });
+
+    assert.equal(summary.level, "warning");
+    assert.match(summary.description, /页面仍可渲染/);
+    assert.deepEqual(
+      summary.priorityItems.map((item) => item.id),
+      ["source", "nodes", "dataSources", "render"],
+    );
+    assert.match(summary.items.find((item) => item.id === "source").description, /已启用 fallback/);
+    assert.match(summary.items.find((item) => item.id === "nodes").description, /安全空态/);
+  });
+
+  it("creates error runtime health summaries for invalid schema", () => {
+    const summary = createLowcodeRuntimeHealthSummary({
+      source: "encoded",
+      validationValid: false,
+      validationErrors: ["schemaVersion is required"],
+      nodeCount: 2,
+    });
+
+    assert.equal(summary.level, "error");
+    assert.equal(summary.title, "H5 runtime 需要处理");
+    assert.equal(summary.priorityItems[0].id, "schema");
+    assert.match(summary.priorityItems[0].description, /schemaVersion is required/);
+  });
+
+  it("creates loading runtime health summaries", () => {
+    const summary = createLowcodeRuntimeHealthSummary({
+      loading: true,
+      dataResolving: true,
+    });
+
+    assert.equal(summary.level, "loading");
+    assert.equal(summary.title, "H5 runtime 加载中");
+    assert.equal(summary.items.find((item) => item.id === "source").status, "loading");
+    assert.equal(summary.items.find((item) => item.id === "dataSources").status, "loading");
   });
 });
