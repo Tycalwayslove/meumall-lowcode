@@ -1892,28 +1892,35 @@ export const SectionContainer = defineComponent({
       const title = text(runtimeProps.title);
       const subtitle = text(runtimeProps.subtitle);
       const children = slots.default?.();
+      const marginY = number(runtimeProps.marginY, 10);
+      const gap = number(runtimeProps.gap, 10);
+      const borderWidth = number(runtimeProps.borderWidth, 0);
+      const radius = number(runtimeProps.radius, 10);
+      const emptyText = text(runtimeProps.emptyText, "向容器中添加物料");
 
       return h(
         "section",
         {
           class: "mlc-material mlc-section-container",
           style: {
-            margin: "10px 0",
+            margin: `${marginY}px 0`,
             padding: `${number(runtimeProps.padding, 12)}px`,
             background: text(runtimeProps.backgroundColor, "#ffffff"),
-            borderRadius: `${number(runtimeProps.radius, 10)}px`,
+            border: borderWidth > 0 ? `${borderWidth}px solid ${text(runtimeProps.borderColor, "#e5e7eb")}` : undefined,
+            borderRadius: `${radius}px`,
+            boxShadow: boolean(runtimeProps.shadow) ? "0 10px 28px rgba(15, 23, 42, 0.08)" : undefined,
           },
         },
         [
           title
-            ? h("h2", { style: { margin: "0 0 6px", color: "#111827", fontSize: "18px" } }, title)
+            ? h("h2", { style: { margin: "0 0 6px", color: text(runtimeProps.titleColor, "#111827"), fontSize: "18px" } }, title)
             : null,
           subtitle
-            ? h("p", { style: { margin: "0 0 12px", color: "#64748b", fontSize: "13px", lineHeight: 1.6 } }, subtitle)
+            ? h("p", { style: { margin: "0 0 12px", color: text(runtimeProps.subtitleColor, "#64748b"), fontSize: "13px", lineHeight: 1.6 } }, subtitle)
             : null,
           children?.length
-            ? h("div", { class: "mlc-section-container__body" }, children)
-            : h("div", { class: "mlc-section-container__empty" }, "向容器中添加物料"),
+            ? h("div", { class: "mlc-section-container__body", style: { display: "grid", gap: `${gap}px` } }, children)
+            : h("div", { class: "mlc-section-container__empty" }, emptyText),
         ],
       );
     };
@@ -2379,14 +2386,30 @@ export const h5VueMaterials: LowcodeMaterial<VueH5MaterialComponent>[] = [
         subtitle: "可在容器中继续添加 Banner、商品或优惠券。",
         backgroundColor: "#ffffff",
         padding: 12,
+        marginY: 10,
+        gap: 10,
         radius: 10,
+        borderColor: "#e5e7eb",
+        borderWidth: 0,
+        shadow: false,
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        emptyText: "向容器中添加物料",
       },
       propsSchema: {
         title: { label: "标题", type: "string", setter: "input", defaultValue: "精选专区" },
         subtitle: { label: "说明", type: "string", setter: "textarea", defaultValue: "可在容器中继续添加 Banner、商品或优惠券。" },
         backgroundColor: { label: "背景色", type: "string", setter: "color", defaultValue: "#ffffff" },
         padding: { label: "内边距", type: "number", setter: "number", defaultValue: 12 },
+        marginY: { label: "上下外边距", type: "number", setter: "number", defaultValue: 10 },
+        gap: { label: "子节点间距", type: "number", setter: "number", defaultValue: 10 },
         radius: { label: "圆角", type: "number", setter: "number", defaultValue: 10 },
+        borderColor: { label: "边框色", type: "string", setter: "color", defaultValue: "#e5e7eb" },
+        borderWidth: { label: "边框宽度", type: "number", setter: "number", defaultValue: 0 },
+        shadow: { label: "阴影", type: "boolean", setter: "switch", defaultValue: false },
+        titleColor: { label: "标题色", type: "string", setter: "color", defaultValue: "#111827" },
+        subtitleColor: { label: "说明色", type: "string", setter: "color", defaultValue: "#64748b" },
+        emptyText: { label: "空态文案", type: "string", setter: "input", defaultValue: "向容器中添加物料" },
       },
     }),
   },

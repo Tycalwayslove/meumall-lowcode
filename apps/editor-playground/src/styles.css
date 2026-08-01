@@ -2144,11 +2144,6 @@ button:focus-visible {
   line-height: 1.4;
 }
 
-.mlc-section-container__body > .mlc-runtime-node + .mlc-runtime-node,
-.mlc-section-container__body > .mlc-material + .mlc-material {
-  margin-top: 10px;
-}
-
 .mlc-section-container__empty {
   padding: 14px;
   border: 1px dashed #cbd5e1;

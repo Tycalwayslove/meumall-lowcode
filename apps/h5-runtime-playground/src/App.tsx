@@ -560,8 +560,16 @@ const sampleSchema = createLowcodePageSchema({
         title: "精选专区",
         subtitle: "容器内可以嵌套 Banner、商品列表和富文本。",
         backgroundColor: "#ffffff",
-        padding: 12,
-        radius: 10,
+        padding: 14,
+        marginY: 12,
+        gap: 10,
+        radius: 12,
+        borderColor: "#d1d5db",
+        borderWidth: 1,
+        shadow: true,
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        emptyText: "向精选专区中添加物料",
       },
       children: [
         {

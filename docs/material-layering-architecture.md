@@ -125,6 +125,8 @@ Generic Materials 是可被运营直接拖拽的通用物料。它们声明 mani
 - `TabsBlock`
 - 后续可增加 `VideoBlock`、`FormSubmitButton`，复杂表单字段应优先复用 `BasicInput` 再组合。
 
+`SectionContainer` 是当前编辑器唯一默认识别的嵌套容器物料，负责运营分组、基础留白、子节点间距、边框和阴影等单列布局能力。新增多列或栅格前，应优先确认是否能通过增强 `SectionContainer` 满足。
+
 通用物料允许处理：
 
 - 可配置文案、图片、链接、样式。

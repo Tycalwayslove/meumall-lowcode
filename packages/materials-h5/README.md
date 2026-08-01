@@ -90,4 +90,6 @@ Current materials:
 - `FlashSaleList`
 - `RichTextBlock`
 
+`SectionContainer` is the current nested layout entry for editor canvas operations. It supports configurable spacing, border, shadow, title colors, and empty-state copy while keeping the Page Schema node shape unchanged.
+
 These materials share the same `componentName` and core manifest fields with `@meumall/lowcode-materials-vue-h5` so the editor preview schema can be rendered by the H5 runtime package.

@@ -20,6 +20,7 @@ import {
   LiveEntry,
   NavGrid,
   ProductRankList,
+  SectionContainer,
   SpacerBlock,
   StickyActionBar,
   StoreExpertSection,
@@ -194,6 +195,53 @@ describe("MeuMall H5 material manifests", () => {
     assert.equal(material.manifest.defaultProps.title, "今日主推");
     assert.equal(material.manifest.propsSchema.markerText.setter, "input");
     assert.equal(material.manifest.propsSchema.subtitle.setter, "textarea");
+  });
+
+  it("registers the enhanced section container material", () => {
+    const material = h5Materials.find((item) => item.manifest.componentName === "SectionContainer");
+
+    assert.ok(material);
+    assert.equal(material.manifest.title, "容器区块");
+    assert.equal(material.manifest.category, "layout");
+    assert.equal(material.manifest.defaultProps.gap, 10);
+    assert.equal(material.manifest.defaultProps.shadow, false);
+    assert.equal(material.manifest.propsSchema.gap.setter, "number");
+    assert.equal(material.manifest.propsSchema.borderColor.setter, "color");
+    assert.equal(material.manifest.propsSchema.shadow.setter, "switch");
+    assert.equal(material.manifest.propsSchema.emptyText.setter, "input");
+  });
+
+  it("renders section container layout props in React H5", () => {
+    const element = SectionContainer({
+      node: { id: "container_1", componentName: "SectionContainer", props: {} },
+      props: {
+        title: "增强容器",
+        subtitle: "用于组合基础物料",
+        marginY: 12,
+        padding: 14,
+        gap: 10,
+        radius: 12,
+        borderColor: "#d1d5db",
+        borderWidth: 1,
+        shadow: true,
+        titleColor: "#111827",
+        subtitleColor: "#64748b",
+        emptyText: "添加内容",
+      },
+      children: "子节点",
+    });
+
+    assert.equal(element.props.className, "mlc-material mlc-section-container");
+    assert.equal(element.props.style.margin, "12px 0");
+    assert.equal(element.props.style.padding, 14);
+    assert.equal(element.props.style.border, "1px solid #d1d5db");
+    assert.equal(element.props.style.borderRadius, 12);
+    assert.equal(element.props.style.boxShadow.includes("rgba"), true);
+
+    const body = element.props.children.find((child) => child?.props?.className === "mlc-section-container__body");
+    assert.ok(body);
+    assert.equal(body.props.style.gap, 10);
+    assert.equal(body.props.children, "子节点");
   });
 
   it("registers the basic button material", () => {
