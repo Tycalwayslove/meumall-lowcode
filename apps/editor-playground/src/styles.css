@@ -2235,6 +2235,89 @@ button:focus-visible {
   height: 38px;
 }
 
+.color-field {
+  display: grid;
+  gap: 8px;
+}
+
+.color-input-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.color-input-row input[type="color"] {
+  width: 42px;
+  height: 38px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.color-input-row input[type="text"] {
+  min-width: 0;
+}
+
+.color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-swatches button {
+  display: inline-flex;
+  max-width: 116px;
+  height: 28px;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--mlc-editor-border, #e2e8f0);
+  border-radius: var(--mlc-editor-radius-sm, 8px);
+  padding: 3px 7px 3px 4px;
+  color: var(--mlc-editor-text-muted, #64748b);
+  background: var(--mlc-editor-surface, #ffffff);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.color-swatches button:hover,
+.color-swatches button.active {
+  border-color: var(--mlc-editor-primary, #2563eb);
+  color: var(--mlc-editor-primary, #2563eb);
+  background: var(--mlc-editor-primary-soft, #eff6ff);
+}
+
+.color-swatches i {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 999px;
+}
+
+.color-swatches i.transparent {
+  background:
+    linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+    linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+    linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+  background-color: #ffffff;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+}
+
+.color-swatches span {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .number-field {
   display: grid;
   grid-template-columns: 34px minmax(0, 1fr) 34px auto;

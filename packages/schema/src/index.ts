@@ -154,6 +154,7 @@ export interface LowcodePropSchema {
   max?: number;
   step?: number;
   unit?: string;
+  swatches?: string[];
   description?: string;
 }
 

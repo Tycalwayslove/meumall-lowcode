@@ -1152,6 +1152,21 @@ export const LOWCODE_EDITOR_PAGE_BACKGROUND_SWATCHES = [
   "#eff6ff",
   "#111827",
 ] as const;
+export const LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES = [
+  "#111827",
+  "#ffffff",
+  "#64748b",
+  "#e5e7eb",
+  "#f3f4f6",
+  "#0f766e",
+  "#2563eb",
+  "#dc2626",
+  "#ea580c",
+  "#fef2f2",
+  "#fff7ed",
+  "#f0fdfa",
+  "transparent",
+] as const;
 export const LOWCODE_EDITOR_DEFAULT_DATA_SOURCE_TYPE_OPTIONS: readonly LowcodeEditorDataSourceTypeOption[] = [
   {
     type: "product.byActivity",
@@ -3547,6 +3562,45 @@ export function toLowcodePropInputBoolean(value: unknown): boolean {
   return Boolean(value);
 }
 
+function normalizeLowcodeColorText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : value == null ? "" : String(value).trim();
+}
+
+export function isLowcodeHexColor(value: unknown): value is string {
+  return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value.trim());
+}
+
+export function normalizeLowcodeColorInputValue(propSchema: LowcodePropSchema, value: unknown): string {
+  const nextValue = normalizeLowcodeColorText(value);
+  if (nextValue) return nextValue;
+  return typeof propSchema.defaultValue === "string" ? propSchema.defaultValue : "transparent";
+}
+
+export function createLowcodeColorSwatches(propSchema: LowcodePropSchema, fallbackSwatches = LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES): string[] {
+  const swatches = [
+    ...(propSchema.swatches ?? []),
+    ...(typeof propSchema.defaultValue === "string" ? [propSchema.defaultValue] : []),
+    ...fallbackSwatches,
+  ];
+  const normalized = new Map<string, string>();
+  for (const swatch of swatches) {
+    const color = normalizeLowcodeColorText(swatch);
+    if (!color) continue;
+    const key = color.toLowerCase();
+    if (!normalized.has(key)) normalized.set(key, color);
+  }
+  return [...normalized.values()];
+}
+
+export function getLowcodeNativeColorInputValue(propSchema: LowcodePropSchema, value: unknown): string {
+  const currentValue = normalizeLowcodeColorText(value);
+  if (isLowcodeHexColor(currentValue)) return currentValue.toLowerCase();
+  const defaultValue = typeof propSchema.defaultValue === "string" ? propSchema.defaultValue : "";
+  if (isLowcodeHexColor(defaultValue)) return defaultValue.toLowerCase();
+  const swatch = createLowcodeColorSwatches(propSchema).find((item) => isLowcodeHexColor(item));
+  return swatch?.toLowerCase() ?? "#111827";
+}
+
 export function normalizeLowcodePropInputValue(propSchema: LowcodePropSchema, value: unknown): JsonValue {
   if (propSchema.type === "number") {
     const fallback = typeof propSchema.defaultValue === "number" ? propSchema.defaultValue : 0;
@@ -3566,6 +3620,9 @@ export function normalizeLowcodePropInputValue(propSchema: LowcodePropSchema, va
     } catch {
       return value;
     }
+  }
+  if (propSchema.setter === "color") {
+    return normalizeLowcodeColorInputValue(propSchema, value);
   }
   return String(value);
 }

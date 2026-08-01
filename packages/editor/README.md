@@ -136,6 +136,11 @@ This package starts as headless editor state and schema operations. A full UI sh
 - `createLowcodeDefaultListItem`
 - `toLowcodePropInputText`
 - `toLowcodePropInputBoolean`
+- `normalizeLowcodeColorInputValue`
+- `isLowcodeHexColor`
+- `createLowcodeColorSwatches`
+- `getLowcodeNativeColorInputValue`
+- `LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES`
 - `normalizeLowcodePropInputValue`
 - `LOWCODE_EDITOR_PAGE_TYPE_OPTIONS`
 - `LOWCODE_EDITOR_PAGE_STATUS_OPTIONS`
@@ -230,6 +235,8 @@ The prop editor model helpers keep inspector field behavior reusable across the 
 `createLowcodeListEditorFields(propName, options)` derives stable list-item field metadata from the prop name, component name, and current list items. `createLowcodeDefaultListItem(propName, options)` creates common starter rows for rule, coupon, navigation, image card, floor anchor, and store/expert list props.
 
 `toLowcodePropInputText`, `toLowcodePropInputBoolean`, and `normalizeLowcodePropInputValue` provide the shared display and write-back conversion used by property panels. Number values are normalized as real numbers and clamped to optional manifest `min`/`max` bounds when present.
+
+`normalizeLowcodeColorInputValue`, `isLowcodeHexColor`, `createLowcodeColorSwatches`, `getLowcodeNativeColorInputValue`, and `LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES` provide the shared color field model. Shells can combine native color inputs with text fallback and manifest `swatches` without losing CSS values such as `transparent` or `rgba(...)`.
 
 These helpers do not render controls, open resource pickers, read DOM, save schema, or call Java APIs. Host shells remain responsible for Vue/React components, layout, validation feedback, resource libraries, permissions, audit, and persistence.
 

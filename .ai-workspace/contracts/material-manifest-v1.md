@@ -84,6 +84,7 @@ interface LowcodePropSchema {
   max?: number;
   step?: number;
   unit?: string;
+  swatches?: string[];
   description?: string;
 }
 ```
@@ -149,6 +150,7 @@ interface LowcodeDataSourceSlotManifest {
 - `setter` 决定编辑器推荐控件。
 - `defaultValue` 应与 `type` 保持一致。
 - 对 `number` 类型，`min`、`max`、`step` 和 `unit` 是可选编辑元数据，用于生成范围、步长和单位提示；这些字段不写入 Page Schema 节点 props。
+- 对 `setter: "color"` 字段，`swatches` 是可选推荐色板，用于生成快捷颜色选择；该字段不限制最终写入值，编辑器必须保留文本输入兜底以支持 `transparent`、`rgba(...)` 等 CSS 颜色字符串。
 - 对 `array` 或 `object` 类型，编辑器必须保留 JSON 兜底编辑能力。
 
 ### `defaultProps`
@@ -219,6 +221,7 @@ interface LowcodeValidationResult {
 - `switch` 或 `boolean` 字段必须写入真实 boolean。
 - `select` 字段应按 `options` 渲染选择控件，写回 `options[].value`；历史 schema 中的未知值不得导致属性面板崩溃，运行时仍按物料 fallback 处理。
 - `number` 字段应按 `min/max/step/unit` 渲染范围、步长和单位提示，并在写回时保持真实 number；超出范围的编辑值应夹取到 manifest 声明范围内。
+- `color` 字段应按 `swatches` 渲染快捷色板，同时提供原生颜色选择和文本输入；原生颜色选择只能处理 `#rrggbb` 时，文本输入仍必须保留作为 CSS 颜色兜底。
 - `array` 和 `object` 字段必须保留 JSON 兜底编辑。
 - `events` 用于展示动作绑定。
 - `dataSourceSlots` 用于限制数据源绑定入口。

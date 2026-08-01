@@ -210,7 +210,7 @@ Vue3 editor playground 是后续迁入 Java 管理台的参考实现。组件化
 
 职责：
 
-- 展示右侧属性区的属性分组、基础字段控件、manifest `select/options` 下拉选择、manifest `min/max/step/unit` 数值步进控件、数组列表编辑器、列表项图片素材选择面板和事件绑定列表。
+- 展示右侧属性区的属性分组、基础字段控件、manifest `select/options` 下拉选择、manifest `min/max/step/unit` 数值步进控件、manifest `swatches` 颜色色板控件、数组列表编辑器、列表项图片素材选择面板和事件绑定列表。
 - 接收 `propGroups`、`selectedProps`、`selectedComponentName`、`collapsedGroups`、列表项拖拽状态、列表项素材目标、素材筛选状态、素材列表和事件绑定展示模型。
 - 通过 emits 抛出分组折叠、属性更新、列表项增删改移、列表项拖拽、列表项素材选择、素材筛选、商品快捷操作和事件绑定操作。
 - 复用 prop groups、prop editor model 和 event binding API 产出的展示模型，以及现有 `.property-*`、`.list-*`、`.resource-*` 和 `.event-binding-list` 样式，保持当前视觉与 smoke check DOM 语义。

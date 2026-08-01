@@ -137,11 +137,19 @@ describe("@meumall/lowcode-schema", () => {
           setter: "input",
           defaultValue: "限时领券",
         },
+        backgroundColor: {
+          label: "背景色",
+          type: "string",
+          setter: "color",
+          defaultValue: "#ffffff",
+          swatches: ["#ffffff", "#111827", "transparent"],
+        },
       },
-      defaultProps: { title: "限时领券" },
+      defaultProps: { title: "限时领券", backgroundColor: "#ffffff" },
     });
 
     assert.equal(validateLowcodeMaterialManifest(manifest).valid, true);
+    assert.deepEqual(manifest.propsSchema.backgroundColor.swatches, ["#ffffff", "#111827", "transparent"]);
     assert.equal(isSchemaVersionCompatible("1.9.0"), true);
     assert.equal(isSchemaVersionCompatible("2.0.0"), false);
   });

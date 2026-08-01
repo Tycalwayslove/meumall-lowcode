@@ -51,6 +51,10 @@ function numberMeta(propSchema) {
   };
 }
 
+function swatches(propSchema) {
+  return propSchema?.swatches ?? [];
+}
+
 function elementTypeNames(element, names = new Set()) {
   if (!element || typeof element !== "object") return names;
 
@@ -138,6 +142,32 @@ describe("MeuMall H5 material manifests", () => {
       assert.equal(vueProp?.setter, "number", `${componentName}.${propName} should use number in Vue manifest`);
       assert.deepEqual(numberMeta(reactProp), meta);
       assert.deepEqual(numberMeta(vueProp), meta);
+    }
+  });
+
+  it("keeps generic material color swatches aligned", () => {
+    const colorProps = [
+      ["SectionContainer", "backgroundColor"],
+      ["BasicButton", "backgroundColor"],
+      ["BasicButton", "wrapperBackgroundColor"],
+      ["BasicInput", "borderColor"],
+      ["BasicText", "backgroundColor"],
+      ["DividerBlock", "color"],
+      ["BasicTag", "backgroundColor"],
+      ["BasicCard", "accentColor"],
+      ["SectionTitle", "accentColor"],
+      ["ImageCardGrid", "cardBackgroundColor"],
+    ];
+
+    for (const [componentName, propName] of colorProps) {
+      const reactProp = findMaterial(h5Materials, componentName)?.manifest.propsSchema[propName];
+      const vueProp = findMaterial(h5VueMaterials, componentName)?.manifest.propsSchema[propName];
+
+      assert.equal(reactProp?.setter, "color", `${componentName}.${propName} should use color in React manifest`);
+      assert.equal(vueProp?.setter, "color", `${componentName}.${propName} should use color in Vue manifest`);
+      assert.deepEqual(swatches(reactProp), swatches(vueProp));
+      assert.equal(swatches(reactProp).includes("#111827"), true);
+      assert.equal(swatches(reactProp).includes("transparent"), true);
     }
   });
 

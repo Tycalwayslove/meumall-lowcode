@@ -2,10 +2,13 @@
 import { ChevronDown, GripVertical, Image, PanelRight, Search } from "@lucide/vue";
 import type { LowcodeImageAssetResource } from "@meumall/lowcode-adapters";
 import {
+  createLowcodeColorSwatches,
   createLowcodeListEditorFields,
+  getLowcodeNativeColorInputValue,
   getLowcodePropEditorControl,
   isLowcodeListImageField,
   isLowcodeListPropEditor,
+  normalizeLowcodeColorInputValue,
   toLowcodePropInputBoolean,
   toLowcodePropInputText,
   type LowcodeEditorEventBindingItem,
@@ -116,6 +119,30 @@ function findOptionValue(propSchema: LowcodePropSchema, value: string): JsonValu
 
 function asBoolean(value: unknown): boolean {
   return toLowcodePropInputBoolean(value);
+}
+
+function colorInputValue(propSchema: LowcodePropSchema, value: JsonValue | undefined): string {
+  return getLowcodeNativeColorInputValue(propSchema, value);
+}
+
+function colorTextValue(propSchema: LowcodePropSchema, value: JsonValue | undefined): string {
+  return normalizeLowcodeColorInputValue(propSchema, value);
+}
+
+function colorSwatches(propSchema: LowcodePropSchema): string[] {
+  return createLowcodeColorSwatches(propSchema);
+}
+
+function isColorSwatchActive(propSchema: LowcodePropSchema, value: JsonValue | undefined, swatch: string): boolean {
+  return colorTextValue(propSchema, value).toLowerCase() === swatch.toLowerCase();
+}
+
+function colorSwatchStyle(swatch: string): Record<string, string> {
+  return swatch.toLowerCase() === "transparent" ? {} : { background: swatch };
+}
+
+function colorSwatchClass(swatch: string): Record<string, boolean> {
+  return { transparent: swatch.toLowerCase() === "transparent" };
 }
 
 function numberStep(propSchema: LowcodePropSchema): number {
@@ -385,12 +412,39 @@ function canUseProductQuickActions(propName: string): boolean {
             </span>
             <em>{{ asBoolean(selectedProps[entry.name]) ? "开启" : "关闭" }}</em>
           </div>
-          <input
+          <div
             v-else-if="entry.schema.setter === 'color'"
-            type="color"
-            :value="asText(selectedProps[entry.name]) || '#111827'"
-            @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
-          />
+            class="color-field"
+          >
+            <div class="color-input-row">
+              <input
+                type="color"
+                :aria-label="`${entry.schema.label}颜色选择`"
+                :value="colorInputValue(entry.schema, selectedProps[entry.name])"
+                @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
+              />
+              <input
+                type="text"
+                :value="colorTextValue(entry.schema, selectedProps[entry.name])"
+                placeholder="#111827 / transparent / rgba(...)"
+                @input="emit('update-prop', entry.name, entry.schema, ($event.target as HTMLInputElement).value)"
+              />
+            </div>
+            <div class="color-swatches" :aria-label="`${entry.schema.label}快捷色板`">
+              <button
+                v-for="swatch in colorSwatches(entry.schema)"
+                :key="`${entry.name}-${swatch}`"
+                type="button"
+                :class="{ active: isColorSwatchActive(entry.schema, selectedProps[entry.name], swatch) }"
+                :title="swatch"
+                :aria-label="`选择${entry.schema.label}${swatch}`"
+                @click="emit('update-prop', entry.name, entry.schema, swatch)"
+              >
+                <i :class="colorSwatchClass(swatch)" :style="colorSwatchStyle(swatch)" />
+                <span>{{ swatch }}</span>
+              </button>
+            </div>
+          </div>
           <div
             v-else-if="entry.schema.type === 'number'"
             class="number-field"

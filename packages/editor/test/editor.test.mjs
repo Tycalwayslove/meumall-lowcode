@@ -34,6 +34,7 @@ import {
   createLowcodeEditorApprovalState,
   createLowcodeEditorPermissionState,
   createLowcodeActionOptions,
+  createLowcodeColorSwatches,
   createLowcodeEventBindingItems,
   createLowcodeListEditorFields,
   createLowcodeMaterialCatalogItem,
@@ -89,6 +90,7 @@ import {
   formatLowcodeTemplateVersion,
   getLowcodeEditorViewportPreset,
   getLowcodeEditorDraftStatusTone,
+  getLowcodeNativeColorInputValue,
   getLowcodeNodeDisplayName,
   getLowcodePropEditorControl,
   getLowcodeSelectedGroupNodeIdsForDrag,
@@ -96,6 +98,7 @@ import {
   getLowcodeEditorActionDisabledReason,
   getLowcodePropGroupKey,
   hasLowcodeSameParentSelection,
+  isLowcodeHexColor,
   isLowcodeInvalidNodeDropTarget,
   isLowcodeListImageField,
   isLowcodeEditorActionAllowed,
@@ -116,9 +119,11 @@ import {
   LOWCODE_EDITOR_MUTATING_PERMISSION_ACTIONS,
   LOWCODE_EDITOR_PERMISSION_ACTIONS,
   LOWCODE_EDITOR_COMMON_LIST_FIELDS,
+  LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES,
   LOWCODE_EDITOR_PROP_GROUP_META,
   LOWCODE_EDITOR_PROP_GROUP_ORDER,
   LOWCODE_EDITOR_RECENT_MATERIAL_DEFAULT_LIMIT,
+  normalizeLowcodeColorInputValue,
   normalizeLowcodeMaterialComponentNames,
   normalizeLowcodePropInputValue,
   normalizeLowcodePageMaxWidth,
@@ -1542,6 +1547,18 @@ describe("@meumall/lowcode-editor readiness", () => {
     assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "-1"), 0);
     assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "80"), 48);
     assert.equal(normalizeLowcodePropInputValue(constrainedNumberSchema, "abc"), 8);
+    assert.equal(normalizeLowcodePropInputValue(colorSchema, "  #2563eb  "), "#2563eb");
+    assert.equal(normalizeLowcodePropInputValue(colorSchema, ""), "#111827");
+    assert.equal(normalizeLowcodeColorInputValue({ ...colorSchema, defaultValue: "transparent" }, ""), "transparent");
+    assert.equal(isLowcodeHexColor("#2563EB"), true);
+    assert.equal(isLowcodeHexColor("rgba(15, 118, 110, 0.1)"), false);
+    assert.equal(getLowcodeNativeColorInputValue(colorSchema, "rgba(15, 118, 110, 0.1)"), "#111827");
+    assert.equal(getLowcodeNativeColorInputValue({ ...colorSchema, defaultValue: "transparent", swatches: ["#0f766e"] }, "transparent"), "#0f766e");
+    assert.deepEqual(
+      createLowcodeColorSwatches({ ...colorSchema, swatches: ["#2563eb", "#2563EB", "transparent"] }).slice(0, 4),
+      ["#2563eb", "transparent", "#111827", "#ffffff"],
+    );
+    assert.equal(LOWCODE_EDITOR_DEFAULT_COLOR_SWATCHES.includes("transparent"), true);
     assert.equal(normalizeLowcodePropInputValue(switchSchema, "false"), false);
     assert.deepEqual(normalizeLowcodePropInputValue(listSchema, "[{\"id\":\"item_1\"}]"), [{ id: "item_1" }]);
     assert.equal(normalizeLowcodePropInputValue(jsonSchema, "{bad json"), "{bad json");
