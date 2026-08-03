@@ -860,20 +860,29 @@ async function assertReactRuntimeBasicFormSubmitValues(page) {
 
 async function assertEditorViewportSwitch(page) {
   log("检查 Vue3 编辑器 H5 画布视口预设");
-  await page.waitForExpression("Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '紧凑屏 360px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '标准屏 390px') && Array.from(document.querySelectorAll('.viewport-switch button')).some((item) => item.title === '大屏 430px')");
+  await page.waitForExpression("document.querySelector('.workbench-tabs button.active')?.innerText.includes('物料库')");
+  await page.waitForExpression("document.querySelector('.right-workbench-tabs button.active')?.innerText.includes('属性')");
+  await page.waitForExpression("document.querySelector('.canvas-outline-float') && document.querySelector('.canvas-outline-toggle')?.innerText.includes('结构')");
+  await page.waitForExpression("(() => { const options = Array.from(document.querySelectorAll('.viewport-select option')).map((item) => item.textContent || ''); return options.some((item) => item.includes('紧凑屏') && item.includes('360')) && options.some((item) => item.includes('标准屏') && item.includes('390')) && options.some((item) => item.includes('大屏') && item.includes('430')) && options.some((item) => item.includes('Pixel 7') && item.includes('412x915')) && options.some((item) => item.includes('iPad Air') && item.includes('820x1180')); })()");
   await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '390px'");
   await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('标准屏 390')");
-  await page.clickByText(".viewport-switch button", "360");
+  await page.evaluate("(() => { const select = document.querySelector('.viewport-select select'); select.value = 'h5-compact'; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()");
   await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '360px'");
   await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('紧凑屏 360')");
-  await page.clickByText(".viewport-switch button", "430");
+  await page.evaluate("(() => { const select = document.querySelector('.viewport-select select'); select.value = 'ipad-air'; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()");
+  await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '820px'");
+  await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).height === '1180px'");
+  await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('iPad Air 820x1180')");
+  await page.clickFirst(".canvas-reset-button");
+  await page.evaluate("(() => { const select = document.querySelector('.viewport-select select'); select.value = 'h5-large'; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()");
   await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '430px'");
   await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('大屏 430')");
-  log("通过：Vue3 编辑器 H5 画布视口预设可切换并同步到手机框");
+  log("通过：Vue3 编辑器 H5 画布设备预设可切换，结构树已移入画布浮层");
 }
 
 async function assertEditorWorkflow(page) {
   log("检查 H5 预览入口");
+  await page.clickByText(".right-workbench-tabs button", "发布");
   await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
   await page.waitForExpression("document.body.innerText.includes('当前草稿 React H5')");
   await page.waitForExpression("document.body.innerText.includes('页面草稿/最新版本 H5')");
@@ -898,6 +907,7 @@ async function assertEditorWorkflow(page) {
   log("通过：交付清单展示页面摘要、交付步骤、H5 入口状态，并可复制/导出 Schema");
 
   log("检查页面设置面板");
+  await page.clickByText(".right-workbench-tabs button", "页面");
   await page.fillFieldByLabel("标题", "夏日好物节-页面设置");
   await page.fillFieldByLabel("描述", "页面设置 smoke 验证");
   await page.selectFieldByLabel("页面类型", "promotion");
@@ -1403,17 +1413,21 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
   log("通过：节点菜单、删除、复制、粘贴、撤销和重做快捷键可用");
 
+  await page.clickByText(".right-workbench-tabs button", "页面");
   await page.fillFieldByLabel("版本备注", "Smoke 设计验收版");
   await page.evaluate("document.activeElement?.blur()");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "保存草稿");
   await page.clickByText(".command-palette-item", "保存草稿");
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
+  await page.clickByText(".right-workbench-tabs button", "发布");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('Smoke 设计验收版'))");
   log("通过：快捷命令可保存草稿");
 
   log("检查本地版本差异详情");
+  await page.clickByText(".right-workbench-tabs button", "页面");
   await page.fillFieldByLabel("标题", "版本差异 Smoke 当前草稿");
+  await page.clickByText(".right-workbench-tabs button", "发布");
   await page.fillByPlaceholder("筛选版本、类型或备注", "Smoke 设计验收版");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).length === 1 && document.body.innerText.includes('Smoke 设计验收版')");
   await page.clickByText(".release-actions button", "对比");
@@ -1435,6 +1449,7 @@ async function assertEditorWorkflow(page) {
   log("通过：本地版本对比展示字段差异和 schema 片段详情");
 
   log("检查本地自定义模板");
+  await page.clickByText(".workbench-tabs button", "模板");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "保存为模板");
   await page.waitForExpression("document.body.innerText.includes('保存为本地模板')");
@@ -1776,7 +1791,7 @@ async function main() {
       { label: "编辑器审批状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('无需审批')" },
       { label: "编辑器顶部发布检查状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"publish-check\"]')?.textContent?.includes('发布检查')" },
       { label: "编辑器宿主顶部扩展位存在", expression: "document.querySelector('[data-testid=\"host-toolbar-status\"]')?.textContent?.includes('审计已启用') && document.querySelector('[data-testid=\"host-audit-button\"]')?.textContent?.includes('审计日志')" },
-      { label: "编辑器实操清单存在", expression: "document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('实操清单') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('页面有内容') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('H5 预览入口') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.innerText.includes('React H5 渲染可验证')" },
+      { label: "编辑器实操清单存在", expression: "document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('实操清单') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('页面有内容') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('H5 预览入口') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('React H5 渲染可验证')" },
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },
@@ -1821,7 +1836,7 @@ async function main() {
       { label: "物料分类说明存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-category-summary\"]'); return Boolean(summary && summary.innerText.includes('全部物料') && summary.innerText.includes('全部可拖拽物料') && summary.innerText.includes('全部')); })()" },
       { label: "物料架构分层存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-architecture-summary\"]'); return Boolean(summary && summary.innerText.includes('物料分层') && summary.innerText.includes('通用物料') && summary.innerText.includes('业务物料')); })()" },
       { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
-      { label: "发布风险摘要存在", expression: "document.querySelector('.publish-risk-summary') && (document.body.innerText.includes('发布检查已通过') || document.body.innerText.includes('可以生成预览，仍有提醒') || document.body.innerText.includes('发布前需要处理阻塞项'))" },
+      { label: "发布风险摘要存在", expression: "(() => { const summary = document.querySelector('.publish-risk-summary'); const text = summary?.textContent || ''; return Boolean(summary && (text.includes('发布检查已通过') || text.includes('可以生成预览，仍有提醒') || text.includes('发布前需要处理阻塞项'))); })()" },
       { label: "编辑器发布面板宿主扩展位存在", expression: "document.querySelector('[data-testid=\"host-delivery-policy\"]') && document.querySelector('[data-testid=\"host-approval-policy\"]') && document.querySelector('[data-testid=\"host-publish-check-policy\"]') && document.querySelector('[data-testid=\"host-release-policy-button\"]')" },
       { label: "默认大促模板包含增强活动头图", expression: "document.querySelector('.phone-frame .mlc-activity-hero img') && document.body.innerText.includes('夏日好物节')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },

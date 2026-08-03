@@ -262,7 +262,16 @@ const isRuntimeMode = runtimeQuery.get("runtime") === "1";
 const collaborationDemoMode = runtimeQuery.get("collaboration");
 const approvalDemoMode = runtimeQuery.get("approval");
 const collaborationDemoExpiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
-const h5ViewportPresets = LOWCODE_H5_VIEWPORT_PRESETS;
+const h5ViewportPresets: readonly LowcodeEditorViewportPreset[] = [
+  ...LOWCODE_H5_VIEWPORT_PRESETS,
+  { id: "iphone-se", platform: "h5", title: "iPhone SE", description: "4.7 英寸小屏 iPhone", width: 375, height: 667, scale: 1 },
+  { id: "iphone-14", platform: "h5", title: "iPhone 14", description: "主流 iPhone", width: 390, height: 844, scale: 1 },
+  { id: "pixel-7", platform: "h5", title: "Pixel 7", description: "主流 Android", width: 412, height: 915, scale: 1 },
+  { id: "iphone-plus", platform: "h5", title: "iPhone Plus", description: "大屏 iPhone", width: 414, height: 896, scale: 1 },
+  { id: "ipad-mini", platform: "h5", title: "iPad Mini", description: "小尺寸平板", width: 768, height: 1024, scale: 0.86 },
+  { id: "ipad-air", platform: "h5", title: "iPad Air", description: "常见 iPad", width: 820, height: 1180, scale: 0.78 },
+  { id: "ipad-pro", platform: "h5", title: "iPad Pro", description: "大尺寸平板", width: 1024, height: 1366, scale: 0.68 },
+];
 const defaultH5ViewportPreset = getLowcodeEditorViewportPreset("h5-standard") ?? h5ViewportPresets[1];
 const pageTypeOptions = LOWCODE_EDITOR_PAGE_TYPE_OPTIONS;
 const pageStatusOptions = LOWCODE_EDITOR_PAGE_STATUS_OPTIONS;
@@ -539,6 +548,9 @@ const selectedReleaseId = ref(releases.value[0]?.id ?? "");
 const releaseNoteDraft = ref("");
 const releaseKeyword = ref("");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
+const leftWorkbenchTab = ref<"materials" | "templates">("materials");
+const rightWorkbenchTab = ref<"inspector" | "page" | "publish" | "data" | "status">("inspector");
+const outlineFloatOpen = ref(true);
 const templateKeyword = ref("");
 const templateCategory = ref("全部");
 const materialKeyword = ref("");
@@ -651,6 +663,14 @@ const listItemDragState = ref<ListItemDragState>();
 const listAssetTarget = ref<ListAssetTarget>();
 const pointerCanvasDragState = ref<PointerCanvasDragState>();
 const multiSelectedNodeIds = ref<string[]>([]);
+const canvasPan = ref({ x: 0, y: 0 });
+const canvasPanDragState = ref<{
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+}>();
 const collapsedPropGroups = ref<Partial<Record<PropGroupKey, boolean>>>({
   advanced: true,
 });
@@ -1054,10 +1074,23 @@ const canvasStarterMaterials = computed(() => {
     .filter((item) => order.has(item.manifest.componentName))
     .sort((a, b) => (order.get(a.manifest.componentName) ?? 0) - (order.get(b.manifest.componentName) ?? 0));
 });
-const activeH5ViewportPreset = computed<LowcodeEditorViewportPreset | undefined>(() =>
-  findLowcodeEditorViewportPreset(editorState.value.viewport, h5ViewportPresets),
-);
-const activeH5ViewportTitle = computed(() => formatLowcodeEditorViewportTitle(editorState.value.viewport, h5ViewportPresets));
+const activeH5ViewportPreset = computed<LowcodeEditorViewportPreset | undefined>(() => {
+  const viewport = editorState.value.viewport;
+  return (
+    h5ViewportPresets.find(
+      (preset) =>
+        preset.platform === viewport.platform &&
+        preset.width === viewport.width &&
+        (preset.height ?? 0) === (viewport.height ?? 0),
+    ) ?? findLowcodeEditorViewportPreset(viewport, h5ViewportPresets)
+  );
+});
+const activeH5ViewportTitle = computed(() => {
+  const preset = activeH5ViewportPreset.value;
+  return preset
+    ? `${preset.title} ${preset.width}${preset.height ? `x${preset.height}` : ""}`
+    : formatLowcodeEditorViewportTitle(editorState.value.viewport, h5ViewportPresets);
+});
 const canvasToolbarStatusText = computed(() =>
   selectedNode.value
     ? `${selectedParentTitle.value} / ${selectedPositionText.value}`
@@ -1067,6 +1100,12 @@ const canvasToolbarStatusText = computed(() =>
 );
 const phoneFrameStyle = computed<CSSProperties>(() => ({
   width: `${editorState.value.viewport.width}px`,
+  height: `${editorState.value.viewport.height ?? 720}px`,
+  transform: `scale(${editorState.value.viewport.scale ?? 1})`,
+  transformOrigin: "top center",
+}));
+const canvasDeviceStyle = computed<CSSProperties>(() => ({
+  transform: `translate(${canvasPan.value.x}px, ${canvasPan.value.y}px)`,
 }));
 const materialDetailSummary = computed<MaterialDetailSummary | undefined>(() =>
   selectedMaterialDetailManifest.value
@@ -2249,6 +2288,50 @@ function onPhoneFramePointerDown(event: PointerEvent): void {
   startPointerCanvasDrag(event, "node", { nodeId });
 }
 
+function canStartCanvasPan(event: PointerEvent): boolean {
+  if (event.button !== 0) return false;
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  return !target.closest(
+    ".phone-frame, .canvas-context-toolbar, .canvas-outline-float, button, input, select, textarea, a",
+  );
+}
+
+function onCanvasPanPointerDown(event: PointerEvent): void {
+  if (!canStartCanvasPan(event)) return;
+  canvasPanDragState.value = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originX: canvasPan.value.x,
+    originY: canvasPan.value.y,
+  };
+  const target = event.currentTarget;
+  if (target instanceof HTMLElement && typeof target.setPointerCapture === "function") {
+    target.setPointerCapture(event.pointerId);
+  }
+}
+
+function onCanvasPanPointerMove(event: PointerEvent): void {
+  const state = canvasPanDragState.value;
+  if (!state || state.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  canvasPan.value = {
+    x: state.originX + event.clientX - state.startX,
+    y: state.originY + event.clientY - state.startY,
+  };
+}
+
+function onCanvasPanPointerEnd(event: PointerEvent): void {
+  if (canvasPanDragState.value?.pointerId === event.pointerId) {
+    canvasPanDragState.value = undefined;
+  }
+}
+
+function resetCanvasPan(): void {
+  canvasPan.value = { x: 0, y: 0 };
+}
+
 function pointerDragDistance(state: PointerCanvasDragState, event: PointerEvent): number {
   return Math.hypot(event.clientX - state.startX, event.clientY - state.startY);
 }
@@ -3032,6 +3115,7 @@ function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): Jso
 function select(nodeId: string): void {
   editorState.value = selectNode(editorState.value, nodeId);
   multiSelectedNodeIds.value = [nodeId];
+  rightWorkbenchTab.value = "inspector";
 }
 
 function isNodeOperationDisabled(action: NodeContextAction): boolean {
@@ -4261,7 +4345,28 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
     />
 
     <aside class="left-panel">
-      <section class="panel-section">
+      <div class="workbench-tabs" role="tablist" aria-label="搭建素材">
+        <button
+          type="button"
+          :class="{ active: leftWorkbenchTab === 'materials' }"
+          role="tab"
+          :aria-selected="leftWorkbenchTab === 'materials'"
+          @click="leftWorkbenchTab = 'materials'"
+        >
+          物料库
+        </button>
+        <button
+          type="button"
+          :class="{ active: leftWorkbenchTab === 'templates' }"
+          role="tab"
+          :aria-selected="leftWorkbenchTab === 'templates'"
+          @click="leftWorkbenchTab = 'templates'"
+        >
+          模板
+        </button>
+      </div>
+
+      <section v-show="leftWorkbenchTab === 'templates'" class="panel-section workbench-tab-panel">
         <div class="panel-title">
           <Layers :size="16" />
           <span>模板</span>
@@ -4336,8 +4441,10 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       </section>
 
       <EditorMaterialCatalog
+        v-show="leftWorkbenchTab === 'materials'"
         v-model:keyword="materialKeyword"
         v-model:category="materialCategory"
+        class="workbench-tab-panel"
         :materials="materials"
         :visible-materials="visibleMaterials"
         :favorite-materials="favoriteMaterials"
@@ -4361,28 +4468,6 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         @material-dragend="onMaterialDragEnd"
       />
 
-      <EditorOutlineTree
-        v-model:keyword="outlineKeyword"
-        v-model:rename-draft="outlineRenameDraft"
-        :rows="visibleOutlineRows"
-        :visible-summary="outlineVisibleSummary"
-        :multi-select-summary="multiSelectSummary"
-        :selected-node-id="editorState.selectedNodeId"
-        :collapsed-node-ids="collapsedOutlineNodeIds"
-        :search-matched-node-ids="outlineVisibility.matchedNodeIds"
-        :multi-selected-node-ids="multiSelection.selectedNodeIds"
-        :group-draggable-node-ids="groupDraggableOutlineNodeIds"
-        :renaming-node-id="renamingOutlineNodeId"
-        @node-click="onOutlineNodeClick"
-        @node-pointerdown="onOutlineNodePointerDown"
-        @node-dragstart="onNodeDragStart"
-        @node-drop="onNodeDrop"
-        @node-contextmenu="openNodeContextMenu"
-        @toggle-collapse="toggleOutlineCollapse"
-        @toggle-multi-select="toggleMultiSelected"
-        @commit-rename="commitOutlineRename"
-        @cancel-rename="cancelOutlineRename"
-      />
     </aside>
 
     <section
@@ -4398,9 +4483,19 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         :viewport-presets="h5ViewportPresets"
         :active-viewport-preset="activeH5ViewportPreset"
         @select-viewport="applyH5ViewportPreset"
+        @reset-canvas-pan="resetCanvasPan"
       />
 
-      <div v-if="editorState.mode !== 'outline'" class="phone-stage">
+      <div
+        v-if="editorState.mode !== 'outline'"
+        class="phone-stage"
+        :class="{ 'is-panning': Boolean(canvasPanDragState) }"
+        @pointerdown="onCanvasPanPointerDown"
+        @pointermove="onCanvasPanPointerMove"
+        @pointerup="onCanvasPanPointerEnd"
+        @pointercancel="onCanvasPanPointerEnd"
+      >
+        <div class="canvas-device-shell" :style="canvasDeviceStyle">
         <EditorCanvasContextToolbar
           v-if="selectedNode && selectedManifest && editorState.mode === 'design'"
           v-model:selected-insert-component-name="selectedInsertComponentName"
@@ -4419,7 +4514,6 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
           @remove="removeSelected"
         />
         <div
-          ref="phoneFrameRef"
           class="phone-frame"
           :class="{ 'is-touch-drag-enabled': editorState.mode === 'design' }"
           :style="phoneFrameStyle"
@@ -4430,6 +4524,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
             <span>{{ editorState.schema.title }}</span>
             <span>{{ activeH5ViewportTitle }}</span>
           </div>
+          <div ref="phoneFrameRef" class="phone-scroll-area">
           <div
             v-for="guide in canvasDropHint?.guides ?? []"
             :key="`${guide.axis}-${guide.label}-${guide.style.top ?? guide.style.left}`"
@@ -4505,6 +4600,39 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
               从模板开始
             </button>
           </div>
+          </div>
+        </div>
+        </div>
+        <div class="canvas-outline-float" :class="{ collapsed: !outlineFloatOpen }">
+          <button type="button" class="canvas-outline-toggle" @click="outlineFloatOpen = !outlineFloatOpen">
+            <Layers :size="14" />
+            <span>结构</span>
+            <small>{{ outlineVisibleSummary }}</small>
+          </button>
+          <EditorOutlineTree
+            v-show="outlineFloatOpen"
+            v-model:keyword="outlineKeyword"
+            v-model:rename-draft="outlineRenameDraft"
+            class="canvas-outline-tree"
+            :rows="visibleOutlineRows"
+            :visible-summary="outlineVisibleSummary"
+            :multi-select-summary="multiSelectSummary"
+            :selected-node-id="editorState.selectedNodeId"
+            :collapsed-node-ids="collapsedOutlineNodeIds"
+            :search-matched-node-ids="outlineVisibility.matchedNodeIds"
+            :multi-selected-node-ids="multiSelection.selectedNodeIds"
+            :group-draggable-node-ids="groupDraggableOutlineNodeIds"
+            :renaming-node-id="renamingOutlineNodeId"
+            @node-click="onOutlineNodeClick"
+            @node-pointerdown="onOutlineNodePointerDown"
+            @node-dragstart="onNodeDragStart"
+            @node-drop="onNodeDrop"
+            @node-contextmenu="openNodeContextMenu"
+            @toggle-collapse="toggleOutlineCollapse"
+            @toggle-multi-select="toggleMultiSelected"
+            @commit-rename="commitOutlineRename"
+            @cancel-rename="cancelOutlineRename"
+          />
         </div>
       </div>
 
@@ -4520,8 +4648,59 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
     </section>
 
     <aside class="right-panel">
+      <div class="workbench-tabs right-workbench-tabs" role="tablist" aria-label="编辑信息">
+        <button
+          type="button"
+          :class="{ active: rightWorkbenchTab === 'inspector' }"
+          role="tab"
+          :aria-selected="rightWorkbenchTab === 'inspector'"
+          @click="rightWorkbenchTab = 'inspector'"
+        >
+          属性
+        </button>
+        <button
+          type="button"
+          :class="{ active: rightWorkbenchTab === 'page' }"
+          role="tab"
+          :aria-selected="rightWorkbenchTab === 'page'"
+          @click="rightWorkbenchTab = 'page'"
+        >
+          页面
+        </button>
+        <button
+          type="button"
+          :class="{ active: rightWorkbenchTab === 'publish' }"
+          role="tab"
+          :aria-selected="rightWorkbenchTab === 'publish'"
+          @click="rightWorkbenchTab = 'publish'"
+        >
+          发布
+        </button>
+        <button
+          type="button"
+          :class="{ active: rightWorkbenchTab === 'data' }"
+          role="tab"
+          :aria-selected="rightWorkbenchTab === 'data'"
+          @click="rightWorkbenchTab = 'data'"
+        >
+          数据
+        </button>
+        <button
+          type="button"
+          :class="{ active: rightWorkbenchTab === 'status' }"
+          role="tab"
+          :aria-selected="rightWorkbenchTab === 'status'"
+          @click="rightWorkbenchTab = 'status'"
+        >
+          状态
+        </button>
+      </div>
+      <p v-if="releaseMessage" class="right-workbench-message">{{ releaseMessage }}</p>
+
       <EditorPageSettingsPanel
+        v-show="rightWorkbenchTab === 'page'"
         v-model:release-note-draft="releaseNoteDraft"
+        class="right-tab-panel"
         :form="pageSettingsForm"
         :release-message="releaseMessage"
         @update:title="updatePageTitle"
@@ -4535,7 +4714,9 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       />
 
       <EditorPublishPanel
+        v-show="rightWorkbenchTab === 'publish'"
         v-model:release-keyword="releaseKeyword"
+        class="right-tab-panel"
         :preview-link-items="previewLinkItems"
         :preview-link-summary="previewLinkSummary"
         :delivery-status-text="deliveryStatusText"
@@ -4604,7 +4785,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         </template>
       </EditorPublishPanel>
 
-      <section class="panel-section">
+      <section v-show="rightWorkbenchTab === 'inspector'" class="panel-section right-tab-panel inspector-primary-panel">
         <div class="panel-title">
           <Layers :size="16" />
           <span>属性</span>
@@ -4742,6 +4923,8 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       </section>
 
       <EditorSchemaConfigPanel
+        v-show="rightWorkbenchTab === 'data'"
+        class="right-tab-panel"
         :data-source-items="dataSourceFormItems"
         :action-items="actionFormItems"
         :action-type-options="actionTypeOptions"
@@ -4760,6 +4943,8 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       />
 
       <EditorStatusPanel
+        v-show="rightWorkbenchTab === 'status'"
+        class="right-tab-panel"
         :node-count="editorState.schema.nodes.length"
         :history-past-count="editorState.history.past.length"
         :history-future-count="editorState.history.future.length"

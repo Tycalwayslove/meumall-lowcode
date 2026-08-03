@@ -6,6 +6,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 ## 最新架构增量
 
+- Vue3 editor playground 已完成一轮运营工作台 UX 重组：左侧改为“物料库/模板”Tab，结构树迁移到画布右下浮层；画布设备选择从 360/390/430 扩展到常见 iPhone、Android 和 iPad 尺寸，并支持拖动画布位置与复位；右侧改为“属性/页面/发布/数据/状态”Tab，默认聚焦选中物料属性，页面设置、发布、数据配置和状态信息收纳为次级任务。该变更只影响 playground 信息架构，不改变 Page Schema v1、Material Manifest v1、renderer、runtime、materials 或 npm 公开 API。
 - `LowcodeRuntimeContext` 新增 runtime-only `event` 字段，React/Vue renderer 会把物料事件 payload 透传到 action context，adapters 安全 action handler 和默认 HTTP action payload 均可读取该字段；Page Schema v1 和 Material Manifest v1 结构不变。
 - React/Vue `BasicForm` 提交时会采集子级基础控件当前值，payload 保留 `formId`、`childCount`，并新增 `fieldCount`、`valid`、`errorCount`、`errors`、`values`、`fieldLabels`、`fieldTypes`；基础控件支持 `required/requiredMessage` 本地必填校验，校验失败时展示表单级错误、字段级 invalid/error 文案并阻断 action，复杂校验、远程提交、登录、权限和风控仍由宿主 action handler 或后续 Java/BFF 协议承担。
 - React/Vue H5 primitives 新增业务无关表单字段 helper：`MlcFormFieldType`、字段 data attributes、值格式化、值解析、空值判断和必填提示推导；React/Vue materials 的 `BasicForm` 字段采集已复用该基础层 API，Page Schema v1、Material Manifest v1、renderer 和提交 payload 字段保持兼容。
@@ -224,6 +225,7 @@ MeuMall Lowcode 已完成第一版 monorepo 骨架、AI 协作体系、GitHub �
 
 | 日期 | 提交 | 说明 |
 | --- | --- | --- |
+| 2026-08-03 | 本次提交 | 优化 Vue3 编辑器工作台信息架构，左侧 Tab 化、结构树移入画布浮层、扩展设备模拟并让右侧属性优先。 |
 | 2026-08-01 | 本次提交 | 新增 editor 交付步骤清单 API 并接入 Vue3 发布面板。 |
 | 2026-08-01 | 本次提交 | 架构检查接入物料预设兼容性护栏并修正默认预设字段。 |
 | 2026-08-01 | 本次提交 | 新增 editor 物料插入预设校验 API。 |

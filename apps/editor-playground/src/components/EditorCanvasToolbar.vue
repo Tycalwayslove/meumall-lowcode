@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Smartphone } from "@lucide/vue";
+import { RotateCcw, Smartphone } from "@lucide/vue";
 import type {
   LowcodeEditorMode,
   LowcodeEditorViewportPreset,
@@ -17,6 +17,7 @@ defineProps<{
 
 const emit = defineEmits<{
   "select-viewport": [preset: LowcodeEditorViewportPreset];
+  "reset-canvas-pan": [];
 }>();
 </script>
 
@@ -27,21 +28,29 @@ const emit = defineEmits<{
       <span>{{ statusText }}</span>
     </div>
     <EditorWorkspaceStats :stats="stats" />
-    <div class="viewport-switch" role="group" aria-label="H5 画布视口">
-      <span class="viewport-switch-label">视口</span>
-      <button
-        v-for="preset in viewportPresets"
-        :key="preset.id"
-        type="button"
-        :title="`${preset.title} ${preset.width}px`"
-        :class="{ active: activeViewportPreset?.id === preset.id }"
-        @click="emit('select-viewport', preset)"
-      >
-        <Smartphone :size="16" />
-        <span>
-          <b>{{ preset.width }}</b>
-          <small>{{ preset.title }}</small>
-        </span>
+    <div class="viewport-switch" aria-label="H5 画布视口">
+      <label class="viewport-select">
+        <Smartphone :size="15" />
+        <span>设备</span>
+        <select
+          :value="activeViewportPreset?.id"
+          aria-label="选择设备尺寸"
+          @change="
+            emit(
+              'select-viewport',
+              viewportPresets.find((preset) => preset.id === ($event.target as HTMLSelectElement).value) ??
+                viewportPresets[0],
+            )
+          "
+        >
+          <option v-for="preset in viewportPresets" :key="preset.id" :value="preset.id">
+            {{ preset.title }} · {{ preset.width }}{{ preset.height ? `x${preset.height}` : "" }}
+          </option>
+        </select>
+      </label>
+      <button type="button" class="canvas-reset-button" title="复位画布位置" @click="emit('reset-canvas-pan')">
+        <RotateCcw :size="14" />
+        <span>复位</span>
       </button>
     </div>
   </div>
