@@ -239,7 +239,7 @@ function locateRiskItem(item: LowcodeEditorPublishRiskItem): void {
     <slot name="approval-extra" />
   </section>
 
-  <section class="panel-section">
+  <section class="panel-section publish-check-panel">
     <div class="panel-title">
       <PanelRight :size="16" />
       <span>发布检查</span>
@@ -305,7 +305,7 @@ function locateRiskItem(item: LowcodeEditorPublishRiskItem): void {
     <slot name="publish-check-extra" />
   </section>
 
-  <section class="panel-section">
+  <section class="panel-section release-history-panel">
     <div class="panel-title">
       <Save :size="16" />
       <span>本地版本</span>

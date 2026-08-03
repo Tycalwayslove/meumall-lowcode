@@ -75,6 +75,7 @@ function canDragGroup(nodeId: string): boolean {
       class="outline-item"
       role="button"
       tabindex="0"
+      :data-node-id="row.node.id"
       :class="{
         selected: selectedNodeId === row.node.id,
         'multi-selected': isMultiSelected(row.node.id),

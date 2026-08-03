@@ -5,7 +5,12 @@ import {
   ArrowUp,
   Copy,
   ExternalLink,
+  GripVertical,
   Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Plus,
   Save,
   Search,
@@ -549,8 +554,35 @@ const releaseNoteDraft = ref("");
 const releaseKeyword = ref("");
 const selectedInsertComponentName = ref(materials[0]?.manifest.componentName ?? "");
 const leftWorkbenchTab = ref<"materials" | "templates">("materials");
-const rightWorkbenchTab = ref<"inspector" | "page" | "publish" | "data" | "status">("inspector");
+type WorkbenchPanelSide = "left" | "right";
+type WorkflowPanelKey = "page" | "preview" | "delivery" | "approval" | "checks" | "releases" | "status";
+
+const PANEL_WIDTH_BOUNDS: Record<WorkbenchPanelSide, { min: number; max: number; collapsed: number }> = {
+  left: { min: 248, max: 520, collapsed: 44 },
+  right: { min: 320, max: 580, collapsed: 44 },
+};
+
+const leftPanelWidth = ref(316);
+const rightPanelWidth = ref(380);
+const leftPanelCollapsed = ref(false);
+const rightPanelCollapsed = ref(false);
+const panelResizeState = ref<{
+  side: WorkbenchPanelSide;
+  pointerId: number;
+  startX: number;
+  startWidth: number;
+}>();
+const rightWorkbenchTab = ref<"inspector" | "data">("inspector");
+const activeWorkflowPanel = ref<WorkflowPanelKey>();
 const outlineFloatOpen = ref(true);
+const outlineFloatOffset = ref({ x: 0, y: 0 });
+const outlineFloatDragState = ref<{
+  pointerId: number;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+}>();
 const templateKeyword = ref("");
 const templateCategory = ref("全部");
 const materialKeyword = ref("");
@@ -1005,6 +1037,22 @@ const nodeContextMenuStyle = computed<CSSProperties>(() => {
     top: `${menu.y}px`,
   };
 });
+const editorShellStyle = computed<CSSProperties>(() => ({
+  "--left-panel-width": `${leftPanelCollapsed.value ? PANEL_WIDTH_BOUNDS.left.collapsed : leftPanelWidth.value}px`,
+  "--right-panel-width": `${rightPanelCollapsed.value ? PANEL_WIDTH_BOUNDS.right.collapsed : rightPanelWidth.value}px`,
+}) as CSSProperties);
+const workflowPanelTitle = computed(() => {
+  const titleMap: Record<WorkflowPanelKey, string> = {
+    page: "页面设置",
+    preview: "H5 预览入口",
+    delivery: "交付清单",
+    approval: "发布审批",
+    checks: "发布检查",
+    releases: "本地版本",
+    status: "编辑器状态",
+  };
+  return activeWorkflowPanel.value ? titleMap[activeWorkflowPanel.value] : "";
+});
 function canUseEditorAction(action: LowcodeEditorPermissionAction): boolean {
   return isLowcodeEditorActionAllowed(editorPermissionState.value, action);
 }
@@ -1106,6 +1154,9 @@ const phoneFrameStyle = computed<CSSProperties>(() => ({
 }));
 const canvasDeviceStyle = computed<CSSProperties>(() => ({
   transform: `translate(${canvasPan.value.x}px, ${canvasPan.value.y}px)`,
+}));
+const canvasOutlineFloatStyle = computed<CSSProperties>(() => ({
+  transform: `translate(${outlineFloatOffset.value.x}px, ${outlineFloatOffset.value.y}px)`,
 }));
 const materialDetailSummary = computed<MaterialDetailSummary | undefined>(() =>
   selectedMaterialDetailManifest.value
@@ -1522,6 +1573,7 @@ watch(
   () => editorState.value.selectedNodeId,
   (nodeId) => {
     revealOutlineNode(nodeId);
+    if (nodeId) scrollOutlineNodeIntoView(nodeId);
   },
   { immediate: true },
 );
@@ -1631,8 +1683,14 @@ watch(
 
 onMounted(() => {
   window.addEventListener("pointermove", onPointerCanvasDragMove, { passive: false });
+  window.addEventListener("pointermove", onPanelResizePointerMove, { passive: false });
+  window.addEventListener("pointermove", onOutlineFloatDragPointerMove, { passive: false });
   window.addEventListener("pointerup", onPointerCanvasDragEnd);
+  window.addEventListener("pointerup", onPanelResizePointerEnd);
+  window.addEventListener("pointerup", onOutlineFloatDragPointerEnd);
   window.addEventListener("pointercancel", onPointerCanvasDragCancel);
+  window.addEventListener("pointercancel", onPanelResizePointerEnd);
+  window.addEventListener("pointercancel", onOutlineFloatDragPointerEnd);
   window.addEventListener("keydown", onGlobalKeydown);
   recordAuditMessage("system.message", "打开编辑器", `已打开页面：${editorState.value.schema.title || editorState.value.schema.pageId}`, "info");
   void refreshReleases();
@@ -1643,8 +1701,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("pointermove", onPointerCanvasDragMove);
+  window.removeEventListener("pointermove", onPanelResizePointerMove);
+  window.removeEventListener("pointermove", onOutlineFloatDragPointerMove);
   window.removeEventListener("pointerup", onPointerCanvasDragEnd);
+  window.removeEventListener("pointerup", onPanelResizePointerEnd);
+  window.removeEventListener("pointerup", onOutlineFloatDragPointerEnd);
   window.removeEventListener("pointercancel", onPointerCanvasDragCancel);
+  window.removeEventListener("pointercancel", onPanelResizePointerEnd);
+  window.removeEventListener("pointercancel", onOutlineFloatDragPointerEnd);
   window.removeEventListener("keydown", onGlobalKeydown);
   if (autoSaveTimer) window.clearTimeout(autoSaveTimer);
 });
@@ -2095,6 +2159,7 @@ function addMaterial(manifest: LowcodeMaterialManifest, preset?: LowcodeEditorMa
     return false;
   }
   editorState.value = appendNode(editorState.value, createNodeInput(manifest, preset));
+  focusNodeEditing(editorState.value.selectedNodeId);
   recordRecentMaterial(manifest);
   recordAuditEvent({
     type: "material.insert",
@@ -2163,6 +2228,7 @@ function addMaterialToSelectedContainer(manifest: LowcodeMaterialManifest): void
     return;
   }
   editorState.value = insertLowcodeMaterialByTarget(editorState.value, createNodeInput(manifest), target);
+  focusNodeEditing(editorState.value.selectedNodeId);
   recordRecentMaterial(manifest);
   showNodeOperationMessage("addInside", { materialTitle: manifest.title });
 }
@@ -2187,6 +2253,7 @@ function addMaterialPresetToSelectedContainer(
   editorState.value = insertLowcodeMaterialPresetByTarget(editorState.value, manifest, preset, target, {
     dataBindingByComponentName: materialPreviewDataBindings,
   });
+  focusNodeEditing(editorState.value.selectedNodeId);
   recordRecentMaterial(manifest);
   const message = `已加入容器预设：${manifest.title} · ${preset.title}`;
   materialPreferenceMessage.value = message;
@@ -2286,6 +2353,129 @@ function onPhoneFramePointerDown(event: PointerEvent): void {
   if (!nodeId) return;
   selectNodeForDrag(nodeId);
   startPointerCanvasDrag(event, "node", { nodeId });
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function togglePanelCollapsed(side: WorkbenchPanelSide): void {
+  if (side === "left") {
+    leftPanelCollapsed.value = !leftPanelCollapsed.value;
+    return;
+  }
+  rightPanelCollapsed.value = !rightPanelCollapsed.value;
+}
+
+function startPanelResize(event: PointerEvent, side: WorkbenchPanelSide): void {
+  if ((side === "left" && leftPanelCollapsed.value) || (side === "right" && rightPanelCollapsed.value)) return;
+  event.preventDefault();
+  panelResizeState.value = {
+    side,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startWidth: side === "left" ? leftPanelWidth.value : rightPanelWidth.value,
+  };
+  const target = event.currentTarget;
+  if (target instanceof HTMLElement && typeof target.setPointerCapture === "function") {
+    target.setPointerCapture(event.pointerId);
+  }
+}
+
+function onPanelResizePointerMove(event: PointerEvent): void {
+  const state = panelResizeState.value;
+  if (!state || state.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  const delta = event.clientX - state.startX;
+  const bounds = PANEL_WIDTH_BOUNDS[state.side];
+  const nextWidth = state.side === "left" ? state.startWidth + delta : state.startWidth - delta;
+  if (state.side === "left") {
+    leftPanelWidth.value = clampNumber(nextWidth, bounds.min, bounds.max);
+    return;
+  }
+  rightPanelWidth.value = clampNumber(nextWidth, bounds.min, bounds.max);
+}
+
+function onPanelResizePointerEnd(event: PointerEvent): void {
+  if (panelResizeState.value?.pointerId === event.pointerId) {
+    panelResizeState.value = undefined;
+  }
+}
+
+function openWorkflowPanel(panel: WorkflowPanelKey): void {
+  activeWorkflowPanel.value = panel;
+  if (panel === "releases") void refreshReleases();
+}
+
+function closeWorkflowPanel(): void {
+  activeWorkflowPanel.value = undefined;
+}
+
+async function createPreviewFromToolbar(): Promise<void> {
+  openWorkflowPanel("preview");
+  await createPreviewRelease();
+}
+
+async function publishFromToolbar(): Promise<void> {
+  openWorkflowPanel("approval");
+  await publishCurrentPage();
+}
+
+function resetOutlineFloatPosition(): void {
+  outlineFloatOffset.value = { x: 0, y: 0 };
+}
+
+function onOutlineFloatDragPointerDown(event: PointerEvent): void {
+  if (event.button !== 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  outlineFloatDragState.value = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originX: outlineFloatOffset.value.x,
+    originY: outlineFloatOffset.value.y,
+  };
+  const target = event.currentTarget;
+  if (target instanceof HTMLElement && typeof target.setPointerCapture === "function") {
+    target.setPointerCapture(event.pointerId);
+  }
+}
+
+function onOutlineFloatDragPointerMove(event: PointerEvent): void {
+  const state = outlineFloatDragState.value;
+  if (!state || state.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  outlineFloatOffset.value = {
+    x: state.originX + event.clientX - state.startX,
+    y: state.originY + event.clientY - state.startY,
+  };
+}
+
+function onOutlineFloatDragPointerEnd(event: PointerEvent): void {
+  if (outlineFloatDragState.value?.pointerId === event.pointerId) {
+    outlineFloatDragState.value = undefined;
+  }
+}
+
+function scrollOutlineNodeIntoView(nodeId: string): void {
+  void nextTick(() => {
+    const outlineNode = document.querySelector<HTMLElement>(`.canvas-outline-tree .outline-item[data-node-id="${CSS.escape(nodeId)}"]`)
+      ?? document.querySelector<HTMLElement>(".canvas-outline-tree .outline-item.selected");
+    outlineNode?.scrollIntoView({
+      block: "center",
+      behavior: "smooth",
+    });
+  });
+}
+
+function focusNodeEditing(nodeId?: string): void {
+  if (!nodeId) return;
+  rightWorkbenchTab.value = "inspector";
+  outlineFloatOpen.value = true;
+  revealOutlineNode(nodeId);
+  scrollOutlineNodeIntoView(nodeId);
+  scrollCanvasNodeIntoView(nodeId);
 }
 
 function canStartCanvasPan(event: PointerEvent): boolean {
@@ -2509,8 +2699,7 @@ function locatePublishCheck(check: PublishCheck): void {
   closeNodeContextMenu();
   editorState.value = setEditorMode(selectNode(editorState.value, check.nodeId), "design");
   multiSelectedNodeIds.value = [check.nodeId];
-  revealOutlineNode(check.nodeId);
-  scrollCanvasNodeIntoView(check.nodeId);
+  focusNodeEditing(check.nodeId);
   releaseMessage.value = `已定位：${check.nodeTitle ?? getNodeDisplayName(target)}`;
 }
 
@@ -2642,6 +2831,7 @@ function moveCanvasNodeGroup(nodeIds: string[], hint: CanvasDropHint): boolean {
   if (!result.handled) return false;
   editorState.value = result.state;
   multiSelectedNodeIds.value = nodeIds;
+  focusNodeEditing(editorState.value.selectedNodeId);
   return true;
 }
 
@@ -2651,6 +2841,7 @@ function moveCanvasNode(nodeId: string, hint: CanvasDropHint): void {
 
   const result = moveLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, nodeId);
   editorState.value = result.state;
+  focusNodeEditing(editorState.value.selectedNodeId);
 }
 
 function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: CanvasDropHint): void {
@@ -2660,6 +2851,7 @@ function insertMaterialByDropHint(manifest: LowcodeMaterialManifest, hint: Canva
   }
   const result = insertLowcodeCanvasNodeByHint(editorState.value, outlineRows.value, hint, createNodeInput(manifest));
   editorState.value = result.state;
+  focusNodeEditing(editorState.value.selectedNodeId);
   recordRecentMaterial(manifest);
   recordAuditEvent({
     type: "material.insert",
@@ -3115,7 +3307,7 @@ function normalizeInputValue(propSchema: LowcodePropSchema, value: unknown): Jso
 function select(nodeId: string): void {
   editorState.value = selectNode(editorState.value, nodeId);
   multiSelectedNodeIds.value = [nodeId];
-  rightWorkbenchTab.value = "inspector";
+  focusNodeEditing(nodeId);
 }
 
 function isNodeOperationDisabled(action: NodeContextAction): boolean {
@@ -3155,6 +3347,7 @@ function duplicateSelected(): void {
   if (!selectedNode.value) return;
   const nodeTitle = selectedNodeDisplayName.value;
   editorState.value = duplicateNode(editorState.value, selectedNode.value.id);
+  focusNodeEditing(editorState.value.selectedNodeId);
   showNodeOperationMessage("duplicate", { nodeTitle });
 }
 
@@ -3166,6 +3359,7 @@ function copySelected(): void {
 
 function pasteCopied(): void {
   editorState.value = pasteNode(editorState.value);
+  focusNodeEditing(editorState.value.selectedNodeId);
   showNodeOperationMessage("paste");
 }
 
@@ -4184,7 +4378,7 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
     </div>
   </main>
 
-  <main v-else class="editor-shell">
+  <main v-else class="editor-shell" :style="editorShellStyle">
     <EditorTopToolbar
       :title="editorState.schema.title"
       :dirty="editorState.dirty"
@@ -4203,8 +4397,8 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       @save="saveSchema"
       @export-schema="exportCurrentSchema"
       @import-schema="triggerSchemaImport"
-      @create-preview="createPreviewRelease"
-      @publish="publishCurrentPage"
+      @create-preview="createPreviewFromToolbar"
+      @publish="publishFromToolbar"
       @open-runtime="openRuntime()"
       @open-react-runtime="openReactH5Runtime()"
     >
@@ -4212,6 +4406,76 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         <span class="host-extension-pill" data-testid="host-toolbar-status">审计已启用</span>
       </template>
       <template #secondary-actions>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'page' }"
+          title="页面设置"
+          @click="openWorkflowPanel('page')"
+        >
+          <Layers :size="13" />
+          <span>页面</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'preview' }"
+          title="查看 H5 预览入口"
+          @click="openWorkflowPanel('preview')"
+        >
+          <ExternalLink :size="13" />
+          <span>H5预览</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'delivery' }"
+          title="查看交付清单"
+          @click="openWorkflowPanel('delivery')"
+        >
+          <Save :size="13" />
+          <span>交付</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'approval' }"
+          title="查看发布审批"
+          @click="openWorkflowPanel('approval')"
+        >
+          <ExternalLink :size="13" />
+          <span>审核</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'checks' }"
+          title="查看发布检查"
+          @click="openWorkflowPanel('checks')"
+        >
+          <Layers :size="13" />
+          <span>检查</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'releases' }"
+          title="查看本地版本"
+          @click="openWorkflowPanel('releases')"
+        >
+          <Save :size="13" />
+          <span>版本</span>
+        </button>
+        <button
+          type="button"
+          class="workflow-trigger"
+          :class="{ active: activeWorkflowPanel === 'status' }"
+          title="查看编辑器状态"
+          @click="openWorkflowPanel('status')"
+        >
+          <Layers :size="13" />
+          <span>状态</span>
+        </button>
         <button
           type="button"
           class="host-extension-button"
@@ -4334,6 +4598,133 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       @add="addMaterialFromDetail"
     />
 
+    <div
+      v-if="activeWorkflowPanel"
+      class="workflow-overlay"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="workflowPanelTitle"
+      @click.self="closeWorkflowPanel"
+    >
+      <section class="workflow-dialog">
+        <div class="workflow-dialog-head">
+          <div>
+            <strong>{{ workflowPanelTitle }}</strong>
+            <span>流程信息按需查看，右侧保留给当前物料配置。</span>
+          </div>
+          <button type="button" title="关闭流程面板" @click="closeWorkflowPanel">
+            <X :size="18" />
+          </button>
+        </div>
+        <p v-if="releaseMessage" class="right-workbench-message workflow-message">{{ releaseMessage }}</p>
+
+        <EditorPageSettingsPanel
+          v-if="activeWorkflowPanel === 'page'"
+          v-model:release-note-draft="releaseNoteDraft"
+          class="workflow-tab-panel"
+          :form="pageSettingsForm"
+          :release-message="releaseMessage"
+          @update:title="updatePageTitle"
+          @update:description="updatePageDescription"
+          @update:page-type="updatePageType"
+          @update:background-color="updatePageBackgroundColor"
+          @update:safe-area="updatePageSafeArea"
+          @update:max-width="updatePageMaxWidth"
+          @update:status="updatePageStatus"
+          @update:publish-environment="updatePublishEnvironment"
+        />
+
+        <div
+          v-else-if="activeWorkflowPanel !== 'status'"
+          class="workflow-tab-panel workflow-publish-panel"
+          :class="`is-${activeWorkflowPanel}`"
+        >
+          <EditorPublishPanel
+            v-model:release-keyword="releaseKeyword"
+            :preview-link-items="previewLinkItems"
+            :preview-link-summary="previewLinkSummary"
+            :delivery-status-text="deliveryStatusText"
+            :delivery-metrics="deliveryMetrics"
+            :delivery-checklist-items="deliveryChecklistItems"
+            :publish-checks="publishChecks"
+            :publish-check-summary="publishCheckSummary"
+            :publish-risk-summary="publishRiskSummary"
+            :has-publish-blocking-errors="hasPublishBlockingErrors"
+            :approval-status-text="editorApprovalState.title"
+            :approval-status-description="editorApprovalState.description"
+            :approval-can-submit="canSubmitApproval"
+            :approval-can-cancel="canCancelApproval"
+            :approval-can-review="canReviewApproval"
+            :approval-submit-disabled-reason="approvalSubmitDisabledReason"
+            :approval-cancel-disabled-reason="approvalCancelDisabledReason"
+            :approval-review-disabled-reason="approvalReviewDisabledReason"
+            :release-count="releases.length"
+            :release-list-summary="releaseListSummary"
+            :visible-release-items="visibleReleaseItems"
+            :has-selected-release="Boolean(selectedRelease)"
+            :release-diff-summary-text="releaseDiffSummaryText"
+            :release-diff-items="releaseDiffItems"
+            :release-schema-preview-items="releaseSchemaPreviewItems"
+            @open-preview-link="openPreviewLink"
+            @copy-preview-link="copyPreviewLink"
+            @copy-schema="copyCurrentSchema"
+            @export-schema="exportCurrentSchema"
+            @locate-publish-check="locatePublishCheck"
+            @submit-approval="submitCurrentApproval"
+            @cancel-approval="cancelCurrentApproval"
+            @approve-approval="approveCurrentApproval"
+            @reject-approval="rejectCurrentApproval"
+            @select-release="selectRelease"
+            @load-release="loadReleaseById"
+            @open-release="openReleaseRuntime"
+            @load-selected-release="loadSelectedRelease"
+            @rollback-selected-release="rollbackPublishSelectedRelease"
+          >
+            <template #delivery-extra>
+              <p class="host-extension-note" data-testid="host-delivery-policy">
+                宿主交付策略：正式环境使用 Java previewToken 或 releaseId 打开 H5。
+              </p>
+            </template>
+            <template #approval-extra>
+              <p class="host-extension-note" data-testid="host-approval-policy">
+                宿主审批策略：审批通过后才能发布正式环境。
+              </p>
+            </template>
+            <template #publish-check-extra>
+              <p class="host-extension-note" data-testid="host-publish-check-policy">
+                宿主发布校验：服务端可追加商品、库存、价格和风控检查。
+              </p>
+            </template>
+            <template #release-extra>
+              <button
+                type="button"
+                class="host-extension-button is-wide"
+                title="查看宿主发布策略"
+                data-testid="host-release-policy-button"
+                @click="showHostReleasePolicy"
+              >
+                <ExternalLink :size="13" />
+                <span>发布策略</span>
+              </button>
+            </template>
+          </EditorPublishPanel>
+        </div>
+
+        <EditorStatusPanel
+          v-else
+          class="workflow-tab-panel"
+          :node-count="editorState.schema.nodes.length"
+          :history-past-count="editorState.history.past.length"
+          :history-future-count="editorState.history.future.length"
+          :validation-valid="validation.valid"
+          :demo-checklist-items="demoChecklistItems"
+          :demo-checklist-summary="demoChecklistSummary"
+          :audit-items="auditListItems"
+          @reset-schema="resetSchema"
+        />
+      </section>
+    </div>
+
     <EditorNodeContextMenu
       :open="Boolean(nodeContextMenu && selectedNode)"
       :menu-style="nodeContextMenuStyle"
@@ -4344,7 +4735,17 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       @execute="runNodeContextMenuAction"
     />
 
-    <aside class="left-panel">
+    <aside class="left-panel" :class="{ collapsed: leftPanelCollapsed }">
+      <button
+        type="button"
+        class="panel-collapse-button"
+        :title="leftPanelCollapsed ? '展开左侧面板' : '收起左侧面板'"
+        @click="togglePanelCollapsed('left')"
+      >
+        <PanelLeftClose v-if="!leftPanelCollapsed" :size="17" />
+        <PanelLeftOpen v-else :size="17" />
+      </button>
+      <div v-show="!leftPanelCollapsed" class="panel-content">
       <div class="workbench-tabs" role="tablist" aria-label="搭建素材">
         <button
           type="button"
@@ -4467,7 +4868,14 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         @material-dragstart="onDragStart"
         @material-dragend="onMaterialDragEnd"
       />
-
+      </div>
+      <div
+        class="panel-resize-handle is-left"
+        role="separator"
+        aria-orientation="vertical"
+        title="拖动调整左侧宽度"
+        @pointerdown="startPanelResize($event, 'left')"
+      />
     </aside>
 
     <section
@@ -4603,12 +5011,29 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
           </div>
         </div>
         </div>
-        <div class="canvas-outline-float" :class="{ collapsed: !outlineFloatOpen }">
-          <button type="button" class="canvas-outline-toggle" @click="outlineFloatOpen = !outlineFloatOpen">
-            <Layers :size="14" />
-            <span>结构</span>
-            <small>{{ outlineVisibleSummary }}</small>
-          </button>
+        <div
+          class="canvas-outline-float"
+          :class="{ collapsed: !outlineFloatOpen, dragging: Boolean(outlineFloatDragState) }"
+          :style="canvasOutlineFloatStyle"
+        >
+          <div class="canvas-outline-head">
+            <button
+              type="button"
+              class="canvas-outline-drag-handle"
+              title="拖动结构面板"
+              @pointerdown="onOutlineFloatDragPointerDown"
+            >
+              <GripVertical :size="14" />
+            </button>
+            <button type="button" class="canvas-outline-toggle" @click="outlineFloatOpen = !outlineFloatOpen">
+              <Layers :size="14" />
+              <span>结构</span>
+              <small>{{ outlineVisibleSummary }}</small>
+            </button>
+            <button type="button" class="canvas-outline-reset" title="复位结构面板" @click="resetOutlineFloatPosition">
+              <X :size="14" />
+            </button>
+          </div>
           <EditorOutlineTree
             v-show="outlineFloatOpen"
             v-model:keyword="outlineKeyword"
@@ -4647,7 +5072,17 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
       />
     </section>
 
-    <aside class="right-panel">
+    <aside class="right-panel" :class="{ collapsed: rightPanelCollapsed }">
+      <button
+        type="button"
+        class="panel-collapse-button"
+        :title="rightPanelCollapsed ? '展开右侧面板' : '收起右侧面板'"
+        @click="togglePanelCollapsed('right')"
+      >
+        <PanelRightClose v-if="!rightPanelCollapsed" :size="17" />
+        <PanelRightOpen v-else :size="17" />
+      </button>
+      <div v-show="!rightPanelCollapsed" class="panel-content">
       <div class="workbench-tabs right-workbench-tabs" role="tablist" aria-label="编辑信息">
         <button
           type="button"
@@ -4660,130 +5095,15 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         </button>
         <button
           type="button"
-          :class="{ active: rightWorkbenchTab === 'page' }"
-          role="tab"
-          :aria-selected="rightWorkbenchTab === 'page'"
-          @click="rightWorkbenchTab = 'page'"
-        >
-          页面
-        </button>
-        <button
-          type="button"
-          :class="{ active: rightWorkbenchTab === 'publish' }"
-          role="tab"
-          :aria-selected="rightWorkbenchTab === 'publish'"
-          @click="rightWorkbenchTab = 'publish'"
-        >
-          发布
-        </button>
-        <button
-          type="button"
           :class="{ active: rightWorkbenchTab === 'data' }"
           role="tab"
           :aria-selected="rightWorkbenchTab === 'data'"
           @click="rightWorkbenchTab = 'data'"
         >
-          数据
-        </button>
-        <button
-          type="button"
-          :class="{ active: rightWorkbenchTab === 'status' }"
-          role="tab"
-          :aria-selected="rightWorkbenchTab === 'status'"
-          @click="rightWorkbenchTab = 'status'"
-        >
-          状态
+          数据源
         </button>
       </div>
       <p v-if="releaseMessage" class="right-workbench-message">{{ releaseMessage }}</p>
-
-      <EditorPageSettingsPanel
-        v-show="rightWorkbenchTab === 'page'"
-        v-model:release-note-draft="releaseNoteDraft"
-        class="right-tab-panel"
-        :form="pageSettingsForm"
-        :release-message="releaseMessage"
-        @update:title="updatePageTitle"
-        @update:description="updatePageDescription"
-        @update:page-type="updatePageType"
-        @update:background-color="updatePageBackgroundColor"
-        @update:safe-area="updatePageSafeArea"
-        @update:max-width="updatePageMaxWidth"
-        @update:status="updatePageStatus"
-        @update:publish-environment="updatePublishEnvironment"
-      />
-
-      <EditorPublishPanel
-        v-show="rightWorkbenchTab === 'publish'"
-        v-model:release-keyword="releaseKeyword"
-        class="right-tab-panel"
-        :preview-link-items="previewLinkItems"
-        :preview-link-summary="previewLinkSummary"
-        :delivery-status-text="deliveryStatusText"
-        :delivery-metrics="deliveryMetrics"
-        :delivery-checklist-items="deliveryChecklistItems"
-        :publish-checks="publishChecks"
-        :publish-check-summary="publishCheckSummary"
-        :publish-risk-summary="publishRiskSummary"
-        :has-publish-blocking-errors="hasPublishBlockingErrors"
-        :approval-status-text="editorApprovalState.title"
-        :approval-status-description="editorApprovalState.description"
-        :approval-can-submit="canSubmitApproval"
-        :approval-can-cancel="canCancelApproval"
-        :approval-can-review="canReviewApproval"
-        :approval-submit-disabled-reason="approvalSubmitDisabledReason"
-        :approval-cancel-disabled-reason="approvalCancelDisabledReason"
-        :approval-review-disabled-reason="approvalReviewDisabledReason"
-        :release-count="releases.length"
-        :release-list-summary="releaseListSummary"
-        :visible-release-items="visibleReleaseItems"
-        :has-selected-release="Boolean(selectedRelease)"
-        :release-diff-summary-text="releaseDiffSummaryText"
-        :release-diff-items="releaseDiffItems"
-        :release-schema-preview-items="releaseSchemaPreviewItems"
-        @open-preview-link="openPreviewLink"
-        @copy-preview-link="copyPreviewLink"
-        @copy-schema="copyCurrentSchema"
-        @export-schema="exportCurrentSchema"
-        @locate-publish-check="locatePublishCheck"
-        @submit-approval="submitCurrentApproval"
-        @cancel-approval="cancelCurrentApproval"
-        @approve-approval="approveCurrentApproval"
-        @reject-approval="rejectCurrentApproval"
-        @select-release="selectRelease"
-        @load-release="loadReleaseById"
-        @open-release="openReleaseRuntime"
-        @load-selected-release="loadSelectedRelease"
-        @rollback-selected-release="rollbackPublishSelectedRelease"
-      >
-        <template #delivery-extra>
-          <p class="host-extension-note" data-testid="host-delivery-policy">
-            宿主交付策略：正式环境使用 Java previewToken 或 releaseId 打开 H5。
-          </p>
-        </template>
-        <template #approval-extra>
-          <p class="host-extension-note" data-testid="host-approval-policy">
-            宿主审批策略：审批通过后才能发布正式环境。
-          </p>
-        </template>
-        <template #publish-check-extra>
-          <p class="host-extension-note" data-testid="host-publish-check-policy">
-            宿主发布校验：服务端可追加商品、库存、价格和风控检查。
-          </p>
-        </template>
-        <template #release-extra>
-          <button
-            type="button"
-            class="host-extension-button is-wide"
-            title="查看宿主发布策略"
-            data-testid="host-release-policy-button"
-            @click="showHostReleasePolicy"
-          >
-            <ExternalLink :size="13" />
-            <span>发布策略</span>
-          </button>
-        </template>
-      </EditorPublishPanel>
 
       <section v-show="rightWorkbenchTab === 'inspector'" class="panel-section right-tab-panel inspector-primary-panel">
         <div class="panel-title">
@@ -4941,18 +5261,13 @@ async function rollbackPublishSelectedRelease(): Promise<void> {
         @update-action-params="updateActionParams"
         @remove-action="removeAction"
       />
-
-      <EditorStatusPanel
-        v-show="rightWorkbenchTab === 'status'"
-        class="right-tab-panel"
-        :node-count="editorState.schema.nodes.length"
-        :history-past-count="editorState.history.past.length"
-        :history-future-count="editorState.history.future.length"
-        :validation-valid="validation.valid"
-        :demo-checklist-items="demoChecklistItems"
-        :demo-checklist-summary="demoChecklistSummary"
-        :audit-items="auditListItems"
-        @reset-schema="resetSchema"
+      </div>
+      <div
+        class="panel-resize-handle is-right"
+        role="separator"
+        aria-orientation="vertical"
+        title="拖动调整右侧宽度"
+        @pointerdown="startPanelResize($event, 'right')"
       />
     </aside>
   </main>

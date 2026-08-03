@@ -106,7 +106,7 @@ button:focus-visible {
   display: grid;
   grid-template:
     "topbar topbar topbar" var(--mlc-editor-size-topbar-height)
-    "left canvas right" minmax(0, calc(100dvh - var(--mlc-editor-size-topbar-height))) / 316px minmax(560px, 1fr) 360px;
+    "left canvas right" minmax(0, calc(100dvh - var(--mlc-editor-size-topbar-height))) / var(--left-panel-width, 316px) minmax(520px, 1fr) var(--right-panel-width, 380px);
   min-height: 100dvh;
 }
 
@@ -336,7 +336,7 @@ button:focus-visible {
 }
 
 .right-workbench-tabs {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .workbench-tabs button {
@@ -390,6 +390,18 @@ button:focus-visible {
   border-color: var(--mlc-editor-color-info);
   color: var(--mlc-editor-color-info-text);
   background: var(--mlc-editor-color-info-soft);
+}
+
+.toolbar .workflow-trigger {
+  border-color: #cbd5e1;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.toolbar .workflow-trigger.active {
+  border-color: #0f766e;
+  color: #f8fafc;
+  background: #0f766e;
 }
 
 .host-extension-button.is-wide {
@@ -514,6 +526,87 @@ button:focus-visible {
   padding: 16px;
   background: var(--mlc-editor-color-surface);
   box-shadow: var(--mlc-editor-shadow-floating);
+}
+
+.workflow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: grid;
+  align-items: start;
+  justify-items: end;
+  padding: calc(var(--mlc-editor-size-topbar-height) + 14px) 18px 18px;
+  background: rgba(15, 23, 42, 0.2);
+}
+
+.workflow-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(760px, calc(100vw - 36px));
+  max-height: calc(100dvh - var(--mlc-editor-size-topbar-height) - 32px);
+  overflow: auto;
+  border: 1px solid rgba(203, 213, 225, 0.92);
+  border-radius: 10px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--mlc-editor-shadow-floating);
+}
+
+.workflow-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--mlc-editor-color-border-soft);
+  padding-bottom: 12px;
+}
+
+.workflow-dialog-head div {
+  min-width: 0;
+}
+
+.workflow-dialog-head strong,
+.workflow-dialog-head span {
+  display: block;
+}
+
+.workflow-dialog-head strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.workflow-dialog-head span {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.workflow-dialog-head button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--mlc-editor-color-border-control);
+  border-radius: 8px;
+  color: #475569;
+  background: #fff;
+}
+
+.workflow-message {
+  margin: 0;
+}
+
+.workflow-tab-panel {
+  min-width: 0;
+}
+
+.workflow-publish-panel.is-preview > :not(.preview-link-panel),
+.workflow-publish-panel.is-delivery > :not(.delivery-panel),
+.workflow-publish-panel.is-approval > :not(.approval-workflow-panel),
+.workflow-publish-panel.is-checks > :not(.publish-check-panel),
+.workflow-publish-panel.is-releases > :not(.release-history-panel) {
+  display: none;
 }
 
 .page-start-head {
@@ -821,8 +914,12 @@ button:focus-visible {
 
 .left-panel,
 .right-panel {
-  overflow: auto;
-  padding: 16px;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
   background: var(--mlc-editor-color-panel-bg);
 }
 
@@ -834,6 +931,88 @@ button:focus-visible {
 .right-panel {
   grid-area: right;
   border-left: 1px solid var(--mlc-editor-color-border);
+}
+
+.panel-collapse-button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin: 10px;
+  border: 1px solid var(--mlc-editor-color-border-control);
+  border-radius: 8px;
+  color: #475569;
+  background: #fff;
+}
+
+.panel-collapse-button:hover,
+.panel-collapse-button:focus-visible {
+  border-color: var(--mlc-editor-color-brand);
+  color: var(--mlc-editor-color-brand);
+  outline: 0;
+}
+
+.panel-content {
+  min-width: 0;
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
+.left-panel.collapsed,
+.right-panel.collapsed {
+  justify-items: center;
+}
+
+.left-panel.collapsed .panel-collapse-button,
+.right-panel.collapsed .panel-collapse-button {
+  margin: 10px 0;
+}
+
+.panel-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 16;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.panel-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 54px;
+  border-radius: 999px;
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.panel-resize-handle:hover::after,
+.panel-resize-handle:focus-visible::after {
+  background: #94a3b8;
+}
+
+.panel-resize-handle.is-left {
+  right: -4px;
+}
+
+.panel-resize-handle.is-left::after {
+  right: 2px;
+}
+
+.panel-resize-handle.is-right {
+  left: -4px;
+}
+
+.panel-resize-handle.is-right::after {
+  left: 2px;
+}
+
+.left-panel.collapsed .panel-resize-handle,
+.right-panel.collapsed .panel-resize-handle {
+  display: none;
 }
 
 .panel-section {
@@ -2273,10 +2452,23 @@ button:focus-visible {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  will-change: transform;
 }
 
 .canvas-outline-float.collapsed {
-  width: min(220px, calc(100% - 36px));
+  width: min(260px, calc(100% - 36px));
+}
+
+.canvas-outline-float.dragging {
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.22);
+}
+
+.canvas-outline-head {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 34px;
+  align-items: stretch;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .canvas-outline-toggle {
@@ -2286,11 +2478,38 @@ button:focus-visible {
   gap: 7px;
   min-height: 38px;
   border: 0;
-  border-bottom: 1px solid #e2e8f0;
   padding: 0 11px;
   color: #0f172a;
-  background: #f8fafc;
+  background: transparent;
   text-align: left;
+}
+
+.canvas-outline-drag-handle,
+.canvas-outline-reset {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  border: 0;
+  color: #64748b;
+  background: transparent;
+}
+
+.canvas-outline-drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.canvas-outline-float.dragging .canvas-outline-drag-handle {
+  cursor: grabbing;
+}
+
+.canvas-outline-drag-handle:hover,
+.canvas-outline-drag-handle:focus-visible,
+.canvas-outline-reset:hover,
+.canvas-outline-reset:focus-visible {
+  color: #0f172a;
+  background: #e2e8f0;
+  outline: 0;
 }
 
 .canvas-outline-toggle span,

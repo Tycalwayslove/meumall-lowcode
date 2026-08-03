@@ -862,7 +862,10 @@ async function assertEditorViewportSwitch(page) {
   log("检查 Vue3 编辑器 H5 画布视口预设");
   await page.waitForExpression("document.querySelector('.workbench-tabs button.active')?.innerText.includes('物料库')");
   await page.waitForExpression("document.querySelector('.right-workbench-tabs button.active')?.innerText.includes('属性')");
+  await page.waitForExpression("document.querySelector('.panel-resize-handle.is-left') && document.querySelector('.panel-resize-handle.is-right')");
+  await page.waitForExpression("document.querySelector('.left-panel .panel-collapse-button') && document.querySelector('.right-panel .panel-collapse-button')");
   await page.waitForExpression("document.querySelector('.canvas-outline-float') && document.querySelector('.canvas-outline-toggle')?.innerText.includes('结构')");
+  await page.waitForExpression("document.querySelector('.canvas-outline-drag-handle') && document.querySelector('.canvas-outline-reset')");
   await page.waitForExpression("(() => { const options = Array.from(document.querySelectorAll('.viewport-select option')).map((item) => item.textContent || ''); return options.some((item) => item.includes('紧凑屏') && item.includes('360')) && options.some((item) => item.includes('标准屏') && item.includes('390')) && options.some((item) => item.includes('大屏') && item.includes('430')) && options.some((item) => item.includes('Pixel 7') && item.includes('412x915')) && options.some((item) => item.includes('iPad Air') && item.includes('820x1180')); })()");
   await page.waitForExpression("getComputedStyle(document.querySelector('.phone-frame')).width === '390px'");
   await page.waitForExpression("document.querySelector('.phone-status')?.innerText.includes('标准屏 390')");
@@ -882,7 +885,7 @@ async function assertEditorViewportSwitch(page) {
 
 async function assertEditorWorkflow(page) {
   log("检查 H5 预览入口");
-  await page.clickByText(".right-workbench-tabs button", "发布");
+  await page.clickByText(".workflow-trigger", "H5预览");
   await page.waitForExpression("document.body.innerText.includes('H5 预览入口')");
   await page.waitForExpression("document.body.innerText.includes('当前草稿 React H5')");
   await page.waitForExpression("document.body.innerText.includes('页面草稿/最新版本 H5')");
@@ -893,6 +896,7 @@ async function assertEditorWorkflow(page) {
   log("通过：H5 预览入口展示链接并提供复制反馈");
 
   log("检查交付分享清单");
+  await page.clickByText(".workflow-trigger", "交付");
   await page.waitForExpression("document.querySelector('.delivery-panel') && document.body.innerText.includes('交付清单')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('Page ID'))");
   await page.waitForExpression("Array.from(document.querySelectorAll('.delivery-summary-grid article')).some((item) => item.innerText.includes('节点'))");
@@ -907,7 +911,7 @@ async function assertEditorWorkflow(page) {
   log("通过：交付清单展示页面摘要、交付步骤、H5 入口状态，并可复制/导出 Schema");
 
   log("检查页面设置面板");
-  await page.clickByText(".right-workbench-tabs button", "页面");
+  await page.clickByText(".workflow-trigger", "页面");
   await page.fillFieldByLabel("标题", "夏日好物节-页面设置");
   await page.fillFieldByLabel("描述", "页面设置 smoke 验证");
   await page.selectFieldByLabel("页面类型", "promotion");
@@ -919,11 +923,18 @@ async function assertEditorWorkflow(page) {
     target?.click();
   })()`);
   await page.waitForExpression("document.body.innerText.includes('夏日好物节-页面设置')");
+  await page.clickFirst(".workflow-dialog-head button");
   await page.clickByText(".toolbar button", "源码");
   await page.waitForExpression("Array.from(document.querySelectorAll('textarea')).some((item) => item.value.includes('页面设置 smoke 验证') && item.value.includes('\"pageType\": \"promotion\"') && item.value.includes('\"backgroundColor\": \"#eff6ff\"') && item.value.includes('\"safeArea\": false') && item.value.includes('\"maxWidth\": 390') && item.value.includes('\"environment\": \"pre\"'))");
   await page.clickByText(".toolbar button", "设计");
   await page.waitForExpression("document.querySelector('.phone-frame')");
   log("通过：页面设置可写入标题、描述、类型、布局和发布环境");
+
+  log("检查编辑器状态流程面板");
+  await page.clickByText(".workflow-trigger", "状态");
+  await page.waitForExpression("document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('实操清单') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('页面有内容') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('H5 预览入口') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('React H5 渲染可验证')");
+  await page.clickFirst(".workflow-dialog-head button");
+  log("通过：编辑器状态流程面板可按需打开");
 
   log("检查物料收藏和最近使用");
   const nodeCountBeforeMaterialPreference = await page.evaluate("document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length");
@@ -934,7 +945,6 @@ async function assertEditorWorkflow(page) {
   await page.clickByText(".material-detail-actions button", "添加到画布");
   await page.waitForExpression("!document.querySelector('.material-detail-dialog')");
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length > ${Number(nodeCountBeforeMaterialPreference)}`);
-  await page.waitForExpression("document.querySelector('[data-testid=\"audit-trail-panel\"]') && document.querySelector('[data-testid=\"audit-trail-panel\"]')?.innerText.includes('添加物料') && document.querySelector('[data-testid=\"audit-trail-panel\"]')?.innerText.includes('图片 Banner')");
   await page.clickFirst("[data-testid='host-audit-button']");
   await page.waitForExpression("document.querySelector('[data-testid=\"audit-log-panel\"]') && document.querySelector('[data-testid=\"audit-log-panel\"]')?.innerText.includes('审计日志') && document.querySelector('[data-testid=\"audit-log-panel\"]')?.innerText.includes('图片 Banner')");
   await page.clickFirst("[data-testid='audit-log-close']");
@@ -1371,8 +1381,9 @@ async function assertEditorWorkflow(page) {
   await page.fillByPlaceholder("搜索命令、物料或模板", "秒杀商品组");
   await page.waitForExpression("document.body.innerText.includes('添加物料：秒杀商品组')");
   await page.clickByText(".command-palette-item", "添加物料：秒杀商品组");
-  await page.waitForExpression("document.body.innerText.includes('秒杀商品组 没有静态商品，也没有绑定商品数据源')");
   await page.clickByText(".toolbar button", "预览");
+  await page.clickByText(".workflow-trigger", "检查");
+  await page.waitForExpression("document.body.innerText.includes('秒杀商品组 没有静态商品，也没有绑定商品数据源')");
   await page.waitForExpression("document.querySelector('.publish-risk-summary') && document.body.innerText.includes('可以生成预览，仍有提醒')");
   await page.waitForExpression("Array.from(document.querySelectorAll('.publish-risk-item')).some((item) => item.innerText.includes('秒杀商品组 没有静态商品'))");
   await page.waitForExpression("!document.querySelector('.phone-frame .mlc-runtime-node.is-selected')");
@@ -1380,6 +1391,7 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression("document.body.innerText.includes('已定位：秒杀商品组')");
   await page.waitForExpression("(() => { const selected = document.querySelector('.outline-item.selected'); return Boolean(selected && selected.innerText.includes('秒杀商品组')); })()");
   await page.waitForExpression("(() => { const selected = document.querySelector('.phone-frame .mlc-runtime-node.is-selected'); return Boolean(selected && selected.innerText.includes('限时秒杀')); })()");
+  await page.clickFirst(".workflow-dialog-head button");
   log("通过：发布检查定位可切回设计态并选中问题节点");
 
   await page.pressShortcut("k", { ctrlKey: true });
@@ -1413,21 +1425,22 @@ async function assertEditorWorkflow(page) {
   await page.waitForExpression(`document.querySelectorAll('.phone-frame [data-lowcode-node-id]').length === ${Number(nodeCountBeforeNodeActions)}`);
   log("通过：节点菜单、删除、复制、粘贴、撤销和重做快捷键可用");
 
-  await page.clickByText(".right-workbench-tabs button", "页面");
+  await page.clickByText(".workflow-trigger", "页面");
   await page.fillFieldByLabel("版本备注", "Smoke 设计验收版");
   await page.evaluate("document.activeElement?.blur()");
+  await page.clickFirst(".workflow-dialog-head button");
   await page.pressShortcut("k", { ctrlKey: true });
   await page.fillByPlaceholder("搜索命令、物料或模板", "保存草稿");
   await page.clickByText(".command-palette-item", "保存草稿");
   await page.waitForExpression("document.body.innerText.includes('已保存草稿') || document.body.innerText.includes('已保存')");
-  await page.clickByText(".right-workbench-tabs button", "发布");
+  await page.clickByText(".workflow-trigger", "版本");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('Smoke 设计验收版'))");
   log("通过：快捷命令可保存草稿");
 
   log("检查本地版本差异详情");
-  await page.clickByText(".right-workbench-tabs button", "页面");
+  await page.clickByText(".workflow-trigger", "页面");
   await page.fillFieldByLabel("标题", "版本差异 Smoke 当前草稿");
-  await page.clickByText(".right-workbench-tabs button", "发布");
+  await page.clickByText(".workflow-trigger", "版本");
   await page.fillByPlaceholder("筛选版本、类型或备注", "Smoke 设计验收版");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).length === 1 && document.body.innerText.includes('Smoke 设计验收版')");
   await page.clickByText(".release-actions button", "对比");
@@ -1446,6 +1459,7 @@ async function assertEditorWorkflow(page) {
   await page.fillByPlaceholder("筛选版本、类型或备注", "草稿");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('草稿'))");
   await page.fillByPlaceholder("筛选版本、类型或备注", "");
+  await page.clickFirst(".workflow-dialog-head button");
   log("通过：本地版本对比展示字段差异和 schema 片段详情");
 
   log("检查本地自定义模板");
@@ -1569,8 +1583,8 @@ async function assertEditorWorkflow(page) {
 async function assertEditorApprovalActions(page) {
   await assertPage(page, editorApprovalActionsUrl, [
     {
-      label: "发布审批区域存在",
-      expression: "document.querySelector('.approval-workflow-panel') && document.body.innerText.includes('发布审批')",
+      label: "发布审批流程入口存在",
+      expression: "Array.from(document.querySelectorAll('.workflow-trigger')).some((item) => (item.innerText || '').includes('审核'))",
     },
     {
       label: "待提交审批状态存在",
@@ -1578,6 +1592,8 @@ async function assertEditorApprovalActions(page) {
     },
   ]);
 
+  await page.clickByText(".workflow-trigger", "审核");
+  await page.waitForExpression("document.querySelector('.approval-workflow-panel') && document.body.innerText.includes('发布审批')");
   await page.clickByText(".approval-workflow-actions button", "提交审批");
   await page.waitForExpression("document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('审批中')");
   await page.waitForExpression("document.body.innerText.includes('已提交审批')");
@@ -1619,9 +1635,11 @@ async function assertEditorReadonlyMaterialInsert(page) {
 async function assertEditorHttpConfigPlatform(page) {
   await assertPage(page, editorHttpUrl, [
     { label: "Vue3 编辑器 HTTP 配置平台 shell 已挂载", expression: "document.querySelector('.editor-shell')" },
-    { label: "Vue3 编辑器 HTTP 配置平台入口存在", expression: `document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})` },
-    { label: "Vue3 编辑器 HTTP 配置平台保留发布面板", expression: "document.body.innerText.includes('发布检查') && document.body.innerText.includes('本地版本')" },
+    { label: "Vue3 编辑器 HTTP 配置平台流程入口存在", expression: "Array.from(document.querySelectorAll('.workflow-trigger')).some((item) => (item.innerText || '').includes('检查')) && Array.from(document.querySelectorAll('.workflow-trigger')).some((item) => (item.innerText || '').includes('版本'))" },
   ]);
+  await page.clickByText(".workflow-trigger", "H5预览");
+  await page.waitForExpression(`document.body.innerText.includes(${jsString(`http ${configPlatformSmokeUrl}`)})`);
+  await page.clickFirst(".workflow-dialog-head button");
   await waitForConfigPlatformRequest(
     (request) => request.method === "GET"
       && request.url === "/api/lowcode/pages/releases?pageId=summer-campaign-demo"
@@ -1641,6 +1659,7 @@ async function assertEditorHttpConfigPlatform(page) {
     "Vue3 编辑器 HTTP 模式读取 editor draft snapshot",
   );
 
+  await page.clickByText(".workflow-trigger", "页面");
   await page.fillFieldByLabel("标题", "HTTP 编辑器 Smoke 页面");
   await page.waitForExpression("document.body.innerText.includes('HTTP 编辑器 Smoke 页面')");
   await page.waitForExpression("document.body.innerText.includes('已自动保存')");
@@ -1655,6 +1674,7 @@ async function assertEditorHttpConfigPlatform(page) {
 
   await page.fillFieldByLabel("版本备注", "HTTP Smoke 草稿");
   await page.evaluate("document.activeElement?.blur()");
+  await page.clickFirst(".workflow-dialog-head button");
   await page.clickByText(".toolbar button", "保存草稿");
   await page.waitForExpression("document.body.innerText.includes('已保存草稿')");
   await waitForConfigPlatformRequest(
@@ -1689,6 +1709,7 @@ async function assertEditorHttpConfigPlatform(page) {
       && request.body?.operator?.id === "operator-me",
     "Vue3 编辑器 HTTP 模式发布页面 release",
   );
+  await page.clickByText(".workflow-trigger", "版本");
   await page.waitForExpression("Array.from(document.querySelectorAll('.release-card')).some((item) => item.innerText.includes('HTTP 编辑器 Smoke 页面') || item.innerText.includes('published-smoke'))");
   log("通过：Vue3 编辑器可通过 env 使用 HTTP 配置平台 client 完成草稿、预览、发布和自动快照");
 }
@@ -1791,7 +1812,7 @@ async function main() {
       { label: "编辑器审批状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"approval\"]')?.textContent?.includes('无需审批')" },
       { label: "编辑器顶部发布检查状态存在", expression: "document.querySelector('.capability-pill[data-capability-status-id=\"publish-check\"]')?.textContent?.includes('发布检查')" },
       { label: "编辑器宿主顶部扩展位存在", expression: "document.querySelector('[data-testid=\"host-toolbar-status\"]')?.textContent?.includes('审计已启用') && document.querySelector('[data-testid=\"host-audit-button\"]')?.textContent?.includes('审计日志')" },
-      { label: "编辑器实操清单存在", expression: "document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('实操清单') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('页面有内容') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('H5 预览入口') && document.querySelector('[data-testid=\"demo-checklist-panel\"]')?.textContent?.includes('React H5 渲染可验证')" },
+      { label: "编辑器顶部流程入口存在", expression: "(() => { const text = Array.from(document.querySelectorAll('.workflow-trigger')).map((item) => item.innerText || '').join('|'); return text.includes('页面') && text.includes('H5预览') && text.includes('交付') && text.includes('审核') && text.includes('检查') && text.includes('版本') && text.includes('状态'); })()" },
       { label: "模板入口存在", expression: "document.body.innerText.includes('模板')" },
       { label: "物料入口存在", expression: "document.body.innerText.includes('物料')" },
       { label: "直播入口物料存在", expression: "document.body.innerText.includes('直播入口')" },
@@ -1835,9 +1856,7 @@ async function main() {
       { label: "物料插入预设存在", expression: "Array.from(document.querySelectorAll('.material-item')).some((item) => item.innerText.includes('基础按钮') && item.innerText.includes('主按钮') && item.innerText.includes('描边按钮'))" },
       { label: "物料分类说明存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-category-summary\"]'); return Boolean(summary && summary.innerText.includes('全部物料') && summary.innerText.includes('全部可拖拽物料') && summary.innerText.includes('全部')); })()" },
       { label: "物料架构分层存在", expression: "(() => { const summary = document.querySelector('[data-testid=\"material-architecture-summary\"]'); return Boolean(summary && summary.innerText.includes('物料分层') && summary.innerText.includes('通用物料') && summary.innerText.includes('业务物料')); })()" },
-      { label: "发布检查存在", expression: "document.body.innerText.includes('发布检查')" },
-      { label: "发布风险摘要存在", expression: "(() => { const summary = document.querySelector('.publish-risk-summary'); const text = summary?.textContent || ''; return Boolean(summary && (text.includes('发布检查已通过') || text.includes('可以生成预览，仍有提醒') || text.includes('发布前需要处理阻塞项'))); })()" },
-      { label: "编辑器发布面板宿主扩展位存在", expression: "document.querySelector('[data-testid=\"host-delivery-policy\"]') && document.querySelector('[data-testid=\"host-approval-policy\"]') && document.querySelector('[data-testid=\"host-publish-check-policy\"]') && document.querySelector('[data-testid=\"host-release-policy-button\"]')" },
+      { label: "编辑器右侧聚焦属性和数据源", expression: "(() => { const text = Array.from(document.querySelectorAll('.right-workbench-tabs button')).map((item) => item.innerText || '').join('|'); return text.includes('属性') && text.includes('数据源') && !text.includes('发布') && !text.includes('状态'); })()" },
       { label: "默认大促模板包含增强活动头图", expression: "document.querySelector('.phone-frame .mlc-activity-hero img') && document.body.innerText.includes('夏日好物节')" },
       { label: "默认大促模板包含直播入口", expression: "document.body.innerText.includes('今晚 8 点直播专场')" },
       { label: "默认大促模板包含品牌专题", expression: "document.body.innerText.includes('夏日品牌馆')" },
